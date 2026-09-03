@@ -78,6 +78,8 @@ DeepCode 流水线里同一模式的四处静默降级 —— LLM 输出超限�
 | 预筛返回合法空列表 | 与"调用失败"共用分支 | 同样回退全量 |
 | 判分侧文件选择返回空 | `<files>` 为空 | 叶子静默得 0,`valid_score` 仍为 True |
 
+另一条与上表同源的观察:**写码阶段从不验证自己的产物**。命令执行器可用且被调用过 50 次,但全部是 `mkdir`/`touch` 建骨架与 `find`/`ls`/`cat` 查看目录;跨 31 个归档、2,443 次工具调用,**没有一次运行生成的代码**(无 python / pytest / import / pip install)。索引模式下工具面只有 `write_file` 与 `search_code_references`(`code_implementation_workflow.py:78`),执行类工具根本不在写码 agent 的可见范围内。
+
 详见 `deepcode_test/docs/FINDING_prefilter_silent_failure.md`、`FINDING_judge_serving_dependence.md`。
 
 ---
@@ -235,6 +237,7 @@ PAPER=fre bash deepcode_test/scripts/run_grade.sh         # 真判,约 ¥38/份,
 
 | 文件 | 内容 |
 | --- | --- |
+| `deepcode_test/docs/DEEPCODE_INTERNALS.md` | **DeepCode 是怎么运转的**:11 个 Phase 的职责与产出、`task_dir` 文件合同、LLM 调用点与配置流、31 个归档 2,443 次工具调用的实证、怎么只跑前半段当前端 |
 | `deepcode_test/docs/ARCHITECTURE_PROPOSAL_v0.1.md` | **下一步:自建论文复现 agent 的架构设计**(多 agent 工作流合成:AutoSOTA 研读 + 计划批评 + 3 提案 6 评审;含周末/下周计划) |
 | `deepcode_test/docs/CONCLUSIONS.md` | 总结论、可信度五项核验、逐份失分表、§⑦ 裁判依赖 |
 | `deepcode_test/docs/FINDING_judge_serving_dependence.md` | 双裁判对照与诊断(本项目最重要的发现) |
