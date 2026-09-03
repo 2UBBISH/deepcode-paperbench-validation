@@ -61,7 +61,7 @@ flowchart TD
     S5 --> G5{"产物判据<br/>exit 0 + metrics.json schema + reproduce.log"}
     G5 --> LEDGER["scores.jsonl iteration 0<br/>baseline_source=measured_by_us"]
     LEDGER --> S6["S6 verify.py → verdict.json<br/>claims pass/fail/na · guardrail · failure_category"]
-    S6 -.离线.-> AUDIT["run_grade.sh 双裁判(异模型)<br/>Code-Dev 只做审计"]
+    S6 -.离线.-> AUDIT["run_grade.sh 单裁判<br/>Code-Dev 只做审计"]
     S6 -.下周.-> IND["独立只读审计会话<br/>real / uncertain / invalid"]
     MON["monitor.py 外层薄监督<br/>停滞检测 · 预算 · 续跑重启"] -.读 agent_events.jsonl.-> S3
     CI["ci/check_no_rubric_leak.sh<br/>每次 commit 与 run 前"] -.-> S0
@@ -80,7 +80,7 @@ flowchart TD
 | **S3 修复环** | `code_v0`(git)、镜像、`manifest.json`、`preflight_env.json`、gate 报告 | `code_v1`(每次闸门新绿即 `git commit`,消息含闸门名;tag `_smoke_ok`)、根目录 `reproduce.sh`(`SCALE=smoke\|scaled\|full`)、`outputs/metrics.json`、`notes/code_map.md`、`notes/decisions.md`、`failures.jsonl`、`amendments.jsonl`、`agent_events.jsonl`、`protected_paths.sha256` | **不复用** DeepCode Phase 9;周末用 `openai` SDK 自写 `repro/agent/loop.py`(~400 行),从 DeepCode 抄**规则**不抄**模块**:重试退避 `10/30/60/180/300s`、identical-error 上限 30、工具名 `[a-z_]` 消毒规则(`core/agent_runtime/tools/mcp.py:90 _sanitize_exposed_name` 思路)、上下文尾部保留压缩策略(`core/agent_runtime/compaction.py`);`tools/code_reference_indexer.py` 模块级 `from mcp.server.fastmcp import FastMCP`(`:31`),`search_code_references` 是 `@mcp.tool()` async(`:338-339`)——**复制**三个真纯函数 `load_index_files_from_directory(:69)` / `find_relevant_references_in_cache(:179)` / `format_reference_output(:243)` 到 `repro/agent/refs.py`,不 import 该模块 | `repro/gates/smoke.sh`(**在从镜像新起的干净容器内**执行,不在开发容器):(1) `python -m py_compile` 全部 `.py`;(2) 每个 `manifest.experiments[].entry` `--help` 退出 0;(3) `SCALE=smoke bash reproduce.sh` 退出 0 且 ≤10 分钟;(4) `outputs/metrics.json` 通过 `repro/schemas/metrics.schema.json` 且每个 experiment×env×method ≥1 条记录、每条带 `provenance{env_module, entry, commit}`;(5) **运行时真环境核验**:`provenance.env_module` 的顶层包 ∈ `manifest.environments[].source` 声明的第三方包(rice:`gymnasium`),不得来自 `submission/`;(6) 静态审计项(§3.2)输出报告。全绿 → tag `_smoke_ok` → 生成 `protected_paths.sha256`(`reproduce.sh`、`experiments/evaluate.py`、指标写出模块) | `max_iter = 15 + 5×len(experiments)×len(environments)`(rice 子集 = 20);墙钟 3h;费用 ≤¥20(按 `agent_events.jsonl` 的 usage 实时累计);**smoke 单次 ≤10 分钟且一场最多 12 次**(12×10 = 2h ≤ 3h,与迭代上限乘积闭合);同签名最多 3 次,第 3 次注入「换策略」,第 4 次标 `blocked` 并继续;LLM 单次 `max_tokens 32768`、超时 600s;空正文/`finish_reason=length`/JSON 未闭合一律显式错误重试,不回退;**开发容器里任何 pip install 必须回写 `env.lock` 并重烤镜像后才允许进 S5** |
 | **S4 数据与资源获取** | `manifest.datasets[]` / `environments[source=asset\|repo]`(每项:`name, kind∈dataset\|env_asset\|repo, url, mirrors[], size_bytes, sha256, license, gated, dest, env_var, verify`) | `~/repro_store/{datasets,models,repos}/<name>/`、`acquire_report.json`(每项 `available\|failed\|needs_upload` + 原因)、失败时 `UPLOAD_REQUEST.md` | URL 来源复用 `code_base/exorl/download.sh`、`code_base/D4RL/d4rl/infos.py:68,73`;第三方仓库克隆经 `DEEPCODE_URL_DENYLIST` 等价拦截;**不复用** DeepCode 下载 agent(D2–D5:宣布意图不调工具、静默报成功) | `repro/acquire.py` 每项:HEAD/Range 0-0 探测 → 磁盘预算(单项 ≤ `REPRO_MAX_ITEM_GB=20`,总量 ≤ 可用一半)→ `wget -c`(本机无 aria2c;下周 `apt install aria2`)≤3 次 → sha256/文件数 → `verify` 命令(load 一个 batch、shape/条数)→ 通过才 `available`;失败 → `needs_upload` + 上传单;S5 前再核一次磁盘产物 | 单项超时 `max(600s, size/1MBps×2)`;429/503 退避 60/300/900s 三次后转 `needs_upload`;周末 rice 子集为空集,但接口与 schema 必须建好 |
 | **S5 调度与复现** | `jobs/<paper>_<exp>.json`(`image, cmd, needs_gpu, timeout_s, mem_limit, scale, mounts{submission, /store:ro, outputs}, seed`) | `runs/<job_id>/{reproduce.log, reproduce.log.creation_time, outputs/metrics.json, exit_code, run_manifest.json(镜像 sha、GPU 型号、墙钟、scale、seed)}`;`submission/scores.jsonl` 追加 iteration 0(`baseline_source=measured_by_us, scale, eval_scope`) | PaperBench 执行合同 `frontier-evals/project/paperbench/paperbench/reproduce.py:39-59`:`bash -c 'cd <submission> && bash reproduce.sh 2>&1 \| tee reproduce.log'` + `date +%s > reproduce.log.creation_time`(`judge/base.py:47-49` 读这两个文件);AutoSOTA `tmp/autosota-ref/record_score.sh:64-138` 的 protected 哈希 + exit 9 逻辑改写为 `repro/record_score.sh` | `docker run --rm --gpus all --memory 8g --shm-size 2g --name <job_id>`,`flock /tmp/repro_gpu.lock` 互斥;完成判据 = 退出码 0 **且** `outputs/metrics.json` 存在且 schema 通过(以产物为准);`protected_paths.sha256` 不匹配 → 该 run `invalid`、不入 `scores.jsonl`(exit 9);超时 kill 进程组记 `Insufficient Resources` 并自动降 scale 一档重试一次;每次状态变更写 `jobs/state.jsonl`,重启进 recovery(`docker inspect` 判活、按产物推断终态) | `needs_gpu` 由静态规则(cuda/`--device`/torch/SB3)+ 60s CPU 冒烟决定;GPU 串行、CPU 并行 ≤2;smoke:`total_timesteps=10000, N_SEEDS=1`, 超时 30 分钟;scaled:`3e5` 步、1 seed、超时 2h;full:论文 `1e6` 步 × 5 seed,标为下周租 GPU;**注**:rice Hopper PPO 是 CPU-bound(MuJoCo 仿真 + 小 MLP),周末 GPU 步验证的是 `--gpus` 管道与 `torch.cuda` 可用,不是真实 GPU 负载 |
-| **S6 验证与报告** | `manifest.json`、`preflight_env.json`、smoke/scaled 两次 run 的 `metrics.json`、`scores.jsonl`、gate 报告、`agent_events.jsonl` | `verdict.json`(`stages[]{name, status, gate_results}`, `metrics{env_ready, smoke_pass, claims_evaluable, claims_pass, wall_clock, cost_yuan}`, `failure_category`, `baseline_source`, `scale`, `blocked[]`, `judge_scores[]{score, serving, model, pb_commit, n_invalid_leaves}`, `independent_verdict: null(下周)`)+ `docs/runs/<run_id>.md` | 离线审计复用 `deepcode_test/scripts/run_grade.sh`(code_only)双 serving;下周 CE/RA 口径:`paperbench.reproduction.skip_reproduction=True` + `paperbench.judge.code_only=False`(`nano/task.py:224` `_should_reproduce = not skip_reproduction and not code_only`;若只去掉 code_only,PaperBench 会在无 torch/GPU 的 `pb-reproducer:latest` 里自己再跑一遍) | `repro/verify.py`:每条 claim 按 comparator 对 `metrics.json` 求值 → `pass\|fail\|na`;**smoke 与 1-seed scaled 一律 `na`**(`insufficient_scale` / `no_std`),只有 `N_SEEDS≥3` 且差异 > `2×合并 std` 才判 `pass`;guardrail 指标不得劣于 iteration 0 记录 5%;CI `repro/ci/check_no_rubric_leak.sh` grep `-iE 'grader\|rubric\|forfeit\|credit\|paperbench\|judge\|weight(ed)? score'`(不用裸 `weight`/`points`,会满屏误报) | 验证脚本 0 次 LLM;裁判审计每份 ≈¥38×2 serving,周末可选(上限 ¥80),`num_invalid_leaf_nodes ≤ 2` 否则作废 |
+| **S6 验证与报告** | `manifest.json`、`preflight_env.json`、smoke/scaled 两次 run 的 `metrics.json`、`scores.jsonl`、gate 报告、`agent_events.jsonl` | `verdict.json`(`stages[]{name, status, gate_results}`, `metrics{env_ready, smoke_pass, claims_evaluable, claims_pass, wall_clock, cost_yuan}`, `failure_category`, `baseline_source`, `scale`, `blocked[]`, `judge_scores[]{score, serving, model, pb_commit, n_invalid_leaves}`, `independent_verdict: null(下周)`)+ `docs/runs/<run_id>.md` | 离线审计复用 `deepcode_test/scripts/run_grade.sh`(code_only)单裁判;下周 CE/RA 口径:`paperbench.reproduction.skip_reproduction=True` + `paperbench.judge.code_only=False`(`nano/task.py:224` `_should_reproduce = not skip_reproduction and not code_only`;若只去掉 code_only,PaperBench 会在无 torch/GPU 的 `pb-reproducer:latest` 里自己再跑一遍) | `repro/verify.py`:每条 claim 按 comparator 对 `metrics.json` 求值 → `pass\|fail\|na`;**smoke 与 1-seed scaled 一律 `na`**(`insufficient_scale` / `no_std`),只有 `N_SEEDS≥3` 且差异 > `2×合并 std` 才判 `pass`;guardrail 指标不得劣于 iteration 0 记录 5%;CI `repro/ci/check_no_rubric_leak.sh` grep `-iE 'grader\|rubric\|forfeit\|credit\|paperbench\|judge\|weight(ed)? score'`(不用裸 `weight`/`points`,会满屏误报) | 验证脚本 0 次 LLM;裁判审计每份 ≈¥38×2 serving,周末可选(上限 ¥80),`num_invalid_leaf_nodes ≤ 2` 否则作废 |
 
 ---
 
@@ -185,7 +185,7 @@ flowchart TD
 | 10 | 失败分类枚举 | **CVPR 2026 仪表盘 `cvpr-data.js` 的 `AutoSOTA_Category` 字段**(Missing Repo 2268 / Incomplete Repo 689 / Non-Method Paper 369 / Missing Data 233 / Setup Failed 179 / Insufficient Resources 173 / No Improvement 66 / Succeeded 44 / Missed Claims 23);**论文正文与 cli_guide 全文 grep 不到此枚举** | **采纳(注明出处)** | `verdict.failure_category` 用这九类 + `stage ∈ {manifest, frontend, env, repair, acquire, reproduce, verify}`;漏斗带分母(尝试数、各阶段淘汰数) |
 | 11 | 入选门槛「单次完整复现 ≤4 GPU 小时」 | 论文 §4.1(L1168-1185) | **采纳(改为分流)** | `manifest.gpu_hours_estimate ≤ 4` 否则缩子集,不拒绝 |
 | 12 | 多指标护栏 R4,每轮上报全部指标 | 论文 R4(L1105-1108);cli_guide 结构化目标 | **采纳** | `verify.py` 对护栏设显式容忍带;报表标「主升/护栏平/护栏退」 |
-| 13 | 独立只读评估会话 → `evaluation_verdict.json` real/uncertain/invalid | cli_guide v0.3.0(L929-937) | **采纳(下周)** | `repro/verify/independent.py`:未参与修复的模型读 `_seed.._smoke_ok` diff + `scores.jsonl`;LLM 判断项要求 SiliconFlow 与 Paratera 双 serving 一致才 pass,不一致记 uncertain;周末 `verdict.independent_verdict=null` 预留 |
+| 13 | 独立只读评估会话 → `evaluation_verdict.json` real/uncertain/invalid | cli_guide v0.3.0(L929-937) | **采纳(下周)** | `repro/verify/independent.py`:未参与修复的模型读 `_seed.._smoke_ok` diff + `scores.jsonl`;LLM 判断项由 Paratera `DeepSeek-V4-Pro` 单裁判给出;判「不确定」时记 uncertain(原设想的双 serving 交叉验证已取消);周末 `verdict.independent_verdict=null` 预留 |
 | 14 | 取消「达标即停」早停 | cli_guide v0.3.0 移除 `target_improvement_pct` | **采纳** | 停止条件只由预算与闸门决定;best-iterate 与 mean-of-reruns 分列 |
 | 15 | 多 seed 噪声阈值 | 论文仅 R1 禁 best-of-N;per-paper 报告「best iterate vs mean eval 分歧」 | **采纳并加严** | AutoSOTA 把任何正变化记为 SOTA(CVPR 44 篇 median 0.11%、ICML 80 篇 <1%);我们 `N_SEEDS≥3`、claim pass 需差异 > 2×合并 std |
 | 16 | 树状 rubric 权重守恒 BFS | 论文 §2.3 | **不采纳(现在)** | 他们自认只用了 Result Match 一维;我们的 manifest 是平面清单 + 执行级闸门,先跑通再谈分层评分 |
@@ -212,10 +212,14 @@ flowchart TD
 
 ### 6.4 次指标(裁判审计,不做目标)
 - PaperBench Code-Dev `code_only`,裁判固定为「模型名 + serving + temperature + PB commit + `PB_STRUCTURED_PARSER_MODEL`」四元组;grade 文件名带 serving 与模型前缀。
-- **第二裁判臂(2026-09-03 修订)**:原计划的「同模型双 serving(SiliconFlow + Paratera)」因供应商决策不再可用。
-  改为**同 serving、异模型**:主臂 Paratera `DeepSeek-V4-Pro`,对照臂 Paratera `GLM-5.1`(备选 `Qwen3.5-Plus`)。
-  第二臂的作用不变 —— 检出「结论是否依赖裁判」;差别在于异模型的分歧会比异 serving 更大,
-  因此它只用于**方向性敏感度分析**,不再有「同一权重应当一致」这层预期。
+- **单裁判(2026-09-03 定案)**:原计划的双 serving 对照**取消**。理由不是它没价值,而是它服务的问题已经变了 ——
+  双裁判是为「DeepCode 到底有没有增益」服务的,那个问题里裁判分就是测量本身;
+  本项目的主指标是执行级(§6.3),裁判分只做事后审计,给一个不做目标的指标付双倍钱不划算。
+  **固定为 Paratera `DeepSeek-V4-Pro`**,唯一理由是**与已有基线可比** —— 我们手上 11 份提交的
+  Paratera 重判分(fre 裸跑 0.4807 / trial1 0.4682 / trial5 0.3101;rice 裸跑 0.1452 / trial2 0.4033 …)
+  都出自这个裁判,换任何一个都要重判一遍才有对照。
+  ⚠️ 代价必须写明:单裁判下的绝对分与倍数**继承 serving 依赖**(同名模型异 serving 有 16% 叶级分歧),
+  所以任何对外报告的 Code-Dev 数字都必须带裁判标签,且不得用它做「优于/劣于」的判断,只看方向。
   ⚠️ 启用新裁判模型前必须先把模型名登记进 `preparedness_turn_completer/utils.py` 的
   `CONTEXT_WINDOW_LENGTHS`,否则整批判分会以 `Grading failed` 静默全废(2026-09-03 踩过,64 秒烧掉一整批);`num_invalid_leaf_nodes ≤ 2` 否则作废;判分前 2000-token 真实成本探针(`refresh_after_fx.sh` 已如此)+ 金丝雀 1 份。
 - **新增口径(下周)**:Code Execution / Result Analysis 叶(fre 124/7、rice 170/13,已核 `rubric.json`),配置 `paperbench.reproduction.skip_reproduction=True` + `paperbench.judge.code_only=False`,由我们在自己的 GPU 容器里跑出 `reproduce.log` 后摆卷到 `~/pb_submissions/<paper>/<run_id>/`。
@@ -262,7 +266,7 @@ flowchart TD
 - 10:00–12:00 **步骤 9 scaled 复现**:`submit jobs/rice_scaled.json`(`SCALE=scaled`:3e5 步、seed 0、`needs_gpu true`、timeout 7200);完成后 `bash repro/record_score.sh --iter 0 --status success --primary <return> --scale scaled --baseline-source measured_by_us --eval-scope Hopper-v4`;`eval_runner.py` 用 gymnasium 独立回放 checkpoint 得主指标写入 `scores.jsonl`。
 - 12:00–13:00 **步骤 10 verify + 报告**:`python -m repro.verify --run ~/repro_runs/rice/wk1` → `verdict.json`(claims 全部 `na`,`reason=no_std/not_testable_by_us`;`env_ready=true`、`smoke_pass=true`、`failure_category=Succeeded(scale=scaled)`);写 `docs/runs/wk1_rice.md`:每阶段耗时、费用、gate 表、失败签名清单、blocked 组件、审计项。
 - 13:00–15:00 **步骤 11(时间允许)**再提交 2 个 seed 的 scaled job 得 std 写入 `scores.jsonl`;或跑周六夜后台 DeepCode fast 前端一轮(`PAPER=rice RUN_ID=wk1_fast bash repro/scripts/run_frontend.sh`,`DEEPCODE_MAX_WALL_SECONDS=7200`,¥≤15),只归档不进关键路径。
-- 15:00–16:00 **步骤 12 离线审计(可选,¥≤80)**:`code_v1` 摆到 `~/pb_submissions/rice/wk1_repaired/`;`PAPER=rice DRY=1 bash deepcode_test/scripts/run_grade.sh` 报价后,Paratera 的 DeepSeek-V4-Pro 与 GLM-5.1 各判一次,分数带「serving+模型」写入 `verdict.judge_scores`;对照 trial2 的 0.5447(SF)/0.4033(PT) 只说方向。
+- 15:00–16:00 **步骤 12 离线审计(可选,¥≤40)**:`code_v1` 摆到 `~/pb_submissions/rice/wk1_repaired/`;`PAPER=rice DRY=1 bash deepcode_test/scripts/run_grade.sh` 报价后,Paratera `DeepSeek-V4-Pro` 判一次(¥38),分数带裁判标签写入 `verdict.judge_scores`;对照 trial2 的 0.5447(SF)/0.4033(PT) 只说方向。
 - 16:00–17:30 **步骤 13 沉淀与冻结**:`failures.jsonl` 里的签名与修法整理进 `~/repro_store/skills/`;`manifest.schema.json`、`metrics.schema.json`、`reproduce.sh` 合同、`verdict.json` 字段定稿写入 `repro/README.md`;DeepCode 以 `e0767d0 + pre_weekend_0905.patch + weekend_min.patch` 三件冻结;写 `docs/prereg/` 模板与下周待办。
 - **18:00 硬止损**。
 
@@ -270,13 +274,13 @@ flowchart TD
 
 ### 7.2 下周
 
-- **周一 · 协议与集合冻结**:`docs/prereg` 模板与第一份预注册;只读 paper.md/addendum 对其余 21 篇跑 S0 分诊(手写或 `repro/manifest/triage.py`),选 3 篇留出集写入 `experiments/splits/holdout.txt` 并冻结,留出集 `rubric.json` 移出工作树;裁判四元组写进 `repro/config/judge.yaml`;`run_grade.sh` 默认双裁判(Paratera 上 DeepSeek-V4-Pro + GLM-5.1);`check_no_rubric_leak.sh` 进 pre-commit;`apt install aria2`。
+- **周一 · 协议与集合冻结**:`docs/prereg` 模板与第一份预注册;只读 paper.md/addendum 对其余 21 篇跑 S0 分诊(手写或 `repro/manifest/triage.py`),选 3 篇留出集写入 `experiments/splits/holdout.txt` 并冻结,留出集 `rubric.json` 移出工作树;裁判四元组写进 `repro/config/judge.yaml`;`run_grade.sh` 固定单裁判(Paratera `DeepSeek-V4-Pro`);`check_no_rubric_leak.sh` 进 pre-commit;`apt install aria2`。
 - **周二 · S0/S2 自动化**:`repro/manifest/extract.py`(输入白名单 paper.md/addendum/被引论文,1 次调用);在 fre/rice 上跑,召回只允许离线用开发集 rubric 的 CE/RA 叶算(`repro/eval/manifest_recall.py` 只输出数字);`repro/envprep/lock.py` 三路来源合并 + 解析回路;建老栈镜像 `repro-legacy`(py3.9 + mujoco210 + mujoco-py + d4rl@2024-06 前 commit + gym 0.23);闸门/里程碑模板按 `manifest.category` 分五类,周末的 RL 模板标「手写,待泛化」。
 - **周三 · S4 数据预飞(fre)**:`repro/acquire.py` 实跑:D4RL 官方源 502 → 试 HF/Minari 镜像与格式转换,ExORL `walker/rnd.zip` 断点续传与 `buffer/` 逐 episode 适配;`UPLOAD_REQUEST.md` 流程走通一次;容器 DNS 级拒绝 + 出口白名单。
 - **周三–周四 · 自建增量写码器 v1 与 CodeRAG 前端**:`loop.py` 加 planner 钩子(按 manifest 实验网格逐组件规划→写→冒烟→再规划),预算 `15 + 5×组件数`;与 DeepCode fast 前端在 rice 上 A/B(执行级指标为主,各 3 轮分散到夜间);前端:在 `agent_orchestration_engine.py:2184` Phase 9 前镜像 `:2162` 写法补 `DEEPCODE_STOP_AT_PHASE=9` 探针(5 行),`orchestrate_codebase_intelligence_agent` 前加单仓 `.py>2000` 跳过 + `skipped_repos` 留痕,`tools/code_indexer.py:558` 的「recommendation systems, graph neural networks, and diffusion models」残留改为运行时注入 manifest 关键词;**「先索引后规划」实验前提**:`codebase_index_workflow.py:196-241` 从 `initial_plan.txt` 抽 file_tree 作 `target_structure`,缺计划会回退到推荐系统默认骨架(P7/P3①),必须先把 `target_structure` 改为从 `manifest.methods/environments` 注入。
-- **周四 · AutoSOTA 三件**:`protected_paths` 校验接入 S5(exit 9 不入账);独立只读审计 `repro/verify/independent.py`(双 serving 一致才 pass);失败分类看板 `repro/report/dashboard.py`(带分母的漏斗)。同日隔离测试 DeepCode `core/providers/openai_compat.py:OpenAICompatProvider`(1387 行,含 persistent 重试/token meter)能否不带 mcp 栈单独 import;能则替换 `client.py`,不能则维持薄客户端。
+- **周四 · AutoSOTA 三件**:`protected_paths` 校验接入 S5(exit 9 不入账);独立只读审计 `repro/verify/independent.py`(未参与修复的独立会话,单裁判);失败分类看板 `repro/report/dashboard.py`(带分母的漏斗)。同日隔离测试 DeepCode `core/providers/openai_compat.py:OpenAICompatProvider`(1387 行,含 persistent 重试/token meter)能否不带 mcp 栈单独 import;能则替换 `client.py`,不能则维持薄客户端。
 - **周四–周五 · fre 端到端**:老栈镜像 + 数据预飞 + 四基线清单;多 seed 方差协议(iteration 0 三 seed,claim 阈值 2×std);预算缩放公式用 fre 33+ 文件实测校准。
-- **周五 · 留出集第一篇 + 报告**:按预注册跑留出集第一篇(零 rubric 接触);启用 CE/RA 口径(`skip_reproduction=True + code_only=False`)双 serving 判 1 份金丝雀再放批;`docs/repro-week1.md`:漏斗表、失败签名 Top-10、DeepCode 语料前端去留(只看执行级指标);租 GPU 方案(full 规模 1e6 步×5 seed)的 job 模板与成本估算;DeepCode venv 重建为 3.12 并逐条核对 15 处未门控改动。
+- **周五 · 留出集第一篇 + 报告**:按预注册跑留出集第一篇(零 rubric 接触);启用 CE/RA 口径(`skip_reproduction=True + code_only=False`)先判 1 份金丝雀再放批;`docs/repro-week1.md`:漏斗表、失败签名 Top-10、DeepCode 语料前端去留(只看执行级指标);租 GPU 方案(full 规模 1e6 步×5 seed)的 job 模板与成本估算;DeepCode venv 重建为 3.12 并逐条核对 15 处未门控改动。
 - **整周持续**:每个 run 的 `verdict.json` 入 `docs/runs/`;skills 笔记增量沉淀;所有对照 n≥5 才下结论;自进化与「逼近论文倍数」不列入。
 
 ---
@@ -296,7 +300,7 @@ flowchart TD
 | Docker Hub 拉取不可靠 | 基础镜像从本机 `pb-env:latest` 或 `deepevol-runtime:py311` 派生 |
 | 评分元知识泄漏(fx1/fx2 前车之鉴) | import 白名单 + CI grep + manifest 只读 paper.md/addendum + 留出集 rubric 移出工作树 + 选篇不看 rubric |
 | 周末产物「跑通」被误读为「复现成功」 | verdict 强制 `scale`/`baseline_source`;1-seed 与 smoke 的 claim 一律 `na`;报告只说执行级通过率 |
-| 下周 A/B 若用 Code-Dev 分下结论会被 σ 0.1~0.2 淹没;n≥5 跑轮塞不进一天 | 主指标执行级;裁判双 serving 只审计;n<5 只说方向;对照分散到整周夜间 |
+| 下周 A/B 若用 Code-Dev 分下结论会被 σ 0.1~0.2 淹没;n≥5 跑轮塞不进一天 | 主指标执行级;裁判分只做审计、带标签、不下优劣结论;n<5 只说方向;对照分散到整周夜间 |
 | rice Hopper PPO 是 CPU-bound,周末 GPU 步只验证管道 | 明确写进 `docs/runs/wk1_rice.md`;真实 GPU 负载留给 fre/留出集 |
 | DeepCode 本地版 15 处未门控改动、venv 3.11 vs 上游 3.12 | `e0767d0` + 两份 patch 冻结;下周重建 3.12 并逐条回退 |
 | 密钥:`credentials.json` 曾回显、`.env.bak_siliconflow_0902` 未 ignore | 周五晚轮换、移出、只经环境变量注入;pre-commit 加 secret 扫描 |
@@ -308,5 +312,5 @@ flowchart TD
 4. PaperBench CE/RA 口径下,我们自己跑出的 `reproduce.log` 是否被 `nano/task.py:266,343` 的 `_executed.tar.gz` 路径接受——启用前先读代码确认摆卷布局。
 5. AutoSOTA 的 sota_category A/B/C/D、CVPR「Missed Claims」「No Improvement」精确定义未公开;我们的九类枚举只借标签名,定义以 `repro/schemas/verdict.schema.json` 的注释为准。
 6. 非 RL 论文(留出集候选中的 sbibm、GPT-2 探针)的闸门模板(dataset adapter 一个 batch / forward 一次 / loss 有限 / eval 出指标)尚未设计,周二做。
-7. 独立审计会话对「方法保真」的 LLM 判断在双 serving 下会有相当比例 `uncertain`——它在漏斗里既非 pass 也非 fail,循环无法据此纠偏;是否需要第三种确定性代理(关键模块/损失/切分与论文一致性的结构检查)待下周数据。
+7. 独立审计会话对「方法保真」的 LLM 判断会有相当比例 `uncertain`——它在漏斗里既非 pass 也非 fail,循环无法据此纠偏;是否需要第三种确定性代理(关键模块/损失/切分与论文一致性的结构检查)待下周数据。
 8. full 规模(1e6 步 × 5 seed;fre 每域 12~24h 单卡)的租 GPU 预算与调度接口未定。
