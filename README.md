@@ -23,12 +23,13 @@
 | DeepCode 里值得复用的 | 前半段:参考挖掘、下载、CodeRAG 索引与检索、文档分段(产物是独立文件) | `docs/ARCHITECTURE_v0.2_OPTIMAL.md` §4 A1、§8 复用地图 |
 | DeepCode 里要整体替换的 | 后半段 Phase 9 写码循环(不执行、规划冻结、预算常量、clean-slate、2 个工具) | 同上 §4 A3 |
 
-**阅读顺序(约 40 分钟)**
+**阅读顺序(约 1 小时)**
 
 1. 本 README §1(结论)与 §1.3(工程发现)—— 5 分钟
-2. `deepcode_test/docs/PITFALLS.md` —— **踩坑总表,60 余条,分 PaperBench / DeepCode 配置 / DeepCode 源码 / 供应商 / 方法学 / 运维**,大多数会在新系统里原样重现 —— 15 分钟
-3. `deepcode_test/docs/ARCHITECTURE_v0.2_OPTIMAL.md` —— 自建 agent 的目标架构、建造顺序、每层验收、复用地图、给下一个对话的操作指引 —— 15 分钟
-4. 需要细节时:`docs/CONCLUSIONS.md`(失分机制)、`docs/FINDING_judge_serving_dependence.md`(为什么裁判分不能做目标)、`docs/FINDING_prefilter_silent_failure.md`(四种静默降级)、`docs/REVIEW_local_changes_2026-09-03.md`(我们自己的改动哪些没守住纪律)、`docs/ARCHITECTURE_PROPOSAL_v0.1.md`(周末降配版与 AutoSOTA 逐条)
+2. `deepcode_test/docs/PROJECT_CHRONICLE.md` —— **前因后果全纪事**:从 08-25 装环境到 09-03 转向自建,每一步做了什么、得到什么数字、用户在对话里问了什么、我们因此改了什么;配套 `RESULTS_MASTER.md`(全部结果总表,含作废轮与试点)与 `DECISIONS.md`(22 条决策记录)—— 20 分钟
+3. `deepcode_test/docs/PITFALLS.md` —— **踩坑总表,60 余条,分 PaperBench / DeepCode 配置 / DeepCode 源码 / 供应商 / 方法学 / 运维**,大多数会在新系统里原样重现 —— 15 分钟
+4. `deepcode_test/docs/ARCHITECTURE_v0.2_OPTIMAL.md` —— 自建 agent 的目标架构、建造顺序、每层验收、复用地图、给下一个对话的操作指引 —— 15 分钟
+5. 需要细节时:`docs/CONCLUSIONS.md`(失分机制)、`docs/FINDING_judge_serving_dependence.md`(为什么裁判分不能做目标)、`docs/FINDING_prefilter_silent_failure.md`(四种静默降级)、`docs/REVIEW_local_changes_2026-09-03.md`(我们自己的改动哪些没守住纪律)、`docs/ARCHITECTURE_PROPOSAL_v0.1.md`(周末降配版与 AutoSOTA 逐条)
 
 **五条不要做的事**(每条都有真金白银的教训):不用 LLM 裁判分做目标函数;不让任何评分表信息进入流水线或提示词;不在没有执行验证的循环里写码;不让 LLM→程序的任何接缝静默降级;每组 <5 轮不下结论。
 
@@ -265,6 +266,7 @@ PAPER=fre bash deepcode_test/scripts/run_grade.sh         # 真判,约 ¥38/份,
 | 文件 | 内容 |
 | --- | --- |
 | `deepcode_test/docs/DEEPCODE_INTERNALS.md` | **DeepCode 是怎么运转的**:11 个 Phase 的职责与产出、`task_dir` 文件合同、LLM 调用点与配置流、31 个归档 2,443 次工具调用的实证、怎么只跑前半段当前端 |
+| `deepcode_test/docs/PROJECT_CHRONICLE.md` / `RESULTS_MASTER.md` / `DECISIONS.md` | 全程纪事(含对话转折)/ 全部结果总表 / 决策记录 |
 | `deepcode_test/docs/PITFALLS.md` | **踩坑总表**(60 余条,分六类,每条现象/根因/修法/证据) |
 | `deepcode_test/docs/ARCHITECTURE_v0.2_OPTIMAL.md` | **最优版架构(交接文档,自含全部事实与路径)**:度量体/复现体分离、建造顺序、每层验收、复用地图 |
 | `deepcode_test/docs/ARCHITECTURE_PROPOSAL_v0.1.md` | **下一步:自建论文复现 agent 的架构设计**(多 agent 工作流合成:AutoSOTA 研读 + 计划批评 + 3 提案 6 评审;含周末/下周计划) |
