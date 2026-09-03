@@ -16,7 +16,7 @@
 - 不追求 PaperBench Code-Development 裁判分「逼近论文倍数」——同名裁判换 serving 有 15.7% 叶级分歧(28/178),rice 倍数在 1.05× 与 2.58× 之间翻转,组内轮间波动(0.094/0.107/0.195)是组间差距(0.010/0.023)的 4.6~9 倍,该分数不能做目标函数。
 - 不做自进化。前置条件(执行级目标函数、沙箱、留出集、固定 serving)全部就位前不启动。
 - 不复现原规模(rice 论文 8×A100、fre 每域 12~24h 单卡);本周验收的是「降配跑通」,full 规模标记为租 GPU 的目标。
-- 不接 Claude Code 壳,不用 Anthropic API;模型只走 OpenAI 兼容端点(Paratera `https://llmapi.paratera.com/v1` / SiliconFlow `https://api.siliconflow.cn/v1` 的 DeepSeek-V4-Pro、Kimi-K2.7-Code)。
+- 不接 Claude Code 壳,不用 Anthropic API;模型只走 OpenAI 兼容端点。**供应商决策(2026-09-03):只用 Paratera `https://llmapi.paratera.com/v1`,不再使用 SiliconFlow** —— 历史分数里的 SiliconFlow 数据保持不变作为存档。
 
 **与 DeepCode 的关系**:DeepCode 冻结在 `e0767d0` + `deepcode_test/patches/deepcode_local_changes.patch`,只作**可选前端**(Phase 2–8:文档转换/分段/规划/参考仓库挖掘/下载/CodeRAG 索引),以 `task_dir` 文件合同对外供料;它的 Phase 9 写码循环整体废弃——索引模式工具面只有 `write_file` + `search_code_references`(`workflows/code_implementation_workflow.py:78` `_INDEXED_TOOL_NAMES`),`_MAX_ITERATIONS = 800` 常量(`:90`),`max_tokens=8192` 硬编码(`:989`),`execute_python/execute_bash` 默认 30s(`tools/code_implementation_server.py:683,774`),31 个归档、2,443 次工具调用里 `execute_*` 共 50 次,全部是 `mkdir`/`touch`/`find`/`ls`/`cat`/`grep`,**没有一次运行生成的代码**(无 python/pytest/import/pip)。周末**不跑 DeepCode**:代码种子直接用冻结产物 `deepcode_test/rice/submissions/trial2/`,语料用归档 `deepcode_test/rice/task_archives/archive_task_paper_ddaecdf1_0830_0724/`(`planning_result_meta.json` source=generated、5 个参考仓库、5 份 index 齐全)。DeepCode 被证实的唯一长处是覆盖面(参考仓库挖掘 + CodeRAG 使环境/数据集维度普遍占优),下周作为语料层接回。
 
@@ -61,7 +61,7 @@ flowchart TD
     S5 --> G5{"产物判据<br/>exit 0 + metrics.json schema + reproduce.log"}
     G5 --> LEDGER["scores.jsonl iteration 0<br/>baseline_source=measured_by_us"]
     LEDGER --> S6["S6 verify.py → verdict.json<br/>claims pass/fail/na · guardrail · failure_category"]
-    S6 -.离线.-> AUDIT["run_grade.sh 双 serving<br/>Code-Dev 只做审计"]
+    S6 -.离线.-> AUDIT["run_grade.sh 双裁判(异模型)<br/>Code-Dev 只做审计"]
     S6 -.下周.-> IND["独立只读审计会话<br/>real / uncertain / invalid"]
     MON["monitor.py 外层薄监督<br/>停滞检测 · 预算 · 续跑重启"] -.读 agent_events.jsonl.-> S3
     CI["ci/check_no_rubric_leak.sh<br/>每次 commit 与 run 前"] -.-> S0
@@ -211,7 +211,13 @@ flowchart TD
 `env_ready` 率、`smoke_pass` 率、`resources_verified` 比例、coverage(manifest grid 单元有 metrics 行的比例)、`claims_evaluable` 率、`claims_pass` 率(仅 full 且 ≥3 seed)、`audit_verdict==real` 比例、按九类 `failure_category` 分层的漏斗、墙钟、费用。报「成功率 = 成功/尝试」,报 median + IQR 与超过噪声阈值的篇数,不报均值。
 
 ### 6.4 次指标(裁判审计,不做目标)
-- PaperBench Code-Dev `code_only`,裁判固定为「模型名 + serving + temperature + PB commit + `PB_STRUCTURED_PARSER_MODEL`」四元组,默认双 serving(SiliconFlow `deepseek-ai/DeepSeek-V4-Pro` 与 Paratera `DeepSeek-V4-Pro`)同报;grade 文件名带 serving 前缀;`num_invalid_leaf_nodes ≤ 2` 否则作废;判分前 2000-token 真实成本探针(`refresh_after_fx.sh` 已如此)+ 金丝雀 1 份。
+- PaperBench Code-Dev `code_only`,裁判固定为「模型名 + serving + temperature + PB commit + `PB_STRUCTURED_PARSER_MODEL`」四元组;grade 文件名带 serving 与模型前缀。
+- **第二裁判臂(2026-09-03 修订)**:原计划的「同模型双 serving(SiliconFlow + Paratera)」因供应商决策不再可用。
+  改为**同 serving、异模型**:主臂 Paratera `DeepSeek-V4-Pro`,对照臂 Paratera `GLM-5.1`(备选 `Qwen3.5-Plus`)。
+  第二臂的作用不变 —— 检出「结论是否依赖裁判」;差别在于异模型的分歧会比异 serving 更大,
+  因此它只用于**方向性敏感度分析**,不再有「同一权重应当一致」这层预期。
+  ⚠️ 启用新裁判模型前必须先把模型名登记进 `preparedness_turn_completer/utils.py` 的
+  `CONTEXT_WINDOW_LENGTHS`,否则整批判分会以 `Grading failed` 静默全废(2026-09-03 踩过,64 秒烧掉一整批);`num_invalid_leaf_nodes ≤ 2` 否则作废;判分前 2000-token 真实成本探针(`refresh_after_fx.sh` 已如此)+ 金丝雀 1 份。
 - **新增口径(下周)**:Code Execution / Result Analysis 叶(fre 124/7、rice 170/13,已核 `rubric.json`),配置 `paperbench.reproduction.skip_reproduction=True` + `paperbench.judge.code_only=False`,由我们在自己的 GPU 容器里跑出 `reproduce.log` 后摆卷到 `~/pb_submissions/<paper>/<run_id>/`。
 - 任何倍数/差值必须附 serving 标签;每臂 ≥5 轮才允许说「优于」,n<5 只许说方向。
 
@@ -235,7 +241,7 @@ flowchart TD
 ### 7.1 周末(按小时;硬止损周日 18:00)
 
 **周五晚(准备,¥0,~2h)**
-- 0a 密钥卫生:轮换 `~/.deepcode/credentials.json` 里两家 key(本次排查曾被 cat 到终端);`frontier-evals/project/paperbench/.env.bak_siliconflow_0902` 移出仓库并加 `.gitignore`;新 key 只放 `~/.repro.env`(`REPRO_API_KEY_PARATERA / REPRO_API_KEY_SILICONFLOW`)。`refresh_after_fx.sh:18` 已改为从 `credentials.json` 读,不再是明文,无需改。
+- 0a 密钥卫生:**用户决定不轮换 key**(2026-09-03),该项取消 —— 但请知悉 Paratera key 曾在排查中回显到终端、并被记入本机 `logs/llm.jsonl`(发布仓库已脱敏,本机日志仍在)。仍需做的是:`frontier-evals/project/paperbench/.env.bak_siliconflow_0902` 移出仓库并加 `.gitignore`;新 key 只放 `~/.repro.env`(`REPRO_API_KEY_PARATERA / REPRO_API_KEY_SILICONFLOW`)。`refresh_after_fx.sh:18` 已改为从 `credentials.json` 读,不再是明文,无需改。
 - 0b `cd ~/deepevol/DeepCode && git diff HEAD > ../deepcode_test/patches/pre_weekend_0905.patch`;确认 `git rev-parse --short HEAD` = `e0767d0`。
 - 0c `mkdir -p ~/deepevol/repro/{agent,gates,schemas,scripts,docker,ci} ~/repro_runs ~/repro_store/{datasets,models,repos,skills,images}`;`cd ~/deepevol/repro && uv init --python 3.12`(与 DeepCode 的 3.11 venv 分离),依赖 `openai pydantic pyyaml jsonschema`。
 - 0d Windows 侧 `/mnt/c/Users/43519/.wslconfig` 追加 `[wsl2]\nmemory=10GB\nswap=8GB` → `wsl --shutdown` → 重进后 `free -g` 复核 total ≈10;`docker info | grep -i nvidia`;`nvidia-smi -L` 应见 RTX 4060 Laptop GPU。
@@ -256,7 +262,7 @@ flowchart TD
 - 10:00–12:00 **步骤 9 scaled 复现**:`submit jobs/rice_scaled.json`(`SCALE=scaled`:3e5 步、seed 0、`needs_gpu true`、timeout 7200);完成后 `bash repro/record_score.sh --iter 0 --status success --primary <return> --scale scaled --baseline-source measured_by_us --eval-scope Hopper-v4`;`eval_runner.py` 用 gymnasium 独立回放 checkpoint 得主指标写入 `scores.jsonl`。
 - 12:00–13:00 **步骤 10 verify + 报告**:`python -m repro.verify --run ~/repro_runs/rice/wk1` → `verdict.json`(claims 全部 `na`,`reason=no_std/not_testable_by_us`;`env_ready=true`、`smoke_pass=true`、`failure_category=Succeeded(scale=scaled)`);写 `docs/runs/wk1_rice.md`:每阶段耗时、费用、gate 表、失败签名清单、blocked 组件、审计项。
 - 13:00–15:00 **步骤 11(时间允许)**再提交 2 个 seed 的 scaled job 得 std 写入 `scores.jsonl`;或跑周六夜后台 DeepCode fast 前端一轮(`PAPER=rice RUN_ID=wk1_fast bash repro/scripts/run_frontend.sh`,`DEEPCODE_MAX_WALL_SECONDS=7200`,¥≤15),只归档不进关键路径。
-- 15:00–16:00 **步骤 12 离线审计(可选,¥≤80)**:`code_v1` 摆到 `~/pb_submissions/rice/wk1_repaired/`;`PAPER=rice DRY=1 bash deepcode_test/scripts/run_grade.sh` 报价后,SiliconFlow 与 Paratera 各判一次,分数带 serving 写入 `verdict.judge_scores`;对照 trial2 的 0.5447(SF)/0.4033(PT) 只说方向。
+- 15:00–16:00 **步骤 12 离线审计(可选,¥≤80)**:`code_v1` 摆到 `~/pb_submissions/rice/wk1_repaired/`;`PAPER=rice DRY=1 bash deepcode_test/scripts/run_grade.sh` 报价后,Paratera 的 DeepSeek-V4-Pro 与 GLM-5.1 各判一次,分数带「serving+模型」写入 `verdict.judge_scores`;对照 trial2 的 0.5447(SF)/0.4033(PT) 只说方向。
 - 16:00–17:30 **步骤 13 沉淀与冻结**:`failures.jsonl` 里的签名与修法整理进 `~/repro_store/skills/`;`manifest.schema.json`、`metrics.schema.json`、`reproduce.sh` 合同、`verdict.json` 字段定稿写入 `repro/README.md`;DeepCode 以 `e0767d0 + pre_weekend_0905.patch + weekend_min.patch` 三件冻结;写 `docs/prereg/` 模板与下周待办。
 - **18:00 硬止损**。
 
@@ -264,7 +270,7 @@ flowchart TD
 
 ### 7.2 下周
 
-- **周一 · 协议与集合冻结**:`docs/prereg` 模板与第一份预注册;只读 paper.md/addendum 对其余 21 篇跑 S0 分诊(手写或 `repro/manifest/triage.py`),选 3 篇留出集写入 `experiments/splits/holdout.txt` 并冻结,留出集 `rubric.json` 移出工作树;裁判四元组写进 `repro/config/judge.yaml`;`run_grade.sh` 默认双 serving;`check_no_rubric_leak.sh` 进 pre-commit;`apt install aria2`。
+- **周一 · 协议与集合冻结**:`docs/prereg` 模板与第一份预注册;只读 paper.md/addendum 对其余 21 篇跑 S0 分诊(手写或 `repro/manifest/triage.py`),选 3 篇留出集写入 `experiments/splits/holdout.txt` 并冻结,留出集 `rubric.json` 移出工作树;裁判四元组写进 `repro/config/judge.yaml`;`run_grade.sh` 默认双裁判(Paratera 上 DeepSeek-V4-Pro + GLM-5.1);`check_no_rubric_leak.sh` 进 pre-commit;`apt install aria2`。
 - **周二 · S0/S2 自动化**:`repro/manifest/extract.py`(输入白名单 paper.md/addendum/被引论文,1 次调用);在 fre/rice 上跑,召回只允许离线用开发集 rubric 的 CE/RA 叶算(`repro/eval/manifest_recall.py` 只输出数字);`repro/envprep/lock.py` 三路来源合并 + 解析回路;建老栈镜像 `repro-legacy`(py3.9 + mujoco210 + mujoco-py + d4rl@2024-06 前 commit + gym 0.23);闸门/里程碑模板按 `manifest.category` 分五类,周末的 RL 模板标「手写,待泛化」。
 - **周三 · S4 数据预飞(fre)**:`repro/acquire.py` 实跑:D4RL 官方源 502 → 试 HF/Minari 镜像与格式转换,ExORL `walker/rnd.zip` 断点续传与 `buffer/` 逐 episode 适配;`UPLOAD_REQUEST.md` 流程走通一次;容器 DNS 级拒绝 + 出口白名单。
 - **周三–周四 · 自建增量写码器 v1 与 CodeRAG 前端**:`loop.py` 加 planner 钩子(按 manifest 实验网格逐组件规划→写→冒烟→再规划),预算 `15 + 5×组件数`;与 DeepCode fast 前端在 rice 上 A/B(执行级指标为主,各 3 轮分散到夜间);前端:在 `agent_orchestration_engine.py:2184` Phase 9 前镜像 `:2162` 写法补 `DEEPCODE_STOP_AT_PHASE=9` 探针(5 行),`orchestrate_codebase_intelligence_agent` 前加单仓 `.py>2000` 跳过 + `skipped_repos` 留痕,`tools/code_indexer.py:558` 的「recommendation systems, graph neural networks, and diffusion models」残留改为运行时注入 manifest 关键词;**「先索引后规划」实验前提**:`codebase_index_workflow.py:196-241` 从 `initial_plan.txt` 抽 file_tree 作 `target_structure`,缺计划会回退到推荐系统默认骨架(P7/P3①),必须先把 `target_structure` 改为从 `manifest.methods/environments` 注入。
