@@ -32,12 +32,17 @@ need docker   "判分要用 Docker 起沙箱;安装后确保 'docker info' 能�
 docker info >/dev/null 2>&1 && echo "  ✅ docker daemon 在跑" || echo "  ⚠️ docker daemon 未运行(复现不需要,判分前再启动)"
 
 echo "==== [2/6] frontier-evals(PaperBench)@ ${FE_COMMIT:0:10} ===="
+# 注意:不能用 --filter=blob:none 部分克隆 —— git-lfs 在缺 blob 的仓库里会逐个懒取指针,
+# 实测挂死 3 分钟以上。改为「按 commit 浅取(depth 1)+ 稀疏检出」,只下载需要的两个目录。
 if [ ! -d "$ROOT/frontier-evals/.git" ]; then
-  git clone --filter=blob:none --no-checkout "$FE_REPO" "$ROOT/frontier-evals"
+  git init -q "$ROOT/frontier-evals"
+  git -C "$ROOT/frontier-evals" remote add origin "$FE_REPO"
   git -C "$ROOT/frontier-evals" sparse-checkout init --cone
   git -C "$ROOT/frontier-evals" sparse-checkout set project/paperbench project/common
-  git -C "$ROOT/frontier-evals" checkout "$FE_COMMIT"
-  echo "  ✅ 稀疏克隆完成"
+  git -C "$ROOT/frontier-evals" fetch -q --depth 1 origin "$FE_COMMIT"
+  git -C "$ROOT/frontier-evals" checkout -q FETCH_HEAD
+  git -C "$ROOT/frontier-evals" lfs install --local >/dev/null
+  echo "  ✅ 稀疏检出完成(paperbench + common)"
 else
   echo "  ⏭ 已存在,跳过克隆"
 fi

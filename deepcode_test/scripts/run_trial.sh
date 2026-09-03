@@ -40,8 +40,10 @@ python3 - <<'EOF'
 import json, os
 c = json.load(open(os.path.expanduser('~/.deepcode/deepcode_config.json')))
 a = c.get('agents', {})
-# 期望底座可用 DEEPCODE_EXPECT_MODEL 覆盖(如 Kimi 对照轮);默认仍是 V4-Pro
-want = os.environ.get('DEEPCODE_EXPECT_MODEL', 'deepseek-ai/DeepSeek-V4-Pro')
+# 同底座双切守卫:规划与写码必须是同一个模型,且不允许 planning 单独覆盖。
+# 设 DEEPCODE_EXPECT_MODEL 可额外钉死具体模型名(防止配置被改后误跑);不设则只要求两阶段一致。
+want = os.environ.get('DEEPCODE_EXPECT_MODEL') or a.get('defaults', {}).get('model', '')
+assert want, 'agents.defaults.model 为空'
 for ph in ('defaults', 'implementation'):
     m = a.get(ph, {}).get('model', '')
     assert m == want, f'{ph}.model={m!r} != {want!r} — 本实验要求全程同底座双切'

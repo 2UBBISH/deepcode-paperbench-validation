@@ -1,0 +1,4 @@
+2026-09-03 11:05:03 [info     ] Evaluating judge on example run: rice/0 component=__main__
+2026-09-03 11:05:03 [warning  ] Model DeepSeek-V4-Pro not found in tiktoken, using o200k_base component=preparedness_turn_completer.oai_completions_turn_completer
+2026-09-03 11:05:03 [warning  ] Model DeepSeek-V4-Pro not found in tiktoken, using o200k_base component=preparedness_turn_completer.oai_completions_turn_completer
+2026-09-03 11:05:03 [warning  ] Model DeepSeek-V4-Pro not found in tiktoken, using o200k_base component=preparedness_turn_completer.oai_completions_turn_completer
