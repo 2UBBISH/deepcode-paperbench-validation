@@ -1,0 +1,39 @@
+2026-08-26 10:01:02 [info     ] Grading leaf: In Experiment II, for the selfish mining environment, for the "JSRL" refinement method, code has been implemented for measuring cumulative reward throughout refinement
+2026-08-26 10:02:55 [info     ] Model file selection raw output:
+Refine_selfish_mining/retrain.py
+Refine_selfish_mining/utils.py
+Refine_selfish_mining/baseline/train_ppo.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/training/trainer.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/training/rl_algorithm.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/training/callbacks/logging/text_logging_callback.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/training/callbacks/logging/tensorboard_logging_callback.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/experience_acquisition/experience.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/utility/buffer.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/blockchain_simulator/mdp_blockchain_simulator.py
+2026-08-26 10:02:55 [info     ] Model file selection raw output:
+Refine_selfish_mining/retrain.py
+Refine_selfish_mining/utils.py
+Refine_selfish_mining/baseline/train_ppo.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/training/trainer.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/training/rl_algorithm.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/training/callbacks/logging/text_logging_callback.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/training/callbacks/logging/tensorboard_logging_callback.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/experience_acquisition/experience.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/utility/buffer.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/blockchain_simulator/mdp_blockchain_simulator.py
+2026-08-26 10:03:46 [info     ] model response: # Expectations
+For Experiment II in the selfish mining environment, the JSRL refinement method should be implemented and run, and during that refinement process the cumulative reward (e.g., mean episode reward, total reward, or similar performance metric) must be measured and logged. In code terms, this means there should be some script or module that trains a policy using the JSRL algorithm, and within that training loop there must be functionality to record and output the cumulative reward over time (e.g., writing to TensorBoard, logging to file, or printing). The code should be explicitly present in the submission and clearly associated with the JSRL baseline for the selfish mining task.
+
+# Reality
+The submitted files include `Refine_selfish_mining/retrain.py`, `Refine_selfish_mining/utils.py`, and several baseline training files (`baseline/train_ppo.py`, generic trainer/utility modules, etc.). None of these files contain any implementation of the JSRL (Jump-Start Reinforcement Learning) algorithm. There is no mention of “JSRL”, “jump-start”, “curriculum”, or any related terms in any of the provided code. The `retrain.py` script appears to implement the RICE (Ours) refinement method (using RND and a retraining environment), but not JSRL. The baseline files only cover vanilla PPO training and general infrastructure. Therefore, there is no code from which one could extract a cumulative reward measurement for a JSRL refinement run on the selfish mining environment.
+
+# Score
+0 – The submission does not contain any implementation of the JSRL refinement method for the selfish mining environment, and consequently no code exists to measure cumulative reward during such a refinement process. The criterion is not met.
+2026-08-26 10:03:46 [info     ] model response: # Expectations
+For Experiment II in the selfish mining environment, the JSRL refinement method should be implemented and run, and during that refinement process the cumulative reward (e.g., mean episode reward, total reward, or similar performance metric) must be measured and logged. In code terms, this means there should be some script or module that trains a policy using the JSRL algorithm, and within that training loop there must be functionality to record and output the cumulative reward over time (e.g., writing to TensorBoard, logging to file, or printing). The code should be explicitly present in the submission and clearly associated with the JSRL baseline for the selfish mining task.
+
+# Reality
+The submitted files include `Refine_selfish_mining/retrain.py`, `Refine_selfish_mining/utils.py`, and several baseline training files (`baseline/train_ppo.py`, generic trainer/utility modules, etc.). None of these files contain any implementation of the JSRL (Jump-Start Reinforcement Learning) algorithm. There is no mention of “JSRL”, “jump-start”, “curriculum”, or any related terms in any of the provided code. The `retrain.py` script appears to implement the RICE (Ours) refinement method (using RND and a retraining environment), but not JSRL. The baseline files only cover vanilla PPO training and general infrastructure. Therefore, there is no code from which one could extract a cumulative reward measurement for a JSRL refinement run on the selfish mining environment.
+
+# Score
+0 – The submission does not contain any implementation of the JSRL refinement method for the selfish mining environment, and consequently no code exists to measure cumulative reward during such a refinement process. The criterion is not met.

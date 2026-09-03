@@ -1,0 +1,65 @@
+2026-08-26 09:58:46 [info     ] Grading leaf: For the MuJoCo environments, the policy network agents has been implemented
+2026-08-26 09:59:28 [info     ] Model file selection raw output:
+Refine_mujoco/PPO.py
+Refine_mujoco/models.py
+Refine_mujoco/OnPolicyAlgorithm.py
+Refine_mujoco/base_class.py
+Refine_mujoco/retrain.py
+Refine_mujoco/environment.py
+Refine_mujoco/callback.py
+Refine_mujoco/masknet/cus_PPO.py
+Refine_mujoco/masknet/train.py
+Refine_mujoco/baseline/train.py
+2026-08-26 09:59:28 [info     ] Model file selection raw output:
+Refine_mujoco/PPO.py
+Refine_mujoco/models.py
+Refine_mujoco/OnPolicyAlgorithm.py
+Refine_mujoco/base_class.py
+Refine_mujoco/retrain.py
+Refine_mujoco/environment.py
+Refine_mujoco/callback.py
+Refine_mujoco/masknet/cus_PPO.py
+Refine_mujoco/masknet/train.py
+Refine_mujoco/baseline/train.py
+2026-08-26 10:00:03 [info     ] model response: # Expectations
+
+The criterion asks whether the policy network agents have been implemented for the MuJoCo environments. Based on the paper, the agent policy networks are generic reinforcement learning policies compatible with PPO and the MuJoCo environments (Hopper, Walker2d, Reacher, HalfCheetah). The paper and addendum clarify that the architecture is not specified in detail and can rely on default Stable Baselines3 policies (e.g., `MlpPolicy`). Therefore, a correct implementation would include code that instantiates or loads a PPO-compatible policy network (such as an ActorCriticPolicy) and is set up to interact with the MuJoCo environments. I will look for actual code (not just instructions) that defines, trains, or loads a policy network agent for the MuJoCo tasks, such as using `PPO("MlpPolicy", ...)` or similar.
+
+# Reality
+
+The submission contains several Python files relevant to the MuJoCo experiments:
+
+- **`Refine_mujoco/baseline/train.py`** directly creates a PPO agent for a MuJoCo environment (Hopper-v3) using `stable_baselines3.PPO("MlpPolicy", env)`. This code instantiates a policy network (the default MLP policy from SB3) and proceeds to train it. The same script structure could be adapted to other MuJoCo environments by changing the environment name.
+
+- **`Refine_mujoco/retrain.py`** loads a pre-trained PPO agent (via `PPO.load`) and assigns it a new environment for refinement. The loaded agent already contains a policy network, showing that the implementation handles agent policies for MuJoCo environments.
+
+- The file **`Refine_mujoco/masknet/cus_PPO.py`** defines a custom PPO class that inherits from SB3’s `OnPolicyAlgorithm`, and it is used with `MlpPolicy` in **`Refine_mujoco/masknet/train.py`** to train the mask network. This again relies on SB3’s policy network implementation.
+
+- The modified SB3 base classes (`Refine_mujoco/base_class.py`, `Refine_mujoco/OnPolicyAlgorithm.py`, `Refine_mujoco/PPO.py`) and the model definitions (`Refine_mujoco/models.py`) are used to support bonus mechanisms and environment resets, but the core agent policy remains the standard SB3 `ActorCriticPolicy` (MlpPolicy).
+
+All of these files contain actual executable code that instantiates and trains policy network agents for MuJoCo tasks. The policy networks are implemented by using the standard SB3 `MlpPolicy`, which is consistent with the paper’s description of using default settings from Stable Baselines3. There is no indication that a custom policy architecture is required; the paper explicitly says the architecture is omitted from the reproduction and results should hold with any generic RL agent policy.
+
+# Score
+
+1 – The submission contains code that correctly implements policy network agents for the MuJoCo environments, using Stable Baselines3’s default MLP policy with PPO. The code is present and functional, meeting the criterion.
+2026-08-26 10:00:03 [info     ] model response: # Expectations
+
+The criterion asks whether the policy network agents have been implemented for the MuJoCo environments. Based on the paper, the agent policy networks are generic reinforcement learning policies compatible with PPO and the MuJoCo environments (Hopper, Walker2d, Reacher, HalfCheetah). The paper and addendum clarify that the architecture is not specified in detail and can rely on default Stable Baselines3 policies (e.g., `MlpPolicy`). Therefore, a correct implementation would include code that instantiates or loads a PPO-compatible policy network (such as an ActorCriticPolicy) and is set up to interact with the MuJoCo environments. I will look for actual code (not just instructions) that defines, trains, or loads a policy network agent for the MuJoCo tasks, such as using `PPO("MlpPolicy", ...)` or similar.
+
+# Reality
+
+The submission contains several Python files relevant to the MuJoCo experiments:
+
+- **`Refine_mujoco/baseline/train.py`** directly creates a PPO agent for a MuJoCo environment (Hopper-v3) using `stable_baselines3.PPO("MlpPolicy", env)`. This code instantiates a policy network (the default MLP policy from SB3) and proceeds to train it. The same script structure could be adapted to other MuJoCo environments by changing the environment name.
+
+- **`Refine_mujoco/retrain.py`** loads a pre-trained PPO agent (via `PPO.load`) and assigns it a new environment for refinement. The loaded agent already contains a policy network, showing that the implementation handles agent policies for MuJoCo environments.
+
+- The file **`Refine_mujoco/masknet/cus_PPO.py`** defines a custom PPO class that inherits from SB3’s `OnPolicyAlgorithm`, and it is used with `MlpPolicy` in **`Refine_mujoco/masknet/train.py`** to train the mask network. This again relies on SB3’s policy network implementation.
+
+- The modified SB3 base classes (`Refine_mujoco/base_class.py`, `Refine_mujoco/OnPolicyAlgorithm.py`, `Refine_mujoco/PPO.py`) and the model definitions (`Refine_mujoco/models.py`) are used to support bonus mechanisms and environment resets, but the core agent policy remains the standard SB3 `ActorCriticPolicy` (MlpPolicy).
+
+All of these files contain actual executable code that instantiates and trains policy network agents for MuJoCo tasks. The policy networks are implemented by using the standard SB3 `MlpPolicy`, which is consistent with the paper’s description of using default settings from Stable Baselines3. There is no indication that a custom policy architecture is required; the paper explicitly says the architecture is omitted from the reproduction and results should hold with any generic RL agent policy.
+
+# Score
+
+1 – The submission contains code that correctly implements policy network agents for the MuJoCo environments, using Stable Baselines3’s default MLP policy with PPO. The code is present and functional, meeting the criterion.

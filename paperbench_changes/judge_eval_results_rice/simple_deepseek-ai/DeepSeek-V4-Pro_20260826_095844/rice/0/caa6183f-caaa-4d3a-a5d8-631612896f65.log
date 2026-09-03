@@ -1,0 +1,59 @@
+2026-08-26 10:00:55 [info     ] Grading leaf: In Experiment II, for the MuJoCo environments, for the "Ours" refinement method, code has been implemented for measuring cumulative reward throughout refinement
+2026-08-26 10:01:49 [info     ] Model file selection raw output:
+Refine_mujoco/retrain.py
+Refine_mujoco/callback.py
+Refine_mujoco/monitor.py
+Refine_mujoco/PPO.py
+Refine_mujoco/OnPolicyAlgorithm.py
+Refine_mujoco/base_class.py
+Refine_mujoco/utils.py
+Refine_mujoco/environment.py
+Refine_mujoco/models.py
+Refine_mujoco/retrain.sh
+2026-08-26 10:01:49 [info     ] Model file selection raw output:
+Refine_mujoco/retrain.py
+Refine_mujoco/callback.py
+Refine_mujoco/monitor.py
+Refine_mujoco/PPO.py
+Refine_mujoco/OnPolicyAlgorithm.py
+Refine_mujoco/base_class.py
+Refine_mujoco/utils.py
+Refine_mujoco/environment.py
+Refine_mujoco/models.py
+Refine_mujoco/retrain.sh
+2026-08-26 10:02:36 [info     ] model response: # Expectations
+The criterion requires that for Experiment II, in the MuJoCo environments, for the "Ours" refinement method, there is code that measures cumulative reward (e.g., total episode return or average episodic reward) throughout the refinement process. This measurement should be implemented as part of the retraining pipeline, enabling tracking of agent performance improvement over time. I expect to find:
+- Mechanisms to compute the reward accumulated per episode (e.g., via wrappers, callbacks, or logging within the training loop).
+- Code that records or logs these cumulative rewards at intervals (e.g., tensorboard logging, saving to files).
+- The code must be specifically present for the "Ours" method, meaning the retraining script that uses the mixed initial distribution + exploration bonus (RND) should include this measurement.
+
+# Reality
+The submission includes a full retraining pipeline for MuJoCo environments, specifically in the `Refine_mujoco/` folder.
+
+- **`retrain.py`** sets up the refinement process using the custom PPO implementation with RND bonus (`--bonus 'rnd'`). It creates an `EvalCallback` that periodically evaluates the agent on a separate environment, which internally computes and logs the mean episode reward. It also uses `VecMonitor` (via `VecMonitor` wrapper in `monitor.py`) to record episode returns and lengths into a CSV log.
+- **`monitor.py`** (VecMonitor) computes `episode_returns` per environment and writes them to a file, capturing true cumulative rewards (using `info["true_reward"]`).
+- **`callback.py`** (CustomCallback) loads the monitor log at regular intervals and logs the mean reward of the last 100 entries as `train/mean_reward` to tensorboard.
+- **`OnPolicyAlgorithm.py`** (the parent algorithm class) collects episode info from `ep_info_buffer` and logs `rollout/ep_rew_mean` during training, which represents the average episodic reward.
+
+All these components are part of the "Ours" refinement method as invoked in `retrain.sh` (with `--bonus 'rnd'`, `--go_prob 1`, etc.). They collectively implement the measurement of cumulative reward throughout the refinement process.
+
+# Score
+The criterion is met. Score = 1.
+2026-08-26 10:02:36 [info     ] model response: # Expectations
+The criterion requires that for Experiment II, in the MuJoCo environments, for the "Ours" refinement method, there is code that measures cumulative reward (e.g., total episode return or average episodic reward) throughout the refinement process. This measurement should be implemented as part of the retraining pipeline, enabling tracking of agent performance improvement over time. I expect to find:
+- Mechanisms to compute the reward accumulated per episode (e.g., via wrappers, callbacks, or logging within the training loop).
+- Code that records or logs these cumulative rewards at intervals (e.g., tensorboard logging, saving to files).
+- The code must be specifically present for the "Ours" method, meaning the retraining script that uses the mixed initial distribution + exploration bonus (RND) should include this measurement.
+
+# Reality
+The submission includes a full retraining pipeline for MuJoCo environments, specifically in the `Refine_mujoco/` folder.
+
+- **`retrain.py`** sets up the refinement process using the custom PPO implementation with RND bonus (`--bonus 'rnd'`). It creates an `EvalCallback` that periodically evaluates the agent on a separate environment, which internally computes and logs the mean episode reward. It also uses `VecMonitor` (via `VecMonitor` wrapper in `monitor.py`) to record episode returns and lengths into a CSV log.
+- **`monitor.py`** (VecMonitor) computes `episode_returns` per environment and writes them to a file, capturing true cumulative rewards (using `info["true_reward"]`).
+- **`callback.py`** (CustomCallback) loads the monitor log at regular intervals and logs the mean reward of the last 100 entries as `train/mean_reward` to tensorboard.
+- **`OnPolicyAlgorithm.py`** (the parent algorithm class) collects episode info from `ep_info_buffer` and logs `rollout/ep_rew_mean` during training, which represents the average episodic reward.
+
+All these components are part of the "Ours" refinement method as invoked in `retrain.sh` (with `--bonus 'rnd'`, `--go_prob 1`, etc.). They collectively implement the measurement of cumulative reward throughout the refinement process.
+
+# Score
+The criterion is met. Score = 1.

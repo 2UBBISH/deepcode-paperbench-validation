@@ -1,0 +1,49 @@
+2026-08-26 10:00:32 [info     ] Grading leaf: For the autonomous driving environment, the reward function is implemented such that an additional reward is given when the mask net outputs "1", as outlined in section 3.3.
+2026-08-26 10:01:43 [info     ] Model file selection raw output:
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/retrain.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/readme.md
+2026-08-26 10:01:43 [info     ] Model file selection raw output:
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/retrain.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/readme.md
+2026-08-26 10:03:46 [info     ] model response: # Expectations
+The paper describes the optimized StateMask explanation method for RICE. In section 3.3, it states that a reward bonus is added to encourage the mask network to output the blind action (1). The new reward is formulated as:  
+$R'(s_t, a_t) = R(s_t, a_t) + \alpha a_t^m$, where $a_t^m$ is 1 if the mask network chooses to blind the agent (outputs “1”), and 0 otherwise.  
+The implementation should modify the environment’s reward at each time step to include this bonus. This modified reward is then used to train the mask network with PPO (Algorithm 1). Therefore, the code for the autonomous driving environment must contain a reward function that, at each step, adds a term proportional to the mask action when the mask outputs 1.
+
+# Reality
+The relevant code is in `custom_masknet_env.py`, which implements the `DriveEnvWrapper` used to train the mask network. In the `step` method, the reward is captured, and a bonus logic exists:
+- If `self.bonus_last` is `False`, the bonus `self.lamb * mask` is added immediately to `rew`.
+- If `self.bonus_last` is `True`, the bonus is not added per step; instead the mask count (`self.accu_mask`) is incremented, and the total bonus is added only at the end of the episode (`if done: rew += self.lamb * self.accu_mask`).
+
+The `__init__` method sets `self.bonus_last = True` unconditionally, and this value is never changed by the training script (`train_masknet.py`). Consequently, the per-step reward never includes the bonus when the mask net outputs “1”; the bonus is deferred to the terminal step. This does not match the described $R'(s_t, a_t) = R(s_t, a_t) + \alpha a_t^m$, which requires an immediate modification of the reward at each masking step.
+
+# Score
+0 – The implemented reward function does not give the additional reward at the moment the mask net outputs “1”; it only adds it at the episode’s end. This deviates from the reward formulation presented in section 3.3.
+2026-08-26 10:03:46 [info     ] model response: # Expectations
+The paper describes the optimized StateMask explanation method for RICE. In section 3.3, it states that a reward bonus is added to encourage the mask network to output the blind action (1). The new reward is formulated as:  
+$R'(s_t, a_t) = R(s_t, a_t) + \alpha a_t^m$, where $a_t^m$ is 1 if the mask network chooses to blind the agent (outputs “1”), and 0 otherwise.  
+The implementation should modify the environment’s reward at each time step to include this bonus. This modified reward is then used to train the mask network with PPO (Algorithm 1). Therefore, the code for the autonomous driving environment must contain a reward function that, at each step, adds a term proportional to the mask action when the mask outputs 1.
+
+# Reality
+The relevant code is in `custom_masknet_env.py`, which implements the `DriveEnvWrapper` used to train the mask network. In the `step` method, the reward is captured, and a bonus logic exists:
+- If `self.bonus_last` is `False`, the bonus `self.lamb * mask` is added immediately to `rew`.
+- If `self.bonus_last` is `True`, the bonus is not added per step; instead the mask count (`self.accu_mask`) is incremented, and the total bonus is added only at the end of the episode (`if done: rew += self.lamb * self.accu_mask`).
+
+The `__init__` method sets `self.bonus_last = True` unconditionally, and this value is never changed by the training script (`train_masknet.py`). Consequently, the per-step reward never includes the bonus when the mask net outputs “1”; the bonus is deferred to the terminal step. This does not match the described $R'(s_t, a_t) = R(s_t, a_t) + \alpha a_t^m$, which requires an immediate modification of the reward at each masking step.
+
+# Score
+0 – The implemented reward function does not give the additional reward at the moment the mask net outputs “1”; it only adds it at the episode’s end. This deviates from the reward formulation presented in section 3.3.

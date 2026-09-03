@@ -1,0 +1,96 @@
+# RICE hyper-parameters for MetaDrive autonomous-driving experiments (Macro-v1).
+# The wrapper converts a 2-D continuous action a \in [-1, 1]^2 to MetaDrive
+# steering / throttle / brake commands and aggregates macro-steps into single
+# RL steps.
+
+defaults:
+  seed: 0
+  device: auto
+  n_seeds: 5
+  output_root: ./outputs/metadrive
+
+target:
+  algo: ppo
+  total_timesteps: 2_000_000
+  learning_rate: 3.0e-4
+  n_steps: 2048
+  batch_size: 64
+  n_epochs: 10
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_range: 0.2
+  ent_coef: 0.0
+  vf_coef: 0.5
+  max_grad_norm: 0.5
+  use_sb3: true
+  normalize_obs: true
+  policy_kwargs:
+    net_arch: [64, 64]
+  env_kwargs:
+    config: null            # uses rice.envs.metadrive_env.DEFAULT_CONFIG
+    n_macro_steps: 100
+    flatten_obs: true
+    target_obs_dim: null    # auto-infer from env
+
+mask:
+  algo: ppo
+  total_timesteps: 500_000
+  learning_rate: 3.0e-4
+  n_steps: 2048
+  batch_size: 64
+  n_epochs: 10
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_range: 0.2
+  ent_coef: 0.0
+  vf_coef: 0.5
+  max_grad_norm: 0.5
+  alpha: 1.0e-4
+  match_target_arch: true
+
+critical_buffer:
+  n_trajectories: 100
+  selection_mode: top_p
+  top_p: 0.25
+  threshold: 0.5
+  capacity: null
+
+refine:
+  algo: ppo
+  total_timesteps: 1_000_000
+  learning_rate: 3.0e-4
+  n_steps: 2048
+  batch_size: 64
+  n_epochs: 10
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_range: 0.2
+  ent_coef: 0.0
+  vf_coef: 0.5
+  max_grad_norm: 0.5
+  p: 0.50
+  lambda_rnd: 0.01
+  warm_start: true
+  rnd:
+    output_dim: 128
+    hidden_sizes: [64, 64]
+    lr: 1.0e-4
+    update_proportion: 1.0
+
+eval:
+  n_episodes: 500
+  deterministic: true
+  fidelity:
+    n_episodes: 50
+    n_samples: 200
+    n_action_samples: 8
+
+envs:
+  metadrive:
+    normalize_obs: true
+    target:
+      total_timesteps: 2_000_000
+    mask:
+      total_timesteps: 500_000
+    refine:
+      total_timesteps: 1_000_000

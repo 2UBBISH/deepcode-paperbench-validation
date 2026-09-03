@@ -1,0 +1,73 @@
+2026-08-26 10:01:19 [info     ] Grading leaf: For the autonomous driving environment, for the "Ours" refinement method, code has been implemented for measuring cumulative reward throughout refinement
+2026-08-26 10:02:23 [info     ] Model file selection raw output:
+Refine_auto_drive/retrain.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/readme.md
+README.md
+2026-08-26 10:02:23 [info     ] Model file selection raw output:
+Refine_auto_drive/retrain.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/readme.md
+README.md
+2026-08-26 10:04:00 [info     ] model response: # Expectations
+The criterion requires that for the autonomous driving environment, within the implementation of the "Ours" refinement method, there exists code that measures cumulative reward throughout the refinement process. In the paper, the "Ours" refinement method (Algorithm 2) involves continuing to train the DRL agent with a mixed initial state distribution and an exploration bonus (RND). During this process, the agent's performance is evaluated by measuring the cumulative reward (the total reward obtained over an episode). The paper reports the final cumulative reward after refining (Table 1) and also shows refining curves for sparse environments (Figure 2). Therefore, I expect the submission's code for the autonomous driving environment's "Ours" refinement to include:
+
+- An environment wrapper or training loop that accumulates the per-step rewards over an episode to compute the episode's cumulative reward.
+- A mechanism (e.g., a periodic evaluator or a logger) that records or outputs this cumulative reward during the refinement process so that the reward can be monitored "throughout refinement."
+
+Specifically, I will look for code that:
+- Tracks a running sum of rewards (e.g., `self._final_eval_reward += rew`) and resets it at the beginning of each episode.
+- Uses an evaluator (e.g., `InteractionSerialEvaluator`) that runs evaluation episodes periodically and computes the average cumulative reward, or otherwise logs the cumulative reward as training progresses.
+
+# Reality
+The candidate submission includes a set of files for the autonomous driving environment under `Refine_auto_drive/`. The main refinement script is `retrain.py`. It sets up a custom training environment using `CustomWrapper` (from `retrain_env.py`) for the collector, and a separate `DriveEnvWrapper` (from `core.envs`, not provided) for the evaluator.
+
+In `retrain_env.py`, the `CustomWrapper` class overrides the `step` method to accumulate episode reward:
+```python
+self._final_eval_reward += rew
+```
+and on `done` it stores the total in `info['final_eval_reward']`. The `reset` method resets `self._final_eval_reward = 0.0`. This directly implements the measurement of the cumulative reward for each episode within the refinement environment wrapper.
+
+The refinement script `retrain.py` creates an evaluator (`InteractionSerialEvaluator`) that periodically evaluates the agent (line `evaluator.eval(...)`). Although the evaluator's internals are from the DI-engine library (not included in the submission files), the evaluator is configured to run several episodes (`n_evaluator_episode=5`) and returns a performance metric (`rate`) that represents the average cumulative reward. Combined with the custom wrapper that computes `final_eval_reward`, the code clearly implements a mechanism to measure cumulative reward during refinement.
+
+The presence of `retrain_env.py` with its explicit reward accumulation, and the periodic evaluation loop in `retrain.py`, satisfies the requirement that code has been implemented for measuring cumulative reward throughout refinement.
+
+# Score
+1. The submission contains concrete implementation of cumulative reward measurement: `CustomWrapper` in `retrain_env.py` accumulates reward and stores it per episode, and the evaluator in `retrain.py` is set up to evaluate and report the agent's performance periodically during the refinement process. These together correctly implement the required functionality for the autonomous driving environment's "Ours" refinement method.
+2026-08-26 10:04:00 [info     ] model response: # Expectations
+The criterion requires that for the autonomous driving environment, within the implementation of the "Ours" refinement method, there exists code that measures cumulative reward throughout the refinement process. In the paper, the "Ours" refinement method (Algorithm 2) involves continuing to train the DRL agent with a mixed initial state distribution and an exploration bonus (RND). During this process, the agent's performance is evaluated by measuring the cumulative reward (the total reward obtained over an episode). The paper reports the final cumulative reward after refining (Table 1) and also shows refining curves for sparse environments (Figure 2). Therefore, I expect the submission's code for the autonomous driving environment's "Ours" refinement to include:
+
+- An environment wrapper or training loop that accumulates the per-step rewards over an episode to compute the episode's cumulative reward.
+- A mechanism (e.g., a periodic evaluator or a logger) that records or outputs this cumulative reward during the refinement process so that the reward can be monitored "throughout refinement."
+
+Specifically, I will look for code that:
+- Tracks a running sum of rewards (e.g., `self._final_eval_reward += rew`) and resets it at the beginning of each episode.
+- Uses an evaluator (e.g., `InteractionSerialEvaluator`) that runs evaluation episodes periodically and computes the average cumulative reward, or otherwise logs the cumulative reward as training progresses.
+
+# Reality
+The candidate submission includes a set of files for the autonomous driving environment under `Refine_auto_drive/`. The main refinement script is `retrain.py`. It sets up a custom training environment using `CustomWrapper` (from `retrain_env.py`) for the collector, and a separate `DriveEnvWrapper` (from `core.envs`, not provided) for the evaluator.
+
+In `retrain_env.py`, the `CustomWrapper` class overrides the `step` method to accumulate episode reward:
+```python
+self._final_eval_reward += rew
+```
+and on `done` it stores the total in `info['final_eval_reward']`. The `reset` method resets `self._final_eval_reward = 0.0`. This directly implements the measurement of the cumulative reward for each episode within the refinement environment wrapper.
+
+The refinement script `retrain.py` creates an evaluator (`InteractionSerialEvaluator`) that periodically evaluates the agent (line `evaluator.eval(...)`). Although the evaluator's internals are from the DI-engine library (not included in the submission files), the evaluator is configured to run several episodes (`n_evaluator_episode=5`) and returns a performance metric (`rate`) that represents the average cumulative reward. Combined with the custom wrapper that computes `final_eval_reward`, the code clearly implements a mechanism to measure cumulative reward during refinement.
+
+The presence of `retrain_env.py` with its explicit reward accumulation, and the periodic evaluation loop in `retrain.py`, satisfies the requirement that code has been implemented for measuring cumulative reward throughout refinement.
+
+# Score
+1. The submission contains concrete implementation of cumulative reward measurement: `CustomWrapper` in `retrain_env.py` accumulates reward and stores it per episode, and the evaluator in `retrain.py` is set up to evaluate and report the agent's performance periodically during the refinement process. These together correctly implement the required functionality for the autonomous driving environment's "Ours" refinement method.

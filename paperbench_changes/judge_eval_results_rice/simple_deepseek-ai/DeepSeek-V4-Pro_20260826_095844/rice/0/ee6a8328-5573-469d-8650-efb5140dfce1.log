@@ -1,0 +1,67 @@
+2026-08-26 10:00:43 [info     ] Grading leaf: For the MuJoCo environments, the refining method has been implemented to support the hyperparameter $\lambda$ to govern the trade-off between task reward and exploration bonus, as outlined in section 3.3. The $\lambda$ hyperparameter must be mutable i.e., a hyperparameter whose value can be changed (without having to edit the code directly). Alternative hyperparameter names are allowed, as long as the functionality remains the same.
+2026-08-26 10:01:39 [info     ] Model file selection raw output:
+Refine_mujoco/retrain.py
+Refine_mujoco/retrain.sh
+Refine_mujoco/utils.py
+Refine_mujoco/PPO.py
+Refine_mujoco/OnPolicyAlgorithm.py
+Refine_mujoco/base_class.py
+Refine_mujoco/models.py
+Refine_mujoco/environment.py
+Refine_mujoco/callback.py
+Refine_mujoco/monitor.py
+2026-08-26 10:01:39 [info     ] Model file selection raw output:
+Refine_mujoco/retrain.py
+Refine_mujoco/retrain.sh
+Refine_mujoco/utils.py
+Refine_mujoco/PPO.py
+Refine_mujoco/OnPolicyAlgorithm.py
+Refine_mujoco/base_class.py
+Refine_mujoco/models.py
+Refine_mujoco/environment.py
+Refine_mujoco/callback.py
+Refine_mujoco/monitor.py
+2026-08-26 10:02:41 [info     ] model response: # Expectations
+
+The criterion requires that for the MuJoCo environments, the refining method implements a hyperparameter **λ** (or equivalent) that controls the trade-off between the task reward and the exploration bonus (Random Network Distillation reward), as described in Section 3.3 of the paper. The hyperparameter must be **mutable**, meaning its value can be changed without modifying the source code directly (e.g., through command-line arguments, configuration files, etc.). Alternative names for the hyperparameter are allowed as long as the functionality remains the same (scaling the exploration bonus in the reward update \(R'(s_t, a_t) = R(s_t, a_t) + \lambda \|f(s_{t+1}) - \hat{f}(s_{t+1})\|^2\)). I expect to find:
+
+- A parameter (e.g., `--lambda`, `--bonus_scale`, or similar) defined in the training script that can be passed at runtime.
+- The parameter used inside the refining algorithm to scale the RND intrinsic reward before adding it to the environment reward.
+- The parameter not hard-coded; a user can supply different values when running the script.
+
+# Reality
+
+I examined the provided files in the `Refine_mujoco` directory:
+
+- **`retrain.py`** (line 43): An argparse argument `--bonus_scale` is defined of type `float` with a default value of `1e-2`. This value is later passed to `PPO.load` as `bonus_scale = args.bonus_scale`.
+- **`PPO.py`** (lines 69–72, 147): The `PPO` class's `__init__` accepts `bonus_scale` and passes it to the parent class `OnPolicyAlgorithm`. During training, the RND bonus is scaled by `self.bonus_scale` inside `collect_rollouts` (line 227 in `OnPolicyAlgorithm.py`): `rewards = rewards + self.bonus_scale * rnd_rewards`.
+- **`retrain.sh`** shows a usage example with `--bonus_scale 0`, but any float can be supplied.
+- The implementation is specifically for MuJoCo environments (the environment is imported from `gym` and is configured via `--env` in `retrain.py`).
+
+The hyperparameter `bonus_scale` serves exactly as **λ**: it governs the trade-off between task reward and exploration bonus. It is mutable because its value can be changed via the command-line argument without editing the source code. The criterion allows alternative names, so `bonus_scale` is acceptable.
+
+# Score
+
+1 – The criterion is fully satisfied. The refining method includes a mutable hyperparameter (`--bonus_scale`) that scales the exploration bonus, functioning as λ described in Section 3.3.
+2026-08-26 10:02:41 [info     ] model response: # Expectations
+
+The criterion requires that for the MuJoCo environments, the refining method implements a hyperparameter **λ** (or equivalent) that controls the trade-off between the task reward and the exploration bonus (Random Network Distillation reward), as described in Section 3.3 of the paper. The hyperparameter must be **mutable**, meaning its value can be changed without modifying the source code directly (e.g., through command-line arguments, configuration files, etc.). Alternative names for the hyperparameter are allowed as long as the functionality remains the same (scaling the exploration bonus in the reward update \(R'(s_t, a_t) = R(s_t, a_t) + \lambda \|f(s_{t+1}) - \hat{f}(s_{t+1})\|^2\)). I expect to find:
+
+- A parameter (e.g., `--lambda`, `--bonus_scale`, or similar) defined in the training script that can be passed at runtime.
+- The parameter used inside the refining algorithm to scale the RND intrinsic reward before adding it to the environment reward.
+- The parameter not hard-coded; a user can supply different values when running the script.
+
+# Reality
+
+I examined the provided files in the `Refine_mujoco` directory:
+
+- **`retrain.py`** (line 43): An argparse argument `--bonus_scale` is defined of type `float` with a default value of `1e-2`. This value is later passed to `PPO.load` as `bonus_scale = args.bonus_scale`.
+- **`PPO.py`** (lines 69–72, 147): The `PPO` class's `__init__` accepts `bonus_scale` and passes it to the parent class `OnPolicyAlgorithm`. During training, the RND bonus is scaled by `self.bonus_scale` inside `collect_rollouts` (line 227 in `OnPolicyAlgorithm.py`): `rewards = rewards + self.bonus_scale * rnd_rewards`.
+- **`retrain.sh`** shows a usage example with `--bonus_scale 0`, but any float can be supplied.
+- The implementation is specifically for MuJoCo environments (the environment is imported from `gym` and is configured via `--env` in `retrain.py`).
+
+The hyperparameter `bonus_scale` serves exactly as **λ**: it governs the trade-off between task reward and exploration bonus. It is mutable because its value can be changed via the command-line argument without editing the source code. The criterion allows alternative names, so `bonus_scale` is acceptable.
+
+# Score
+
+1 – The criterion is fully satisfied. The refining method includes a mutable hyperparameter (`--bonus_scale`) that scales the exploration bonus, functioning as λ described in Section 3.3.

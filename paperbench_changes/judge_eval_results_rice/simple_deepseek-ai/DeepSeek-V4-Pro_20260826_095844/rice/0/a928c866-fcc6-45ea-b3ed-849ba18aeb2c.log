@@ -1,0 +1,67 @@
+2026-08-26 09:58:46 [info     ] Grading leaf: For the network defence environment, code for pretraining the policy network agent has been setup
+2026-08-26 09:59:25 [info     ] Model file selection raw output:
+Refine_cage_challenge/ppo_train.py
+Refine_cage_challenge/Agents/PPOAgent.py
+Refine_cage_challenge/PPO/ActorCritic.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2.py
+Refine_cage_challenge/rollout_ppo.py
+Refine_cage_challenge/Agents/MainAgent.py
+Refine_cage_challenge/PPO/Memory.py
+Refine_cage_challenge/Wrappers/utils.py
+Refine_cage_challenge/retrain.py
+Refine_cage_challenge/readme.md
+2026-08-26 09:59:25 [info     ] Model file selection raw output:
+Refine_cage_challenge/ppo_train.py
+Refine_cage_challenge/Agents/PPOAgent.py
+Refine_cage_challenge/PPO/ActorCritic.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2.py
+Refine_cage_challenge/rollout_ppo.py
+Refine_cage_challenge/Agents/MainAgent.py
+Refine_cage_challenge/PPO/Memory.py
+Refine_cage_challenge/Wrappers/utils.py
+Refine_cage_challenge/retrain.py
+Refine_cage_challenge/readme.md
+2026-08-26 10:00:11 [info     ] model response: # Expectations
+The paper uses the Cage Challenge 2 network defense environment as one of its real-world applications. For this environment, the authors pre‑train a PPO‑based blue agent that defends against the red agent “B‑line”. A correct reproduction must include working code that:
+
+- Sets up the CybORG simulator with the B‑line red agent and the appropriate blue‑agent wrapper (ChallengeWrapper2).
+- Defines a policy network (actor‑critic) compatible with PPO.
+- Runs a training loop that gathers trajectories, computes PPO updates, and saves model checkpoints that can later be used as the **pre‑trained** policy.
+
+I expect to see a complete, executable script that performs this pre‑training without relying on external instructions or placeholders.
+
+# Reality
+The submission provides several files inside the `Refine_cage_challenge` directory, but the key file for pre‑training is **`ppo_train.py`**. This file contains:
+
+- Imports of `CybORG`, `B_lineAgent`, `ChallengeWrapper2`, and the custom `PPOAgent`.
+- A `train()` function that runs episodes (up to `max_episodes`), collects rewards and transitions, performs PPO updates every `update_timestep` steps, and periodically saves model checkpoints (e.g., `'{}.pth'.format(i_episode)`) to disk.
+- A `__main__` block that initializes the environment exactly as described in the paper (CybORG with `B_lineAgent`, wrapped with `ChallengeWrapper2`), sets the action space to the documented subset, and calls `train()` with appropriate hyperparameters (learning rate, clip epsilon, K epochs, etc.).
+
+The underlying PPO agent (`Agents/PPOAgent.py`) implements a standard actor‑critic architecture with discrete actions, and the training loop follows the classic PPO algorithm (clipped surrogate objective, advantage normalization, value‑function loss). The code is self‑contained and would, when executed, produce a pre‑trained checkpoint that can be used by the RICE refining process.
+
+Therefore, the submission contains actual, runnable code that pre‑trains a policy network agent for the network defense environment.
+
+# Score
+**1** – The submission includes working code (`ppo_train.py` and supporting classes) that correctly sets up and pre‑trains a PPO agent for the network defense environment, satisfying the criterion.
+2026-08-26 10:00:11 [info     ] model response: # Expectations
+The paper uses the Cage Challenge 2 network defense environment as one of its real-world applications. For this environment, the authors pre‑train a PPO‑based blue agent that defends against the red agent “B‑line”. A correct reproduction must include working code that:
+
+- Sets up the CybORG simulator with the B‑line red agent and the appropriate blue‑agent wrapper (ChallengeWrapper2).
+- Defines a policy network (actor‑critic) compatible with PPO.
+- Runs a training loop that gathers trajectories, computes PPO updates, and saves model checkpoints that can later be used as the **pre‑trained** policy.
+
+I expect to see a complete, executable script that performs this pre‑training without relying on external instructions or placeholders.
+
+# Reality
+The submission provides several files inside the `Refine_cage_challenge` directory, but the key file for pre‑training is **`ppo_train.py`**. This file contains:
+
+- Imports of `CybORG`, `B_lineAgent`, `ChallengeWrapper2`, and the custom `PPOAgent`.
+- A `train()` function that runs episodes (up to `max_episodes`), collects rewards and transitions, performs PPO updates every `update_timestep` steps, and periodically saves model checkpoints (e.g., `'{}.pth'.format(i_episode)`) to disk.
+- A `__main__` block that initializes the environment exactly as described in the paper (CybORG with `B_lineAgent`, wrapped with `ChallengeWrapper2`), sets the action space to the documented subset, and calls `train()` with appropriate hyperparameters (learning rate, clip epsilon, K epochs, etc.).
+
+The underlying PPO agent (`Agents/PPOAgent.py`) implements a standard actor‑critic architecture with discrete actions, and the training loop follows the classic PPO algorithm (clipped surrogate objective, advantage normalization, value‑function loss). The code is self‑contained and would, when executed, produce a pre‑trained checkpoint that can be used by the RICE refining process.
+
+Therefore, the submission contains actual, runnable code that pre‑trains a policy network agent for the network defense environment.
+
+# Score
+**1** – The submission includes working code (`ppo_train.py` and supporting classes) that correctly sets up and pre‑trains a PPO agent for the network defense environment, satisfying the criterion.

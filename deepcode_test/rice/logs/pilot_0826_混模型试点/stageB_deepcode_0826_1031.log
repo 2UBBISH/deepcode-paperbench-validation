@@ -1,0 +1,331 @@
+Info: docling is unavailable; built-in document converters remain enabled.
+2026-08-26 10:31:38.195 | DEBUG    | core.config:_load_raw:615 - deepcode_config.json not found at /home/deepevol/deepevol/DeepCode/deepcode_config.json; skipping layer
+--- Logging error ---
+Traceback (most recent call last):
+  File "/home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/logging/__init__.py", line 1110, in emit
+    msg = self.format(record)
+          ^^^^^^^^^^^^^^^^^^^
+  File "/home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/logging/__init__.py", line 953, in format
+    return fmt.format(record)
+           ^^^^^^^^^^^^^^^^^^
+  File "/home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/logging/__init__.py", line 687, in format
+    record.message = record.getMessage()
+                     ^^^^^^^^^^^^^^^^^^^
+  File "/home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/logging/__init__.py", line 377, in getMessage
+    msg = msg % self.args
+          ~~~~^~~~~~~~~~~
+TypeError: not all arguments converted during string formatting
+Call stack:
+  File "/home/deepevol/deepevol/stage_b_driver.py", line 75, in <module>
+    asyncio.run(main())
+  File "/home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/asyncio/runners.py", line 190, in run
+    return runner.run(main)
+  File "/home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+  File "/home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/asyncio/base_events.py", line 641, in run_until_complete
+    self.run_forever()
+  File "/home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/asyncio/base_events.py", line 608, in run_forever
+    self._run_once()
+  File "/home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/asyncio/base_events.py", line 1936, in _run_once
+    handle._run()
+  File "/home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/asyncio/events.py", line 84, in _run
+    self._context.run(self._callback, *self._args)
+  File "/home/deepevol/deepevol/stage_b_driver.py", line 43, in main
+    result = await execute_multi_agent_research_pipeline(
+  File "/home/deepevol/deepevol/DeepCode/workflows/agent_orchestration_engine.py", line 1827, in execute_multi_agent_research_pipeline
+    ctx = await prepare_workflow_environment(
+  File "/home/deepevol/deepevol/DeepCode/workflows/environment.py", line 138, in prepare_workflow_environment
+    log.info(
+Message: '🗂️  Workspace={} task_kind={} task_dir={} kind={} resume={}'
+Arguments: (PosixPath('/home/deepevol/deepevol/DeepCode/deepcode_lab'), 'paper2code', 'paper_e8af8afa', 'md', True)
+2026-08-26 10:31:38,227 INFO Preparing document segments for: /home/deepevol/deepevol/DeepCode/deepcode_lab/tasks/paper_e8af8afa
+2026-08-26 10:31:38.676 | DEBUG    | core.agent_runtime.tools.mcp:connect_single_server:511 - MCP: registered tool 'mcp_document-segmentation_analyze_and_segment_document' from server 'document-segmentation'
+2026-08-26 10:31:38.676 | DEBUG    | core.agent_runtime.tools.mcp:connect_single_server:511 - MCP: registered tool 'mcp_document-segmentation_read_document_segments' from server 'document-segmentation'
+2026-08-26 10:31:38.676 | DEBUG    | core.agent_runtime.tools.mcp:connect_single_server:511 - MCP: registered tool 'mcp_document-segmentation_get_document_overview' from server 'document-segmentation'
+2026-08-26 10:31:38.679 | INFO     | core.agent_runtime.tools.mcp:connect_single_server:569 - MCP server 'document-segmentation': connected, 3 capabilities registered
+2026-08-26 10:31:38.680 | DEBUG    | core.compat.agent:_connect_servers:518 - Agent 'DocumentSegmentationCoordinator': 1 MCP servers connected, 3 tools registered total
+2026-08-26 10:31:39.858 | INFO     | core.llm_runtime:attach_workflow_llm:125 - Attached workflow LLM: agent=DocumentSegmentationCoordinator phase=planning provider=custom model=deepseek-ai/DeepSeek-V4-Pro reasoning_effort=None
+2026-08-26 10:31:39,858 INFO DocumentSegmentationAgent initialized successfully
+2026-08-26 10:31:39,858 INFO Starting document analysis for: /home/deepevol/deepevol/DeepCode/deepcode_lab/tasks/paper_e8af8afa
+2026-08-26 10:31:44,711 INFO HTTP Request: POST https://api.siliconflow.cn/v1/chat/completions "HTTP/1.1 200 OK"
+2026-08-26 10:31:47,533 INFO HTTP Request: POST https://api.siliconflow.cn/v1/chat/completions "HTTP/1.1 200 OK"
+2026-08-26 10:31:55,769 INFO HTTP Request: POST https://api.siliconflow.cn/v1/chat/completions "HTTP/1.1 200 OK"
+2026-08-26 10:32:10,808 INFO HTTP Request: POST https://api.siliconflow.cn/v1/chat/completions "HTTP/1.1 200 OK"
+2026-08-26 10:33:17,279 INFO HTTP Request: POST https://api.siliconflow.cn/v1/chat/completions "HTTP/1.1 200 OK"
+2026-08-26 10:33:17,293 INFO Document analysis completed successfully
+2026-08-26 10:33:17.297 | DEBUG    | core.agent_runtime.tools.registry:aclose:186 - ToolRegistry.aclose: benign anyio teardown noise: Cancelled via cancel scope 73b0d423eb90 by <Task pending name='Task-14' coro=<AsyncExitStack.aclose() running at /home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/contextlib.py:687> cb=[_release_waiter(<Future pendi...ask_wakeup()]>)() at /home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/asyncio/tasks.py:431]>
+2026-08-26 10:33:17,299 INFO Document segments prepared successfully
+2026-08-26 10:33:20.542 | DEBUG    | core.agent_runtime.tools.mcp:connect_single_server:511 - MCP: registered tool 'mcp_filesystem_read_file' from server 'filesystem'
+2026-08-26 10:33:20.542 | DEBUG    | core.agent_runtime.tools.mcp:connect_single_server:511 - MCP: registered tool 'mcp_filesystem_read_text_file' from server 'filesystem'
+2026-08-26 10:33:20.543 | DEBUG    | core.agent_runtime.tools.mcp:connect_single_server:511 - MCP: registered tool 'mcp_filesystem_read_media_file' from server 'filesystem'
+2026-08-26 10:33:20.543 | DEBUG    | core.agent_runtime.tools.mcp:connect_single_server:511 - MCP: registered tool 'mcp_filesystem_read_multiple_files' from server 'filesystem'
+2026-08-26 10:33:20.543 | DEBUG    | core.agent_runtime.tools.mcp:connect_single_server:511 - MCP: registered tool 'mcp_filesystem_write_file' from server 'filesystem'
+2026-08-26 10:33:20.543 | DEBUG    | core.agent_runtime.tools.mcp:connect_single_server:511 - MCP: registered tool 'mcp_filesystem_edit_file' from server 'filesystem'
+2026-08-26 10:33:20.543 | DEBUG    | core.agent_runtime.tools.mcp:connect_single_server:511 - MCP: registered tool 'mcp_filesystem_create_directory' from server 'filesystem'
+2026-08-26 10:33:20.543 | DEBUG    | core.agent_runtime.tools.mcp:connect_single_server:511 - MCP: registered tool 'mcp_filesystem_list_directory' from server 'filesystem'
+2026-08-26 10:33:20,545 ERROR Task exception was never retrieved
+future: <Task finished name='Task-14' coro=<AsyncExitStack.aclose() done, defined at /home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/contextlib.py:685> exception=RuntimeError('Attempted to exit cancel scope in a different task than it was entered in')>
+  + Exception Group Traceback (most recent call last):
+  |   File "/home/deepevol/deepevol/DeepCode/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 815, in __aexit__
+  |     raise BaseExceptionGroup(
+  | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+  +-+---------------- 1 ----------------
+    | Traceback (most recent call last):
+    |   File "/home/deepevol/deepevol/DeepCode/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 819, in __aexit__
+    |     raise exc_val
+    |   File "/home/deepevol/deepevol/DeepCode/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 788, in __aexit__
+    |     await self._on_completed_fut
+    | asyncio.exceptions.CancelledError
+    | 
+    | During handling of the above exception, another exception occurred:
+    | 
+    | Traceback (most recent call last):
+    |   File "/home/deepevol/deepevol/DeepCode/.venv/lib/python3.11/site-packages/mcp/client/stdio/__init__.py", line 189, in stdio_client
+    |     yield read_stream, write_stream
+    |   File "/home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/contextlib.py", line 728, in __aexit__
+    |     cb_suppress = await cb(*exc_details)
+    |                   ^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/deepevol/deepevol/DeepCode/.venv/lib/python3.11/site-packages/mcp/shared/session.py", line 238, in __aexit__
+    |     return await self._task_group.__aexit__(exc_type, exc_val, exc_tb)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/deepevol/deepevol/DeepCode/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 821, in __aexit__
+    |     if self.cancel_scope.__exit__(type(exc), exc, exc.__traceback__):
+    |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/deepevol/deepevol/DeepCode/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 464, in __exit__
+    |     raise RuntimeError(
+    | RuntimeError: Attempted to exit cancel scope in a different task than it was entered in
+    +------------------------------------
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/contextlib.py", line 687, in aclose
+    await self.__aexit__(None, None, None)
+  File "/home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/contextlib.py", line 745, in __aexit__
+    raise exc_details[1]
+  File "/home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/contextlib.py", line 728, in __aexit__
+    cb_suppress = await cb(*exc_details)
+                  ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/contextlib.py", line 231, in __aexit__
+    await self.gen.athrow(typ, value, traceback)
+  File "/home/deepevol/deepevol/DeepCode/.venv/lib/python3.11/site-packages/mcp/client/stdio/__init__.py", line 182, in stdio_client
+    async with (
+  File "/home/deepevol/deepevol/DeepCode/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 821, in __aexit__
+    if self.cancel_scope.__exit__(type(exc), exc, exc.__traceback__):
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/deepevol/deepevol/DeepCode/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 464, in __exit__
+    raise RuntimeError(
+RuntimeError: Attempted to exit cancel scope in a different task than it was entered in
+2026-08-26 10:33:20.543 | DEBUG    | core.agent_runtime.tools.mcp:connect_single_server:511 - MCP: registered tool 'mcp_filesystem_list_directory_with_sizes' from server 'filesystem'
+2026-08-26 10:33:20.559 | DEBUG    | core.agent_runtime.tools.mcp:connect_single_server:511 - MCP: registered tool 'mcp_filesystem_directory_tree' from server 'filesystem'
+2026-08-26 10:33:20.559 | DEBUG    | core.agent_runtime.tools.mcp:connect_single_server:511 - MCP: registered tool 'mcp_filesystem_move_file' from server 'filesystem'
+2026-08-26 10:33:20.559 | DEBUG    | core.agent_runtime.tools.mcp:connect_single_server:511 - MCP: registered tool 'mcp_filesystem_search_files' from server 'filesystem'
+2026-08-26 10:33:20.559 | DEBUG    | core.agent_runtime.tools.mcp:connect_single_server:511 - MCP: registered tool 'mcp_filesystem_get_file_info' from server 'filesystem'
+2026-08-26 10:33:20.559 | DEBUG    | core.agent_runtime.tools.mcp:connect_single_server:511 - MCP: registered tool 'mcp_filesystem_list_allowed_directories' from server 'filesystem'
+2026-08-26 10:33:20.560 | DEBUG    | core.agent_runtime.tools.mcp:connect_single_server:547 - MCP server 'filesystem': resources not supported or failed: Method not found
+2026-08-26 10:33:20.561 | DEBUG    | core.agent_runtime.tools.mcp:connect_single_server:565 - MCP server 'filesystem': prompts not supported or failed: Method not found
+2026-08-26 10:33:20.561 | INFO     | core.agent_runtime.tools.mcp:connect_single_server:569 - MCP server 'filesystem': connected, 14 capabilities registered
+2026-08-26 10:33:25.994 | DEBUG    | core.agent_runtime.tools.mcp:connect_single_server:511 - MCP: registered tool 'mcp_fetch_fetch' from server 'fetch'
+2026-08-26 10:33:25.995 | DEBUG    | core.agent_runtime.tools.mcp:connect_single_server:547 - MCP server 'fetch': resources not supported or failed: Method not found
+2026-08-26 10:33:25.997 | DEBUG    | core.agent_runtime.tools.mcp:connect_single_server:559 - MCP: registered prompt 'mcp_fetch_prompt_fetch' from server 'fetch'
+2026-08-26 10:33:25.997 | INFO     | core.agent_runtime.tools.mcp:connect_single_server:569 - MCP server 'fetch': connected, 2 capabilities registered
+2026-08-26 10:33:25.997 | DEBUG    | core.compat.agent:_connect_servers:518 - Agent 'ReferenceAnalysisAgent': 2 MCP servers connected, 16 tools registered total
+2026-08-26 10:33:26.001 | INFO     | core.llm_runtime:attach_workflow_llm:125 - Attached workflow LLM: agent=ReferenceAnalysisAgent phase=planning provider=custom model=deepseek-ai/DeepSeek-V4-Pro reasoning_effort=None
+2026-08-26 10:33:29,952 INFO HTTP Request: POST https://api.siliconflow.cn/v1/chat/completions "HTTP/1.1 200 OK"
+2026-08-26 10:33:32,848 INFO HTTP Request: POST https://api.siliconflow.cn/v1/chat/completions "HTTP/1.1 200 OK"
+2026-08-26 10:34:52,106 INFO HTTP Request: POST https://api.siliconflow.cn/v1/chat/completions "HTTP/1.1 200 OK"
+2026-08-26 10:34:56,922 ERROR Failed to parse JSONRPC message from server
+Traceback (most recent call last):
+  File "/home/deepevol/deepevol/DeepCode/.venv/lib/python3.11/site-packages/mcp/client/stdio/__init__.py", line 155, in stdout_reader
+    message = types.JSONRPCMessage.model_validate_json(line)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/deepevol/deepevol/DeepCode/.venv/lib/python3.11/site-packages/pydantic/main.py", line 782, in model_validate_json
+    return cls.__pydantic_validator__.validate_json(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+pydantic_core._pydantic_core.ValidationError: 1 validation error for JSONRPCMessage
+  Invalid JSON: EOF while parsing a value at line 1 column 0 [type=json_invalid, input_value='', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/json_invalid
+2026-08-26 10:34:56,926 ERROR Failed to parse JSONRPC message from server
+Traceback (most recent call last):
+  File "/home/deepevol/deepevol/DeepCode/.venv/lib/python3.11/site-packages/mcp/client/stdio/__init__.py", line 155, in stdout_reader
+    message = types.JSONRPCMessage.model_validate_json(line)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/deepevol/deepevol/DeepCode/.venv/lib/python3.11/site-packages/pydantic/main.py", line 782, in model_validate_json
+    return cls.__pydantic_validator__.validate_json(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+pydantic_core._pydantic_core.ValidationError: 1 validation error for JSONRPCMessage
+  Invalid JSON: expected value at line 1 column 1 [type=json_invalid, input_value='added 41 packages in 3s', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/json_invalid
+2026-08-26 10:34:56,927 ERROR Failed to parse JSONRPC message from server
+Traceback (most recent call last):
+  File "/home/deepevol/deepevol/DeepCode/.venv/lib/python3.11/site-packages/mcp/client/stdio/__init__.py", line 155, in stdout_reader
+    message = types.JSONRPCMessage.model_validate_json(line)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/deepevol/deepevol/DeepCode/.venv/lib/python3.11/site-packages/pydantic/main.py", line 782, in model_validate_json
+    return cls.__pydantic_validator__.validate_json(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+pydantic_core._pydantic_core.ValidationError: 1 validation error for JSONRPCMessage
+  Invalid JSON: EOF while parsing a value at line 1 column 0 [type=json_invalid, input_value='', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/json_invalid
+2026-08-26 10:34:56,927 ERROR Failed to parse JSONRPC message from server
+Traceback (most recent call last):
+  File "/home/deepevol/deepevol/DeepCode/.venv/lib/python3.11/site-packages/mcp/client/stdio/__init__.py", line 155, in stdout_reader
+    message = types.JSONRPCMessage.model_validate_json(line)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/deepevol/deepevol/DeepCode/.venv/lib/python3.11/site-packages/pydantic/main.py", line 782, in model_validate_json
+    return cls.__pydantic_validator__.validate_json(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+pydantic_core._pydantic_core.ValidationError: 1 validation error for JSONRPCMessage
+  Invalid JSON: trailing characters at line 1 column 3 [type=json_invalid, input_value='9 packages are looking for funding', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/json_invalid
+2026-08-26 10:34:56,927 ERROR Failed to parse JSONRPC message from server
+Traceback (most recent call last):
+  File "/home/deepevol/deepevol/DeepCode/.venv/lib/python3.11/site-packages/mcp/client/stdio/__init__.py", line 155, in stdout_reader
+    message = types.JSONRPCMessage.model_validate_json(line)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/deepevol/deepevol/DeepCode/.venv/lib/python3.11/site-packages/pydantic/main.py", line 782, in model_validate_json
+    return cls.__pydantic_validator__.validate_json(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+pydantic_core._pydantic_core.ValidationError: 1 validation error for JSONRPCMessage
+  Invalid JSON: expected value at line 1 column 3 [type=json_invalid, input_value='  run `npm fund` for details', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/json_invalid
+2026-08-26 10:35:10,766 INFO HTTP Request: POST https://api.siliconflow.cn/v1/chat/completions "HTTP/1.1 200 OK"
+2026-08-26 10:35:25,742 INFO HTTP Request: POST https://api.siliconflow.cn/v1/chat/completions "HTTP/1.1 200 OK"
+2026-08-26 10:35:39,540 INFO HTTP Request: POST https://api.siliconflow.cn/v1/chat/completions "HTTP/1.1 200 OK"
+2026-08-26 10:35:50,600 INFO HTTP Request: POST https://api.siliconflow.cn/v1/chat/completions "HTTP/1.1 200 OK"
+2026-08-26 10:36:18,726 INFO HTTP Request: POST https://api.siliconflow.cn/v1/chat/completions "HTTP/1.1 200 OK"
+2026-08-26 10:36:19.260 | DEBUG    | core.agent_runtime.tools.registry:aclose:186 - ToolRegistry.aclose: benign anyio teardown noise: Cancelled via cancel scope 73b0d1c74b80 by <Task pending name='Task-45' coro=<AsyncExitStack.aclose() running at /home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/contextlib.py:687> cb=[_release_waiter(<Future pendi...ask_wakeup()]>)() at /home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/asyncio/tasks.py:431]>
+2026-08-26 10:36:19.260 | DEBUG    | core.agent_runtime.tools.registry:aclose:186 - ToolRegistry.aclose: benign anyio teardown noise: Cancelled via cancel scope 73b0d1cdfeb0 by <Task pending name='Task-46' coro=<AsyncExitStack.aclose() running at /home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/contextlib.py:687> cb=[_release_waiter(<Future cancelled>)() at /home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/asyncio/tasks.py:431]>
+2026-08-26 10:36:24.268 | WARNING  | core.compat.agent:_connect_servers:499 - Agent 'GithubDownloadAgent': MCP server(s) ['github-downloader'] not in deepcode_config.json (tools.mcpServers). Available: ['code-implementation', 'code-reference-indexer', 'document-segmentation', 'fetch', 'filesystem']. The agent will run without those tools.
+2026-08-26 10:36:24.925 | DEBUG    | core.agent_runtime.tools.mcp:connect_single_server:511 - MCP: registered tool 'mcp_filesystem_read_file' from server 'filesystem'
+2026-08-26 10:36:24.925 | DEBUG    | core.agent_runtime.tools.mcp:connect_single_server:511 - MCP: registered tool 'mcp_filesystem_read_text_file' from server 'filesystem'
+2026-08-26 10:36:24.925 | DEBUG    | core.agent_runtime.tools.mcp:connect_single_server:511 - MCP: registered tool 'mcp_filesystem_read_media_file' from server 'filesystem'
+2026-08-26 10:36:24.925 | DEBUG    | core.agent_runtime.tools.mcp:connect_single_server:511 - MCP: registered tool 'mcp_filesystem_read_multiple_files' from server 'filesystem'
+2026-08-26 10:36:24.925 | DEBUG    | core.agent_runtime.tools.mcp:connect_single_server:511 - MCP: registered tool 'mcp_filesystem_write_file' from server 'filesystem'
+2026-08-26 10:36:24.925 | DEBUG    | core.agent_runtime.tools.mcp:connect_single_server:511 - MCP: registered tool 'mcp_filesystem_edit_file' from server 'filesystem'
+2026-08-26 10:36:24.925 | DEBUG    | core.agent_runtime.tools.mcp:connect_single_server:511 - MCP: registered tool 'mcp_filesystem_create_directory' from server 'filesystem'
+2026-08-26 10:36:24.925 | DEBUG    | core.agent_runtime.tools.mcp:connect_single_server:511 - MCP: registered tool 'mcp_filesystem_list_directory' from server 'filesystem'
+2026-08-26 10:36:24.925 | DEBUG    | core.agent_runtime.tools.mcp:connect_single_server:511 - MCP: registered tool 'mcp_filesystem_list_directory_with_sizes' from server 'filesystem'
+2026-08-26 10:36:24.925 | DEBUG    | core.agent_runtime.tools.mcp:connect_single_server:511 - MCP: registered tool 'mcp_filesystem_directory_tree' from server 'filesystem'
+2026-08-26 10:36:24.925 | DEBUG    | core.agent_runtime.tools.mcp:connect_single_server:511 - MCP: registered tool 'mcp_filesystem_move_file' from server 'filesystem'
+2026-08-26 10:36:24.925 | DEBUG    | core.agent_runtime.tools.mcp:connect_single_server:511 - MCP: registered tool 'mcp_filesystem_search_files' from server 'filesystem'
+2026-08-26 10:36:24.926 | DEBUG    | core.agent_runtime.tools.mcp:connect_single_server:511 - MCP: registered tool 'mcp_filesystem_get_file_info' from server 'filesystem'
+2026-08-26 10:36:24.926 | DEBUG    | core.agent_runtime.tools.mcp:connect_single_server:511 - MCP: registered tool 'mcp_filesystem_list_allowed_directories' from server 'filesystem'
+2026-08-26 10:36:24,926 ERROR Task exception was never retrieved
+future: <Task finished name='Task-45' coro=<AsyncExitStack.aclose() done, defined at /home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/contextlib.py:685> exception=RuntimeError('Attempted to exit cancel scope in a different task than it was entered in')>
+  + Exception Group Traceback (most recent call last):
+  |   File "/home/deepevol/deepevol/DeepCode/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 815, in __aexit__
+  |     raise BaseExceptionGroup(
+  | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+  +-+---------------- 1 ----------------
+    | Traceback (most recent call last):
+    |   File "/home/deepevol/deepevol/DeepCode/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 819, in __aexit__
+    |     raise exc_val
+    |   File "/home/deepevol/deepevol/DeepCode/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 788, in __aexit__
+    |     await self._on_completed_fut
+    | asyncio.exceptions.CancelledError
+    | 
+    | During handling of the above exception, another exception occurred:
+    | 
+    | Traceback (most recent call last):
+    |   File "/home/deepevol/deepevol/DeepCode/.venv/lib/python3.11/site-packages/mcp/client/stdio/__init__.py", line 189, in stdio_client
+    |     yield read_stream, write_stream
+    |   File "/home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/contextlib.py", line 728, in __aexit__
+    |     cb_suppress = await cb(*exc_details)
+    |                   ^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/deepevol/deepevol/DeepCode/.venv/lib/python3.11/site-packages/mcp/shared/session.py", line 238, in __aexit__
+    |     return await self._task_group.__aexit__(exc_type, exc_val, exc_tb)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/deepevol/deepevol/DeepCode/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 821, in __aexit__
+    |     if self.cancel_scope.__exit__(type(exc), exc, exc.__traceback__):
+    |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/deepevol/deepevol/DeepCode/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 464, in __exit__
+    |     raise RuntimeError(
+    | RuntimeError: Attempted to exit cancel scope in a different task than it was entered in
+    +------------------------------------
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/contextlib.py", line 687, in aclose
+    await self.__aexit__(None, None, None)
+  File "/home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/contextlib.py", line 745, in __aexit__
+    raise exc_details[1]
+  File "/home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/contextlib.py", line 728, in __aexit__
+    cb_suppress = await cb(*exc_details)
+                  ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/contextlib.py", line 231, in __aexit__
+    await self.gen.athrow(typ, value, traceback)
+  File "/home/deepevol/deepevol/DeepCode/.venv/lib/python3.11/site-packages/mcp/client/stdio/__init__.py", line 182, in stdio_client
+    async with (
+  File "/home/deepevol/deepevol/DeepCode/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 821, in __aexit__
+    if self.cancel_scope.__exit__(type(exc), exc, exc.__traceback__):
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/deepevol/deepevol/DeepCode/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 464, in __exit__
+    raise RuntimeError(
+RuntimeError: Attempted to exit cancel scope in a different task than it was entered in
+2026-08-26 10:36:24,928 ERROR Task exception was never retrieved
+future: <Task finished name='Task-46' coro=<AsyncExitStack.aclose() done, defined at /home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/contextlib.py:685> exception=RuntimeError('Attempted to exit cancel scope in a different task than it was entered in')>
+  + Exception Group Traceback (most recent call last):
+  |   File "/home/deepevol/deepevol/DeepCode/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 815, in __aexit__
+  |     raise BaseExceptionGroup(
+  | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+  +-+---------------- 1 ----------------
+    | Traceback (most recent call last):
+    |   File "/home/deepevol/deepevol/DeepCode/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 808, in __aexit__
+    |     await AsyncIOBackend.cancel_shielded_checkpoint()
+    |   File "/home/deepevol/deepevol/DeepCode/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 2521, in cancel_shielded_checkpoint
+    |     await sleep(0)
+    |   File "/home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/asyncio/tasks.py", line 640, in sleep
+    |     await __sleep0()
+    |   File "/home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/asyncio/tasks.py", line 634, in __sleep0
+    |     yield
+    | asyncio.exceptions.CancelledError
+    | 
+    | During handling of the above exception, another exception occurred:
+    | 
+    | Traceback (most recent call last):
+    |   File "/home/deepevol/deepevol/DeepCode/.venv/lib/python3.11/site-packages/mcp/client/stdio/__init__.py", line 189, in stdio_client
+    |     yield read_stream, write_stream
+    |   File "/home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/contextlib.py", line 728, in __aexit__
+    |     cb_suppress = await cb(*exc_details)
+    |                   ^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/deepevol/deepevol/DeepCode/.venv/lib/python3.11/site-packages/mcp/shared/session.py", line 238, in __aexit__
+    |     return await self._task_group.__aexit__(exc_type, exc_val, exc_tb)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/deepevol/deepevol/DeepCode/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 821, in __aexit__
+    |     if self.cancel_scope.__exit__(type(exc), exc, exc.__traceback__):
+    |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/deepevol/deepevol/DeepCode/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 464, in __exit__
+    |     raise RuntimeError(
+    | RuntimeError: Attempted to exit cancel scope in a different task than it was entered in
+    +------------------------------------
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/contextlib.py", line 687, in aclose
+    await self.__aexit__(None, None, None)
+  File "/home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/contextlib.py", line 745, in __aexit__
+    raise exc_details[1]
+  File "/home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/contextlib.py", line 728, in __aexit__
+    cb_suppress = await cb(*exc_details)
+                  ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/contextlib.py", line 231, in __aexit__
+    await self.gen.athrow(typ, value, traceback)
+  File "/home/deepevol/deepevol/DeepCode/.venv/lib/python3.11/site-packages/mcp/client/stdio/__init__.py", line 182, in stdio_client
+    async with (
+  File "/home/deepevol/deepevol/DeepCode/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 821, in __aexit__
+    if self.cancel_scope.__exit__(type(exc), exc, exc.__traceback__):
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/deepevol/deepevol/DeepCode/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 464, in __exit__
+    raise RuntimeError(
+RuntimeError: Attempted to exit cancel scope in a different task than it was entered in
+2026-08-26 10:36:24.931 | DEBUG    | core.agent_runtime.tools.mcp:connect_single_server:547 - MCP server 'filesystem': resources not supported or failed: Method not found
+2026-08-26 10:36:24.932 | DEBUG    | core.agent_runtime.tools.mcp:connect_single_server:565 - MCP server 'filesystem': prompts not supported or failed: Method not found
+2026-08-26 10:36:24.932 | INFO     | core.agent_runtime.tools.mcp:connect_single_server:569 - MCP server 'filesystem': connected, 14 capabilities registered
+2026-08-26 10:36:24.933 | DEBUG    | core.compat.agent:_connect_servers:518 - Agent 'GithubDownloadAgent': 1 MCP servers connected, 14 tools registered total
+2026-08-26 10:36:24.943 | INFO     | core.llm_runtime:attach_workflow_llm:125 - Attached workflow LLM: agent=GithubDownloadAgent phase=planning provider=custom model=deepseek-ai/DeepSeek-V4-Pro reasoning_effort=None
+2026-08-26 10:36:29,922 INFO HTTP Request: POST https://api.siliconflow.cn/v1/chat/completions "HTTP/1.1 200 OK"
+2026-08-26 10:36:35,479 INFO HTTP Request: POST https://api.siliconflow.cn/v1/chat/completions "HTTP/1.1 200 OK"
+2026-08-26 10:36:41,293 INFO HTTP Request: POST https://api.siliconflow.cn/v1/chat/completions "HTTP/1.1 200 OK"

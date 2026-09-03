@@ -1,0 +1,51 @@
+2026-08-26 09:58:46 [info     ] Grading leaf: For the selfish mining environment, the "Random" Explanation method has been implemented as outlined in 4.1, wherein critical steps are identified by randomly selecting previously visited states.
+2026-08-26 10:00:14 [info     ] Model file selection raw output:
+Refine_selfish_mining/masknet/replay.py
+Refine_selfish_mining/retrain.py
+Refine_selfish_mining/masknet/fidelity_score.py
+Refine_selfish_mining/utils.py
+Refine_selfish_mining/masknet/utils.py
+Refine_selfish_mining/masknet/sample_mask_score.py
+Refine_selfish_mining/masknet/train.py
+Refine_selfish_mining/masknet/sample_value_score.py
+Refine_selfish_mining/rnd_policy.py
+Refine_selfish_mining/rnd_model.py
+2026-08-26 10:00:14 [info     ] Model file selection raw output:
+Refine_selfish_mining/masknet/replay.py
+Refine_selfish_mining/retrain.py
+Refine_selfish_mining/masknet/fidelity_score.py
+Refine_selfish_mining/utils.py
+Refine_selfish_mining/masknet/utils.py
+Refine_selfish_mining/masknet/sample_mask_score.py
+Refine_selfish_mining/masknet/train.py
+Refine_selfish_mining/masknet/sample_value_score.py
+Refine_selfish_mining/rnd_policy.py
+Refine_selfish_mining/rnd_model.py
+2026-08-26 10:01:24 [info     ] model response: # Expectations
+The paper introduces "Random" as a baseline explanation method in Section 4.1. It is described as: "Random identifies critical steps by randomly selecting a visited state as the critical state." In the context of the fidelity score experiments (and possibly the refining pipeline), this means that given a trajectory of states, the method should pick a random state (or a segment of consecutive steps) to be treated as the "critical" ones. For the selfish mining environment, we expect to find code that implements this logic – that is, a function or a code block that, when executed, will randomly choose a visited state (or a window of states) from an episode. This random selection should be usable as the explanation output (e.g., to compute fidelity scores or to provide critical states for resetting during refinement).
+
+# Reality
+Looking at the provided files for the selfish mining environment, the file `Refine_selfish_mining/masknet/replay.py` contains a function `replay` that is used for fidelity score evaluation. Within this function, the parameter `method` can be set to `"random"`. When `method == "random"`, the code calculates a window length (`sub_length = int(action_set.shape[0] * width)`) and then picks a starting index randomly:
+
+```python
+best_score_index = np.random.randint(0, action_set.shape[0] - sub_length)
+```
+
+This selection effectively identifies a "critical segment" (i.e., a contiguous block of previously visited states) by random choice, which aligns exactly with the description of the Random explanation method. The same random logic is utilized when the fidelity score is computed in `Refine_selfish_mining/masknet/fidelity_score.py`, which calls `replay.py` with `method="random"`. The environment used in these scripts is the selfish mining MDP (created via `create_env` in `Refine_selfish_mining/masknet/sample_mask_score.py`). Therefore, the Random explanation method has been implemented for the selfish mining environment.
+
+# Score
+1 – The submission contains a correct implementation of the "Random" explanation method for the selfish mining environment, as described in Section 4.1.
+2026-08-26 10:01:24 [info     ] model response: # Expectations
+The paper introduces "Random" as a baseline explanation method in Section 4.1. It is described as: "Random identifies critical steps by randomly selecting a visited state as the critical state." In the context of the fidelity score experiments (and possibly the refining pipeline), this means that given a trajectory of states, the method should pick a random state (or a segment of consecutive steps) to be treated as the "critical" ones. For the selfish mining environment, we expect to find code that implements this logic – that is, a function or a code block that, when executed, will randomly choose a visited state (or a window of states) from an episode. This random selection should be usable as the explanation output (e.g., to compute fidelity scores or to provide critical states for resetting during refinement).
+
+# Reality
+Looking at the provided files for the selfish mining environment, the file `Refine_selfish_mining/masknet/replay.py` contains a function `replay` that is used for fidelity score evaluation. Within this function, the parameter `method` can be set to `"random"`. When `method == "random"`, the code calculates a window length (`sub_length = int(action_set.shape[0] * width)`) and then picks a starting index randomly:
+
+```python
+best_score_index = np.random.randint(0, action_set.shape[0] - sub_length)
+```
+
+This selection effectively identifies a "critical segment" (i.e., a contiguous block of previously visited states) by random choice, which aligns exactly with the description of the Random explanation method. The same random logic is utilized when the fidelity score is computed in `Refine_selfish_mining/masknet/fidelity_score.py`, which calls `replay.py` with `method="random"`. The environment used in these scripts is the selfish mining MDP (created via `create_env` in `Refine_selfish_mining/masknet/sample_mask_score.py`). Therefore, the Random explanation method has been implemented for the selfish mining environment.
+
+# Score
+1 – The submission contains a correct implementation of the "Random" explanation method for the selfish mining environment, as described in Section 4.1.

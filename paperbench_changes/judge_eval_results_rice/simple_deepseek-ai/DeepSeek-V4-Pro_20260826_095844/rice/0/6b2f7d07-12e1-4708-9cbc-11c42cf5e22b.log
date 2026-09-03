@@ -1,0 +1,67 @@
+2026-08-26 10:00:32 [info     ] Grading leaf: For the non-sparse MuJoCo environments, for the "StateMask" explanation method, code for measuring training time throughout training as outlined in Appendix C.3 and Table 4 has been implemented.
+2026-08-26 10:01:14 [info     ] Model file selection raw output:
+Refine_mujoco/masknet/train.py
+Refine_mujoco/masknet/cus_PPO.py
+Refine_mujoco/masknet/environment.py
+Refine_mujoco/masknet/readme.md
+Refine_mujoco/retrain.py
+Refine_mujoco/PPO.py
+Refine_mujoco/utils.py
+Refine_mujoco/monitor.py
+Refine_mujoco/callback.py
+Refine_mujoco/base_class.py
+2026-08-26 10:01:14 [info     ] Model file selection raw output:
+Refine_mujoco/masknet/train.py
+Refine_mujoco/masknet/cus_PPO.py
+Refine_mujoco/masknet/environment.py
+Refine_mujoco/masknet/readme.md
+Refine_mujoco/retrain.py
+Refine_mujoco/PPO.py
+Refine_mujoco/utils.py
+Refine_mujoco/monitor.py
+Refine_mujoco/callback.py
+Refine_mujoco/base_class.py
+2026-08-26 10:01:49 [info     ] model response: # Expectations
+The paper's Appendix C.3 and Table 4 report an efficiency comparison for training the mask network (the explanation method) between StateMask and the authors' own method. The criterion asks whether the submission implements **code that measures the training time** (in seconds) for the **StateMask** explanation method, specifically for the non‑sparse MuJoCo environments. I therefore expect to see code that:
+- Trains a mask network using the StateMask algorithm (as described in the original StateMask paper or the RICE paper’s baseline description).
+- Explicitly records the **wall‑clock time** (start/end time) for the entire training process, or per‑iteration timing that can be summed to the total training time.
+- Runs on the four MuJoCo environments (Hopper, Walker2d, Reacher, HalfCheetah) and can output the number of seconds (or stores it in a log/table) for a given number of training samples.
+- The implementation should be separate from the “Ours” explanation method’s training code, because StateMask is a distinct baseline.
+
+# Reality
+The provided submission files are:
+
+- `Refine_mujoco/masknet/train.py` – trains a mask network using a custom PPO (`cus_PPO.py`) on a `Multi2SingleEnv` that loads a pre‑trained base model and adds an `alpha` bonus. This corresponds to the **“Ours”** explanation method.
+- `Refine_mujoco/masknet/cus_PPO.py`, `environment.py`, `readme.md` – support the training of “Ours”.
+- `Refine_mujoco/retrain.py`, `PPO.py`, `utils.py`, `monitor.py`, `callback.py`, `base_class.py` – these implement the **refinement** step, not explanation training.
+
+Nowhere in these files is there any implementation of the **StateMask** explanation method (the original method from Cheng et al. 2023). Moreover, none of the files contain any code that measures or records training time (e.g., `time.time()`, `time.perf_counter()`, or logging of training duration) for any explanation method. Even if we look at the “Ours” training script `train.py`, it only calls `model.learn(...)` with callbacks but never records or saves the time taken to train the mask network.
+
+Thus, there is **no code** that implements measuring training time for the StateMask explanation method for the MuJoCo environments (or any environment).
+
+# Score
+**Score: 0**
+
+**Explanation:** The criterion requires actual code that measures training time for the StateMask explanation method on non‑sparse MuJoCo environments. The submission lacks any code for StateMask at all, and contains no timing measurement code. Therefore the requirement is not met.
+2026-08-26 10:01:49 [info     ] model response: # Expectations
+The paper's Appendix C.3 and Table 4 report an efficiency comparison for training the mask network (the explanation method) between StateMask and the authors' own method. The criterion asks whether the submission implements **code that measures the training time** (in seconds) for the **StateMask** explanation method, specifically for the non‑sparse MuJoCo environments. I therefore expect to see code that:
+- Trains a mask network using the StateMask algorithm (as described in the original StateMask paper or the RICE paper’s baseline description).
+- Explicitly records the **wall‑clock time** (start/end time) for the entire training process, or per‑iteration timing that can be summed to the total training time.
+- Runs on the four MuJoCo environments (Hopper, Walker2d, Reacher, HalfCheetah) and can output the number of seconds (or stores it in a log/table) for a given number of training samples.
+- The implementation should be separate from the “Ours” explanation method’s training code, because StateMask is a distinct baseline.
+
+# Reality
+The provided submission files are:
+
+- `Refine_mujoco/masknet/train.py` – trains a mask network using a custom PPO (`cus_PPO.py`) on a `Multi2SingleEnv` that loads a pre‑trained base model and adds an `alpha` bonus. This corresponds to the **“Ours”** explanation method.
+- `Refine_mujoco/masknet/cus_PPO.py`, `environment.py`, `readme.md` – support the training of “Ours”.
+- `Refine_mujoco/retrain.py`, `PPO.py`, `utils.py`, `monitor.py`, `callback.py`, `base_class.py` – these implement the **refinement** step, not explanation training.
+
+Nowhere in these files is there any implementation of the **StateMask** explanation method (the original method from Cheng et al. 2023). Moreover, none of the files contain any code that measures or records training time (e.g., `time.time()`, `time.perf_counter()`, or logging of training duration) for any explanation method. Even if we look at the “Ours” training script `train.py`, it only calls `model.learn(...)` with callbacks but never records or saves the time taken to train the mask network.
+
+Thus, there is **no code** that implements measuring training time for the StateMask explanation method for the MuJoCo environments (or any environment).
+
+# Score
+**Score: 0**
+
+**Explanation:** The criterion requires actual code that measures training time for the StateMask explanation method on non‑sparse MuJoCo environments. The submission lacks any code for StateMask at all, and contains no timing measurement code. Therefore the requirement is not met.

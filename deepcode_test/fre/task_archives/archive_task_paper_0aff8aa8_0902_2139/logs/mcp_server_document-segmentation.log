@@ -1,0 +1,18 @@
+INFO:mcp.server.lowlevel.server:Processing request of type ListToolsRequest
+INFO:mcp.server.lowlevel.server:Processing request of type ListResourcesRequest
+INFO:mcp.server.lowlevel.server:Processing request of type ListPromptsRequest
+INFO:mcp.server.lowlevel.server:Processing request of type CallToolRequest
+INFO:__main__:Document segmentation completed: 9 segments created
+INFO:mcp.server.lowlevel.server:Processing request of type CallToolRequest
+ERROR:__main__:Error in analyze_and_segment_document: [Errno 2] No such file or directory: '/home/deeprol/deepevol/DeepCode/deepcode_lab/tasks/paper_0aff8aa8'
+ERROR:__main__:Error in get_document_overview: '/home/deeprol/deepevol/DeepCode/deepcode_lab/tasks/paper_0aff8aa8'
+INFO:mcp.server.lowlevel.server:Processing request of type CallToolRequest
+INFO:mcp.server.lowlevel.server:Processing request of type CallToolRequest
+INFO:__main__:Selected 2 segments for algorithm_extraction query
+INFO:mcp.server.lowlevel.server:Processing request of type CallToolRequest
+INFO:__main__:Selected 3 segments for algorithm_extraction query
+INFO:mcp.server.lowlevel.server:Processing request of type CallToolRequest
+INFO:__main__:Selected 3 segments for concept_analysis query
+INFO:mcp.server.lowlevel.server:Processing request of type ListToolsRequest
+INFO:mcp.server.lowlevel.server:Processing request of type ListResourcesRequest
+INFO:mcp.server.lowlevel.server:Processing request of type ListPromptsRequest

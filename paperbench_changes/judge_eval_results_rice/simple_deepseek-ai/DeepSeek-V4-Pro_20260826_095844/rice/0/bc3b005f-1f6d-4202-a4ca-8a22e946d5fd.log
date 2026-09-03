@@ -1,0 +1,61 @@
+2026-08-26 10:01:34 [info     ] Grading leaf: For the MuJoCo environments, for the "Ours" explanation method, code has been implemented for measuring cumulative reward throughout refinement
+2026-08-26 10:02:30 [info     ] Model file selection raw output:
+Refine_mujoco/retrain.py
+Refine_mujoco/callback.py
+Refine_mujoco/monitor.py
+Refine_mujoco/utils.py
+Refine_mujoco/OnPolicyAlgorithm.py
+Refine_mujoco/PPO.py
+Refine_mujoco/base_class.py
+Refine_mujoco/environment.py
+Refine_mujoco/masknet/fid_test.py
+Refine_mujoco/masknet/gen_fid.py
+2026-08-26 10:02:30 [info     ] Model file selection raw output:
+Refine_mujoco/retrain.py
+Refine_mujoco/callback.py
+Refine_mujoco/monitor.py
+Refine_mujoco/utils.py
+Refine_mujoco/OnPolicyAlgorithm.py
+Refine_mujoco/PPO.py
+Refine_mujoco/base_class.py
+Refine_mujoco/environment.py
+Refine_mujoco/masknet/fid_test.py
+Refine_mujoco/masknet/gen_fid.py
+2026-08-26 10:03:29 [info     ] model response: # Expectations
+The criterion requires that, for the MuJoCo environments in Experiment III, the submission contains code that measures the cumulative reward (i.e., the reward/performance of the agent) throughout the refinement process when using the "Ours" explanation method. This means:
+
+- The refinement code must be able to load the mask network that represents the "Ours" explanation method.
+- During refinement (training with PPO + exploration bonus, using a mixed initial distribution), the episodic rewards or average returns should be recorded and logged.
+- The measurement should be available to evaluate the agent's performance over time (e.g., via callbacks that log mean episode reward, evaluation callbacks, or monitor wrappers that save episode returns).
+- The implementation must be concrete: actual logging/writing of rewards, not just a description.
+
+I will look for code that, when refining with the critical steps identified by the "Ours" mask network, records and stores the reward values during training (e.g., through VecMonitor, EvalCallback, or custom logging).
+
+# Reality
+The submission includes a file `Refine_mujoco/retrain.py` that sets up the refinement process. It accepts arguments `--masknet_path` and `--random_sampling`. When `random_sampling` is `False`, the environment uses the mask network to select the most critical state (i.e., the "Ours" explanation method). The training environment is wrapped with `VecMonitor(env, log_path)` (line 40). `VecMonitor` (implemented in `Refine_mujoco/monitor.py`) logs episode returns and lengths to a file. Additionally, an `EvalCallback` is created (`eval_callback`) that evaluates the agent on a separate evaluation environment at a given frequency and logs the mean reward. A `CustomCallback` (in `callback.py`) logs the mean reward over the last 100 training episodes. 
+
+These components—`VecMonitor`, `EvalCallback`, `CustomCallback`—collectively measure and record the agent's cumulative reward (episode returns) throughout the refinement process. The code does not separate measurement logic per explanation method, but the measurement occurs while the refinement is using the "Ours" explanation (via `masknet_path` and `random_sampling=False`). Thus, the necessary code for measuring cumulative reward during refinement for the "Ours" explanation method is present.
+
+# Score
+1
+
+The submission contains code that implements measurement of cumulative reward (via logging of episode returns and evaluation callbacks) throughout refinement for the MuJoCo environments using the "Ours" explanation method. Therefore, the criterion is met.
+2026-08-26 10:03:29 [info     ] model response: # Expectations
+The criterion requires that, for the MuJoCo environments in Experiment III, the submission contains code that measures the cumulative reward (i.e., the reward/performance of the agent) throughout the refinement process when using the "Ours" explanation method. This means:
+
+- The refinement code must be able to load the mask network that represents the "Ours" explanation method.
+- During refinement (training with PPO + exploration bonus, using a mixed initial distribution), the episodic rewards or average returns should be recorded and logged.
+- The measurement should be available to evaluate the agent's performance over time (e.g., via callbacks that log mean episode reward, evaluation callbacks, or monitor wrappers that save episode returns).
+- The implementation must be concrete: actual logging/writing of rewards, not just a description.
+
+I will look for code that, when refining with the critical steps identified by the "Ours" mask network, records and stores the reward values during training (e.g., through VecMonitor, EvalCallback, or custom logging).
+
+# Reality
+The submission includes a file `Refine_mujoco/retrain.py` that sets up the refinement process. It accepts arguments `--masknet_path` and `--random_sampling`. When `random_sampling` is `False`, the environment uses the mask network to select the most critical state (i.e., the "Ours" explanation method). The training environment is wrapped with `VecMonitor(env, log_path)` (line 40). `VecMonitor` (implemented in `Refine_mujoco/monitor.py`) logs episode returns and lengths to a file. Additionally, an `EvalCallback` is created (`eval_callback`) that evaluates the agent on a separate evaluation environment at a given frequency and logs the mean reward. A `CustomCallback` (in `callback.py`) logs the mean reward over the last 100 training episodes. 
+
+These components—`VecMonitor`, `EvalCallback`, `CustomCallback`—collectively measure and record the agent's cumulative reward (episode returns) throughout the refinement process. The code does not separate measurement logic per explanation method, but the measurement occurs while the refinement is using the "Ours" explanation (via `masknet_path` and `random_sampling=False`). Thus, the necessary code for measuring cumulative reward during refinement for the "Ours" explanation method is present.
+
+# Score
+1
+
+The submission contains code that implements measurement of cumulative reward (via logging of episode returns and evaluation callbacks) throughout refinement for the MuJoCo environments using the "Ours" explanation method. Therefore, the criterion is met.

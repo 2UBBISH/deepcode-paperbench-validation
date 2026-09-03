@@ -1,0 +1,24 @@
+🚀 GitHub Repository Downloader MCP Tool
+📝 Starting server with FastMCP...
+
+Available tools:
+  • download_github_repo - Download repos from natural language
+  • parse_github_urls - Extract GitHub URLs from text
+  • git_clone - Clone a specific repository
+
+[08/30/26 07:32:05] INFO     Processing request of type            server.py:733
+                             ListToolsRequest                                   
+                    INFO     Processing request of type            server.py:733
+                             ListResourcesRequest                               
+                    INFO     Processing request of type            server.py:733
+                             ListPromptsRequest                                 
+[08/30/26 07:32:21] INFO     Processing request of type            server.py:733
+                             CallToolRequest                                    
+[08/30/26 07:32:23] INFO     Processing request of type            server.py:733
+                             CallToolRequest                                    
+[08/30/26 07:32:24] INFO     Processing request of type            server.py:733
+                             CallToolRequest                                    
+[08/30/26 07:32:26] INFO     Processing request of type            server.py:733
+                             CallToolRequest                                    
+[08/30/26 07:32:27] INFO     Processing request of type            server.py:733
+                             CallToolRequest                                    

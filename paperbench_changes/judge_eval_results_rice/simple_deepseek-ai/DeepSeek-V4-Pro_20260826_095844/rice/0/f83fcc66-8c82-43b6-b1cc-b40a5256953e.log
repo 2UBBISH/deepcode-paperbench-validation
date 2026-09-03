@@ -1,0 +1,87 @@
+2026-08-26 10:01:14 [info     ] Grading leaf: In Experiment II, for the network defence environment, for the "JSRL" refinement method, code has been implemented for measuring cumulative reward throughout refinement
+2026-08-26 10:02:34 [info     ] Model file selection raw output:
+Refine_cage_challenge/retrain.py
+Refine_cage_challenge/Agents/PPOAgent_Retrain.py
+Refine_cage_challenge/rollout_ppo.py
+Refine_cage_challenge/readme.md
+Refine_cage_challenge/ppo_train.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_retrain.py
+Refine_cage_challenge/Agents/PPOAgent.py
+Refine_cage_challenge/Agents/MainAgent.py
+Refine_cage_challenge/replay.py
+Refine_cage_challenge/sample_mask_score.py
+2026-08-26 10:02:34 [info     ] Model file selection raw output:
+Refine_cage_challenge/retrain.py
+Refine_cage_challenge/Agents/PPOAgent_Retrain.py
+Refine_cage_challenge/rollout_ppo.py
+Refine_cage_challenge/readme.md
+Refine_cage_challenge/ppo_train.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_retrain.py
+Refine_cage_challenge/Agents/PPOAgent.py
+Refine_cage_challenge/Agents/MainAgent.py
+Refine_cage_challenge/replay.py
+Refine_cage_challenge/sample_mask_score.py
+2026-08-26 10:03:22 [info     ] model response: # Expectations
+For Experiment II on the network defence environment (Cage Challenge 2), the paper describes using Jump-Start Reinforcement Learning (JSRL) as a baseline refining method. JSRL involves a guided policy to set up a curriculum and train an exploration policy; for refinement, the exploration policy is initialized from the guided (pre‑trained) policy, and the training process progressively increases the exploration horizon.
+
+The criterion requires that the submission contains actual code that implements JSRL refinement **and** specifically measures cumulative reward throughout the refinement process. This would normally include:
+- Loading a pre‑trained agent to act as the guide policy.
+- An exploration policy (e.g., a PPO policy) that is trained using the guide policy to “roll‑in” to a frontier, then acts by itself.
+- A curriculum that gradually increases the roll‑in length.
+- During training, collecting and logging (averaging, printing, or saving) the cumulative reward over episodes so that progress can be monitored.
+
+Since the paper reports “final reward” after refining, the code should be capable of producing reward curves or at least periodic reward logs, indicating that cumulative reward is measured during the refinement loop.
+
+# Reality
+I inspected all the provided files in the `Refine_cage_challenge` directory:
+
+- `retrain.py` – This script trains a `PPOAgent_Retrain` agent using a `ChallengeWrapper2_retrain` environment. The wrapper implements the mixed initial distribution reset (using a mask network to pick a critical state) and the agent adds an RND exploration bonus. This is clearly the **RICE (Ours)** refining method, not JSRL.
+- `ppo_train.py` and `rollout_ppo.py` – These are for training the original PPO agent and rolling it out, respectively. They are not JSRL refinement.
+- `sample_mask_score.py` – Generates mask scores (explanation). Not JSRL.
+- `replay.py` – Performs a replay experiment with masking (computing fidelity scores). Not JSRL.
+- `Agents/PPOAgent.py` – Standard PPO agent (no exploration bonus, no guide‑policy roll‑in).
+- `Agents/PPOAgent_Retrain.py` – The RICE‑specific agent (contains RND model, used for Ours refinement).
+- `Agents/MainAgent.py` – A high‑level agent that loads different agents based on fingerprint. Not a JSRL trainer.
+- `Wrappers/ChallengeWrapper2_retrain.py` – Wrapper for the mixed initial distribution. Not JSRL.
+- `readme.md` – Empty.
+
+There is **no file** that implements JSRL for the Cage Challenge 2 environment. No curriculum‑based training, no guide‑policy roll‑in logic, no exploration horizon increase, and consequently **no measurement of cumulative reward** specific to a JSRL refinement process can be found.
+
+Even if JSRL were implemented, there is no sign of code that computes and logs running reward, reward curves, or final average reward specifically for a JSRL refinement run. The only reward logging seen is in the original training scripts and in the RICE retrain script, but those are not JSRL.
+
+# Score
+The criterion requires that code for measuring cumulative reward throughout refinement be present **for the “JSRL” refinement method**. Since no JSRL refinement code exists in the submission, the requirement is not met.
+
+**Score: 0**
+2026-08-26 10:03:22 [info     ] model response: # Expectations
+For Experiment II on the network defence environment (Cage Challenge 2), the paper describes using Jump-Start Reinforcement Learning (JSRL) as a baseline refining method. JSRL involves a guided policy to set up a curriculum and train an exploration policy; for refinement, the exploration policy is initialized from the guided (pre‑trained) policy, and the training process progressively increases the exploration horizon.
+
+The criterion requires that the submission contains actual code that implements JSRL refinement **and** specifically measures cumulative reward throughout the refinement process. This would normally include:
+- Loading a pre‑trained agent to act as the guide policy.
+- An exploration policy (e.g., a PPO policy) that is trained using the guide policy to “roll‑in” to a frontier, then acts by itself.
+- A curriculum that gradually increases the roll‑in length.
+- During training, collecting and logging (averaging, printing, or saving) the cumulative reward over episodes so that progress can be monitored.
+
+Since the paper reports “final reward” after refining, the code should be capable of producing reward curves or at least periodic reward logs, indicating that cumulative reward is measured during the refinement loop.
+
+# Reality
+I inspected all the provided files in the `Refine_cage_challenge` directory:
+
+- `retrain.py` – This script trains a `PPOAgent_Retrain` agent using a `ChallengeWrapper2_retrain` environment. The wrapper implements the mixed initial distribution reset (using a mask network to pick a critical state) and the agent adds an RND exploration bonus. This is clearly the **RICE (Ours)** refining method, not JSRL.
+- `ppo_train.py` and `rollout_ppo.py` – These are for training the original PPO agent and rolling it out, respectively. They are not JSRL refinement.
+- `sample_mask_score.py` – Generates mask scores (explanation). Not JSRL.
+- `replay.py` – Performs a replay experiment with masking (computing fidelity scores). Not JSRL.
+- `Agents/PPOAgent.py` – Standard PPO agent (no exploration bonus, no guide‑policy roll‑in).
+- `Agents/PPOAgent_Retrain.py` – The RICE‑specific agent (contains RND model, used for Ours refinement).
+- `Agents/MainAgent.py` – A high‑level agent that loads different agents based on fingerprint. Not a JSRL trainer.
+- `Wrappers/ChallengeWrapper2_retrain.py` – Wrapper for the mixed initial distribution. Not JSRL.
+- `readme.md` – Empty.
+
+There is **no file** that implements JSRL for the Cage Challenge 2 environment. No curriculum‑based training, no guide‑policy roll‑in logic, no exploration horizon increase, and consequently **no measurement of cumulative reward** specific to a JSRL refinement process can be found.
+
+Even if JSRL were implemented, there is no sign of code that computes and logs running reward, reward curves, or final average reward specifically for a JSRL refinement run. The only reward logging seen is in the original training scripts and in the RICE retrain script, but those are not JSRL.
+
+# Score
+The criterion requires that code for measuring cumulative reward throughout refinement be present **for the “JSRL” refinement method**. Since no JSRL refinement code exists in the submission, the requirement is not met.
+
+**Score: 0**

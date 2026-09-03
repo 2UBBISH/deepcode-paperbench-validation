@@ -1,0 +1,95 @@
+2026-08-26 09:58:46 [info     ] Grading leaf: For the selfish mining environment, the Jump-Start Reinforcement Learning ("JSRL") refinement method has been implemented as outlined in section 4.1 and Uchendu et al. (2023), i.e. through initializing the exploration policy $\pi_{e}$ to be equal to the guided policy $\pi_{g}$.
+2026-08-26 09:59:47 [info     ] Model file selection raw output:
+Refine_selfish_mining/retrain.py
+Refine_selfish_mining/utils.py
+Refine_selfish_mining/rnd_policy.py
+Refine_selfish_mining/baseline/train_ppo.py
+Refine_selfish_mining/baseline/net.py
+Refine_selfish_mining/masknet/train.py
+Refine_selfish_mining/baseline/blockchain_mdps/bitcoin_fee_model.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/training/trainer.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/training/rl_algorithm.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/function_approximation/approximator.py
+2026-08-26 09:59:47 [info     ] Model file selection raw output:
+Refine_selfish_mining/retrain.py
+Refine_selfish_mining/utils.py
+Refine_selfish_mining/rnd_policy.py
+Refine_selfish_mining/baseline/train_ppo.py
+Refine_selfish_mining/baseline/net.py
+Refine_selfish_mining/masknet/train.py
+Refine_selfish_mining/baseline/blockchain_mdps/bitcoin_fee_model.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/training/trainer.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/training/rl_algorithm.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/function_approximation/approximator.py
+2026-08-26 10:00:39 [info     ] model response: # Expectations
+
+The criterion requires that for the selfish mining environment, the Jump-Start Reinforcement Learning (JSRL) refinement method is correctly implemented as described in the paper (Section 4.1) and in the referenced work by Uchendu et al. (2023). Specifically, the paper states:
+
+> JSRL introduces a guided policy π_g to set up a curriculum to train an exploration policy π_e. Through initializing π_e = π_g, we can transform JSRL to be a refining method that can further improve the performance of the guided policy.
+
+Thus, a correct implementation for this environment must include:
+- A pre‑trained policy (the guided policy) that has been learned earlier for selfish mining.
+- A second policy (the exploration policy) that is initialized to be exactly equal to the guided policy.
+- A training loop that uses a curriculum to control a handover point: at each episode, the guided policy acts for a certain number of initial steps (“roll‑in”), after which the exploration policy takes over and continues the episode. The curriculum gradually reduces the number of roll‑in steps (or shifts the exploration frontier) over time.
+- The exploration policy is then updated (e.g., via PPO) based on the collected experience.
+
+Since the paper treats JSRL as one of the baseline refining methods, the submitted code must contain a script or module that implements this procedure for the selfish mining environment, and that can be run to produce the JSRL results reported in Table 1.
+
+# Reality
+
+I have examined every file that was provided for the submission attempt. The files relevant to the selfish mining environment are:
+
+- `Refine_selfish_mining/retrain.py` – This implements the “Ours” (RICE) refining method, using an RND exploration bonus and a mixed initial state distribution. It does **not** contain any JSRL‑specific logic (no guidance‑policy roll‑in, no curriculum schedule).
+- `Refine_selfish_mining/baseline/train_ppo.py` – This is a script to train the original PPO agent from scratch; it is **not** a refining method.
+- `Refine_selfish_mining/masknet/train.py` – This trains the mask network for explanation, not a refining method.
+- `Refine_selfish_mining/utils.py` – Contains helper functions to load models, but no JSRL training loop.
+- The other provided files (`rnd_policy.py`, `bitcoin_fee_model.py`, `trainer.py`, `approximator.py`, `net.py`) contain infrastructure for the environment, policy networks, and the RND wrapper; none of them implements JSRL.
+
+In none of these files can I find:
+- Code that instantiates a secondary exploration policy and initializes it with the weights of the pre‑trained guide policy.
+- A curriculum manager (e.g., a variable that controls how many steps the guide policy executes before control passes to the exploration policy, and a schedule to decrease that number).
+- A training loop that runs episodes with a “roll‑in” phase using the guide policy followed by an “exploration” phase using the exploration policy.
+
+The submission does not contain any script, class, or function that could be identified as an implementation of JSRL for the selfish mining environment. Therefore, the required refinement method has **not** been implemented.
+
+# Score
+
+Because the submitted code lacks any implementation of Jump‑Start Reinforcement Learning for the selfish mining environment, the criterion is **not met**.
+
+**Score: 0**
+2026-08-26 10:00:39 [info     ] model response: # Expectations
+
+The criterion requires that for the selfish mining environment, the Jump-Start Reinforcement Learning (JSRL) refinement method is correctly implemented as described in the paper (Section 4.1) and in the referenced work by Uchendu et al. (2023). Specifically, the paper states:
+
+> JSRL introduces a guided policy π_g to set up a curriculum to train an exploration policy π_e. Through initializing π_e = π_g, we can transform JSRL to be a refining method that can further improve the performance of the guided policy.
+
+Thus, a correct implementation for this environment must include:
+- A pre‑trained policy (the guided policy) that has been learned earlier for selfish mining.
+- A second policy (the exploration policy) that is initialized to be exactly equal to the guided policy.
+- A training loop that uses a curriculum to control a handover point: at each episode, the guided policy acts for a certain number of initial steps (“roll‑in”), after which the exploration policy takes over and continues the episode. The curriculum gradually reduces the number of roll‑in steps (or shifts the exploration frontier) over time.
+- The exploration policy is then updated (e.g., via PPO) based on the collected experience.
+
+Since the paper treats JSRL as one of the baseline refining methods, the submitted code must contain a script or module that implements this procedure for the selfish mining environment, and that can be run to produce the JSRL results reported in Table 1.
+
+# Reality
+
+I have examined every file that was provided for the submission attempt. The files relevant to the selfish mining environment are:
+
+- `Refine_selfish_mining/retrain.py` – This implements the “Ours” (RICE) refining method, using an RND exploration bonus and a mixed initial state distribution. It does **not** contain any JSRL‑specific logic (no guidance‑policy roll‑in, no curriculum schedule).
+- `Refine_selfish_mining/baseline/train_ppo.py` – This is a script to train the original PPO agent from scratch; it is **not** a refining method.
+- `Refine_selfish_mining/masknet/train.py` – This trains the mask network for explanation, not a refining method.
+- `Refine_selfish_mining/utils.py` – Contains helper functions to load models, but no JSRL training loop.
+- The other provided files (`rnd_policy.py`, `bitcoin_fee_model.py`, `trainer.py`, `approximator.py`, `net.py`) contain infrastructure for the environment, policy networks, and the RND wrapper; none of them implements JSRL.
+
+In none of these files can I find:
+- Code that instantiates a secondary exploration policy and initializes it with the weights of the pre‑trained guide policy.
+- A curriculum manager (e.g., a variable that controls how many steps the guide policy executes before control passes to the exploration policy, and a schedule to decrease that number).
+- A training loop that runs episodes with a “roll‑in” phase using the guide policy followed by an “exploration” phase using the exploration policy.
+
+The submission does not contain any script, class, or function that could be identified as an implementation of JSRL for the selfish mining environment. Therefore, the required refinement method has **not** been implemented.
+
+# Score
+
+Because the submitted code lacks any implementation of Jump‑Start Reinforcement Learning for the selfish mining environment, the criterion is **not met**.
+
+**Score: 0**

@@ -1,0 +1,75 @@
+2026-08-26 09:58:46 [info     ] Grading leaf: For the autonomous driving environment, StateMask fine-tuning, aka "StateMask-R" has been implemented as outlined in section 4.1 and Cheng et al., 2023, i.e. resetting to the identified critical states and continuing training from there.
+2026-08-26 10:00:10 [info     ] Model file selection raw output:
+Refine_auto_drive/retrain.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/readme.md
+README.md
+2026-08-26 10:00:10 [info     ] Model file selection raw output:
+Refine_auto_drive/retrain.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/readme.md
+README.md
+2026-08-26 10:02:51 [info     ] model response: # Expectations
+The criterion requires that the submission contains a correct implementation of **StateMask‑R** for the autonomous driving environment. According to Section 4.1 and the cited Cheng et al. (2023), StateMask‑R is a refining method that:
+1. Uses an explanation method (a trained mask network) to identify the **most critical state** (the step with the highest importance score) within a sampled trajectory of the pre‑trained policy.
+2. Resets the environment to that identified critical state (by fast‑forwarding through the preceding actions).
+3. Continues training (fine‑tunes) the agent starting from that critical state, **without** mixing in default initial states and **without** additional exploration bonuses.
+
+Therefore, I expect to find either a dedicated script or a clearly configurable piece of code that performs exactly these steps for the autonomous driving environment. The critical state selection must be deterministic (argmax of importance scores), not random. The code should be runnable as‑is to reproduce the StateMask‑R baseline.
+
+# Reality
+The submission provides several files under `Refine_auto_drive/`:
+
+- `retrain.py` – the main refining script for RICE, accepting `go_prob` (mixing probability) and `bonus_scale` (exploration bonus) arguments.
+- `retrain_env.py` – defines `CustomWrapper`, the environment used during collection. Its `reset` method can sample a trajectory using `gen_one_traj`, which returns mask probabilities (`mask_probs`). However, the selection of the starting index is controlled by `self.random_sampling`, which is **hardcoded to `True`** (line 46 of `retrain_env.py`). Consequently, the wrapper always performs a **random** selection from the trajectory:
+  ```python
+  if self.random_sampling:
+      start_idx = np.random.choice(traj.eps_len)
+  else:
+      start_idx = np.argmax(traj.mask_probs)
+  ```
+  There is no command‑line argument or alternative code path to set `random_sampling=False` and thereby select the most critical state according to the mask network.
+- `train_baseline.py`, `train_masknet.py`, and other files do not contain StateMask‑R logic; they serve other baselines or the mask training.
+
+Because `self.random_sampling` is permanently `True`, the environment reset always picks a random visited state, which corresponds to the “Random” explanation baseline, **not** StateMask‑R. Even if one runs `retrain.py` with `go_prob=1.0` and `bonus_scale=0.0`, the resulting refinement would use random critical states, not mask‑identified critical states. The submission therefore lacks a correct implementation of StateMask‑R for autonomous driving.
+
+# Score
+**0** – The submitted code does not contain a correct implementation of StateMask‑R. The critical state selection is hardcoded to random, preventing the proper use of the mask network to identify the most important state, which is the defining characteristic of StateMask‑R.
+2026-08-26 10:02:51 [info     ] model response: # Expectations
+The criterion requires that the submission contains a correct implementation of **StateMask‑R** for the autonomous driving environment. According to Section 4.1 and the cited Cheng et al. (2023), StateMask‑R is a refining method that:
+1. Uses an explanation method (a trained mask network) to identify the **most critical state** (the step with the highest importance score) within a sampled trajectory of the pre‑trained policy.
+2. Resets the environment to that identified critical state (by fast‑forwarding through the preceding actions).
+3. Continues training (fine‑tunes) the agent starting from that critical state, **without** mixing in default initial states and **without** additional exploration bonuses.
+
+Therefore, I expect to find either a dedicated script or a clearly configurable piece of code that performs exactly these steps for the autonomous driving environment. The critical state selection must be deterministic (argmax of importance scores), not random. The code should be runnable as‑is to reproduce the StateMask‑R baseline.
+
+# Reality
+The submission provides several files under `Refine_auto_drive/`:
+
+- `retrain.py` – the main refining script for RICE, accepting `go_prob` (mixing probability) and `bonus_scale` (exploration bonus) arguments.
+- `retrain_env.py` – defines `CustomWrapper`, the environment used during collection. Its `reset` method can sample a trajectory using `gen_one_traj`, which returns mask probabilities (`mask_probs`). However, the selection of the starting index is controlled by `self.random_sampling`, which is **hardcoded to `True`** (line 46 of `retrain_env.py`). Consequently, the wrapper always performs a **random** selection from the trajectory:
+  ```python
+  if self.random_sampling:
+      start_idx = np.random.choice(traj.eps_len)
+  else:
+      start_idx = np.argmax(traj.mask_probs)
+  ```
+  There is no command‑line argument or alternative code path to set `random_sampling=False` and thereby select the most critical state according to the mask network.
+- `train_baseline.py`, `train_masknet.py`, and other files do not contain StateMask‑R logic; they serve other baselines or the mask training.
+
+Because `self.random_sampling` is permanently `True`, the environment reset always picks a random visited state, which corresponds to the “Random” explanation baseline, **not** StateMask‑R. Even if one runs `retrain.py` with `go_prob=1.0` and `bonus_scale=0.0`, the resulting refinement would use random critical states, not mask‑identified critical states. The submission therefore lacks a correct implementation of StateMask‑R for autonomous driving.
+
+# Score
+**0** – The submitted code does not contain a correct implementation of StateMask‑R. The critical state selection is hardcoded to random, preventing the proper use of the mask network to identify the most important state, which is the defining characteristic of StateMask‑R.

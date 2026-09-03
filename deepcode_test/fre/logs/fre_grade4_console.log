@@ -1,0 +1,35 @@
+==== [1/3] 提交清点与非空校验 ====
+  trial5         文件 34   python 28    ✅
+
+==== [2/3] 预估与闸门 ====
+  提交份数 : 1  → paperbench.n_tries=1(不设则只判 1 份!)
+  判分叶数 : 306/份(fre rubric 437 叶中 Code Development 占 70%)
+  成本预估 : ¥45~60/份 → 本次约 ¥45~60
+  闸门     : 本计划总预算 ¥600(2026-08-28 由 ¥500 上调);单轮 trial 熔断 ¥100
+  提示     : 判分前请确认所有 trial 已完成,漏判的提交不会被自动补判
+
+==== [3/3] 判分(code_only · DeepSeek-V4-Pro 裁判恒定)2026-08-28 17:23:14 ====
+ 'other_stats': {'n_is_valid_git_repo': 0,
+                 'n_nontrivial_git_log': 0,
+                 'n_repro_script_exists': 0,
+                 'repro_mean_time': nan},
+ 'params': {'agent': 'direct_submission_solver',
+            'code_only': True,
+            'n_samples': 1,
+            'n_tries': 1,
+            'paper_split': 'fre',
+            'resources_provided': False,
+            'skip_reproduction': False},
+ 'run_group_id': '2026-08-28T09-23-16-GMT_run-group_direct_submission_solver',
+ 'run_health': {'n_gradings_failed': 0,
+                'n_reproductions_failed': 1,
+                'n_rollouts_failed': 0}}
+Evaluated 1 tasks with PaperBench-direct_submission_solver[0m [36mcomponent[0m=[35mnanoeval.evaluation[0m
+[2m2026-08-28T09:31:23.197553Z[0m [[32m[1minfo     [0m] [1m[36m[1mEvalboard Summary: unknown, add in pr?[0m[0m [36mcomponent[0m=[35mnanoeval.evaluation[0m
+ubmission_solver (r_id=260828092316ZSFAVSOO, m=nanoeval): 100%|██████████| 1/1 [08:06<00:00, 486.98s/it, corr=0, errs=0, fail=1]
+[2m2026-08-28T09:31:23.197802Z[0m [[33m[1mwarning  [0m] [1mUnable to find model name, using fallback name='nanoeval'[0m [36mcomponent[0m=[35mnanoeval.eval[0m
+[2m2026-08-28T09:31:23.198119Z[0m [[33m[1mwarning  [0m] [1mNo slack integration configured, so not sending user notification[0m [36mcomponent[0m=[35mnanoeval.library_config[0m
+
+==== 完成 2026-08-28 17:31:23。结果: /home/deepevol/deepevol/frontier-evals/project/paperbench/runs/2026-08-28T09-23-16-GMT_run-group_direct_submission_solver/fre_*/grade.json ====
+   fre_7da3362d-eea2-4ebf-8aa1-37f6aba5ce6e → score: 0.4245659227603672 | leaves: None | failed: None
+==== 记得回填 FRE_VALIDATION_PLAN.md §6 ====

@@ -1,0 +1,63 @@
+2026-08-26 10:01:39 [info     ] Grading leaf: For the network defence environment, for the "Random" explanation method, code has been implemented for measuring cumulative reward throughout refinement
+2026-08-26 10:03:40 [info     ] Model file selection raw output:
+Refine_cage_challenge/retrain.py
+Refine_cage_challenge/Agents/PPOAgent_Retrain.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_retrain.py
+Refine_cage_challenge/readme.md
+Refine_cage_challenge/ppo_train.py
+Refine_cage_challenge/rollout_ppo.py
+Refine_cage_challenge/replay.py
+Refine_cage_challenge/rollout_mask.py
+Refine_cage_challenge/sample_mask_score.py
+Refine_cage_challenge/Agents/rnd_model.py
+2026-08-26 10:03:40 [info     ] Model file selection raw output:
+Refine_cage_challenge/retrain.py
+Refine_cage_challenge/Agents/PPOAgent_Retrain.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_retrain.py
+Refine_cage_challenge/readme.md
+Refine_cage_challenge/ppo_train.py
+Refine_cage_challenge/rollout_ppo.py
+Refine_cage_challenge/replay.py
+Refine_cage_challenge/rollout_mask.py
+Refine_cage_challenge/sample_mask_score.py
+Refine_cage_challenge/Agents/rnd_model.py
+2026-08-26 10:04:33 [info     ] model response: # Expectations
+
+The criterion requires that for the network defence (CAGE Challenge 2) environment, the code implements measurement of cumulative reward throughout refinement when using the "Random" explanation method. According to the paper (Section 4.2, Experiment III), the refining method (RICE) is run using critical steps identified by different explanation methods, including "Random", and the agent’s performance after refining is reported (Table 1). Measuring cumulative reward typically means tracking the total reward per episode or average reward over training steps and logging or printing it so that the refinement progress can be observed. I expect to see code that runs the refinement loop for the network defence environment, that accumulates episode rewards (or running average rewards), and that prints or records these values. The code should also be compatible with the "Random" explanation method, i.e., it should be able to reset the environment using a randomly chosen critical state (instead of a state chosen by the mask network). However, the explicit implementation of the random critical state selection is likely covered by a preceding criterion; for this criterion, the focus is specifically on whether the reward measurement code exists and is properly integrated into the refinement process for that setting.
+
+# Reality
+
+The submission includes the file `Refine_cage_challenge/retrain.py`. This script sets up the CAGE Challenge 2 environment using `ChallengeWrapper2_Retrain` and trains a PPO agent with RND exploration (via `PPOAgent_Retrain`). Inside the `train` function:
+
+- `running_reward` accumulates the reward over each episode.
+- After every `print_interval` episodes, the script computes the average training reward (`running_reward / print_interval`) and prints it with the label `Training Avg Reward`.
+- It also runs a short test loop (5 episodes) and prints the `Test Avg Reward`.
+- Checkpoints are saved periodically, which allows tracking the agent’s performance over time.
+
+This code directly implements the measurement of cumulative reward during the refinement process.
+
+The environment wrapper `ChallengeWrapper2_Retrain` (in `Wrappers/ChallengeWrapper2_retrain.py`) has a `reset` method that can use either a random critical state (if `self.random_sampling = True`) or the mask-based critical state (if `False`). Although the provided `retrain.py` does not explicitly set `random_sampling = True` for the Random explanation case, the measurement logic is independent of that flag; the training loop collects and prints rewards regardless of how the initial state is chosen. Hence the code for measuring cumulative reward is present and correctly structured for the network defence environment.
+
+# Score
+
+**1** – The code in `retrain.py` implements the accumulation and printing of cumulative (average) reward during the refinement process for the CAGE Challenge 2 environment. This satisfies the criterion that code has been implemented for measuring cumulative reward throughout refinement, even if the specific configuration for the "Random" explanation method may need a parameter change elsewhere; the measurement mechanism itself is fully implemented.
+2026-08-26 10:04:33 [info     ] model response: # Expectations
+
+The criterion requires that for the network defence (CAGE Challenge 2) environment, the code implements measurement of cumulative reward throughout refinement when using the "Random" explanation method. According to the paper (Section 4.2, Experiment III), the refining method (RICE) is run using critical steps identified by different explanation methods, including "Random", and the agent’s performance after refining is reported (Table 1). Measuring cumulative reward typically means tracking the total reward per episode or average reward over training steps and logging or printing it so that the refinement progress can be observed. I expect to see code that runs the refinement loop for the network defence environment, that accumulates episode rewards (or running average rewards), and that prints or records these values. The code should also be compatible with the "Random" explanation method, i.e., it should be able to reset the environment using a randomly chosen critical state (instead of a state chosen by the mask network). However, the explicit implementation of the random critical state selection is likely covered by a preceding criterion; for this criterion, the focus is specifically on whether the reward measurement code exists and is properly integrated into the refinement process for that setting.
+
+# Reality
+
+The submission includes the file `Refine_cage_challenge/retrain.py`. This script sets up the CAGE Challenge 2 environment using `ChallengeWrapper2_Retrain` and trains a PPO agent with RND exploration (via `PPOAgent_Retrain`). Inside the `train` function:
+
+- `running_reward` accumulates the reward over each episode.
+- After every `print_interval` episodes, the script computes the average training reward (`running_reward / print_interval`) and prints it with the label `Training Avg Reward`.
+- It also runs a short test loop (5 episodes) and prints the `Test Avg Reward`.
+- Checkpoints are saved periodically, which allows tracking the agent’s performance over time.
+
+This code directly implements the measurement of cumulative reward during the refinement process.
+
+The environment wrapper `ChallengeWrapper2_Retrain` (in `Wrappers/ChallengeWrapper2_retrain.py`) has a `reset` method that can use either a random critical state (if `self.random_sampling = True`) or the mask-based critical state (if `False`). Although the provided `retrain.py` does not explicitly set `random_sampling = True` for the Random explanation case, the measurement logic is independent of that flag; the training loop collects and prints rewards regardless of how the initial state is chosen. Hence the code for measuring cumulative reward is present and correctly structured for the network defence environment.
+
+# Score
+
+**1** – The code in `retrain.py` implements the accumulation and printing of cumulative (average) reward during the refinement process for the CAGE Challenge 2 environment. This satisfies the criterion that code has been implemented for measuring cumulative reward throughout refinement, even if the specific configuration for the "Random" explanation method may need a parameter change elsewhere; the measurement mechanism itself is fully implemented.

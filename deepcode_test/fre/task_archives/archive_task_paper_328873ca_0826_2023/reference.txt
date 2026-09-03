@@ -1,0 +1,152 @@
+```json
+{
+    "selected_references": [
+        {
+            "rank": 1,
+            "title": "Stable-baselines3: Reliable reinforcement learning implementations",
+            "authors": ["Antonin Raffin", "Ashley Hill", "Adam Gleave", "Anssi Kanervisto", "Maximilian Ernestus", "Noah Dormann"],
+            "year": "2021",
+            "relevance_score": 0.95,
+            "citation_context": "Listed in the References/Bibliography section. While not explicitly cited in the main text, RICE's core refining loop is built around PPO (Schulman et al., 2017) and SAC (Haarnoja et al., 2018), both of which are implemented in this library. It is the highest-quality modern reference for the policy-gradient algorithms underlying RICE.",
+            "key_contributions": [
+                "Reliable PyTorch implementations of PPO, SAC, and other deep RL algorithms",
+                "Extensive documentation, benchmarking, and reproducibility tools",
+                "Modular API that supports custom policies and environments"
+            ],
+            "implementation_value": "Provides a production-ready PPO/SAC implementation that can serve as the base training loop for RICE's refining stage, including support for custom reward shaping (e.g., adding the RND exploration bonus) and environment resets from arbitrary initial states.",
+            "github_info": {
+                "repository_url": "https://github.com/DLR-RM/stable-baselines3",
+                "stars_count": "13,727",
+                "last_updated": "2026-08-26",
+                "repository_quality": "Excellent. Very high star count, active maintenance, comprehensive CI/CD, extensive documentation, and a large community.",
+                "key_features": [
+                    "PPO, SAC, A2C, DQN, DDPG, TD3, HER implementations",
+                    "Custom policy and environment support",
+                    "Tensorboard/Wandb logging and hyperparameter tuning",
+                    "Vectorized environments and callbacks"
+                ],
+                "documentation_quality": "Outstanding. ReadTheDocs documentation, tutorials, examples, and migration guides from Stable Baselines2.",
+                "community_activity": "Highly active. 2,171 forks, 66 watchers, 87 open issues, frequent commits and releases."
+            },
+            "original_reference": "Raffin, A., Hill, A., Gleave, A., Kanervisto, A., Ernestus, M., and Dormann, N. Stable-baselines3: Reliable reinforcement learning implementations. Journal of Machine Learning Research, 2021."
+        },
+        {
+            "rank": 2,
+            "title": "Exploration by Random Network Distillation",
+            "authors": ["Yuri Burda", "Harrison Edwards", "Amos Storkey", "Oleg Klimov"],
+            "year": "2018",
+            "relevance_score": 0.90,
+            "citation_context": "Cited in Section 3.3 (Technique Detail): \"we adopt Random Network Distillation (RND) (Burda et al., 2018) which is proved to be an effective exploration bonus, especially in large and continuous state spaces.\" RND is a core component of RICE's exploration mechanism.",
+            "key_contributions": [
+                "Introduces Random Network Distillation as an intrinsic reward for exploration",
+                "Demonstrates effectiveness in hard-exploration tasks with high-dimensional state spaces",
+                "Provides a prediction-error-based exploration bonus that decays as state coverage increases"
+            ],
+            "implementation_value": "Directly implements the exploration bonus used in RICE (Algorithm 2). The predictor/target network architecture and MSE loss can be reused or adapted for the RND component of the refining loop.",
+            "github_info": {
+                "repository_url": "https://github.com/openai/random-network-distillation",
+                "stars_count": "930",
+                "last_updated": "2026-07-29",
+                "repository_quality": "Good. Official OpenAI implementation of the paper, but archived and no longer actively maintained (last push 2020-10-01).",
+                "key_features": [
+                    "Official RND implementation",
+                    "PPO training with RND bonus",
+                    "Montezuma's Revenge and other hard-exploration experiments"
+                ],
+                "documentation_quality": "Moderate. README with setup instructions; code is research-grade and less polished than Stable-Baselines3.",
+                "community_activity": "Moderate. 164 forks, 23 watchers, 16 open issues. Archived repository, so limited ongoing activity."
+            },
+            "original_reference": "Burda, Y., Edwards, H., Storkey, A., and Klimov, O. Exploration by random network distillation. In Proc. of ICLR, 2018."
+        },
+        {
+            "rank": 3,
+            "title": "CARLA: An open urban driving simulator",
+            "authors": ["Alexey Dosovitskiy", "German Ros", "Felipe Codevilla", "Antonio Lopez", "Vladlen Koltun"],
+            "year": "2017",
+            "relevance_score": 0.86,
+            "citation_context": "Cited in Section 5 (Discussion): \"Simulation platforms broadly include Carla (Dosovitskiy et al., 2017) and MetaDrive (Li et al., 2022) which have been used to facilitate the training of DRL agents.\" CARLA is a foundational platform for the autonomous driving application domain evaluated in RICE.",
+            "key_contributions": [
+                "Open-source simulator for autonomous driving research",
+                "Realistic urban environments, sensors, and vehicle dynamics",
+                "Supports RL training, imitation learning, and scenario generation"
+            ],
+            "implementation_value": "Provides the simulation backend for autonomous driving experiments similar to those in RICE. Useful for building and testing DRL refining pipelines in a realistic, controllable environment.",
+            "github_info": {
+                "repository_url": "https://github.com/carla-simulator/carla",
+                "stars_count": "14,326",
+                "last_updated": "2026-08-26",
+                "repository_quality": "Excellent. One of the most widely used autonomous driving simulators, very active development, large community.",
+                "key_features": [
+                    "High-fidelity 3D urban driving simulation",
+                    "ROS bridge, Python API, and OpenDRIVE support",
+                    "Sensor suite (camera, LiDAR, radar, GPS, IMU)",
+                    "Scenario runner and traffic manager"
+                ],
+                "documentation_quality": "Excellent. Comprehensive documentation, tutorials, forums, and example scripts.",
+                "community_activity": "Very active. 4,669 forks, 263 watchers, 1,194 open issues, daily commits and active UE5 development branch."
+            },
+            "original_reference": "Dosovitskiy, A., Ros, G., Codevilla, F., Lopez, A., and Koltun, V. CARLA: An open urban driving simulator. In Proc. of CoRL, pp. 1-16, 2017."
+        },
+        {
+            "rank": 4,
+            "title": "MetaDrive: Composing diverse driving scenarios for generalizable reinforcement learning",
+            "authors": ["Quanyi Li", "Zhenghao Peng", "Lan Feng", "Qihang Zhang", "Zhenghai Xue", "Bolei Zhou"],
+            "year": "2022",
+            "relevance_score": 0.83,
+            "citation_context": "Cited in Section 5 (Discussion) alongside CARLA as a simulation platform used to facilitate DRL agent training. MetaDrive is the lightweight driving simulator most directly associated with the paper's autonomous driving experiments.",
+            "key_contributions": [
+                "Lightweight, procedurally generated driving simulator",
+                "Composes diverse driving scenarios for generalizable RL",
+                "Efficient enough for large-scale RL training"
+            ],
+            "implementation_value": "Offers a fast, easy-to-deploy alternative to CARLA for autonomous driving RL experiments. Its procedural generation aligns well with RICE's need to evaluate refining across diverse scenarios.",
+            "github_info": {
+                "repository_url": "https://github.com/metadriverse/metadrive",
+                "stars_count": "1,235",
+                "last_updated": "2026-08-25",
+                "repository_quality": "Very good. Active maintenance, growing community, well-organized codebase.",
+                "key_features": [
+                    "Procedural generation of driving maps and traffic scenarios",
+                    "Gym-compatible interface",
+                    "Multi-agent support and scenario editing tools",
+                    "Lightweight and fast compared to Unreal-based simulators"
+                ],
+                "documentation_quality": "Very good. Documentation website with installation guides, tutorials, and API references.",
+                "community_activity": "Active. 197 forks, 19 watchers, 102 open issues, regular updates and releases."
+            },
+            "original_reference": "Li, Q., Peng, Z., Feng, L., Zhang, Q., Xue, Z., and Zhou, B. Metadrive: Composing diverse driving scenarios for generalizable reinforcement learning. IEEE Transactions on Pattern Analysis and Machine Intelligence, 2022."
+        },
+        {
+            "rank": 5,
+            "title": "Tianshou: A highly modularized deep reinforcement learning library",
+            "authors": ["Jiayi Weng", "Huayu Chen", "Dong Yan", "Kaichao You", "Aristide Duburcq", "Minghao Zhang", "Yi Su", "Hang Su", "Jun Zhu"],
+            "year": "2022",
+            "relevance_score": 0.80,
+            "citation_context": "Listed in the References/Bibliography section as a highly modularized deep RL library. Provides an alternative design pattern for implementing the custom training loop and mask network required by RICE.",
+            "key_contributions": [
+                "Highly modularized PyTorch deep RL library",
+                "Clean separation between algorithms, policies, and trainers",
+                "Supports on-policy, off-policy, offline, and imitation learning algorithms"
+            ],
+            "implementation_value": "Useful as a reference for implementing RICE's custom components (mask network, mixed initial state distribution, RND bonus integration) in a modular way, especially for researchers who prefer building from lower-level primitives than Stable-Baselines3 provides.",
+            "github_info": {
+                "repository_url": "https://github.com/thu-ml/tianshou",
+                "stars_count": "10,943",
+                "last_updated": "2026-08-26",
+                "repository_quality": "Excellent. High star count, active development, strong documentation, and a major v2 redesign improving API clarity.",
+                "key_features": [
+                    "Modular algorithm/policy/trainer abstractions",
+                    "PPO, SAC, DQN, DDPG, TD3, imitation learning, offline RL",
+                    "Vectorized environment support",
+                    "Comprehensive examples and benchmarks"
+                ],
+                "documentation_quality": "Excellent. ReadTheDocs documentation, API references, tutorials, and migration guide for v2.",
+                "community_activity": "Highly active. 1,333 forks, 97 watchers, 137 open issues, frequent commits and active discussions."
+            },
+            "original_reference": "Weng, J., Chen, H., Yan, D., You, K., Duburcq, A., Zhang, M., Su, Y., Su, H., and Zhu, J. Tianshou: A highly modularized deep reinforcement learning library. Journal of Machine Learning Research, 2022."
+        }
+    ],
+    "analysis_summary": "I extracted all references from the RICE paper's bibliography and identified those with associated GitHub repositories. Selection prioritized repository quality (stars, maintenance, documentation), implementation relevance to RICE's core methodology (PPO refining, RND exploration, autonomous driving evaluation), technical depth, and academic influence. The top 5 combine high-quality foundational libraries (Stable-Baselines3, Tianshou), the canonical implementation of RICE's exploration bonus (OpenAI RND), and the leading autonomous driving simulators (CARLA, MetaDrive) used in the paper's real-world application domain. Other references with GitHub repos found but not in the top 5 include DI-drive, malware_rl, cage-challenge-2, pto-selfish-mining, and Go-Explore; these are valuable for reproducing specific experiments but rank lower on repository quality or general implementation value.",
+    "github_repositories_found": "11+ references with identifiable GitHub repositories, including: Stable-Baselines3, Tianshou, CARLA, MetaDrive, Random Network Distillation (OpenAI), Go-Explore, DI-drive, malware_rl, cage-challenge-2, cyborg-cage-2, and pto-selfish-mining."
+}
+```

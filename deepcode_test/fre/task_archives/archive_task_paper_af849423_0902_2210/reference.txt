@@ -1,0 +1,33 @@
+{
+            "rank": 5,
+            "title": "HIQL: Offline Goal-Conditioned RL with Latent States as Actions",
+            "authors": ["Seohong Park", "Dibya Ghosh", "Benjamin Eysenbach", "Sergey Levine"],
+            "year": "2023",
+            "relevance_score": 0.82,
+            "citation_context": "Cited in Section 2 as a representative offline goal-conditioned RL method and in Appendix B for the goal-sampling procedure: 'Specifically we utilize a hindsight experience relabelling (Andrychowicz et al., 2017) distribution in accordance with (Park et al., 2023a).'",
+            "key_contributions": [
+                "Proposes HIQL, a hierarchical offline goal-conditioned RL method that treats latent subgoal states as actions",
+                "Introduces a strong goal-conditioned IQL formulation with hindsight relabeling",
+                "Provides state-of-the-art offline goal-reaching baselines on AntMaze"
+            ],
+            "implementation_value": "Directly informs FRE's goal-reaching reward generation and hindsight relabeling distribution. Its JAX codebase offers clean AntMaze goal-conditioned RL implementations, and the README points to the updated OGBench repository for cleaner reference implementations.",
+            "github_info": {
+                "repository_url": "https://github.com/seohongpark/HIQL",
+                "stars_count": "97",
+                "last_updated": "2024-12-01",
+                "repository_quality": "Official JAX implementation. MIT-licensed, clean, and actively maintained by the author. README points to OGBench as a cleaner replacement for non-reproduction research.",
+                "key_features": [
+                    "HIQL, IQL, GCBC, HGCBC, and POR examples",
+                    "AntMaze goal-conditioned training commands",
+                    "Hindsight relabeling probabilities (p_currgoal, p_trajgoal, p_randomgoal)",
+                    "Integration with the OGBench benchmark"
+                ],
+                "documentation_quality": "Very good: detailed README with installation instructions, command examples for multiple AntMaze variants, and links to the project page and OGBench.",
+                "community_activity": "97 stars, 9 forks, 1 open issue. Last push in 2024; modest but active maintenance."
+            },
+            "original_reference": "Park, S., Ghosh, D., Eysenbach, B., and Levine, S. Hiql: Offline goal-conditioned rl with latent states as actions. arXiv preprint arXiv:2307.11949, 2023a."
+        }
+    ],
+    "analysis_summary": "I analyzed the References section of the FRE paper and identified 16 references with public GitHub repositories, then scored them by repository quality, implementation relevance, technical depth, and academic influence. The top five selected repositories map directly to FRE's implementation pipeline: IQL is the offline RL backbone used to train FRE-conditioned policies; D4RL and ExORL provide the AntMaze, Kitchen, walker, and cheetah environments/datasets; the Controllable Agent repository provides the Forward-Backward zero-shot RL baseline code used in comparisons; and HIQL supplies the goal-conditioned RL/reward-relabeling implementation details referenced in the appendix. The target paper's own implementation (github.com/kvfrans/fre) was intentionally excluded.",
+    "github_repositories_found": 16
+}

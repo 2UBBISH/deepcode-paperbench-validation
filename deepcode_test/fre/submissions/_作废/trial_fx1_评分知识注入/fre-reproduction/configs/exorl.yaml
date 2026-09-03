@@ -1,0 +1,140 @@
+# ExORL benchmark configuration for FRE reproduction.
+# This file mirrors the dataclass defaults in fre/config.py and the
+# structure of configs/antmaze.yaml, with ExORL-specific dimensions,
+# downstream tasks, and shorter phase-2 IQL training (5e5 gradient steps).
+
+domain: exorl
+dataset_name: walker          # use "walker" or "cheetah"; override via CLI/run_experiments.py
+dataset_path: null            # path to ExORL HDF5 dataset, if not using the default package
+env_name: walker
+state_dim: 24                 # DMC walker flattened observation
+action_dim: 6                 # DMC walker action dimension
+
+# Downstream evaluation tasks. For cheetah runs, replace/override with:
+#   ["cheetah-goals", "cheetah-velocity"]
+tasks:
+  - walker-goals
+  - cheetah-goals
+  - walker-velocity
+  - cheetah-velocity
+
+reward_prior:
+  goal_epsilon: 0.5           # ExORL goal-reaching threshold used by env wrapper
+  p_mask: 0.75
+  mlp_hidden: 256
+  mixture_weights: [0.3333333333, 0.3333333333, 0.3333333333]
+  clip_min: -1.0
+  clip_max: 1.0
+
+fre_vae:
+  reward_embedding:
+    state_proj_dim: 192
+    reward_bins: 64
+    embedding_dim: 64
+    token_dim: 256
+  d_model: 256
+  nhead: 4
+  num_layers: 4
+  dim_feedforward: 1024
+  dropout: 0.1
+  activation: gelu
+  latent_dim: 128
+  decoder_hidden: [256, 256]
+  decoder_activation: relu
+  beta: 1.0
+  lr: 1.0e-4
+  weight_decay: 0.0
+  encoder_states: 32
+  decoder_states: 256
+  reward_fn_batch_size: 16
+
+iql:
+  q_hidden: [256, 256]
+  v_hidden: [256, 256]
+  policy_hidden: [256, 256]
+  gamma: 0.99
+  expectile: 0.9
+  awr_temperature: 3.0
+  target_tau: 0.005
+  advantage_clip: [-5.0, 2.0]
+  log_std_min: -5.0
+  log_std_max: 2.0
+  lr: 3.0e-4
+  weight_decay: 0.0
+
+training:
+  seed: 0
+  device: auto
+  vae_steps: 100000
+  vae_batch_size: 16
+  vae_log_interval: 1000
+  vae_save_interval: 10000
+  vae_checkpoint: null
+  rl_steps: 500000           # ExORL uses 5e5 phase-2 steps in the reproduction plan
+  rl_batch_size: 256
+  rl_log_interval: 1000
+  rl_save_interval: 50000
+  rl_checkpoint: null
+  normalize_states: true
+  state_pool_size: null
+  output_dir: checkpoints/exorl
+  log_dir: logs/exorl
+  use_tensorboard: false
+
+evaluation:
+  num_examples: 32
+  num_episodes: 20
+  seeds: [0, 1, 2, 3, 4]
+  stochastic: false
+  device: auto
+  output_dir: eval_results/exorl
+
+baselines:
+  fb:
+    repr_dim: 256
+    hidden_dims: [256, 256]
+    lr: 3.0e-4
+    gamma: 0.99
+    tau: 0.005
+    batch_size: 256
+    eval_reward_samples: 5120
+    ridge_coeff: 1.0e-3
+
+  sf:
+    feature_dim: 256
+    hidden_dims: [256, 256]
+    icm_lr: 1.0e-4
+    lr: 3.0e-4
+    gamma: 0.99
+    tau: 0.005
+    batch_size: 256
+    eval_reward_samples: 5120
+
+  gc_iql:
+    hidden_dims: [256, 256]
+    gamma: 0.99
+    expectile: 0.9
+    awr_temperature: 3.0
+    target_tau: 0.005
+    lr: 3.0e-4
+    batch_size: 256
+    hindsight_prob: 0.5
+    goal_epsilon: 0.5
+
+  gc_bc:
+    hidden_dims: [256, 256]
+    lr: 3.0e-4
+    batch_size: 256
+    relabel_fraction: 0.5
+    goal_epsilon: 0.5
+
+  opal:
+    skill_dim: 16
+    encoder_hidden: [256, 256]
+    decoder_hidden: [256, 256]
+    policy_hidden: [256, 256]
+    prior_hidden: [256, 256]
+    lr: 3.0e-4
+    beta: 1.0
+    batch_size: 256
+    num_skills_eval: 10

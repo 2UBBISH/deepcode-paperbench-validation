@@ -1,0 +1,1 @@
+I'll download all five selected GitHub repositories into the specified directory, with each repo in its own subdirectory.

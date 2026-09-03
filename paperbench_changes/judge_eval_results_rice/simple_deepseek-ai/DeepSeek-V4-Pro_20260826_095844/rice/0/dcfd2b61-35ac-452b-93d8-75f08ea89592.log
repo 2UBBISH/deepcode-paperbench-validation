@@ -1,0 +1,59 @@
+2026-08-26 09:58:46 [info     ] Grading leaf: For the MuJoCo environments, the original StateMask Explanation method can be selected for generating rollouts (without training)
+2026-08-26 10:00:29 [info     ] Model file selection raw output:
+Refine_mujoco/masknet/gen_fid.py
+Refine_mujoco/masknet/fid_test.py
+Refine_mujoco/masknet/environment.py
+Refine_mujoco/masknet/train.py
+Refine_mujoco/masknet/cus_PPO.py
+Refine_mujoco/masknet/readme.md
+Refine_mujoco/retrain.py
+Refine_mujoco/utils.py
+Refine_mujoco/models.py
+Refine_mujoco/environment.py
+2026-08-26 10:00:29 [info     ] Model file selection raw output:
+Refine_mujoco/masknet/gen_fid.py
+Refine_mujoco/masknet/fid_test.py
+Refine_mujoco/masknet/environment.py
+Refine_mujoco/masknet/train.py
+Refine_mujoco/masknet/cus_PPO.py
+Refine_mujoco/masknet/readme.md
+Refine_mujoco/retrain.py
+Refine_mujoco/utils.py
+Refine_mujoco/models.py
+Refine_mujoco/environment.py
+2026-08-26 10:04:02 [info     ] model response: # Expectations
+The criterion requires that for the MuJoCo environments, the original StateMask explanation method (from Cheng et al., 2023, not the proposed "Ours" alternative) can be selected for generating rollouts without training. That means the codebase should allow loading a pre‑trained StateMask mask network model and using it to produce importance scores (mask probabilities) for states along a trajectory. This could be achieved, for example, by a script or function that loads a StateMask‑specific model file and runs episodes, collecting the mask network’s outputs. The selection mechanism could be a command‑line argument, a configuration parameter, or a dedicated script, as long as it is clear that the original StateMask method is a distinct and usable option. The code should not be hard‑wired only to the “Ours” method; there must be some path that enables the original StateMask.
+
+# Reality
+The submission files consist of a `masknet/` directory containing training and inference code for a mask network, plus retraining code that uses the mask network. The key files are:
+
+- `Refine_mujoco/masknet/train.py` – trains a mask network using an environment with an `alpha` reward bonus (the “Ours” method described in Section 3.3).
+- `Refine_mujoco/masknet/cus_PPO.py` – a custom PPO class used for mask training; it does not implement the original StateMask’s prime‑dual optimization or its distinct surrogate objective.
+- `Refine_mujoco/masknet/environment.py` – defines `Multi2SingleEnv`, which adds the `alpha` bonus; this is the “Ours” setup.
+- `Refine_mujoco/masknet/gen_fid.py` – loads a mask model from a hard‑coded path (`models/best_model/best_model`) and collects mask probabilities for fidelity testing.
+- `Refine_mujoco/masknet/fid_test.py` – uses the recorded mask probabilities to compute fidelity scores; it also assumes the same hard‑coded model paths.
+- `Refine_mujoco/utils.py` – contains a generic `gen_one_traj()` function that loads a masknet model (via `PPO.load`) and a base policy to produce a trajectory with mask probabilities.
+- `Refine_mujoco/retrain.py` – the main retraining script, which accepts `--masknet_path` as an argument, allowing any masknet model to be plugged in.
+
+Nowhere in the code is there any implementation of the original StateMask training procedure. There is no class, script, or configuration that explicitly loads or references an “original StateMask” model. The training code (`train.py`, `cus_PPO.py`, `environment.py`) implements only the “Ours” method with the reward bonus, not the original StateMask’s objective or prime‑dual optimization. The inference scripts (`gen_fid.py`, `fid_test.py`, `utils.py`) are generic – they can load any model that was saved by Stable‑Baselines3’s `PPO`, but they do not provide a distinct selection mechanism for the original StateMask method. Because the original StateMask training is not present, there is no pre‑trained StateMask model to use, and the code contains no special handling to make that method selectable.
+
+# Score
+0 – The submission does not contain a correct implementation that allows the original StateMask explanation method to be selected for generating rollouts. The code only implements the proposed “Ours” explanation method, and there is no provision (e.g., a separate model loading path, configuration flag, or distinct script) to choose the original StateMask method for inference.
+2026-08-26 10:04:02 [info     ] model response: # Expectations
+The criterion requires that for the MuJoCo environments, the original StateMask explanation method (from Cheng et al., 2023, not the proposed "Ours" alternative) can be selected for generating rollouts without training. That means the codebase should allow loading a pre‑trained StateMask mask network model and using it to produce importance scores (mask probabilities) for states along a trajectory. This could be achieved, for example, by a script or function that loads a StateMask‑specific model file and runs episodes, collecting the mask network’s outputs. The selection mechanism could be a command‑line argument, a configuration parameter, or a dedicated script, as long as it is clear that the original StateMask method is a distinct and usable option. The code should not be hard‑wired only to the “Ours” method; there must be some path that enables the original StateMask.
+
+# Reality
+The submission files consist of a `masknet/` directory containing training and inference code for a mask network, plus retraining code that uses the mask network. The key files are:
+
+- `Refine_mujoco/masknet/train.py` – trains a mask network using an environment with an `alpha` reward bonus (the “Ours” method described in Section 3.3).
+- `Refine_mujoco/masknet/cus_PPO.py` – a custom PPO class used for mask training; it does not implement the original StateMask’s prime‑dual optimization or its distinct surrogate objective.
+- `Refine_mujoco/masknet/environment.py` – defines `Multi2SingleEnv`, which adds the `alpha` bonus; this is the “Ours” setup.
+- `Refine_mujoco/masknet/gen_fid.py` – loads a mask model from a hard‑coded path (`models/best_model/best_model`) and collects mask probabilities for fidelity testing.
+- `Refine_mujoco/masknet/fid_test.py` – uses the recorded mask probabilities to compute fidelity scores; it also assumes the same hard‑coded model paths.
+- `Refine_mujoco/utils.py` – contains a generic `gen_one_traj()` function that loads a masknet model (via `PPO.load`) and a base policy to produce a trajectory with mask probabilities.
+- `Refine_mujoco/retrain.py` – the main retraining script, which accepts `--masknet_path` as an argument, allowing any masknet model to be plugged in.
+
+Nowhere in the code is there any implementation of the original StateMask training procedure. There is no class, script, or configuration that explicitly loads or references an “original StateMask” model. The training code (`train.py`, `cus_PPO.py`, `environment.py`) implements only the “Ours” method with the reward bonus, not the original StateMask’s objective or prime‑dual optimization. The inference scripts (`gen_fid.py`, `fid_test.py`, `utils.py`) are generic – they can load any model that was saved by Stable‑Baselines3’s `PPO`, but they do not provide a distinct selection mechanism for the original StateMask method. Because the original StateMask training is not present, there is no pre‑trained StateMask model to use, and the code contains no special handling to make that method selectable.
+
+# Score
+0 – The submission does not contain a correct implementation that allows the original StateMask explanation method to be selected for generating rollouts. The code only implements the proposed “Ours” explanation method, and there is no provision (e.g., a separate model loading path, configuration flag, or distinct script) to choose the original StateMask method for inference.

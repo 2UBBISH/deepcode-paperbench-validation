@@ -1,0 +1,39 @@
+2026-08-26 09:58:46 [info     ] Grading leaf: For the autonomous driving environment, the optimization of the mask network objective now uses PPO rather than the prime-dual method
+2026-08-26 09:59:27 [info     ] Model file selection raw output:
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/readme.md
+Refine_auto_drive/retrain.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/train_baseline.py
+README.md
+2026-08-26 09:59:27 [info     ] Model file selection raw output:
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/readme.md
+Refine_auto_drive/retrain.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/train_baseline.py
+README.md
+2026-08-26 10:00:13 [info     ] model response: # Expectations
+The paper describes that for the mask network training (Algorithm 1), they reformulate the objective to maximize the expected total reward of the perturbed agent (with a reward bonus for blinding), and they use the vanilla PPO algorithm to optimize the mask network, rather than the prime‑dual method used in the original StateMask. Section 3.3 states: "Leveraging this theorem, we can transform the objective function to J(θ)=max η(π̅). With this reformulation, we can utilize the vanilla PPO algorithm to train the state mask without sacrificing the theoretical guarantee." Therefore, in the autonomous driving environment, the code should implement a training loop where the mask network policy (outputting binary mask actions) is updated using PPO. The optimizer should not involve any prime‑dual optimization; the PPO policy should directly maximize the modified reward (task reward + α · mask).
+
+# Reality
+In the submitted code, the training of the mask network for autonomous driving is implemented in `Refine_auto_drive/train_masknet.py`. It uses a `PPOPolicy` from the DI-engine library (`from ding.policy import PPOPolicy`). The configuration (`metadrive_macro_config`) defines a policy with an action shape of 2 (for binary mask actions) and uses a standard PPO learner with an actor‑critic model. The environment wrapper (`custom_masknet_env.py`) implements the combined action selection (target agent action when mask=0, random action when mask=1) and adds a bonus reward `lamb * mask` to encourage blinding. The training loop runs a collector to gather trajectories and a learner to update the mask network policy via PPO (using `policy.learn_mode`). There is no evidence of the prime‑dual optimization method being used for the mask network; instead, the optimization is entirely handled by the PPO algorithm, exactly as described in the paper.
+
+# Score
+1 – The code correctly implements the required optimization change: the mask network for the autonomous driving environment is trained using PPO rather than the prime‑dual method.
+2026-08-26 10:00:13 [info     ] model response: # Expectations
+The paper describes that for the mask network training (Algorithm 1), they reformulate the objective to maximize the expected total reward of the perturbed agent (with a reward bonus for blinding), and they use the vanilla PPO algorithm to optimize the mask network, rather than the prime‑dual method used in the original StateMask. Section 3.3 states: "Leveraging this theorem, we can transform the objective function to J(θ)=max η(π̅). With this reformulation, we can utilize the vanilla PPO algorithm to train the state mask without sacrificing the theoretical guarantee." Therefore, in the autonomous driving environment, the code should implement a training loop where the mask network policy (outputting binary mask actions) is updated using PPO. The optimizer should not involve any prime‑dual optimization; the PPO policy should directly maximize the modified reward (task reward + α · mask).
+
+# Reality
+In the submitted code, the training of the mask network for autonomous driving is implemented in `Refine_auto_drive/train_masknet.py`. It uses a `PPOPolicy` from the DI-engine library (`from ding.policy import PPOPolicy`). The configuration (`metadrive_macro_config`) defines a policy with an action shape of 2 (for binary mask actions) and uses a standard PPO learner with an actor‑critic model. The environment wrapper (`custom_masknet_env.py`) implements the combined action selection (target agent action when mask=0, random action when mask=1) and adds a bonus reward `lamb * mask` to encourage blinding. The training loop runs a collector to gather trajectories and a learner to update the mask network policy via PPO (using `policy.learn_mode`). There is no evidence of the prime‑dual optimization method being used for the mask network; instead, the optimization is entirely handled by the PPO algorithm, exactly as described in the paper.
+
+# Score
+1 – The code correctly implements the required optimization change: the mask network for the autonomous driving environment is trained using PPO rather than the prime‑dual method.

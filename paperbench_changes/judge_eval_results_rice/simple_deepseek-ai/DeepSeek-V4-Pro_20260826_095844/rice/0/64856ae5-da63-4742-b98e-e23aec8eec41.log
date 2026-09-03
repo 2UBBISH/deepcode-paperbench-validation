@@ -1,0 +1,61 @@
+2026-08-26 10:01:22 [info     ] Grading leaf: In Experiment II, for the autonomous driving environment, for the "StateMask-R" refinement method, code has been implemented for measuring cumulative reward throughout refinement
+2026-08-26 10:02:55 [info     ] Model file selection raw output:
+Refine_auto_drive/retrain.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/readme.md
+2026-08-26 10:02:55 [info     ] Model file selection raw output:
+Refine_auto_drive/retrain.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/readme.md
+2026-08-26 10:05:11 [info     ] model response: # Expectations
+The paper’s Experiment II compares refining methods (PPO fine‑tuning, JSRL, StateMask‑R, and the proposed RICE) on various environments. For the autonomous driving environment, **StateMask‑R** is defined as the baseline that resets the environment to an explanation‑identified critical state and then continues training the agent from that state. During such a refinement process, one needs to **measure the cumulative reward** (e.g., the agent’s total reward per evaluation episode) to track performance improvement. A correct implementation would therefore contain code that, while running the StateMask‑R refinement for the autonomous driving environment, periodically evaluates the current policy on the environment and records/logs the cumulative reward (e.g., via an evaluation loop that returns evaluation scores). I will look for actual code in the submission that performs this measurement in the context of the StateMask‑R method for the autonomous driving task.
+
+# Reality
+The submission contains a set of files for the autonomous driving environment using MetaDrive. The main refinement script is `retrain.py`. In this script:
+
+- A custom environment wrapper (`CustomWrapper` from `retrain_env.py`) is used, which can reset the environment to a critical state identified by the explanation method (the mask network). The probability of using a critical state vs. a default initial state is controlled by the parameter `go_prob`.
+- An `InteractionSerialEvaluator` is set up (`evaluator`) and used in the training loop (lines ~126‑134):
+  ```python
+  if evaluator.should_eval(learner.train_iter):
+      stop, rate = evaluator.eval(learner.save_checkpoint, learner.train_iter, 1)
+      if stop:
+          break
+  ```
+- This evaluator periodically evaluates the current policy on the autonomous driving environment, returning a `rate` that corresponds to the cumulative reward achieved in evaluation episodes.
+- The same script can be configured to behave as the **StateMask‑R** refinement method by setting `go_prob=1` (always reset to the critical state) and `bonus_scale=0` (disable exploration bonus), because the underlying wrapper already implements the “reset to critical state and continue training” logic.
+- Therefore, the code for **measuring cumulative reward throughout refinement** is present in `retrain.py` via the evaluation loop, and it directly applies to the StateMask‑R refinement method when the appropriate parameters are used.
+
+# Score
+1 – The submission contains code (the evaluator loop in `retrain.py`) that implements cumulative reward measurement during the refinement process. This code is directly applicable to the StateMask‑R method for the autonomous driving environment, satisfying the criterion.
+2026-08-26 10:05:11 [info     ] model response: # Expectations
+The paper’s Experiment II compares refining methods (PPO fine‑tuning, JSRL, StateMask‑R, and the proposed RICE) on various environments. For the autonomous driving environment, **StateMask‑R** is defined as the baseline that resets the environment to an explanation‑identified critical state and then continues training the agent from that state. During such a refinement process, one needs to **measure the cumulative reward** (e.g., the agent’s total reward per evaluation episode) to track performance improvement. A correct implementation would therefore contain code that, while running the StateMask‑R refinement for the autonomous driving environment, periodically evaluates the current policy on the environment and records/logs the cumulative reward (e.g., via an evaluation loop that returns evaluation scores). I will look for actual code in the submission that performs this measurement in the context of the StateMask‑R method for the autonomous driving task.
+
+# Reality
+The submission contains a set of files for the autonomous driving environment using MetaDrive. The main refinement script is `retrain.py`. In this script:
+
+- A custom environment wrapper (`CustomWrapper` from `retrain_env.py`) is used, which can reset the environment to a critical state identified by the explanation method (the mask network). The probability of using a critical state vs. a default initial state is controlled by the parameter `go_prob`.
+- An `InteractionSerialEvaluator` is set up (`evaluator`) and used in the training loop (lines ~126‑134):
+  ```python
+  if evaluator.should_eval(learner.train_iter):
+      stop, rate = evaluator.eval(learner.save_checkpoint, learner.train_iter, 1)
+      if stop:
+          break
+  ```
+- This evaluator periodically evaluates the current policy on the autonomous driving environment, returning a `rate` that corresponds to the cumulative reward achieved in evaluation episodes.
+- The same script can be configured to behave as the **StateMask‑R** refinement method by setting `go_prob=1` (always reset to the critical state) and `bonus_scale=0` (disable exploration bonus), because the underlying wrapper already implements the “reset to critical state and continue training” logic.
+- Therefore, the code for **measuring cumulative reward throughout refinement** is present in `retrain.py` via the evaluation loop, and it directly applies to the StateMask‑R refinement method when the appropriate parameters are used.
+
+# Score
+1 – The submission contains code (the evaluator loop in `retrain.py`) that implements cumulative reward measurement during the refinement process. This code is directly applicable to the StateMask‑R method for the autonomous driving environment, satisfying the criterion.

@@ -1,0 +1,85 @@
+2026-08-26 09:58:46 [info     ] Grading leaf: For the selfish mining environment, The StateMask ("Ours") Explanation method can be selected as the explanation method during retraining
+2026-08-26 09:59:39 [info     ] Model file selection raw output:
+Refine_selfish_mining/retrain.py
+Refine_selfish_mining/utils.py
+Refine_selfish_mining/masknet/train.py
+Refine_selfish_mining/masknet/sample_mask_score.py
+Refine_selfish_mining/masknet/utils.py
+Refine_selfish_mining/masknet/replay.py
+Refine_selfish_mining/masknet/fidelity_score.py
+Refine_selfish_mining/masknet/sample_value_score.py
+README.md
+Refine_selfish_mining/rnd_policy.py
+2026-08-26 09:59:39 [info     ] Model file selection raw output:
+Refine_selfish_mining/retrain.py
+Refine_selfish_mining/utils.py
+Refine_selfish_mining/masknet/train.py
+Refine_selfish_mining/masknet/sample_mask_score.py
+Refine_selfish_mining/masknet/utils.py
+Refine_selfish_mining/masknet/replay.py
+Refine_selfish_mining/masknet/fidelity_score.py
+Refine_selfish_mining/masknet/sample_value_score.py
+README.md
+Refine_selfish_mining/rnd_policy.py
+2026-08-26 10:00:47 [info     ] model response: # Expectations
+The criterion requires that for the selfish mining environment, the optimized StateMask explanation method (called "Ours" in the paper) can be selected and used as the explanation method during the retraining (refinement) process. This means the code must contain a clear implementation that:
+
+1. Loads the trained mask network (the "Ours" version, trained via PPO with the transformed objective and bonus reward).
+2. During retraining (Algorithm 2), with some probability `p`, samples a trajectory using the pretrained policy, applies the mask network to identify the most critical state, and resets the environment to that critical state as the starting point for a new episode of training.
+3. Conversely, with probability `1-p`, starts from the default initial state distribution.  
+4. The exploration bonus (RND) is then applied from there.
+
+In short, the refinement loop should demonstrate the integration of the "Ours" explanation method (the trained mask network) to construct a mixed initial state distribution. I will look for explicit code that loads the mask model, selects critical states, and uses them to reset the environment during retraining.
+
+# Reality
+The provided files for the selfish mining environment are:
+
+- `Refine_selfish_mining/retrain.py` – the main retraining script.
+- `Refine_selfish_mining/rnd_policy.py` – an RND exploration wrapper.
+- `Refine_selfish_mining/utils.py` – utility functions to load the DQN model and the mask model.
+- `Refine_selfish_mining/masknet/` – contains training of the mask network (`train.py`), sampling of mask scores (`sample_mask_score.py`), replay with critical‑step perturbation (`replay.py`), and fidelity score calculation (`fidelity_score.py`).
+
+In `retrain.py`, the retraining loop does the following:
+- It loads the pretrained DQN agent and wraps it with an `RNDPolicy` to add exploration bonuses.
+- The environment is created via `create_retrain_env(args)`, which instantiates `MDPBlockchainSimulatorRetrain`. The source code of this environment class is **not included** in the submission.
+- There is **no code** that loads the trained mask network (`load_mask_model` from `utils.py` is not used anywhere in `retrain.py`), nor any logic that identifies critical states or resets the environment to them.
+- The arguments include `--go-prob` and `--wo_exp`, but these are never referenced in the actual training logic; they do not trigger any mask‑based state selection.
+- The `MDPBlockchainSimulatorRetrain` class might internally perform state selection, but without its source code we cannot verify that it uses the "Ours" explanation method – and the provided code never passes any mask model or mask scores to it.
+
+The `masknet/` folder contains only evaluation scripts for the explanation method (training, fidelity measurement), **not** an integration of the explanation into the refinement loop. The `sample_mask_score.py` script logs mask probabilities, but these are not loaded or used during retraining.
+
+Therefore, the submission does **not** contain a working implementation that selects and uses the "Ours" explanation method during the retraining phase. The critical pieces – loading the mask network, identifying the most important state per trajectory, and mixing it into the initial distribution – are absent from the retraining pipeline.
+
+# Score
+The criteria has not been met. The code lacks any implementation that allows the "Ours" explanation method to be utilized during retraining for the selfish mining environment. Score = **0**.
+2026-08-26 10:00:47 [info     ] model response: # Expectations
+The criterion requires that for the selfish mining environment, the optimized StateMask explanation method (called "Ours" in the paper) can be selected and used as the explanation method during the retraining (refinement) process. This means the code must contain a clear implementation that:
+
+1. Loads the trained mask network (the "Ours" version, trained via PPO with the transformed objective and bonus reward).
+2. During retraining (Algorithm 2), with some probability `p`, samples a trajectory using the pretrained policy, applies the mask network to identify the most critical state, and resets the environment to that critical state as the starting point for a new episode of training.
+3. Conversely, with probability `1-p`, starts from the default initial state distribution.  
+4. The exploration bonus (RND) is then applied from there.
+
+In short, the refinement loop should demonstrate the integration of the "Ours" explanation method (the trained mask network) to construct a mixed initial state distribution. I will look for explicit code that loads the mask model, selects critical states, and uses them to reset the environment during retraining.
+
+# Reality
+The provided files for the selfish mining environment are:
+
+- `Refine_selfish_mining/retrain.py` – the main retraining script.
+- `Refine_selfish_mining/rnd_policy.py` – an RND exploration wrapper.
+- `Refine_selfish_mining/utils.py` – utility functions to load the DQN model and the mask model.
+- `Refine_selfish_mining/masknet/` – contains training of the mask network (`train.py`), sampling of mask scores (`sample_mask_score.py`), replay with critical‑step perturbation (`replay.py`), and fidelity score calculation (`fidelity_score.py`).
+
+In `retrain.py`, the retraining loop does the following:
+- It loads the pretrained DQN agent and wraps it with an `RNDPolicy` to add exploration bonuses.
+- The environment is created via `create_retrain_env(args)`, which instantiates `MDPBlockchainSimulatorRetrain`. The source code of this environment class is **not included** in the submission.
+- There is **no code** that loads the trained mask network (`load_mask_model` from `utils.py` is not used anywhere in `retrain.py`), nor any logic that identifies critical states or resets the environment to them.
+- The arguments include `--go-prob` and `--wo_exp`, but these are never referenced in the actual training logic; they do not trigger any mask‑based state selection.
+- The `MDPBlockchainSimulatorRetrain` class might internally perform state selection, but without its source code we cannot verify that it uses the "Ours" explanation method – and the provided code never passes any mask model or mask scores to it.
+
+The `masknet/` folder contains only evaluation scripts for the explanation method (training, fidelity measurement), **not** an integration of the explanation into the refinement loop. The `sample_mask_score.py` script logs mask probabilities, but these are not loaded or used during retraining.
+
+Therefore, the submission does **not** contain a working implementation that selects and uses the "Ours" explanation method during the retraining phase. The critical pieces – loading the mask network, identifying the most important state per trajectory, and mixing it into the initial distribution – are absent from the retraining pipeline.
+
+# Score
+The criteria has not been met. The code lacks any implementation that allows the "Ours" explanation method to be utilized during retraining for the selfish mining environment. Score = **0**.

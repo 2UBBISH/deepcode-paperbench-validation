@@ -1,0 +1,2 @@
+# git history of this submission (exported; .git removed for publication)
+2938157 2026-08-26 21:02:02 +0800 Initial implementation of FRE (Functional Reward Encodings) reproduction

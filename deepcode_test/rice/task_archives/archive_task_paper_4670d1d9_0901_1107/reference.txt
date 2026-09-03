@@ -1,0 +1,178 @@
+Now I have all the data needed. Let me compile the comprehensive analysis.
+
+---
+
+## Analysis Summary
+
+I've thoroughly analyzed the RICE paper's references section. The paper proposes a refining scheme for RL that uses explanation methods (based on StateMask) to identify critical states, constructs a mixed initial state distribution, and employs RND-based exploration with PPO optimization. 
+
+From the reference list, I identified **15+ references with GitHub repositories**. After filtering out repositories directly associated with the target paper's authors (StateMask, EDGE, AIRS), I evaluated each based on repository quality, implementation relevance, technical depth, and academic influence.
+
+The top 5 selections represent the most valuable code references for implementing/reproducing RICE: the foundational RL library (Stable-Baselines3), the core exploration mechanism (RND), the primary baseline method (JSRL), a key experimental environment (MetaDrive), and a secondary RL framework used in experiments (Tianshou).
+
+---
+
+```json
+{
+    "selected_references": [
+        {
+            "rank": 1,
+            "title": "Stable-Baselines3: Reliable Reinforcement Learning Implementations",
+            "authors": ["Antonin Raffin", "Ashley Hill", "Adam Gleave", "Anssi Kanervisto", "Maximilian Ernestus", "Noah Dormann"],
+            "year": "2021",
+            "relevance_score": 0.96,
+            "citation_context": "We implement our method in four selected MuJoCo games based on Stable-Baselines3 (Raffin et al., 2021). [...] We implement the proposed method using PyTorch (Paszke et al., 2019). We implement our method in four selected MuJoCo games based on Stable-Baselines3 (Raffin et al., 2021).",
+            "key_contributions": [
+                "Reliable PyTorch implementations of state-of-the-art RL algorithms including PPO, SAC, TD3, A2C, DQN",
+                "Standardized Gymnasium interface with extensive documentation and tutorials",
+                "High code coverage with CI testing, type hints, and PEP8 compliance",
+                "Dict observation space support and custom policy/callback architecture",
+                "Integration with Hugging Face Hub, Weights & Biases, and Tensorboard"
+            ],
+            "implementation_value": "RICE explicitly builds its PPO-based implementation on top of Stable-Baselines3 for all four MuJoCo experiments. The library provides the exact PPO algorithm (Schulman et al., 2017) used throughout RICE's refining pipeline, including the policy optimization step in Algorithm 2. Its modular architecture allows direct extension with RND exploration bonuses and custom initial state distributions as required by RICE. The RL Baselines3 Zoo training framework provides hyperparameter tuning infrastructure directly applicable to reproducing RICE's experiments.",
+            "github_info": {
+                "repository_url": "https://github.com/DLR-RM/stable-baselines3",
+                "stars_count": "13,739",
+                "last_updated": "2026-08-30",
+                "repository_quality": "Exceptional. Professional-grade library with comprehensive CI/CD pipeline, 85%+ code coverage, extensive documentation on ReadTheDocs, published in JMLR (Volume 22, 2021). Active maintenance with regular releases and a dedicated contrib repository for new algorithms (SB3 Contrib).",
+                "key_features": [
+                    "PPO, SAC, TD3, DQN, A2C, HER implementations with consistent API",
+                    "Vectorized environments and multiprocessing support",
+                    "Custom policy networks (MLP, CNN, multi-input) with easy extensibility",
+                    "Callbacks system for custom training logic (e.g., RND bonus injection)",
+                    "RL Zoo training framework with tuned hyperparameters for common benchmarks"
+                ],
+                "documentation_quality": "Excellent. Comprehensive ReadTheDocs documentation with getting-started guides, migration guides from SB2, RL tutorials, integration guides, and detailed API references. Includes Colab notebooks and example scripts.",
+                "community_activity": "Very high. 2,171 forks, 85 open issues actively managed, regular releases (v2.6.0 as of 2025), active SB3 Contrib repository for community-contributed algorithms, dedicated Discord community."
+            },
+            "original_reference": "Raffin, A., Hill, A., Gleave, A., Kanervisto, A., Ernestus, M., and Dormann, N. Stable-baselines3: Reliable reinforcement learning implementations. Journal of Machine Learning Research, 2021."
+        },
+        {
+            "rank": 2,
+            "title": "Exploration by Random Network Distillation",
+            "authors": ["Yuri Burda", "Harri Edwards", "Amos Storkey", "Oleg Klimov"],
+            "year": "2018",
+            "relevance_score": 0.91,
+            "citation_context": "Motivated by this, we adopt Random Network Distillation (RND) (Burda et al., 2018) which is proved to be an effective exploration bonus, especially in large and continuous state spaces where count-based bonuses (Bellemare et al., 2016; Ostrovski et al., 2017) can be hard to extend. Specifically, we directly utilize the PPO algorithm to update the policy π, except that we add the intrinsic reward to the task reward, that is, we optimize R′(st, at) = R(st, at) + λ‖f(st+1) − ˆf(st+1)‖².",
+            "key_contributions": [
+                "Introduced Random Network Distillation: a prediction-based exploration bonus using the error between a fixed random target network and a trained predictor network",
+                "Demonstrated state-of-the-art performance on hard-exploration Atari games (Montezuma's Revenge)",
+                "Provided a scalable exploration method for large continuous state spaces without requiring count-based statistics",
+                "Showed RND bonus naturally decays as states become familiar, allowing policy to converge to optimal behavior"
+            ],
+            "implementation_value": "RND is a core algorithmic component of RICE's refining pipeline (Algorithm 2). The paper directly integrates RND's exploration bonus into the PPO training loop: R′(st, at) = R(st, at) + λ‖f(st+1) − ˆf(st+1)‖². The OpenAI implementation provides the exact RND architecture (target network + predictor network with MSE loss) that RICE uses. Understanding this codebase is essential for correctly implementing the exploration component of RICE, including the normalization of intrinsic rewards and the dual optimization of policy and predictor networks.",
+            "github_info": {
+                "repository_url": "https://github.com/openai/random-network-distillation",
+                "stars_count": "930",
+                "last_updated": "2026-07-29 (archived, last push 2020-10-01)",
+                "repository_quality": "Good. Clean, well-structured code from OpenAI with clear documentation. Although archived (code provided as-is), the implementation is self-contained and directly usable. Includes MPI support for distributed training and both Atari and generic environment interfaces.",
+                "key_features": [
+                    "Clean RND implementation with target network and predictor network",
+                    "PPO + RND integration with configurable intrinsic reward coefficient",
+                    "MPI-based distributed rollout collection for scalability",
+                    "Atari wrapper with standard preprocessing",
+                    "Normalization schemes for intrinsic rewards"
+                ],
+                "documentation_quality": "Adequate. README provides installation and usage instructions with command-line examples. Blog post linked for conceptual understanding. Code is well-commented but lacks extensive API documentation.",
+                "community_activity": "Moderate. Repository is archived but still widely referenced (930 stars, 165 forks). Active community discussions in issues despite archived status. Multiple third-party reimplementations exist in SB3 Contrib and other libraries."
+            },
+            "original_reference": "Burda, Y., Edwards, H., Storkey, A., and Klimov, O. Exploration by random network distillation. In Proc. of ICLR, 2018."
+        },
+        {
+            "rank": 3,
+            "title": "Jump-Start Reinforcement Learning",
+            "authors": ["Ikechukwu Uchendu", "Ted Xiao", "Yao Lu", "Banghua Zhu", "Mengyuan Yan", "Joséphine Simon", "Matthew Bennice", "Chuyuan Fu", "Cong Ma", "Jiantao Jiao", "Sergey Levine", "Karol Hausman"],
+            "year": "2023",
+            "relevance_score": 0.87,
+            "citation_context": "The most recent example is Jump-Start Reinforcement Learning (JSRL) proposed by Uchendu et al. (2023) which leverages a pre-trained policy to design a curriculum to guide the training of a self-improving exploration policy. However, their selection of exploration frontiers in the curriculum is random, which cannot guarantee that the exploration frontiers have positive returns. [...] We compare our refining method with three baselines. [...] The third baseline is Jump-Start Reinforcement Learning (referred to as 'JSRL') (Uchendu et al., 2023).",
+            "key_contributions": [
+                "Proposed a curriculum-based approach using a guide policy to initialize exploration policy training",
+                "Introduced the concept of 'roll-in' with an existing policy followed by self-improving exploration",
+                "Provided theoretical analysis showing JSRL can outperform both imitation learning and standard RL",
+                "Demonstrated effectiveness across simulated robotics tasks and real-world robotic manipulation"
+            ],
+            "implementation_value": "JSRL is the most directly comparable baseline to RICE and the primary competing method evaluated in the paper. RICE explicitly compares against JSRL across all 8 environments (Table 1, Figure 2). The JSRL implementation uses Stable-Baselines3, making it directly compatible with RICE's codebase. Understanding JSRL's curriculum construction and exploration frontier selection is crucial for reproducing RICE's comparative evaluations and understanding why explanation-based frontier selection (RICE) outperforms random selection (JSRL).",
+            "github_info": {
+                "repository_url": "https://github.com/steventango/jumpstart-rl",
+                "stars_count": "37",
+                "last_updated": "2026-05-09 (last push 2024-01-12)",
+                "repository_quality": "Moderate. Clean implementation built on Stable-Baselines3 with Gymnasium-Robotics integration. Small but focused codebase with clear examples. Available as pip package (jsrl). MIT licensed.",
+                "key_features": [
+                    "Curriculum-based and random JSRL implementations",
+                    "Built on Stable-Baselines3 for easy integration",
+                    "TD3 + JSRL example on PointMaze-v3 environment",
+                    "Configurable guide policy and exploration policy",
+                    "Pip-installable package"
+                ],
+                "documentation_quality": "Basic. README provides installation instructions and example usage. Limited API documentation but code is straightforward and well-structured.",
+                "community_activity": "Low. Small repository (37 stars, 2 forks) but directly maintained by the paper authors. 4 open issues. Published at ICML 2023 with strong academic impact."
+            },
+            "original_reference": "Uchendu, I., Xiao, T., Lu, Y., Zhu, B., Yan, M., Simon, J., Bennice, M., Fu, C., Ma, C., Jiao, J., et al. Jump-start reinforcement learning. In Proc. of ICML, 2023."
+        },
+        {
+            "rank": 4,
+            "title": "MetaDrive: Composing Diverse Driving Scenarios for Generalizable Reinforcement Learning",
+            "authors": ["Quanyi Li", "Zhenghao Peng", "Lan Feng", "Qihang Zhang", "Zhenghai Xue", "Bolei Zhou"],
+            "year": "2022",
+            "relevance_score": 0.85,
+            "citation_context": "One representative driving simulator is MetaDrive (Li et al., 2022). A DRL agent is trained to guide a vehicle safely and efficiently to travel to its destination. [...] We select the 'Macro-v1' environment powered by the MetaDrive simulator (Li et al., 2022). The goal of the agent is to learn a deep policy to successfully cross the car flow and reach the destination.",
+            "key_contributions": [
+                "Compositional driving simulator generating infinite diverse road maps and traffic scenarios",
+                "Lightweight design achieving 1000+ FPS on standard PC with realistic physics",
+                "Multiple sensory modalities: point cloud, RGB/Depth/Semantic images, top-down maps",
+                "Procedural generation enabling systematic generalization studies in autonomous driving RL"
+            ],
+            "implementation_value": "MetaDrive provides the 'Macro-v1' environment used in RICE's autonomous driving experiments—one of the four real-world applications evaluated. The paper's qualitative analysis (Figure 14) visualizes agent behavior in MetaDrive. To reproduce RICE's autonomous driving results, the MetaDrive simulator is essential. The environment's Gymnasium-compatible API integrates directly with Stable-Baselines3. Understanding MetaDrive's state representation (Bird's Eye View vector) and reward structure is necessary for implementing RICE's explanation and refining pipeline for autonomous driving.",
+            "github_info": {
+                "repository_url": "https://github.com/metadriverse/metadrive",
+                "stars_count": "1,236",
+                "last_updated": "2026-08-29 (last push 2025-08-15)",
+                "repository_quality": "Excellent. Professional-grade simulator with comprehensive test suite, documentation website, and Colab integration. Published in IEEE TPAMI. Active development with regular releases. Apache 2.0 licensed.",
+                "key_features": [
+                    "Procedural generation of infinite diverse driving scenarios",
+                    "Multiple environment configurations: single-agent, multi-agent, safe driving",
+                    "Real-world scenario replay from nuScenes and Waymo datasets",
+                    "Gymnasium-compatible API for seamless RL integration",
+                    "Top-down semantic maps, first-person view, and multi-sensor simulation"
+                ],
+                "documentation_quality": "Excellent. Comprehensive documentation website with installation guides, quick-start tutorials, API references, and Colab notebooks. Clear examples for single-agent, multi-agent, and real-world scenarios.",
+                "community_activity": "High. 198 forks, 103 open issues actively managed, active discussions feature, regular updates. Strong academic adoption with multiple research projects building on MetaDrive."
+            },
+            "original_reference": "Li, Q., Peng, Z., Feng, L., Zhang, Q., Xue, Z., and Zhou, B. Metadrive: Composing diverse driving scenarios for generalizable reinforcement learning. IEEE Transactions on Pattern Analysis and Machine Intelligence, 2022."
+        },
+        {
+            "rank": 5,
+            "title": "Tianshou: A Highly Modularized Deep Reinforcement Learning Library",
+            "authors": ["Jiayi Weng", "Huayu Chen", "Dong Yan", "Kaichao You", "Alexis Duburcq", "Minghao Zhang", "Yi Su", "Hang Su", "Jun Zhu"],
+            "year": "2022",
+            "relevance_score": 0.84,
+            "citation_context": "We train a DRL agent based on Tianshou framework (Weng et al., 2022). The input of the DRL agent is a feature vector of the target malware and outputs the corresponding action to guide the malware manipulation.",
+            "key_contributions": [
+                "Highly modular RL library with clean separation between algorithms, policies, and data collection",
+                "Supports online (on/off-policy), offline RL, multi-agent RL, and model-based RL",
+                "Pure PyTorch implementation with Gymnasium integration and high performance",
+                "Extensive algorithm coverage: DQN variants, policy gradient methods, actor-critic, imitation learning"
+            ],
+            "implementation_value": "Tianshou is the RL framework used for RICE's malware mutation experiments—one of the four real-world applications. The paper explicitly uses Tianshou to train the DRL agent in the MalConv gym environment. For reproducing the malware mutation experiments, understanding Tianshou's modular architecture (separate Algorithm, Policy, and Trainer abstractions) is essential. Tianshou's v2 redesign provides cleaner interfaces that may simplify implementing RICE's custom training loop with explanation-guided reset and RND exploration bonuses.",
+            "github_info": {
+                "repository_url": "https://github.com/thu-ml/tianshou",
+                "stars_count": "10,947",
+                "last_updated": "2026-08-30 (last push 2026-04-03)",
+                "repository_quality": "Excellent. Professional-grade library with comprehensive CI, 90%+ code coverage, extensive documentation, and published in JMLR. Version 2 represents a complete architectural overhaul with improved type safety and interface design. MIT licensed.",
+                "key_features": [
+                    "Modular architecture: Algorithm, Policy, Trainer, Collector abstractions",
+                    "20+ implemented algorithms: DQN, PPO, SAC, TD3, CQL, BCQ, MARL methods",
+                    "Offline RL support with conservative methods (CQL, BCQ)",
+                    "Multi-agent RL experimental support",
+                    "High-performance vectorized environment support"
+                ],
+                "documentation_quality": "Excellent. Comprehensive documentation website (tianshou.org) with tutorials, API references, migration guides (v1→v2), and example scripts. Includes detailed explanations of architectural design decisions.",
+                "community_activity": "Very high. 1,335 forks, 138 open issues actively managed, active discussions, regular releases. Strong adoption in Chinese ML community and growing international usage."
+            },
+            "original_reference": "Weng, J., Chen, H., Yan, D., You, K., Duburcq, A., Zhang, M., Su, Y., Su, H., and Zhu, J. Tianshou: A highly modularized deep reinforcement learning library. Journal of Machine Learning Research, 2022."
+        }
+    ],
+    "analysis_summary": "The RICE paper references 50+ works spanning explanation methods, RL algorithms, exploration strategies, and application environments. From these, 15+ references have identifiable GitHub repositories. After excluding repositories directly associated with the target paper's authors (StateMask by Cheng et al., EDGE by Guo et al., AIRS by Yu et al.—all sharing co-authors with RICE), I evaluated remaining repositories based on four criteria: GitHub repository quality (stars, maintenance, documentation), implementation relevance (how directly the reference is used in RICE's codebase), technical depth (algorithmic similarity to RICE's methodology), and academic influence (venue quality, citation impact).\n\nStable-Baselines3 (Rank 1) is the foundational implementation framework—RICE explicitly builds its PPO training on SB3 for all MuJoCo experiments. RND (Rank 2) provides the core exploration mechanism that distinguishes RICE from prior work; its integration into the PPO training loop is a key technical contribution. JSRL (Rank 3) is the primary baseline that RICE directly compares against and improves upon by replacing random exploration frontiers with explanation-identified critical states. MetaDrive (Rank 4) and Tianshou (Rank 5) are essential environment/framework dependencies for reproducing RICE's real-world application experiments (autonomous driving and malware mutation, respectively).\n\nNotable repositories that were considered but ranked lower include: Go-Explore (Ecoffet et al., 2019, 586 stars, archived) which inspired RICE's environment reset mechanism but is less directly integrated; bfilar/malware_rl (109 stars) which provides the MalConv environment but is a smaller, less-maintained repository; and DI-drive (638 stars) which is referenced for autonomous driving implementation but MetaDrive is the primary environment.",
+    "github_repositories_found": "15+ references with GitHub repositories identified (including: Stable-Baselines3, RND, JSRL, MetaDrive, Tianshou, Go-Explore, bfilar/malware_rl, cage-challenge-2, pto-selfish-mining, DI-drive, CARLA, PyTorch, MuJoCo, and several others). 5 references with repositories were excluded due to direct association with target paper authors (StateMask, EDGE, AIRS) or being the target paper's own implementation (RICE)."
+}
+```

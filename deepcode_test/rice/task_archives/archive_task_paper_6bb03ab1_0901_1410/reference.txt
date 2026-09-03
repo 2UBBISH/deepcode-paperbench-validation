@@ -1,0 +1,184 @@
+```json
+{
+    "selected_references": [
+        {
+            "rank": 1,
+            "title": "Stable-baselines3: Reliable reinforcement learning implementations",
+            "authors": [
+                "Antonin Raffin",
+                "Ashley Hill",
+                "Adam Gleave",
+                "Anssi Kanervisto",
+                "Maximilian Ernestus",
+                "Noah Dormann"
+            ],
+            "year": "2021",
+            "relevance_score": 0.95,
+            "citation_context": "Cited as reference [41] in the RICE paper. PPO (Schulman et al., 2017) is the core algorithm used in RICE's refining process (Algorithm 2), and Stable-Baselines3 provides the most widely adopted, reliable PyTorch implementation of PPO and related algorithms.",
+            "key_contributions": [
+                "Reliable PyTorch implementations of state-of-the-art RL algorithms (PPO, SAC, A2C, DQN, etc.)",
+                "Standardized, clean API compatible with OpenAI Gym/Gymnasium",
+                "Extensive documentation, benchmarking, and community support",
+                "Vectorized environments, callbacks, and TensorBoard integration"
+            ],
+            "implementation_value": "RICE's refining algorithm is built on PPO. SB3 offers a production-quality PPO implementation that can be directly adapted to implement RICE's mixed initial state distribution, RND exploration bonus, and policy fine-tuning loop. It is the most practical starting point for reproducing or extending RICE.",
+            "github_info": {
+                "repository_url": "https://github.com/DLR-RM/stable-baselines3",
+                "stars_count": "14k",
+                "last_updated": "August 2025",
+                "repository_quality": "Excellent - widely adopted industry-standard RL library with continuous CI/CD, comprehensive tests, and active maintenance",
+                "key_features": [
+                    "PPO, SAC, A2C, DQN, TD3, DDPG implementations",
+                    "Vectorized environment support",
+                    "Callbacks, logging, and model saving/loading",
+                    "Extensive documentation and tutorials"
+                ],
+                "documentation_quality": "Excellent - stable-baselines3.readthedocs.io with detailed API docs, examples, and migration guides",
+                "community_activity": "Very active - thousands of GitHub stars, frequent issues/PRs, used in both research and industry"
+            },
+            "original_reference": "Raffin, A., Hill, A., Gleave, A., Kanervisto, A., Ernestus, M., and Dormann, N. Stable-baselines3: Reliable reinforcement learning implementations. Journal of Machine Learning Research, 2021."
+        },
+        {
+            "rank": 2,
+            "title": "Exploration by random network distillation",
+            "authors": [
+                "Yuri Burda",
+                "Harri Edwards",
+                "Amos Storkey",
+                "Oleg Klimov"
+            ],
+            "year": "2018",
+            "relevance_score": 0.92,
+            "citation_context": "Cited as reference [12] in the RICE paper. Random Network Distillation (RND) is used as the exploration bonus in RICE's refining algorithm (Algorithm 2), where the intrinsic reward is computed as the prediction error of a randomly initialized target network.",
+            "key_contributions": [
+                "Prediction-based intrinsic reward for exploration in sparse-reward environments",
+                "Effective in large and continuous state spaces where count-based bonuses are hard to extend",
+                "Official implementation from OpenAI"
+            ],
+            "implementation_value": "RICE directly uses the RND bonus R_t^RND = ||f(s_{t+1}) - \\hat{f}(s_{t+1})||^2 to encourage exploration from critical states. This repository provides the official implementation and can be integrated into the RICE training loop.",
+            "github_info": {
+                "repository_url": "https://github.com/openai/random-network-distillation",
+                "stars_count": "930",
+                "last_updated": "November 2018 (archived)",
+                "repository_quality": "Good but archived - official OpenAI implementation, no further updates expected",
+                "key_features": [
+                    "Official RND implementation",
+                    "Atari experiments with MPI support",
+                    "Prediction-error-based intrinsic reward"
+                ],
+                "documentation_quality": "Basic - README with installation and usage instructions, minimal inline documentation",
+                "community_activity": "Moderate - official repo widely referenced in RL literature, but archived and no longer maintained"
+            },
+            "original_reference": "Burda, Y., Edwards, H., Storkey, A., and Klimov, O. Exploration by random network distillation. In Proc. of ICLR, 2018."
+        },
+        {
+            "rank": 3,
+            "title": "Soft actor-critic: Off-policy maximum entropy deep reinforcement learning with a stochastic actor",
+            "authors": [
+                "Tuomas Haarnoja",
+                "Aurick Zhou",
+                "Pieter Abbeel",
+                "Sergey Levine"
+            ],
+            "year": "2018",
+            "relevance_score": 0.85,
+            "citation_context": "Cited as reference [28] in the RICE paper. SAC is used in Experiment IV, where RICE refines a pre-trained SAC agent in the Hopper environment to demonstrate that RICE is not limited to PPO-trained policies.",
+            "key_contributions": [
+                "Maximum entropy off-policy deep RL algorithm",
+                "Sample-efficient continuous control",
+                "Official implementation of SAC"
+            ],
+            "implementation_value": "RICE demonstrates its general applicability by refining a SAC pre-trained agent. The softlearning repository provides the official SAC implementation and can be used to train the pre-trained policy before applying RICE's refining procedure.",
+            "github_info": {
+                "repository_url": "https://github.com/rail-berkeley/softlearning",
+                "stars_count": "1.4k",
+                "last_updated": "March 2021 (last significant activity)",
+                "repository_quality": "Good - official Berkeley implementation, well-structured but not actively maintained",
+                "key_features": [
+                    "Official Soft Actor-Critic (SAC) implementation",
+                    "Ray Tune integration for experiment orchestration",
+                    "Continuous domain RL support"
+                ],
+                "documentation_quality": "Good - README with installation (conda/docker) and usage examples",
+                "community_activity": "Moderate - official implementation, widely cited, but limited recent activity"
+            },
+            "original_reference": "Haarnoja, T., Zhou, A., Abbeel, P., and Levine, S. Soft actorcritic: Off-policy maximum entropy deep reinforcement learning with a stochastic actor. In Proc. of ICML, pp. 1861-1870, 2018."
+        },
+        {
+            "rank": 4,
+            "title": "Tianshou: A highly modularized deep reinforcement learning library",
+            "authors": [
+                "Jiayi Weng",
+                "Huayu Chen",
+                "Dong Yan",
+                "Kaichao You",
+                "Alexis Duburcq",
+                "Ming Zhang",
+                "Yi Su",
+                "Hang Su",
+                "Jun Zhu"
+            ],
+            "year": "2022",
+            "relevance_score": 0.80,
+            "citation_context": "Cited as reference [52] in the RICE paper. Tianshou is a modular deep RL library that provides alternative implementations of PPO, SAC, and other algorithms relevant to RICE's methodology.",
+            "key_contributions": [
+                "Highly modularized deep RL library in PyTorch",
+                "Clean separation between algorithms and policies (v2 redesign)",
+                "Supports on-policy, off-policy, and offline RL"
+            ],
+            "implementation_value": "Tianshou offers a flexible alternative to Stable-Baselines3 for implementing RICE's components, including PPO-based refining, SAC pre-training, and custom reward shaping with RND bonuses.",
+            "github_info": {
+                "repository_url": "https://github.com/thu-ml/tianshou",
+                "stars_count": "11k",
+                "last_updated": "April 2025",
+                "repository_quality": "Excellent - actively maintained by Tsinghua University, well-tested, modern API",
+                "key_features": [
+                    "PPO, SAC, DQN, A2C, and many other algorithms",
+                    "Modular design with clear Algorithm/Policy separation",
+                    "Vectorized environments and distributed training support"
+                ],
+                "documentation_quality": "Excellent - tianshou.org with comprehensive docs and examples",
+                "community_activity": "Very active - large user base, frequent updates, active issue/PR discussions"
+            },
+            "original_reference": "Weng, J., Chen, H., Yan, D., You, K., Duburcq, A., Zhang, M., Su, Y., Su, H., and Zhu, J. Tianshou: A highly modularized deep reinforcement learning library. Journal of Machine Learning Research, 2022."
+        },
+        {
+            "rank": 5,
+            "title": "MetaDrive: Composing diverse driving scenarios for generalizable reinforcement learning",
+            "authors": [
+                "Quanyi Li",
+                "Zhenghao Peng",
+                "Lan Feng",
+                "Qihang Zhang",
+                "Zhenghai Xue",
+                "Bolei Zhou"
+            ],
+            "year": "2022",
+            "relevance_score": 0.78,
+            "citation_context": "Cited as reference [31] in the RICE paper. MetaDrive is the autonomous driving simulation environment used in RICE's real-world application evaluation, representing one of the key domains where RICE is tested.",
+            "key_contributions": [
+                "Lightweight driving simulator for RL research",
+                "Procedural generation of diverse driving scenarios",
+                "Support for generalizable RL training and evaluation"
+            ],
+            "implementation_value": "RICE evaluates on autonomous driving as one of its real-world applications. MetaDrive provides the simulation environment, scenarios, and RL interfaces needed to reproduce this part of the evaluation.",
+            "github_info": {
+                "repository_url": "https://github.com/metadriverse/metadrive",
+                "stars_count": "1.2k",
+                "last_updated": "May 2025",
+                "repository_quality": "Good - actively maintained, well-documented driving simulator",
+                "key_features": [
+                    "Procedural driving scenario generation",
+                    "RL-compatible Gym/Gymnasium interface",
+                    "Multi-agent and traffic simulation support"
+                ],
+                "documentation_quality": "Good - documentation site with installation, tutorials, and API reference",
+                "community_activity": "Active - growing community in autonomous driving RL research, regular updates"
+            },
+            "original_reference": "Li, Q., Peng, Z., Feng, L., Zhang, Q., Xue, Z., and Zhou, B. Metadrive: Composing diverse driving scenarios for generalizable reinforcement learning. IEEE Transactions on Pattern Analysis and Machine Intelligence, 2022."
+        }
+    ],
+    "analysis_summary": "The RICE paper focuses on refining pre-trained RL agents using explanation methods (StateMask-style masks) and exploration bonuses (RND), with PPO as the base algorithm. We extracted all references from the bibliography and identified those with associated GitHub repositories. The top 5 were selected based on: (1) direct relevance to RICE's core methodology (PPO, RND, SAC), (2) repository quality (stars, maintenance, documentation), (3) implementation value for reproducing or extending RICE, and (4) citation context in the paper. Stable-Baselines3 and RND are the most critical because they implement the base algorithm and exploration bonus used in RICE. SAC and Tianshou provide algorithmic breadth and alternative implementations. MetaDrive represents the real-world evaluation domain. Application-specific repositories (malware_rl, cage-challenge-2, pto-selfish-mining) were considered but ranked lower due to narrower scope and smaller community. StateMask, a key baseline, did not have a public GitHub repository found during our search.",
+    "github_repositories_found": "17"
+}
+```

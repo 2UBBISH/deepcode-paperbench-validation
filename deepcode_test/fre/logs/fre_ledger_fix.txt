@@ -1,0 +1,24 @@
+[09-02 21:39:36] ▶️ 修复验证轮 trial_fx1(fre,V4-Pro):新增三修复 env 开关全开 —— ①DEEPCODE_PLAN_COVERAGE_CHECK 规划覆盖审计+一次修订 ②DEEPCODE_ALLOW_PLAN_EXTENSION 解冻文件树 ③DEEPCODE_POSTWRITE_COMPILE 写后py_compile自检回灌。三者默认关闭,不影响既有口径。假设:fre 的基线遗漏被①②堵住后,分数应从 0.52 档回到反事实的 0.65 档。
+[09-02 21:44:01] ⏸ trial_fx1 中止(用户要换底座模型再跑,沉没 <¥5)。三修复开关代码保留,重启时用新模型 + DEEPCODE_EXPECT_MODEL 即可。
+[09-02 21:47:49] ▶️ 修复验证线重启:底座 DeepSeek-V4-Pro 改走 Paratera(llmapi.paratera.com,同模型换服务商,避开 SiliconFlow 限流;裁判仍 SiliconFlow V4-Pro 不变)。两轮 trial_fx1/fx2 串行,三修复开关全开。对照:fre 旧 V4-Pro 轮 0.5184/0.4246,反事实目标 0.65 档。
+[09-02 21:49:17] ⚖️ 裁判切换:SiliconFlow deepseek-ai/DeepSeek-V4-Pro → Paratera DeepSeek-V4-Pro(同权重换服务商)。⚠️ 口径注意:fx 线的分数与旧线严格讲跨了裁判服务商,同模型但 serving 可能有微差;fx 线内部对比不受影响。
+[09-02 22:10:00] ⛔ fx1 首跑作废(沉没 ~¥2.5):根因=挖掘报告超 8192 token 截断,续写恢复只存尾段,下载侧只见 1/5 仓库。新增 fix-④ DEEPCODE_REFERENCE_MAX_TOKENS=16384 重启。另:回查 trial4 报告完整含 5 仓库,其 1 仓库语料系下载侧问题,此前『只提名 1 个』归因再修正。
+[09-02 22:13:09] 🔧 全部 maxTokens 调大:agents 32768→65536(Paratera 探针接受 65536)、预筛 16000→32000、挖掘报告 16384→32768、下载 agent 4096→16384(新 env DEEPCODE_DOWNLOAD_MAX_TOKENS)。fx1 重启套用(沉没 ~¥0.2)。
+[02:33:23] trial_fx1 退出码=0
+[07:41:05] trial_fx2 退出码=0
+[07:41:35] ========== 修复验证两轮结束 ==========
+[09-03 07:42:30] 🔗 收尾链启动:两轮已结束,开始判分刷新(裁判=Paratera DeepSeek-V4-Pro)
+[09-03 07:42:55] ✅ 探针通过
+[09-03 07:42:56] fre 批清单: anchor, bare_v4, trial1, trial5, trial_fx1, trial_fx2
+[09-03 07:44:04] fre 批完成(判分组 2026-09-02T23-42-59-GMT_run-group_direct_submission_solver),最大无效叶=
+[09-03 07:44:04] ❌ fre 批无效叶超标()—— 金丝雀失败,rice 批不判,等人工处理
+[09-03 07:45:04] 🔧 判分失败根因:Paratera 用裸模型名 DeepSeek-V4-Pro,未在 preparedness_turn_completer/utils.py 的 CONTEXT_WINDOW_LENGTHS 注册 → 6 份全 n_gradings_failed(64 秒,几乎未计费)。已注册裸名(1M ctx,与带前缀版同值);金丝雀判据加固(无有效 grade.json → 999)。重启收尾链。
+[09-03 07:45:13] 🔗 收尾链启动:两轮已结束,开始判分刷新(裁判=Paratera DeepSeek-V4-Pro)
+[09-03 07:45:26] ✅ 探针通过
+[09-03 07:45:27] fre 批清单: anchor, bare_v4, trial1, trial5, trial_fx1, trial_fx2
+[09-03 09:28:56] fre 批完成(判分组 2026-09-02T23-45-29-GMT_run-group_direct_submission_solver),最大无效叶=0
+[09-03 09:28:56] rice 批清单: bare_kimi, bare_v4, trial2, trial3, trial_k1, trial_k2
+[09-03 10:47:27] ⛔ 修复验证轮 trial_fx1(0.3618)/trial_fx2(0.4873)整体作废:代码审查发现 fix-①② 提示词含评分结构元知识("Graders assign separate credit to each baseline…"),违反纪律 B。提交移至 ~/pb_submissions_archive/fre_void/ 与 submissions/_作废/,判分 JSON 改名标注。修复代码保留待清理后重跑。
+[09-03 10:57:56] rice 批完成(判分组 2026-09-03T01-29-00-GMT_run-group_direct_submission_solver)
+[09-03 10:57:56] 🏁 收尾链全部完成:fre 组=2026-09-02T23-45-29-GMT_run-group_direct_submission_solver rice 组=2026-09-03T01-29-00-GMT_run-group_direct_submission_solver
+[09-03 10:59:36] 🧹 判分池清空:重判副本删除(归档区有原件),rice/bare_kimi 移入 rice_graded。下次判分前需重新摆卷。

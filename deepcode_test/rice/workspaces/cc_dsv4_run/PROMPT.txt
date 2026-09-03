@@ -1,0 +1,24 @@
+Reproduce the research paper at /home/deepevol/deepevol/deepcode_test/rice/workspaces/cc_dsv4_run/paper/ and write your implementation to /home/deepevol/deepevol/deepcode_test/rice/workspaces/cc_dsv4_run/submission/.
+
+Read these first:
+- /home/deepevol/deepevol/deepcode_test/rice/workspaces/cc_dsv4_run/paper/paper.md   (the paper)
+- /home/deepevol/deepevol/deepcode_test/rice/workspaces/cc_dsv4_run/paper/addendum.md   (clarifications and what is out of scope)
+
+TASK
+Replicate as many of the core contributions of this paper as possible. You will receive partial credit per component, weighted by importance to the paper's main contributions, so prioritise the core method over peripheral parts. Experiments introduced only in the Appendix are out of scope; an experiment described in the main body stays in scope even if some of its details appear in the appendix.
+
+RULES
+1. Do NOT access github.com/chengzelei/RICE or anything listed in paper/blacklist.txt. That is the paper's own implementation and using it invalidates the run. The URL appears in the paper's abstract — seeing it is fine, visiting it is not.
+2. Do NOT ask me any questions and do NOT wait for input. Decide for yourself and note the decision in the README. This run must be fully autonomous.
+3. Work until you have implemented every core contribution you can. Do not stop early to ask whether to continue.
+
+STRATEGY
+Start by reading the paper and the entirety of the addendum; the addendum sometimes contains important information about how to replicate the paper. When possible do not pin specific versions of Python packages; you don't want to get stuck solving a dependency conflict.
+
+SUBMISSION
+- All code goes in /home/deepevol/deepevol/deepcode_test/rice/workspaces/cc_dsv4_run/submission/
+- Make it a git repo: git init, git add -A, git commit. Untracked files will be deleted before grading.
+- Include README.md describing what you implemented, what you skipped, and why.
+- Your code will NOT be executed during grading. It is graded on whether the algorithms and interfaces described in the paper are faithfully implemented. So prioritise correct, complete, readable implementation of the paper's method over runnability.
+
+When finished, report: components implemented, components skipped (with reason), file count, total lines of Python, number of commits.

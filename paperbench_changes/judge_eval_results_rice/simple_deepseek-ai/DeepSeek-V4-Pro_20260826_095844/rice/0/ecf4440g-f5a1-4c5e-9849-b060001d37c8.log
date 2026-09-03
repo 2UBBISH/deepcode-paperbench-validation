@@ -1,0 +1,57 @@
+2026-08-26 09:58:46 [info     ] Grading leaf: For the autonomous driving environment, the "Random" Explanation method can be selected as the explanation method during retraining
+2026-08-26 10:00:32 [info     ] Model file selection raw output:
+Refine_auto_drive/retrain.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/readme.md
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/rnd_reward_model.py
+README.md
+2026-08-26 10:00:32 [info     ] Model file selection raw output:
+Refine_auto_drive/retrain.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/readme.md
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/rnd_reward_model.py
+README.md
+2026-08-26 10:01:49 [info     ] model response: # Expectations
+The paper introduces "Random" as a baseline explanation method, which identifies critical steps by randomly selecting a visited state as the critical state (Section 4.1). The refining method (Algorithm 2) requires an explanation to determine the exploration frontier. For the autonomous driving environment, the implementation should support using this Random explanation method during retraining. In practice, this means the retraining code must have a mechanism to replace the mask‑network‑based critical‑step selection with a random choice of a state from a sampled trajectory, and this mechanism must be usable (selectable) when running the retraining procedure.
+
+# Reality
+The submission includes an autonomous driving retraining implementation in the `Refine_auto_drive` folder. The key file is `retrain_env.py`, which defines a `CustomWrapper` environment that overrides the `reset` method. Inside `reset`, when the mixed‑initial‑distribution condition is triggered (`np.random.rand() < self.p`), the code generates a trajectory using `gen_one_traj` (which also collects importance scores from the mask network). After obtaining the trajectory, it chooses the starting index for roll‑in as follows:
+
+```python
+if self.random_sampling:
+    start_idx = np.random.choice(traj.eps_len)
+else:
+    start_idx = np.argmax(traj.mask_probs)
+```
+
+The attribute `self.random_sampling` is set to `True` in the constructor. When `True`, it performs exactly the "Random" explanation method—randomly picking a visited state from the trajectory as the critical step. When `False`, it uses the mask network’s importance scores (the "Ours" explanation method). Although the choice is currently hard‑coded and not exposed as a command‑line argument, the code clearly implements the Random explanation and makes it the active behaviour. A developer can therefore select the Random explanation method by retaining `random_sampling = True` (the default) and can switch to the mask‑based method by changing the flag.
+
+# Score
+1 – The Random explanation method is correctly implemented and is the default selection for retraining in the autonomous driving environment, satisfying the criterion.
+2026-08-26 10:01:49 [info     ] model response: # Expectations
+The paper introduces "Random" as a baseline explanation method, which identifies critical steps by randomly selecting a visited state as the critical state (Section 4.1). The refining method (Algorithm 2) requires an explanation to determine the exploration frontier. For the autonomous driving environment, the implementation should support using this Random explanation method during retraining. In practice, this means the retraining code must have a mechanism to replace the mask‑network‑based critical‑step selection with a random choice of a state from a sampled trajectory, and this mechanism must be usable (selectable) when running the retraining procedure.
+
+# Reality
+The submission includes an autonomous driving retraining implementation in the `Refine_auto_drive` folder. The key file is `retrain_env.py`, which defines a `CustomWrapper` environment that overrides the `reset` method. Inside `reset`, when the mixed‑initial‑distribution condition is triggered (`np.random.rand() < self.p`), the code generates a trajectory using `gen_one_traj` (which also collects importance scores from the mask network). After obtaining the trajectory, it chooses the starting index for roll‑in as follows:
+
+```python
+if self.random_sampling:
+    start_idx = np.random.choice(traj.eps_len)
+else:
+    start_idx = np.argmax(traj.mask_probs)
+```
+
+The attribute `self.random_sampling` is set to `True` in the constructor. When `True`, it performs exactly the "Random" explanation method—randomly picking a visited state from the trajectory as the critical step. When `False`, it uses the mask network’s importance scores (the "Ours" explanation method). Although the choice is currently hard‑coded and not exposed as a command‑line argument, the code clearly implements the Random explanation and makes it the active behaviour. A developer can therefore select the Random explanation method by retaining `random_sampling = True` (the default) and can switch to the mask‑based method by changing the flag.
+
+# Score
+1 – The Random explanation method is correctly implemented and is the default selection for retraining in the autonomous driving environment, satisfying the criterion.

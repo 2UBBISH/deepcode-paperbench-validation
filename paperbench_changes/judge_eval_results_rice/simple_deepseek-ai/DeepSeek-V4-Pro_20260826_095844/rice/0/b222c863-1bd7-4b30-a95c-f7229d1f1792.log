@@ -1,0 +1,69 @@
+2026-08-26 09:58:46 [info     ] Grading leaf: For the selfish mining environment, code for constructing a mixed initial state distribution by combining default initial states and critical states identified by the "Ours" explanation method has been implemented as described in Section 3.3.
+2026-08-26 09:59:20 [info     ] Model file selection raw output:
+Refine_selfish_mining/retrain.py
+Refine_selfish_mining/utils.py
+Refine_selfish_mining/masknet/sample_mask_score.py
+Refine_selfish_mining/masknet/replay.py
+Refine_selfish_mining/rnd_policy.py
+Refine_selfish_mining/masknet/utils.py
+Refine_selfish_mining/masknet/train.py
+Refine_selfish_mining/rnd_model.py
+Refine_selfish_mining/masknet/fidelity_score.py
+Refine_selfish_mining/masknet/sample_value_score.py
+2026-08-26 09:59:20 [info     ] Model file selection raw output:
+Refine_selfish_mining/retrain.py
+Refine_selfish_mining/utils.py
+Refine_selfish_mining/masknet/sample_mask_score.py
+Refine_selfish_mining/masknet/replay.py
+Refine_selfish_mining/rnd_policy.py
+Refine_selfish_mining/masknet/utils.py
+Refine_selfish_mining/masknet/train.py
+Refine_selfish_mining/rnd_model.py
+Refine_selfish_mining/masknet/fidelity_score.py
+Refine_selfish_mining/masknet/sample_value_score.py
+2026-08-26 10:00:31 [info     ] model response: # Expectations
+According to Section 3.3 and Algorithm 2 of the paper, the "Ours" refining method constructs a mixed initial state distribution for the RL agent:
+- With probability \(p\) (the reset probability threshold), it runs the pre-trained policy \(\pi\) to obtain a trajectory, uses the trained mask network to identify the **most critical state** in that trajectory, and resets the environment to that state.
+- Otherwise (probability \(1-p\)), it resets the environment to a state sampled from the default initial distribution \(\rho\).
+Thus, for the Selfish Mining environment, the submission must contain actual code that:
+1. Loads the pre-trained policy and the "Ours" mask network (the explanation method) for Selfish Mining.
+2. During refinement training, on each episode reset, decides (using the mixing probability \(p\)) whether to:
+   - (a) generate a new trajectory using the pre-trained policy, apply the mask to select the most critical state, and set that as the initial state, or
+   - (b) reset to a default initial state.
+3. Combines the two sources of initial states as a **mixed distribution**, as described.
+
+# Reality
+I examined all provided files under `Refine_selfish_mining/` and `Refine_selfish_mining/masknet/`. Here is what I found:
+
+- **`Refine_selfish_mining/retrain.py`**: This is the main refinement training script. It creates training environments via `create_retrain_env(args)`, which instantiates `MDPBlockchainSimulatorRetrain` imported from `baseline.reinforcement_learning.base.blockchain_simulator.mdp_blockchain_simulator_retrain`. That class is **not provided** – the `baseline/` directory is entirely absent from the submission. The script passes `args.go_prob` (the mixing probability) to the simulator, but the actual logic that uses this probability to reset either to a critical state or to a default state is hidden inside the missing environment code.
+- **`Refine_selfish_mining/utils.py`**: Contains helper functions to load the pre-trained DQN policy and the mask network. It does **not** implement any mixing or reset logic.
+- **`Refine_selfish_mining/masknet/` files** (`sample_mask_score.py`, `replay.py`, `train.py`, `fidelity_score.py`, `sample_value_score.py`): These are dedicated to explanation (mask network training, trajectory sampling, fidelity evaluation) and do **not** contain the mixed initial state distribution code for refinement.
+- **`Refine_selfish_mining/rnd_policy.py` and `rnd_model.py`**: These implement the Random Network Distillation exploration bonus wrapping the base policy. They do **not** handle the initial state mixing.
+
+Because the core environment that would implement the mixed initial state distribution (`MDPBlockchainSimulatorRetrain`) is completely missing, the submission does **not** provide the required code. No file in the visible part of the submission shows how a trajectory is generated, how the mask identifies the critical state, or how the environment resets to that state versus a default state.
+
+# Score
+**0** – The criterion is not met. The submission lacks the actual code for constructing the mixed initial state distribution by combining default initial states and critical states identified by the “Ours” explanation method for the Selfish Mining environment. The necessary implementation is either absent or hidden in unprovided external files, which is treated as a failure per the instructions.
+2026-08-26 10:00:31 [info     ] model response: # Expectations
+According to Section 3.3 and Algorithm 2 of the paper, the "Ours" refining method constructs a mixed initial state distribution for the RL agent:
+- With probability \(p\) (the reset probability threshold), it runs the pre-trained policy \(\pi\) to obtain a trajectory, uses the trained mask network to identify the **most critical state** in that trajectory, and resets the environment to that state.
+- Otherwise (probability \(1-p\)), it resets the environment to a state sampled from the default initial distribution \(\rho\).
+Thus, for the Selfish Mining environment, the submission must contain actual code that:
+1. Loads the pre-trained policy and the "Ours" mask network (the explanation method) for Selfish Mining.
+2. During refinement training, on each episode reset, decides (using the mixing probability \(p\)) whether to:
+   - (a) generate a new trajectory using the pre-trained policy, apply the mask to select the most critical state, and set that as the initial state, or
+   - (b) reset to a default initial state.
+3. Combines the two sources of initial states as a **mixed distribution**, as described.
+
+# Reality
+I examined all provided files under `Refine_selfish_mining/` and `Refine_selfish_mining/masknet/`. Here is what I found:
+
+- **`Refine_selfish_mining/retrain.py`**: This is the main refinement training script. It creates training environments via `create_retrain_env(args)`, which instantiates `MDPBlockchainSimulatorRetrain` imported from `baseline.reinforcement_learning.base.blockchain_simulator.mdp_blockchain_simulator_retrain`. That class is **not provided** – the `baseline/` directory is entirely absent from the submission. The script passes `args.go_prob` (the mixing probability) to the simulator, but the actual logic that uses this probability to reset either to a critical state or to a default state is hidden inside the missing environment code.
+- **`Refine_selfish_mining/utils.py`**: Contains helper functions to load the pre-trained DQN policy and the mask network. It does **not** implement any mixing or reset logic.
+- **`Refine_selfish_mining/masknet/` files** (`sample_mask_score.py`, `replay.py`, `train.py`, `fidelity_score.py`, `sample_value_score.py`): These are dedicated to explanation (mask network training, trajectory sampling, fidelity evaluation) and do **not** contain the mixed initial state distribution code for refinement.
+- **`Refine_selfish_mining/rnd_policy.py` and `rnd_model.py`**: These implement the Random Network Distillation exploration bonus wrapping the base policy. They do **not** handle the initial state mixing.
+
+Because the core environment that would implement the mixed initial state distribution (`MDPBlockchainSimulatorRetrain`) is completely missing, the submission does **not** provide the required code. No file in the visible part of the submission shows how a trajectory is generated, how the mask identifies the critical state, or how the environment resets to that state versus a default state.
+
+# Score
+**0** – The criterion is not met. The submission lacks the actual code for constructing the mixed initial state distribution by combining default initial states and critical states identified by the “Ours” explanation method for the Selfish Mining environment. The necessary implementation is either absent or hidden in unprovided external files, which is treated as a failure per the instructions.

@@ -1,0 +1,51 @@
+2026-08-26 10:01:05 [info     ] Grading leaf: In Experiment II, for the selfish mining environment, for the "PPO fine-tuning" refinement method, the optimized StateMask ("Ours") explanation method proposed in the paper is used as the explanation method.
+2026-08-26 10:03:18 [info     ] Model file selection raw output:
+Refine_selfish_mining/retrain.py
+Refine_selfish_mining/utils.py
+Refine_selfish_mining/masknet/train.py
+Refine_selfish_mining/masknet/utils.py
+Refine_selfish_mining/masknet/sample_mask_score.py
+README.md
+Refine_selfish_mining/baseline/train_ppo.py
+Refine_selfish_mining/masknet/fidelity_score.py
+Refine_selfish_mining/masknet/replay.py
+Refine_selfish_mining/rnd_model.py
+2026-08-26 10:03:18 [info     ] Model file selection raw output:
+Refine_selfish_mining/retrain.py
+Refine_selfish_mining/utils.py
+Refine_selfish_mining/masknet/train.py
+Refine_selfish_mining/masknet/utils.py
+Refine_selfish_mining/masknet/sample_mask_score.py
+README.md
+Refine_selfish_mining/baseline/train_ppo.py
+Refine_selfish_mining/masknet/fidelity_score.py
+Refine_selfish_mining/masknet/replay.py
+Refine_selfish_mining/rnd_model.py
+2026-08-26 10:04:53 [info     ] model response: # Expectations
+The criterion requires that in the reproduction of Experiment II for the selfish mining environment, the "PPO fine-tuning" refinement method uses the optimized StateMask ("Ours") explanation method as the explanation method. According to the paper, PPO fine-tuning is a baseline that continues training with a lower learning rate and does not inherently require any explanation method. However, the rubric explicitly states that for this method, the Ours explanation method should be used as the explanation method. To meet this criterion, the submission must contain an implementation of PPO fine-tuning for the selfish mining environment that either appropriately incorporates the Ours explanation method or, at a minimum, has the code for the PPO fine-tuning method present (since the criterion's condition about the explanation method can be verified only if the method is implemented). I will look for a script or code block that loads a pre-trained PPO agent and continues training it (fine-tuning) and check whether the Ours explanation is loaded or used.
+
+# Reality
+The provided submission files are limited to the selfish mining task. I examined all provided files:
+
+- `Refine_selfish_mining/retrain.py`: This script implements the RICE "Ours" refining method (it includes RND, go_prob for mixed initial states, loads a pre-trained DQN and mask model). It is not the PPO fine-tuning baseline.
+- `Refine_selfish_mining/baseline/train_ppo.py`: This trains a PPO agent from scratch on the selfish mining environment; it does **not** load a pre-existing model or perform fine-tuning. There is no mechanism to continue training from a checkpoint or lower the learning rate for refinement.
+- Other files (`utils.py`, mask network training scripts, fidelity score scripts, `rnd_model.py`) are auxiliary and do not contain a PPO fine-tuning implementation.
+
+No script in the submission implements the PPO fine-tuning refinement method. Consequently, there is no code that could even potentially use the Ours explanation method within a PPO fine-tuning process. The required implementation is entirely missing.
+
+# Score
+Because the submission does not provide an implementation of the PPO fine-tuning refinement method for the selfish mining environment, the criterion cannot be met. Score: 0.
+2026-08-26 10:04:53 [info     ] model response: # Expectations
+The criterion requires that in the reproduction of Experiment II for the selfish mining environment, the "PPO fine-tuning" refinement method uses the optimized StateMask ("Ours") explanation method as the explanation method. According to the paper, PPO fine-tuning is a baseline that continues training with a lower learning rate and does not inherently require any explanation method. However, the rubric explicitly states that for this method, the Ours explanation method should be used as the explanation method. To meet this criterion, the submission must contain an implementation of PPO fine-tuning for the selfish mining environment that either appropriately incorporates the Ours explanation method or, at a minimum, has the code for the PPO fine-tuning method present (since the criterion's condition about the explanation method can be verified only if the method is implemented). I will look for a script or code block that loads a pre-trained PPO agent and continues training it (fine-tuning) and check whether the Ours explanation is loaded or used.
+
+# Reality
+The provided submission files are limited to the selfish mining task. I examined all provided files:
+
+- `Refine_selfish_mining/retrain.py`: This script implements the RICE "Ours" refining method (it includes RND, go_prob for mixed initial states, loads a pre-trained DQN and mask model). It is not the PPO fine-tuning baseline.
+- `Refine_selfish_mining/baseline/train_ppo.py`: This trains a PPO agent from scratch on the selfish mining environment; it does **not** load a pre-existing model or perform fine-tuning. There is no mechanism to continue training from a checkpoint or lower the learning rate for refinement.
+- Other files (`utils.py`, mask network training scripts, fidelity score scripts, `rnd_model.py`) are auxiliary and do not contain a PPO fine-tuning implementation.
+
+No script in the submission implements the PPO fine-tuning refinement method. Consequently, there is no code that could even potentially use the Ours explanation method within a PPO fine-tuning process. The required implementation is entirely missing.
+
+# Score
+Because the submission does not provide an implementation of the PPO fine-tuning refinement method for the selfish mining environment, the criterion cannot be met. Score: 0.

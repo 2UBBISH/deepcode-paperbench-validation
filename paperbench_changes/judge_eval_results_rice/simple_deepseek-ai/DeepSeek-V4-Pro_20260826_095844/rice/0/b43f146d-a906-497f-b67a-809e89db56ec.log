@@ -1,0 +1,69 @@
+2026-08-26 09:58:46 [info     ] Grading leaf: For the network defence environment, StateMask fine-tuning, aka "StateMask-R" has been implemented as outlined in section 4.1 and Cheng et al., 2023, i.e. resetting to the identified critical states and continuing training from there.
+2026-08-26 09:59:24 [info     ] Model file selection raw output:
+Refine_cage_challenge/retrain.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_retrain.py
+Refine_cage_challenge/sample_mask_score.py
+Refine_cage_challenge/Agents/PPOAgent_Retrain.py
+Refine_cage_challenge/rollout_mask.py
+Refine_cage_challenge/Agents/PPOAgent_mask.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_mask.py
+Refine_cage_challenge/ppo_train.py
+Refine_cage_challenge/Agents/MainAgent.py
+Refine_cage_challenge/rollout_ppo.py
+2026-08-26 09:59:24 [info     ] Model file selection raw output:
+Refine_cage_challenge/retrain.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_retrain.py
+Refine_cage_challenge/sample_mask_score.py
+Refine_cage_challenge/Agents/PPOAgent_Retrain.py
+Refine_cage_challenge/rollout_mask.py
+Refine_cage_challenge/Agents/PPOAgent_mask.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_mask.py
+Refine_cage_challenge/ppo_train.py
+Refine_cage_challenge/Agents/MainAgent.py
+Refine_cage_challenge/rollout_ppo.py
+2026-08-26 10:00:39 [info     ] model response: # Expectations
+For the network defence environment (CAGE Challenge 2), the criterion requires an implementation of the "StateMask‑R" refining baseline. According to the paper (Section 4.1 and the description in Cheng et al., 2023), StateMask‑R works as follows:
+- The environment is reset to a **critical state** that has been identified by a step‑level explanation method (e.g., the mask network). That is, at the start of each refinement episode the agent begins at one such critical state instead of the default initial state.
+- The agent is then **fine‑tuned** from that state using a standard RL algorithm (PPO), without any additional exploration bonus or mixing of initial states.
+- There must be a distinct, runnable script or a clearly separable code path that implements this exact strategy (reset only to critical states, no mixing, no RND bonus) for the network defence environment.
+
+I will look for:
+- A wrapper or environment that, during refinement, resets exclusively to a critical state (e.g., by selecting the state with the highest mask score).
+- A training script that uses this wrapper and runs standard PPO updates (without RND intrinsic rewards) to fine‑tune the pre‑trained policy.
+- Either a dedicated script that performs StateMask‑R or a parameterisation that allows the existing retraining code to run as StateMask‑R (e.g., `go_prob=1` and `bonus_scale=0`) and that this configuration is actually used somewhere.
+
+# Reality
+The submitted files for the network defence environment (under `Refine_cage_challenge/`) include:
+- `retrain.py` – the only refining script.
+- `Wrappers/ChallengeWrapper2_retrain.py` – the environment wrapper used in `retrain.py`.
+- `Agents/PPOAgent_Retrain.py` – the agent class used for retraining, which integrates an RND model and exploration bonus.
+
+**Critical-state reset logic** exists in `ChallengeWrapper2_retrain.py`: its `reset()` method can fast‑forward to a state selected by the mask network (`start_idx = np.argmax(mask_record)`). However, the wrapper mixes this with the default initial state: it only executes this critical‑state reset with probability `self.go_prob`, which is set to `0.5` in `retrain.py`. With probability `1 - go_prob` it starts from the original initial state. Moreover, the training loop in `retrain.py` always adds an RND exploration bonus (`reward += bonus_scale * bonus`) and trains the RND predictor alongside the policy.
+
+There is **no separate script** that performs StateMask‑R (i.e., `go_prob = 1`, `bonus_scale = 0`, and standard PPO fine‑tuning). The code does not provide a command‑line argument or configuration to switch to StateMask‑R; the only refining process implemented is the full RICE method. The submission therefore lacks a correct, executable implementation of StateMask‑R for the network defence environment.
+
+# Score
+0 – The submission does not contain an implementation of StateMask‑R for the network defence environment. The existing retraining code implements RICE (mixed initial distribution + RND exploration) rather than the required baseline, and no separate or parameterised version of StateMask‑R is provided.
+2026-08-26 10:00:39 [info     ] model response: # Expectations
+For the network defence environment (CAGE Challenge 2), the criterion requires an implementation of the "StateMask‑R" refining baseline. According to the paper (Section 4.1 and the description in Cheng et al., 2023), StateMask‑R works as follows:
+- The environment is reset to a **critical state** that has been identified by a step‑level explanation method (e.g., the mask network). That is, at the start of each refinement episode the agent begins at one such critical state instead of the default initial state.
+- The agent is then **fine‑tuned** from that state using a standard RL algorithm (PPO), without any additional exploration bonus or mixing of initial states.
+- There must be a distinct, runnable script or a clearly separable code path that implements this exact strategy (reset only to critical states, no mixing, no RND bonus) for the network defence environment.
+
+I will look for:
+- A wrapper or environment that, during refinement, resets exclusively to a critical state (e.g., by selecting the state with the highest mask score).
+- A training script that uses this wrapper and runs standard PPO updates (without RND intrinsic rewards) to fine‑tune the pre‑trained policy.
+- Either a dedicated script that performs StateMask‑R or a parameterisation that allows the existing retraining code to run as StateMask‑R (e.g., `go_prob=1` and `bonus_scale=0`) and that this configuration is actually used somewhere.
+
+# Reality
+The submitted files for the network defence environment (under `Refine_cage_challenge/`) include:
+- `retrain.py` – the only refining script.
+- `Wrappers/ChallengeWrapper2_retrain.py` – the environment wrapper used in `retrain.py`.
+- `Agents/PPOAgent_Retrain.py` – the agent class used for retraining, which integrates an RND model and exploration bonus.
+
+**Critical-state reset logic** exists in `ChallengeWrapper2_retrain.py`: its `reset()` method can fast‑forward to a state selected by the mask network (`start_idx = np.argmax(mask_record)`). However, the wrapper mixes this with the default initial state: it only executes this critical‑state reset with probability `self.go_prob`, which is set to `0.5` in `retrain.py`. With probability `1 - go_prob` it starts from the original initial state. Moreover, the training loop in `retrain.py` always adds an RND exploration bonus (`reward += bonus_scale * bonus`) and trains the RND predictor alongside the policy.
+
+There is **no separate script** that performs StateMask‑R (i.e., `go_prob = 1`, `bonus_scale = 0`, and standard PPO fine‑tuning). The code does not provide a command‑line argument or configuration to switch to StateMask‑R; the only refining process implemented is the full RICE method. The submission therefore lacks a correct, executable implementation of StateMask‑R for the network defence environment.
+
+# Score
+0 – The submission does not contain an implementation of StateMask‑R for the network defence environment. The existing retraining code implements RICE (mixed initial distribution + RND exploration) rather than the required baseline, and no separate or parameterised version of StateMask‑R is provided.

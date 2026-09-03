@@ -1,0 +1,85 @@
+2026-08-26 09:58:46 [info     ] Grading leaf: For the autonomous driving environment, the explanation fidelity score metric has been implemented as outlined in section 4.1 and 4.2: by forcing a given pretrained policy network agent to take random actions starting from each identified critical time step and measuring the average and maximum reward change.
+2026-08-26 10:01:34 [info     ] Model file selection raw output:
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/retrain.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/readme.md
+Refine_auto_drive/rnd_reward_model.py
+Refine_mujoco/masknet/gen_fid.py
+2026-08-26 10:01:34 [info     ] Model file selection raw output:
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/retrain.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/readme.md
+Refine_auto_drive/rnd_reward_model.py
+Refine_mujoco/masknet/gen_fid.py
+2026-08-26 10:02:53 [info     ] model response: # Expectations
+The paper defines the explanation fidelity score metric in Sections 4.1 and 4.2. For the autonomous driving environment, the implementation must:
+- Load a pre-trained agent and a trained mask network that provides step-level importance scores.
+- For a trajectory, apply a sliding window of length \(l = L \times K\) (K = 10%, 20%, 30%, 40%) to find the segment with the highest average importance score.
+- Fast‑forward the environment to the start of that segment.
+- Force the agent to take **random actions** for the duration of the segment.
+- After the segment, let the agent continue with its own policy until the episode ends.
+- Compute the reward change \(d = |R' - R|\), where \(R\) is the reward from an unperturbed episode and \(R'\) is the reward after the random‑action perturbation.
+- Compute \(d_{\max}\) as the maximum possible reward in the environment.
+- Calculate the fidelity score: \(\log(d / d_{\max}) - \log(l / L)\).
+- Repeat this over 500 trajectories and report the fidelity for each \(K\).
+
+The code submission must contain an actual script or function that performs these steps for the autonomous driving environment (MetaDrive).
+
+# Reality
+The provided files for the autonomous driving environment (`Refine_auto_drive/`) include:
+- `train_masknet.py`, `custom_masknet_env.py` – train the mask network and define the environment wrapper.
+- `gen_retrain_traj.py` – generates trajectories and records mask probabilities, but only to later select critical states for retraining; it does not implement the sliding‑window selection, random‑action perturbation, reward‑change measurement, or fidelity‑score computation.
+- `retrain.py`, `retrain_env.py`, `rnd_reward_model.py`, `learner.py`, `train_baseline.py` – all related to refining the agent or baseline training, not to evaluating explanation fidelity.
+
+None of these files implement the fidelity score pipeline described in the paper. There is no code that:
+- computes sliding windows over the trajectory,
+- fast‑forwards to a critical segment and forces random actions,
+- measures the resulting reward change,
+- computes \(d_{\max}\),
+- or calculates the fidelity score formula.
+
+The `gen_retrain_traj.py` script collects the importance scores (`mask_probs`), but that is used for retraining initialization, not for the fidelity evaluation. The necessary logic to randomise actions starting from identified critical steps and to compute the fidelity metric is entirely absent.
+
+# Score
+0 – The submission does not contain an implementation of the explanation fidelity score metric for the autonomous driving environment as required by the criterion.
+2026-08-26 10:02:53 [info     ] model response: # Expectations
+The paper defines the explanation fidelity score metric in Sections 4.1 and 4.2. For the autonomous driving environment, the implementation must:
+- Load a pre-trained agent and a trained mask network that provides step-level importance scores.
+- For a trajectory, apply a sliding window of length \(l = L \times K\) (K = 10%, 20%, 30%, 40%) to find the segment with the highest average importance score.
+- Fast‑forward the environment to the start of that segment.
+- Force the agent to take **random actions** for the duration of the segment.
+- After the segment, let the agent continue with its own policy until the episode ends.
+- Compute the reward change \(d = |R' - R|\), where \(R\) is the reward from an unperturbed episode and \(R'\) is the reward after the random‑action perturbation.
+- Compute \(d_{\max}\) as the maximum possible reward in the environment.
+- Calculate the fidelity score: \(\log(d / d_{\max}) - \log(l / L)\).
+- Repeat this over 500 trajectories and report the fidelity for each \(K\).
+
+The code submission must contain an actual script or function that performs these steps for the autonomous driving environment (MetaDrive).
+
+# Reality
+The provided files for the autonomous driving environment (`Refine_auto_drive/`) include:
+- `train_masknet.py`, `custom_masknet_env.py` – train the mask network and define the environment wrapper.
+- `gen_retrain_traj.py` – generates trajectories and records mask probabilities, but only to later select critical states for retraining; it does not implement the sliding‑window selection, random‑action perturbation, reward‑change measurement, or fidelity‑score computation.
+- `retrain.py`, `retrain_env.py`, `rnd_reward_model.py`, `learner.py`, `train_baseline.py` – all related to refining the agent or baseline training, not to evaluating explanation fidelity.
+
+None of these files implement the fidelity score pipeline described in the paper. There is no code that:
+- computes sliding windows over the trajectory,
+- fast‑forwards to a critical segment and forces random actions,
+- measures the resulting reward change,
+- computes \(d_{\max}\),
+- or calculates the fidelity score formula.
+
+The `gen_retrain_traj.py` script collects the importance scores (`mask_probs`), but that is used for retraining initialization, not for the fidelity evaluation. The necessary logic to randomise actions starting from identified critical steps and to compute the fidelity metric is entirely absent.
+
+# Score
+0 – The submission does not contain an implementation of the explanation fidelity score metric for the autonomous driving environment as required by the criterion.

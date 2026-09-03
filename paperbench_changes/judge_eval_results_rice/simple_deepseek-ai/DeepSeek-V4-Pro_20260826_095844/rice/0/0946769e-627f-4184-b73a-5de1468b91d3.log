@@ -1,0 +1,51 @@
+2026-08-26 09:58:46 [info     ] Grading leaf: For the selfish mining environment, the refining method has been implemented as outlined in Algorithm 2, integrating the mixed initial state distribution and RND.
+2026-08-26 09:59:42 [info     ] Model file selection raw output:
+Refine_selfish_mining/retrain.py
+Refine_selfish_mining/rnd_model.py
+Refine_selfish_mining/rnd_policy.py
+Refine_selfish_mining/utils.py
+Refine_selfish_mining/masknet/sample_mask_score.py
+Refine_selfish_mining/masknet/utils.py
+Refine_selfish_mining/masknet/train.py
+Refine_selfish_mining/baseline/train_ppo.py
+Refine_selfish_mining/baseline/net.py
+Refine_selfish_mining/masknet/replay.py
+2026-08-26 09:59:42 [info     ] Model file selection raw output:
+Refine_selfish_mining/retrain.py
+Refine_selfish_mining/rnd_model.py
+Refine_selfish_mining/rnd_policy.py
+Refine_selfish_mining/utils.py
+Refine_selfish_mining/masknet/sample_mask_score.py
+Refine_selfish_mining/masknet/utils.py
+Refine_selfish_mining/masknet/train.py
+Refine_selfish_mining/baseline/train_ppo.py
+Refine_selfish_mining/baseline/net.py
+Refine_selfish_mining/masknet/replay.py
+2026-08-26 10:01:26 [info     ] model response: # Expectations
+The refining method for the selfish mining environment must implement Algorithm 2 from the paper. This requires:
+1. Loading the pre-trained policy π and the trained state mask (explanation method) π̃.
+2. At each iteration, with a chosen probability p, running π to generate a trajectory, using the state mask to identify the most critical state, and resetting the environment to that critical state; otherwise resetting to the default initial distribution.
+3. For each collected step, computing the RND intrinsic reward bonus (MSE between a predictor network and a fixed target network) and adding it (scaled by λ) to the environment reward.
+4. Updating the policy using PPO (Proximal Policy Optimization) on the collected data, and updating the RND predictor network via MSE loss with Adam.
+
+All of these components must appear in the submitted code for the selfish mining environment.
+
+# Reality
+The main refining script for selfish mining is `Refine_selfish_mining/retrain.py`. It loads a pre-trained DQN policy (not the PPO agent used in the paper) and wraps it with a `RNDPolicy` (defined in `rnd_policy.py`) that adds the RND exploration bonus. The RND model is implemented in `rnd_model.py`, and the bonus is correctly added to the rewards in `RNDPolicy.process_fn`. However, the mixed initial state distribution is entirely missing from the visible code. The script does not load the state mask network (available in `masknet/utils.py`), and there is no logic to run the pre-trained policy, identify critical states via the mask, or reset the environment to those states with probability p. The environment class `MDPBlockchainSimulatorRetrain` (imported but not provided) might contain some of this logic, but since it is absent, we must treat it as not implemented in the submission. Moreover, the policy optimization uses DQN’s off‑policy update rather than the PPO loss specified in Algorithm 2. These gaps mean the refining method does not correctly integrate the mixed initial state distribution as outlined, and the training loop deviates from the prescribed algorithm.
+
+# Score
+0. The submission does not contain a complete implementation of Algorithm 2 for the selfish mining environment. The mixed initial state distribution component is missing from the provided code, and the optimization step does not follow the PPO‑based approach described in the paper. Therefore, the criterion is not met.
+2026-08-26 10:01:26 [info     ] model response: # Expectations
+The refining method for the selfish mining environment must implement Algorithm 2 from the paper. This requires:
+1. Loading the pre-trained policy π and the trained state mask (explanation method) π̃.
+2. At each iteration, with a chosen probability p, running π to generate a trajectory, using the state mask to identify the most critical state, and resetting the environment to that critical state; otherwise resetting to the default initial distribution.
+3. For each collected step, computing the RND intrinsic reward bonus (MSE between a predictor network and a fixed target network) and adding it (scaled by λ) to the environment reward.
+4. Updating the policy using PPO (Proximal Policy Optimization) on the collected data, and updating the RND predictor network via MSE loss with Adam.
+
+All of these components must appear in the submitted code for the selfish mining environment.
+
+# Reality
+The main refining script for selfish mining is `Refine_selfish_mining/retrain.py`. It loads a pre-trained DQN policy (not the PPO agent used in the paper) and wraps it with a `RNDPolicy` (defined in `rnd_policy.py`) that adds the RND exploration bonus. The RND model is implemented in `rnd_model.py`, and the bonus is correctly added to the rewards in `RNDPolicy.process_fn`. However, the mixed initial state distribution is entirely missing from the visible code. The script does not load the state mask network (available in `masknet/utils.py`), and there is no logic to run the pre-trained policy, identify critical states via the mask, or reset the environment to those states with probability p. The environment class `MDPBlockchainSimulatorRetrain` (imported but not provided) might contain some of this logic, but since it is absent, we must treat it as not implemented in the submission. Moreover, the policy optimization uses DQN’s off‑policy update rather than the PPO loss specified in Algorithm 2. These gaps mean the refining method does not correctly integrate the mixed initial state distribution as outlined, and the training loop deviates from the prescribed algorithm.
+
+# Score
+0. The submission does not contain a complete implementation of Algorithm 2 for the selfish mining environment. The mixed initial state distribution component is missing from the provided code, and the optimization step does not follow the PPO‑based approach described in the paper. Therefore, the criterion is not met.

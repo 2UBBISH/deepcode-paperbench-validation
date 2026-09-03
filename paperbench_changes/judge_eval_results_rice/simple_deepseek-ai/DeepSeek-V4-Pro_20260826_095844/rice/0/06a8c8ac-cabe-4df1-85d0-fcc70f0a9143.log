@@ -1,0 +1,75 @@
+2026-08-26 09:58:46 [info     ] Grading leaf: In the (MuJoCo) HalfCheetah environment, the observations are normalized when training DRL agents (further information about this environment in Appendix C.2).
+2026-08-26 09:59:19 [info     ] Model file selection raw output:
+Refine_mujoco/environment.py
+Refine_mujoco/utils.py
+Refine_mujoco/retrain.py
+Refine_mujoco/PPO.py
+Refine_mujoco/OnPolicyAlgorithm.py
+Refine_mujoco/base_class.py
+Refine_mujoco/masknet/environment.py
+Refine_mujoco/masknet/train.py
+Refine_mujoco/masknet/fid_test.py
+Refine_mujoco/callback.py
+2026-08-26 09:59:19 [info     ] Model file selection raw output:
+Refine_mujoco/environment.py
+Refine_mujoco/utils.py
+Refine_mujoco/retrain.py
+Refine_mujoco/PPO.py
+Refine_mujoco/OnPolicyAlgorithm.py
+Refine_mujoco/base_class.py
+Refine_mujoco/masknet/environment.py
+Refine_mujoco/masknet/train.py
+Refine_mujoco/masknet/fid_test.py
+Refine_mujoco/callback.py
+2026-08-26 10:00:19 [info     ] model response: # Expectations
+According to the paper (Appendix C.2), in the HalfCheetah environment ("HalfCheetah-v3"), observations are normalized when training the DRL agent. This means that during any training process involving the DRL agent (including the initial training and the refinement stage), the raw observations should be preprocessed by a running mean/std normalization (e.g., using Stable‑Baselines3’s `VecNormalize` wrapper). The normalization ensures that the agent receives standardized inputs, which is a standard practice for MuJoCo tasks in Stable‑Baselines3.  
+In a reproduction attempt, I expect to see actual code (not just a description) that applies observation normalization specifically for the HalfCheetah environment. This could be via wrapping the environment with `VecNormalize` (and updating statistics during training, or at least loading a previously saved normalization statistic to continue training). The code must be able to handle the HalfCheetah‑v3 environment and apply the normalization step.
+
+# Reality
+The submission includes a script `Refine_mujoco/retrain.py` that implements the refinement (retraining) of a pre‑trained DRL agent. In that file, there is an explicit check for games that require observation normalization:
+
+```python
+norm_games = ["HalfCheetah-v3", "Walker2d-v3"]
+if args.env not in norm_games:
+    # … environments without normalization …
+else:
+    env = DummyVecEnv([lambda: make_retrain_env(env_name=args.env, …)])
+    env = VecMonitor(env, log_path)
+    env = VecNormalize.load(args.vec_norm_path, env)
+    env.training = False
+    eval_env = DummyVecEnv([lambda:gym.make(args.env)])
+    eval_env = VecNormalize.load(args.vec_norm_path, eval_env)
+    eval_env.training = False
+    eval_env = VecMonitor(eval_env, log_path)
+```
+
+HalfCheetah‑v3 is listed in `norm_games`. When the environment is HalfCheetah‑v3, the code loads a `VecNormalize` wrapper from a pre‑saved path and applies it to both the training and evaluation environments. Although `training=False` stops the internal statistics from being updated, the wrapper still normalizes observations (subtracts mean, divides by standard deviation) using the loaded statistics. This matches the requirement that observations are normalized when training (refinement training is still training of a DRL agent). The implementation is present in the code and specifically targets HalfCheetah‑v3.
+
+# Score
+1 – The submission contains a concrete implementation (in `Refine_mujoco/retrain.py`) that normalizes observations for the HalfCheetah environment when training (refining) the DRL agent, satisfying the criterion.
+2026-08-26 10:00:19 [info     ] model response: # Expectations
+According to the paper (Appendix C.2), in the HalfCheetah environment ("HalfCheetah-v3"), observations are normalized when training the DRL agent. This means that during any training process involving the DRL agent (including the initial training and the refinement stage), the raw observations should be preprocessed by a running mean/std normalization (e.g., using Stable‑Baselines3’s `VecNormalize` wrapper). The normalization ensures that the agent receives standardized inputs, which is a standard practice for MuJoCo tasks in Stable‑Baselines3.  
+In a reproduction attempt, I expect to see actual code (not just a description) that applies observation normalization specifically for the HalfCheetah environment. This could be via wrapping the environment with `VecNormalize` (and updating statistics during training, or at least loading a previously saved normalization statistic to continue training). The code must be able to handle the HalfCheetah‑v3 environment and apply the normalization step.
+
+# Reality
+The submission includes a script `Refine_mujoco/retrain.py` that implements the refinement (retraining) of a pre‑trained DRL agent. In that file, there is an explicit check for games that require observation normalization:
+
+```python
+norm_games = ["HalfCheetah-v3", "Walker2d-v3"]
+if args.env not in norm_games:
+    # … environments without normalization …
+else:
+    env = DummyVecEnv([lambda: make_retrain_env(env_name=args.env, …)])
+    env = VecMonitor(env, log_path)
+    env = VecNormalize.load(args.vec_norm_path, env)
+    env.training = False
+    eval_env = DummyVecEnv([lambda:gym.make(args.env)])
+    eval_env = VecNormalize.load(args.vec_norm_path, eval_env)
+    eval_env.training = False
+    eval_env = VecMonitor(eval_env, log_path)
+```
+
+HalfCheetah‑v3 is listed in `norm_games`. When the environment is HalfCheetah‑v3, the code loads a `VecNormalize` wrapper from a pre‑saved path and applies it to both the training and evaluation environments. Although `training=False` stops the internal statistics from being updated, the wrapper still normalizes observations (subtracts mean, divides by standard deviation) using the loaded statistics. This matches the requirement that observations are normalized when training (refinement training is still training of a DRL agent). The implementation is present in the code and specifically targets HalfCheetah‑v3.
+
+# Score
+1 – The submission contains a concrete implementation (in `Refine_mujoco/retrain.py`) that normalizes observations for the HalfCheetah environment when training (refining) the DRL agent, satisfying the criterion.

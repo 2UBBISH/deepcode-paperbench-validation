@@ -1,0 +1,173 @@
+# Functional Reward Encodings (FRE) reproduction configuration
+# Domain: D4RL Kitchen (kitchen-complete-v0)
+# This config mirrors configs/antmaze.yaml and configs/exorl.yaml, but targets the
+# seven standard Kitchen subtask reward functions used for zero-shot evaluation.
+
+name: "fre-kitchen"
+domain: "kitchen"
+task: "kitchen-all"
+seed: 0
+device: "auto"
+
+log_dir: "logs/kitchen"
+checkpoint_dir: "checkpoints/kitchen"
+use_wandb: false
+wandb_project: "fre-kitchen"
+
+data:
+  env_name: "kitchen-complete-v0"
+  dataset_name: "kitchen-complete-v0"
+  d4rl_data_path: null
+  exorl_data_path: null
+
+  # D4RL Kitchen observations are 60-dimensional: first 30 dims positions, last 30 velocities.
+  normalize_states: true
+  normalize_rewards: true
+
+  batch_size: 256
+  max_episode_steps: 1000
+
+  # Legacy / convenience aliases used by defensive loaders.
+  antmaze_env_name: "antmaze-large-diverse-v2"
+  kitchen_env_name: "kitchen-complete-v0"
+
+reward_sampler:
+  # Prior reward-function mixture. K and K' follow the reproduction defaults.
+  num_encoder_states: 32
+  num_decoder_states: 1024
+
+  # Enable all three unsupervised reward families (uniform mixture by default).
+  singleton_enabled: true
+  linear_enabled: true
+  mlp_enabled: true
+
+  # Legacy aliases retained for robustness with existing code paths.
+  singleton: true
+  linear: true
+  mlp: true
+
+  # Canonical weights are [singleton, linear, mlp].
+  weights: [1.0, 1.0, 1.0]
+
+  # Singleton goal-reaching reward parameters.
+  singleton_threshold: 1.0
+
+  # Random linear reward parameters.
+  linear_active_fraction: 0.3
+
+  # Random MLP reward parameters.
+  mlp_hidden_dim: 64
+  mlp_num_hidden: 2
+
+  # Bounded reward range for stable discretization and reconstruction.
+  reward_min: -1.0
+  reward_max: 1.0
+  normalize_rewards: true
+
+fre:
+  # Latent space.
+  z_dim: 64
+
+  # Transformer encoder.
+  d_model: 128
+  d_ff: 256
+  n_heads: 4
+  n_layers: 2
+  dropout: 0.0
+  activation: "relu"
+
+  # Reward embedding / discretization.
+  num_bins: 128
+  reward_min: -1.0
+  reward_max: 1.0
+  use_linear_reward: false
+  normalize_rewards: true
+
+  # Reward decoder.
+  decoder_hidden_dim: 256
+  decoder_num_hidden: 2
+
+  # VAE objective: reconstruction MSE - beta * KL.
+  beta: 1.0
+
+  # Phase 1 encoder pretraining.
+  lr: 1.0e-4
+  pretrain_steps: 200000
+  batch_size: 256
+  clip_grad_norm: 5.0
+
+iql:
+  # FRE-conditioned IQL (Phase 2).
+  hidden_dim: 256
+  num_hidden: 2
+
+  gamma: 0.99
+  tau: 0.7
+  beta: 3.0
+  target_tau: 0.005
+  advantage_clamp: 100.0
+
+  lr: 3.0e-4
+  train_steps: 1000000
+  batch_size: 256
+
+  # Policy output clamping for GaussianPolicy.
+  log_std_min: -20.0
+  log_std_max: 2.0
+
+# Baseline hyperparameters. Kept as a flat namespace with prefixed keys to be
+# readable by the defensive `_cfg_value` helpers in the baseline implementations.
+baseline:
+  # Forward-Backward (FB)
+  fb_feature_dim: 256
+  fb_hidden_dim: 256
+  fb_num_hidden: 2
+  fb_lr: 3.0e-4
+  fb_learn_backward: false
+
+  # Successor Features (SF)
+  sf_feature_dim: 256
+  sf_hidden_dim: 256
+  sf_num_hidden: 2
+  sf_lr: 3.0e-4
+  sf_icm_pretrain_steps: 10000
+
+  # OPAL skill discovery
+  opal_latent_dim: 16
+  opal_hidden_dim: 256
+  opal_num_hidden: 2
+  opal_chunk_length: 10
+  opal_beta: 1.0
+  opal_lr: 3.0e-4
+  opal_learned_prior: true
+
+  # Goal-conditioned baselines (GC-IQL / GC-BC)
+  gc_hidden_dim: 256
+  gc_num_hidden: 2
+  gc_lr: 3.0e-4
+  gc_gamma: 0.99
+  gc_tau: 0.7
+  gc_beta: 3.0
+  gc_target_tau: 0.005
+  gc_original_goal_prob: 0.3
+  gc_threshold: 1.0
+  gc_deterministic_policy: false
+
+eval:
+  num_episodes: 20
+  # FRE uses only 32 reward samples for downstream task encoding.
+  num_reward_samples: 32
+  seeds: [0, 1, 2, 3, 4]
+  max_episode_steps: 1000
+  normalize_score_0_100: true
+  deterministic: true
+  save_visualizations: false
+
+  tasks:
+    - "bottom burner"
+    - "top burner"
+    - "light switch"
+    - "slide cabinet"
+    - "hinge cabinet"
+    - "microwave"
+    - "kettle"

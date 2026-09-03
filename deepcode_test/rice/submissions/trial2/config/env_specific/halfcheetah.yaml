@@ -1,0 +1,89 @@
+# HalfCheetah-v3 environment-specific hyperparameters for RICE
+# Overrides default.yaml values for the HalfCheetah MuJoCo task.
+# Values taken from RICE paper Tables 3-6.
+
+agent:
+  # PPO hyperparameters for base agent training
+  policy: "MlpPolicy"
+  n_steps: 2048
+  batch_size: 64
+  n_epochs: 10
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_range: 0.2
+  ent_coef: 0.0
+  vf_coef: 0.5
+  max_grad_norm: 0.5
+  learning_rate: 3.0e-4
+  total_timesteps: 1000000  # 1e6
+  net_arch:
+    pi: [64, 64]
+    vf: [64, 64]
+  activation_fn: "tanh"
+  normalize_obs: true
+  normalize_reward: true
+
+mask:
+  # Mask network training hyperparameters
+  alpha: 0.0001
+  total_timesteps: 300000  # 3e5 (Table 4)
+  hidden_sizes: [64, 64]
+  features_dim: 64
+  learning_rate: 3.0e-4
+  n_steps: 2048
+  batch_size: 64
+  n_epochs: 10
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_range: 0.2
+  ent_coef: 0.0
+  vf_coef: 0.5
+  max_grad_norm: 0.5
+  use_sde: false
+
+explanation:
+  # Explanation extraction settings
+  num_trajectories: 100
+  max_steps: 1000
+  buffer_size: 10000
+  top_k_per_trajectory: 1
+  use_perturbed_policy: false
+  deterministic_agent: true
+
+rnd:
+  # Random Network Distillation parameters
+  embedding_dim: 128
+  hidden_sizes: [64, 64]
+  learning_rate: 1.0e-4
+  normalize_obs: true
+  clip_bonus: null
+
+refining:
+  # Refining process hyperparameters (Table 3)
+  p: 0.5                    # Probability of sampling from critical states
+  lambda: 0.01              # RND exploration bonus coefficient
+  total_timesteps: 1000000  # 1e6
+  use_rnd: true
+  use_mixed_init: true
+  ppo_learning_rate: 3.0e-4
+  n_steps: 2048
+  batch_size: 64
+  n_epochs: 10
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_range: 0.2
+  ent_coef: 0.0
+  vf_coef: 0.5
+  max_grad_norm: 0.5
+  rnd_update_freq: 1000
+  rnd_batch_size: 64
+  rnd_n_epochs: 1
+  state_buffer_size: 100000
+
+experiment:
+  # Evaluation and experiment settings
+  eval_episodes: 100
+  eval_freq: 10000
+  num_seeds: 5
+  max_steps: 1000
+  save_videos: false

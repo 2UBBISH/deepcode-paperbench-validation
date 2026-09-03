@@ -1,0 +1,59 @@
+2026-08-26 10:01:35 [info     ] Grading leaf: For the selfish mining environment, for the "Random" explanation method, code has been implemented for measuring cumulative reward throughout refinement
+2026-08-26 10:03:07 [info     ] Model file selection raw output:
+Refine_selfish_mining/retrain.py
+Refine_selfish_mining/utils.py
+Refine_selfish_mining/rnd_policy.py
+Refine_selfish_mining/rnd_model.py
+Refine_selfish_mining/baseline/train_ppo.py
+Refine_selfish_mining/masknet/sample_mask_score.py
+Refine_selfish_mining/masknet/utils.py
+Refine_selfish_mining/masknet/fidelity_score.py
+Refine_selfish_mining/baseline/blockchain_mdps/base/blockchain_simulator/mdp_blockchain_simulator_retrain.py
+Refine_selfish_mining/baseline/net.py
+2026-08-26 10:03:07 [info     ] Model file selection raw output:
+Refine_selfish_mining/retrain.py
+Refine_selfish_mining/utils.py
+Refine_selfish_mining/rnd_policy.py
+Refine_selfish_mining/rnd_model.py
+Refine_selfish_mining/baseline/train_ppo.py
+Refine_selfish_mining/masknet/sample_mask_score.py
+Refine_selfish_mining/masknet/utils.py
+Refine_selfish_mining/masknet/fidelity_score.py
+Refine_selfish_mining/baseline/blockchain_mdps/base/blockchain_simulator/mdp_blockchain_simulator_retrain.py
+Refine_selfish_mining/baseline/net.py
+2026-08-26 10:03:07 [info     ] File /home/deepevol/deepevol/frontier-evals/project/paperbench/data/judge_eval/rice/0/submission/Refine_selfish_mining/baseline/blockchain_mdps/base/blockchain_simulator/mdp_blockchain_simulator_retrain.py not found!
+2026-08-26 10:03:07 [info     ] File /home/deepevol/deepevol/frontier-evals/project/paperbench/data/judge_eval/rice/0/submission/Refine_selfish_mining/baseline/blockchain_mdps/base/blockchain_simulator/mdp_blockchain_simulator_retrain.py not found!
+2026-08-26 10:04:34 [info     ] model response: # Expectations
+For the selfish mining environment, the paper’s Experiment III (Section 4.2 and 4.3) fixes the refining method and varies the explanation methods: Random, StateMask, and Ours. The “Random” explanation method randomly selects a visited state as the critical state for the mixed initial state distribution. The refining process then uses this random critical state together with the default initial distribution, and trains with PPO + RND exploration. During this refinement, the code must measure and log the cumulative reward (e.g., mean episodic reward of the evaluation environment) throughout the training epochs. Concretely, I expect to see:
+1. Code that implements the random selection of a critical state (instead of a mask network) for the selfish mining environment.
+2. Integration of that random explanation into the refinement loop (mixed initial state distribution, RND exploration).
+3. A mechanism to measure and record cumulative reward (e.g., a test collector, TensorBoard logging, or printed metrics) as the agent is refined.
+
+# Reality
+The submitted files contain the following relevant implementations for selfish mining:
+- `Refine_selfish_mining/retrain.py`: This script performs refinement using a pre‑trained DQN agent and a **mask network** (loaded from a checkpoint) to identify critical states. It sets the initial state distribution via `MDPBlockchainSimulatorRetrain` and uses RND exploration. While it does measure reward through `offpolicy_trainer` (which logs test rewards), it relies exclusively on the mask network for explanation. There is no option or code path that implements a random explanation method.
+- `Refine_selfish_mining/utils.py` and `masknet/utils.py`: Provide helper functions to load the DQN model and the mask network. No random baseline logic is present.
+- Other files (`rnd_policy.py`, `rnd_model.py`, `baseline/train_ppo.py`, `masknet/sample_mask_score.py`, etc.) are unrelated to a random‑explanation refinement loop.
+Nowhere in the submission is there code that randomly selects a visited state as critical and feeds it into the refinement pipeline for selfish mining. Consequently, there is no implementation that measures cumulative reward throughout refinement specifically for the “Random” explanation method on this environment.
+
+# Score
+Score: **0**
+
+The criterion is not met because the submission does not contain a correct implementation of measuring cumulative reward during refinement under the “Random” explanation method for the selfish mining environment.
+2026-08-26 10:04:34 [info     ] model response: # Expectations
+For the selfish mining environment, the paper’s Experiment III (Section 4.2 and 4.3) fixes the refining method and varies the explanation methods: Random, StateMask, and Ours. The “Random” explanation method randomly selects a visited state as the critical state for the mixed initial state distribution. The refining process then uses this random critical state together with the default initial distribution, and trains with PPO + RND exploration. During this refinement, the code must measure and log the cumulative reward (e.g., mean episodic reward of the evaluation environment) throughout the training epochs. Concretely, I expect to see:
+1. Code that implements the random selection of a critical state (instead of a mask network) for the selfish mining environment.
+2. Integration of that random explanation into the refinement loop (mixed initial state distribution, RND exploration).
+3. A mechanism to measure and record cumulative reward (e.g., a test collector, TensorBoard logging, or printed metrics) as the agent is refined.
+
+# Reality
+The submitted files contain the following relevant implementations for selfish mining:
+- `Refine_selfish_mining/retrain.py`: This script performs refinement using a pre‑trained DQN agent and a **mask network** (loaded from a checkpoint) to identify critical states. It sets the initial state distribution via `MDPBlockchainSimulatorRetrain` and uses RND exploration. While it does measure reward through `offpolicy_trainer` (which logs test rewards), it relies exclusively on the mask network for explanation. There is no option or code path that implements a random explanation method.
+- `Refine_selfish_mining/utils.py` and `masknet/utils.py`: Provide helper functions to load the DQN model and the mask network. No random baseline logic is present.
+- Other files (`rnd_policy.py`, `rnd_model.py`, `baseline/train_ppo.py`, `masknet/sample_mask_score.py`, etc.) are unrelated to a random‑explanation refinement loop.
+Nowhere in the submission is there code that randomly selects a visited state as critical and feeds it into the refinement pipeline for selfish mining. Consequently, there is no implementation that measures cumulative reward throughout refinement specifically for the “Random” explanation method on this environment.
+
+# Score
+Score: **0**
+
+The criterion is not met because the submission does not contain a correct implementation of measuring cumulative reward during refinement under the “Random” explanation method for the selfish mining environment.

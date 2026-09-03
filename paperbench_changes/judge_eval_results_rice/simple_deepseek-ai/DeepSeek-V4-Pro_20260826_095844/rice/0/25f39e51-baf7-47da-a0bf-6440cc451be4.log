@@ -1,0 +1,83 @@
+2026-08-26 09:58:46 [info     ] Grading leaf: For the selfish mining environment, the explanation method implementation relies on a mask network that outputs "0" for critical steps and "1" otherwise
+2026-08-26 09:59:36 [info     ] Model file selection raw output:
+Refine_selfish_mining/masknet/train.py
+Refine_selfish_mining/masknet/utils.py
+Refine_selfish_mining/masknet/sample_mask_score.py
+Refine_selfish_mining/masknet/fidelity_score.py
+Refine_selfish_mining/masknet/sample_value_score.py
+Refine_selfish_mining/masknet/replay.py
+Refine_selfish_mining/retrain.py
+Refine_selfish_mining/utils.py
+Refine_selfish_mining/baseline/net.py
+Refine_selfish_mining/rnd_policy.py
+2026-08-26 09:59:36 [info     ] Model file selection raw output:
+Refine_selfish_mining/masknet/train.py
+Refine_selfish_mining/masknet/utils.py
+Refine_selfish_mining/masknet/sample_mask_score.py
+Refine_selfish_mining/masknet/fidelity_score.py
+Refine_selfish_mining/masknet/sample_value_score.py
+Refine_selfish_mining/masknet/replay.py
+Refine_selfish_mining/retrain.py
+Refine_selfish_mining/utils.py
+Refine_selfish_mining/baseline/net.py
+Refine_selfish_mining/rnd_policy.py
+2026-08-26 10:00:54 [info     ] model response: # Expectations
+According to Section 3.3 of the paper, the explanation method (StateMask variant, denoted "Ours") uses a mask network that takes the current state as input and outputs a binary action \(a_t^m \in \{0,1\}\):
+- If \(a_t^m = 0\), the target agent’s action is kept (the step is considered **critical**).
+- If \(a_t^m = 1\), the agent’s action is replaced by a random action (the step is **not critical** / “blinding”).
+
+The mask network is trained to maximize the perturbed agent’s reward while receiving an extra bonus for outputting “1”, thereby learning to blind only at non‑critical steps. For any state, the importance score corresponds to the probability (or logit) of the mask network outputting “0”.
+
+For the selfish mining environment, I expect to see:
+- A mask network (e.g., a PPO policy) whose action space has two possible discrete actions, corresponding to “0” (do not mask / critical) and “1” (mask / non‑critical).
+- The training and evaluation code that explicitly uses this mapping: action 0 ⇔ critical step, action 1 ⇔ blind step.
+
+# Reality
+The submitted code contains several files for the selfish mining mask network.
+
+- **`Refine_selfish_mining/masknet/train.py`**  
+  The mask net is created as a `PPOPolicy` with `args.action_shape = 2`, meaning the policy outputs a categorical distribution over two actions. The environment (`MDPBlockchainSimulatorMaskNet`) is presumably designed to interpret action 0 as “keep target action” and action 1 as “take random action”, consistent with the paper’s description.
+
+- **`Refine_selfish_mining/masknet/sample_mask_score.py`**  
+  This file loads the trained mask model and extracts importance scores. The critical line is:
+  ```python
+  mask_prob = mask_model(batch).logits[0][0]  # the prob of not doing the mask -> state importance
+  ```
+  This explicitly treats action index `0` as “not doing the mask” (i.e., critical) and action index `1` as “doing the mask” (i.e., non‑critical), matching the required mapping.
+
+- **`Refine_selfish_mining/masknet/replay.py`** and related files also rely on this interpretation (loading `mask_prob_log.txt` and using the probability of action 0 to identify critical segments).
+
+While the actual environment code `MDPBlockchainSimulatorMaskNet` is not provided in the submission snippet, the definition and usage of the mask network consistently show that it outputs a binary action with the semantics **0 → critical, 1 → otherwise**.
+
+# Score
+The criterion is met. The code clearly implements a mask network that outputs binary values (“0” for critical / keep action, “1” for non‑critical / blind), and the downstream evaluation interprets action 0 as the critical step probability. Therefore, I assign a score of **1**.
+2026-08-26 10:00:54 [info     ] model response: # Expectations
+According to Section 3.3 of the paper, the explanation method (StateMask variant, denoted "Ours") uses a mask network that takes the current state as input and outputs a binary action \(a_t^m \in \{0,1\}\):
+- If \(a_t^m = 0\), the target agent’s action is kept (the step is considered **critical**).
+- If \(a_t^m = 1\), the agent’s action is replaced by a random action (the step is **not critical** / “blinding”).
+
+The mask network is trained to maximize the perturbed agent’s reward while receiving an extra bonus for outputting “1”, thereby learning to blind only at non‑critical steps. For any state, the importance score corresponds to the probability (or logit) of the mask network outputting “0”.
+
+For the selfish mining environment, I expect to see:
+- A mask network (e.g., a PPO policy) whose action space has two possible discrete actions, corresponding to “0” (do not mask / critical) and “1” (mask / non‑critical).
+- The training and evaluation code that explicitly uses this mapping: action 0 ⇔ critical step, action 1 ⇔ blind step.
+
+# Reality
+The submitted code contains several files for the selfish mining mask network.
+
+- **`Refine_selfish_mining/masknet/train.py`**  
+  The mask net is created as a `PPOPolicy` with `args.action_shape = 2`, meaning the policy outputs a categorical distribution over two actions. The environment (`MDPBlockchainSimulatorMaskNet`) is presumably designed to interpret action 0 as “keep target action” and action 1 as “take random action”, consistent with the paper’s description.
+
+- **`Refine_selfish_mining/masknet/sample_mask_score.py`**  
+  This file loads the trained mask model and extracts importance scores. The critical line is:
+  ```python
+  mask_prob = mask_model(batch).logits[0][0]  # the prob of not doing the mask -> state importance
+  ```
+  This explicitly treats action index `0` as “not doing the mask” (i.e., critical) and action index `1` as “doing the mask” (i.e., non‑critical), matching the required mapping.
+
+- **`Refine_selfish_mining/masknet/replay.py`** and related files also rely on this interpretation (loading `mask_prob_log.txt` and using the probability of action 0 to identify critical segments).
+
+While the actual environment code `MDPBlockchainSimulatorMaskNet` is not provided in the submission snippet, the definition and usage of the mask network consistently show that it outputs a binary action with the semantics **0 → critical, 1 → otherwise**.
+
+# Score
+The criterion is met. The code clearly implements a mask network that outputs binary values (“0” for critical / keep action, “1” for non‑critical / blind), and the downstream evaluation interprets action 0 as the critical step probability. Therefore, I assign a score of **1**.

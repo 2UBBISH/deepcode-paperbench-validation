@@ -1,0 +1,83 @@
+2026-08-26 10:01:56 [info     ] Grading leaf: For the autonomous driving environment, the "Ours" explanation method has been utilized to identify the critical step to refine from
+2026-08-26 10:03:02 [info     ] Model file selection raw output:
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/retrain.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/readme.md
+README.md
+2026-08-26 10:03:02 [info     ] Model file selection raw output:
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/retrain.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/readme.md
+README.md
+2026-08-26 10:04:31 [info     ] model response: # Expectations
+According to the paper (Section 3.3 and Algorithm 2), the "Ours" explanation method uses a trained mask network (trained with the reformulated objective and a blinding bonus) to compute an importance score for each state in a trajectory (the probability of the mask network outputting "0", indicating the step is important). The most critical state is the one with the highest importance score (argmax). In the refining process (Algorithm 2), when resetting to a critical state, a trajectory is rolled out using the pre‑trained policy, importance scores are computed via the mask network, and the environment is reset to the most critical state.
+
+For the autonomous driving environment, the submission must contain code that:
+- Trains the mask network according to the "Ours" method (Algorithm 1).
+- In the refining loop, for a certain fraction of episodes, generates a trajectory and uses the trained mask network to identify the most critical state.
+- Resets the environment to that most critical state (i.e., the one with the highest importance score) before continuing training.
+
+Merely having the capability to compute scores but only using a random selection does **not** satisfy the criterion; the "Ours" method must actually be utilized.
+
+# Reality
+The relevant code resides in `Refine_auto_drive/`:
+
+- **Mask network training**: `train_masknet.py` and `custom_masknet_env.py` implement training of the mask network with the blinding bonus (the "Ours" explanation method).  
+- **Trajectory collection and importance scores**: `gen_retrain_traj.py` defines `fid_play`, which runs an episode, records the mask network’s importance score (probability of action 0) at each step, and stores it in `traj.mask_probs`. The function `gen_one_traj` loads the trained mask network and the pre‑trained agent, then returns a trajectory with those scores.  
+- **Refining environment**: `retrain_env.py` defines `CustomWrapper`, which handles the reset logic. In its `reset` method, when a trajectory is generated via `gen_one_traj`, the code contains a branch to select the start index:
+
+```python
+if self.random_sampling:
+    start_idx = np.random.choice(traj.eps_len)
+else:
+    start_idx = np.argmax(traj.mask_probs)
+```
+
+However, `self.random_sampling` is hard‑coded to `True` in the constructor (`self.random_sampling = True`) and is **never** set to `False`. There is no command‑line argument or configuration to change it. Consequently, the refining process always uses a **random** state, never the most critical state identified by the mask network.  
+
+The refining script `retrain.py` only exposes `--go_prob` and `--bonus_scale`; there is no option to select the explanation method (Random vs Ours). The "Ours" explanation method is therefore **not** actually utilized to identify the critical step during refinement – despite the code for computing scores being present, it is not used to determine the reset point.
+
+# Score
+**0** – The submission does not correctly implement the criterion. The code for the "Ours" explanation method exists, but the refining process fails to use it to identify the critical state to refine from; it always falls back to random selection. This means the required behavior is not realized in the codebase.
+2026-08-26 10:04:31 [info     ] model response: # Expectations
+According to the paper (Section 3.3 and Algorithm 2), the "Ours" explanation method uses a trained mask network (trained with the reformulated objective and a blinding bonus) to compute an importance score for each state in a trajectory (the probability of the mask network outputting "0", indicating the step is important). The most critical state is the one with the highest importance score (argmax). In the refining process (Algorithm 2), when resetting to a critical state, a trajectory is rolled out using the pre‑trained policy, importance scores are computed via the mask network, and the environment is reset to the most critical state.
+
+For the autonomous driving environment, the submission must contain code that:
+- Trains the mask network according to the "Ours" method (Algorithm 1).
+- In the refining loop, for a certain fraction of episodes, generates a trajectory and uses the trained mask network to identify the most critical state.
+- Resets the environment to that most critical state (i.e., the one with the highest importance score) before continuing training.
+
+Merely having the capability to compute scores but only using a random selection does **not** satisfy the criterion; the "Ours" method must actually be utilized.
+
+# Reality
+The relevant code resides in `Refine_auto_drive/`:
+
+- **Mask network training**: `train_masknet.py` and `custom_masknet_env.py` implement training of the mask network with the blinding bonus (the "Ours" explanation method).  
+- **Trajectory collection and importance scores**: `gen_retrain_traj.py` defines `fid_play`, which runs an episode, records the mask network’s importance score (probability of action 0) at each step, and stores it in `traj.mask_probs`. The function `gen_one_traj` loads the trained mask network and the pre‑trained agent, then returns a trajectory with those scores.  
+- **Refining environment**: `retrain_env.py` defines `CustomWrapper`, which handles the reset logic. In its `reset` method, when a trajectory is generated via `gen_one_traj`, the code contains a branch to select the start index:
+
+```python
+if self.random_sampling:
+    start_idx = np.random.choice(traj.eps_len)
+else:
+    start_idx = np.argmax(traj.mask_probs)
+```
+
+However, `self.random_sampling` is hard‑coded to `True` in the constructor (`self.random_sampling = True`) and is **never** set to `False`. There is no command‑line argument or configuration to change it. Consequently, the refining process always uses a **random** state, never the most critical state identified by the mask network.  
+
+The refining script `retrain.py` only exposes `--go_prob` and `--bonus_scale`; there is no option to select the explanation method (Random vs Ours). The "Ours" explanation method is therefore **not** actually utilized to identify the critical step during refinement – despite the code for computing scores being present, it is not used to determine the reset point.
+
+# Score
+**0** – The submission does not correctly implement the criterion. The code for the "Ours" explanation method exists, but the refining process fails to use it to identify the critical state to refine from; it always falls back to random selection. This means the required behavior is not realized in the codebase.

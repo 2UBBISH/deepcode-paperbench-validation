@@ -1,0 +1,69 @@
+2026-08-26 10:01:30 [info     ] Grading leaf: In Experiment II, for the autonomous driving environment, for the "PPO fine-tuning" refinement method, code has been implemented for measuring cumulative reward throughout refinement
+2026-08-26 10:02:58 [info     ] Model file selection raw output:
+Refine_auto_drive/retrain.py
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/readme.md
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_mujoco/monitor.py
+2026-08-26 10:02:58 [info     ] Model file selection raw output:
+Refine_auto_drive/retrain.py
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/readme.md
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_mujoco/monitor.py
+2026-08-26 10:05:53 [info     ] model response: # Expectations
+The criterion requires that for the autonomous driving environment, the code implementing the "PPO fine‑tuning" refinement method includes a mechanism to **measure cumulative reward throughout refinement**. In practice this means the training loop should periodically evaluate the policy (e.g., by running full episodes) and record the total (cumulative) reward obtained per episode or averaged over episodes, so that progress can be tracked over time. The measurement should be part of the refinement process, not just a single post‑training evaluation.
+
+I will look in the submission for:
+- A script or code block that explicitly implements PPO fine‑tuning for the autonomous driving environment (i.e., loading the pre‑trained PPO agent, continuing training with PPO, possibly with a lower learning rate, and without explanation‑guided resets or exploration bonuses).
+- An evaluation step inside that script that periodically collects full-episode rewards and logs them (e.g., via an evaluator, a monitor, or custom logging).
+
+# Reality
+The only files provided for the autonomous driving environment are those in `Refine_auto_drive/`. Among them, the main refinement script is `retrain.py`. This script loads a pre‑trained PPO policy (`ckpt_best.pth.tar`), creates a custom environment wrapper, and trains with PPO while optionally adding an exploration bonus and resetting to critical states (the “Ours” method).  
+
+The training loop in `retrain.py` contains:
+```python
+if evaluator.should_eval(learner.train_iter):
+    stop, rate = evaluator.eval(learner.save_checkpoint, learner.train_iter, 1)
+```
+Here `evaluator` is an `InteractionSerialEvaluator` that evaluates the current policy on the evaluation environment (`wrapped_env`). The wrapped environment (`DriveEnvWrapper` in `core/envs`) records the total episode reward (`final_eval_reward`) and passes it back. Therefore, cumulative reward **is** measured and logged at regular intervals throughout refinement.
+
+Although `retrain.py` is primarily the “Ours” script, it can be configured to behave exactly like **PPO fine‑tuning** by setting `go_prob=0` (never reset to critical states) and `bonus_scale=0` (zero exploration bonus). With those parameters, the script effectively fine‑tunes the pre‑trained agent using PPO from the default initial state distribution, which matches the paper’s description of the PPO fine‑tuning baseline. The measurement code described above remains active regardless of those hyperparameter choices.
+
+No separate script named “ppo_fine_tune” is supplied, but the measurement functionality required by the criterion is fully present in the existing code.
+
+# Score
+1 – The code (`retrain.py`) implements periodic evaluation of the policy during refinement, which measures cumulative reward. This implementation can be used (and was likely used) for the PPO fine‑tuning baseline, meeting the criterion.
+2026-08-26 10:05:53 [info     ] model response: # Expectations
+The criterion requires that for the autonomous driving environment, the code implementing the "PPO fine‑tuning" refinement method includes a mechanism to **measure cumulative reward throughout refinement**. In practice this means the training loop should periodically evaluate the policy (e.g., by running full episodes) and record the total (cumulative) reward obtained per episode or averaged over episodes, so that progress can be tracked over time. The measurement should be part of the refinement process, not just a single post‑training evaluation.
+
+I will look in the submission for:
+- A script or code block that explicitly implements PPO fine‑tuning for the autonomous driving environment (i.e., loading the pre‑trained PPO agent, continuing training with PPO, possibly with a lower learning rate, and without explanation‑guided resets or exploration bonuses).
+- An evaluation step inside that script that periodically collects full-episode rewards and logs them (e.g., via an evaluator, a monitor, or custom logging).
+
+# Reality
+The only files provided for the autonomous driving environment are those in `Refine_auto_drive/`. Among them, the main refinement script is `retrain.py`. This script loads a pre‑trained PPO policy (`ckpt_best.pth.tar`), creates a custom environment wrapper, and trains with PPO while optionally adding an exploration bonus and resetting to critical states (the “Ours” method).  
+
+The training loop in `retrain.py` contains:
+```python
+if evaluator.should_eval(learner.train_iter):
+    stop, rate = evaluator.eval(learner.save_checkpoint, learner.train_iter, 1)
+```
+Here `evaluator` is an `InteractionSerialEvaluator` that evaluates the current policy on the evaluation environment (`wrapped_env`). The wrapped environment (`DriveEnvWrapper` in `core/envs`) records the total episode reward (`final_eval_reward`) and passes it back. Therefore, cumulative reward **is** measured and logged at regular intervals throughout refinement.
+
+Although `retrain.py` is primarily the “Ours” script, it can be configured to behave exactly like **PPO fine‑tuning** by setting `go_prob=0` (never reset to critical states) and `bonus_scale=0` (zero exploration bonus). With those parameters, the script effectively fine‑tunes the pre‑trained agent using PPO from the default initial state distribution, which matches the paper’s description of the PPO fine‑tuning baseline. The measurement code described above remains active regardless of those hyperparameter choices.
+
+No separate script named “ppo_fine_tune” is supplied, but the measurement functionality required by the criterion is fully present in the existing code.
+
+# Score
+1 – The code (`retrain.py`) implements periodic evaluation of the policy during refinement, which measures cumulative reward. This implementation can be used (and was likely used) for the PPO fine‑tuning baseline, meeting the criterion.

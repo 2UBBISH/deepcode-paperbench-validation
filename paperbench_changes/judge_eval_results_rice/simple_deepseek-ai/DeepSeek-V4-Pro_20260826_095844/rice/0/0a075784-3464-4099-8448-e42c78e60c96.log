@@ -1,0 +1,99 @@
+2026-08-26 09:58:46 [info     ] Grading leaf: Any version of the autonomous driving environment has been correctly set up and can be initialized can be used to run the experiments (further information about this environment in Appendix C.2).
+2026-08-26 10:00:03 [info     ] Model file selection raw output:
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/retrain.py
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/readme.md
+requirements.txt
+README.md
+2026-08-26 10:00:03 [info     ] Model file selection raw output:
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/retrain.py
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/readme.md
+requirements.txt
+README.md
+2026-08-26 10:01:12 [info     ] model response: # Expectations
+According to the paper (Section 4.1 and Appendix C.2), the autonomous driving environment is based on the **MetaDrive simulator** using the **"Macro‑v1"** environment. The authors state that they train the agent and mask network using the PPO algorithm via **DI‑drive (DI‑engine)**. A correct implementation should therefore:
+- Use `gym.make("Macro‑v1", ...)` or an equivalent MetaDrive call to create the specific driving environment.
+- Set up appropriate configuration for the environment (e.g., rendering options, number of collector/evaluator environments).
+- Include wrappers that enable explanation (mask network training) and refinement (mixed initial state distribution, RND exploration) as described in the paper.
+- Provide the ability to initialize/reset the environment and step through it, thus allowing the experiments to be run.
+
+The rubric only checks that the environment has been **correctly set up and can be initialized**; it does not require actual execution or complete reproduction of all experimental results.
+
+# Reality
+Looking at the submission files under `Refine_auto_drive/`:
+
+- **`retrain.py`** (lines 65‑71) defines the environment creation function:
+  ```python
+  def custom_env(env_cfg, wrapper_cfg=None):
+      return CustomWrapper(gym.make("Macro-v1", config=env_cfg), wrapper_cfg, go_prob=args.go_prob)
+  ```
+  This explicitly uses `gym.make("Macro-v1", ...)` as required. It wraps it with a `CustomWrapper` (defined in `retrain_env.py`) that implements the mixed initial state distribution for refinement (sampling a critical state from a pre‑generated trajectory and fast‑forwarding the environment). The `metadrive_macro_config` dictionary in the same file sets the MetaDrive‑specific options (e.g., `use_render=False`) and the DI‑engine manager parameters.
+
+- **`train_masknet.py`** (lines 52‑55) similarly creates the environment for explanation training:
+  ```python
+  def wrapped_env(env_cfg, wrapper_cfg=None):
+      return DriveEnvWrapper(gym.make("Macro-v1", config=env_cfg), wrapper_cfg)
+  ```
+  `DriveEnvWrapper` (from `custom_masknet_env.py`) implements the mask‑network environment that blends the pre‑trained agent’s actions with random actions and adds an intrinsic bonus for masking, matching Algorithm 1 in the paper.
+
+- **`train_baseline.py`** also uses `gym.make("Macro-v1", ...)` to set up the baseline training environment.
+
+- **`gen_retrain_traj.py`** contains helper code to record a trajectory using the mask network and the pre‑trained agent, which is later used by `retrain_env.py` to identify critical states.
+
+- The files import `metadrive`, `gym`, and DI‑engine components (`SyncSubprocessEnvManager`, `PPOPolicy`, etc.), and they provide configuration dictionaries that compile correctly with DI‑engine utilities.
+
+Thus, the submission **does** contain actual code that sets up the autonomous driving environment (Macro‑v1 from MetaDrive) and wraps it for the explanation and refinement experiments. The environment can be initialized via `gym.make` and subsequently reset/stepped inside the wrappers.
+
+# Score
+1
+
+The criterion is satisfied because the code correctly implements the required environment setup and initialization for the Autonomous Driving domain, consistent with the paper’s description.
+2026-08-26 10:01:12 [info     ] model response: # Expectations
+According to the paper (Section 4.1 and Appendix C.2), the autonomous driving environment is based on the **MetaDrive simulator** using the **"Macro‑v1"** environment. The authors state that they train the agent and mask network using the PPO algorithm via **DI‑drive (DI‑engine)**. A correct implementation should therefore:
+- Use `gym.make("Macro‑v1", ...)` or an equivalent MetaDrive call to create the specific driving environment.
+- Set up appropriate configuration for the environment (e.g., rendering options, number of collector/evaluator environments).
+- Include wrappers that enable explanation (mask network training) and refinement (mixed initial state distribution, RND exploration) as described in the paper.
+- Provide the ability to initialize/reset the environment and step through it, thus allowing the experiments to be run.
+
+The rubric only checks that the environment has been **correctly set up and can be initialized**; it does not require actual execution or complete reproduction of all experimental results.
+
+# Reality
+Looking at the submission files under `Refine_auto_drive/`:
+
+- **`retrain.py`** (lines 65‑71) defines the environment creation function:
+  ```python
+  def custom_env(env_cfg, wrapper_cfg=None):
+      return CustomWrapper(gym.make("Macro-v1", config=env_cfg), wrapper_cfg, go_prob=args.go_prob)
+  ```
+  This explicitly uses `gym.make("Macro-v1", ...)` as required. It wraps it with a `CustomWrapper` (defined in `retrain_env.py`) that implements the mixed initial state distribution for refinement (sampling a critical state from a pre‑generated trajectory and fast‑forwarding the environment). The `metadrive_macro_config` dictionary in the same file sets the MetaDrive‑specific options (e.g., `use_render=False`) and the DI‑engine manager parameters.
+
+- **`train_masknet.py`** (lines 52‑55) similarly creates the environment for explanation training:
+  ```python
+  def wrapped_env(env_cfg, wrapper_cfg=None):
+      return DriveEnvWrapper(gym.make("Macro-v1", config=env_cfg), wrapper_cfg)
+  ```
+  `DriveEnvWrapper` (from `custom_masknet_env.py`) implements the mask‑network environment that blends the pre‑trained agent’s actions with random actions and adds an intrinsic bonus for masking, matching Algorithm 1 in the paper.
+
+- **`train_baseline.py`** also uses `gym.make("Macro-v1", ...)` to set up the baseline training environment.
+
+- **`gen_retrain_traj.py`** contains helper code to record a trajectory using the mask network and the pre‑trained agent, which is later used by `retrain_env.py` to identify critical states.
+
+- The files import `metadrive`, `gym`, and DI‑engine components (`SyncSubprocessEnvManager`, `PPOPolicy`, etc.), and they provide configuration dictionaries that compile correctly with DI‑engine utilities.
+
+Thus, the submission **does** contain actual code that sets up the autonomous driving environment (Macro‑v1 from MetaDrive) and wraps it for the explanation and refinement experiments. The environment can be initialized via `gym.make` and subsequently reset/stepped inside the wrappers.
+
+# Score
+1
+
+The criterion is satisfied because the code correctly implements the required environment setup and initialization for the Autonomous Driving domain, consistent with the paper’s description.

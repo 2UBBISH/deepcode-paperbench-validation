@@ -1,0 +1,65 @@
+2026-08-26 10:00:16 [info     ] Grading leaf: For the MuJoCo environments, the objective being optimized is $J(\theta)=\max \eta(\bar{\pi})$, as outlined in section 3.3.
+2026-08-26 10:01:06 [info     ] Model file selection raw output:
+Refine_mujoco/masknet/train.py
+Refine_mujoco/masknet/cus_PPO.py
+Refine_mujoco/masknet/environment.py
+Refine_mujoco/PPO.py
+Refine_mujoco/OnPolicyAlgorithm.py
+Refine_mujoco/models.py
+Refine_mujoco/base_class.py
+Refine_mujoco/utils.py
+Refine_mujoco/masknet/fid_test.py
+Refine_mujoco/masknet/gen_fid.py
+2026-08-26 10:01:06 [info     ] Model file selection raw output:
+Refine_mujoco/masknet/train.py
+Refine_mujoco/masknet/cus_PPO.py
+Refine_mujoco/masknet/environment.py
+Refine_mujoco/PPO.py
+Refine_mujoco/OnPolicyAlgorithm.py
+Refine_mujoco/models.py
+Refine_mujoco/base_class.py
+Refine_mujoco/utils.py
+Refine_mujoco/masknet/fid_test.py
+Refine_mujoco/masknet/gen_fid.py
+2026-08-26 10:02:42 [info     ] model response: # Expectations
+The paper's section 3.3 describes how they transform the mask network's objective from the original StateMask (min |η(π) − η(π̄)|) to a maximization of the perturbed agent's expected total reward: J(θ) = max η(π̄).  This is justified by Theorem 3.3, which guarantees η(π̄) ≤ η(π) under the assumptions, so maximizing η(π̄) indirectly preserves the explanation fidelity.  To avoid the trivial solution of never masking (always outputting 0), they add a reward bonus when the mask network chooses to blind the agent.  The reward becomes R'(sₜ, aₜ) = R(sₜ, aₜ) + α aₜᵐ (where aₜᵐ = 1 for blinding).  The mask network is then trained with vanilla PPO on this modified reward.
+
+For the MuJoCo environments, I expect the implementation to:
+- Define a mask agent (policy network) that outputs a binary action.
+- Create an environment wrapper that, given the mask action, selects either the base policy action or a random action, collects the environment reward, and adds a bonus when the mask chooses to blind.
+- Use PPO to train the mask network with the objective of maximizing the cumulative (discounted) sum of these modified rewards.  This directly corresponds to maximizing η(π̄) plus the bonus, which implements the intended objective J(θ) = max η(π̄) (with the bonus serving as a regularizer to encourage blinding).
+- Not use the original StateMask's surrogate loss that minimizes the absolute difference between the original and perturbed policies' returns.
+
+# Reality
+The submission contains code under `Refine_mujoco/masknet/`:
+- `environment.py` defines `Multi2SingleEnv`, a wrapper that implements the interaction between the mask and the base agent.  In `step()`, the mask action (`action`) is used to decide whether to take a random action or the base action.  The environment reward is collected, and a bonus `self.alpha * (1 - action)` is added during training (the paper’s bonus α for blinding, adapted to the action encoding used).  The returned reward is exactly the paper's modified reward.
+- `cus_PPO.py` is a standard PPO implementation (inherits from OnPolicyAlgorithm) with no additional loss terms related to the original StateMask objective.  The policy loss is computed from the advantage of the cumulative reward, which means the mask network is trained to maximize the expected return of the perturbed agent.
+- `train.py` instantiates the environment with `Multi2SingleEnv` for Hopper-v3 and trains a PPO model using `cus_PPO.py`.  This shows the mask network is being optimized via PPO on the modified reward, i.e., the objective is effectively max η(π̄) (with bonus regularization).
+
+The code does not contain any implementation of the original StateMask's objective (e.g., minimizing |η(π) − η(π̄)|).  The training setup matches the description in Section 3.3 and Algorithm 1 for the optimized "Ours" explanation method.
+
+# Score
+1
+
+The submission correctly implements the transformed objective for the MuJoCo mask network training, using a reward bonus and vanilla PPO to maximize the perturbed agent's total reward.  This meets the criterion.
+2026-08-26 10:02:42 [info     ] model response: # Expectations
+The paper's section 3.3 describes how they transform the mask network's objective from the original StateMask (min |η(π) − η(π̄)|) to a maximization of the perturbed agent's expected total reward: J(θ) = max η(π̄).  This is justified by Theorem 3.3, which guarantees η(π̄) ≤ η(π) under the assumptions, so maximizing η(π̄) indirectly preserves the explanation fidelity.  To avoid the trivial solution of never masking (always outputting 0), they add a reward bonus when the mask network chooses to blind the agent.  The reward becomes R'(sₜ, aₜ) = R(sₜ, aₜ) + α aₜᵐ (where aₜᵐ = 1 for blinding).  The mask network is then trained with vanilla PPO on this modified reward.
+
+For the MuJoCo environments, I expect the implementation to:
+- Define a mask agent (policy network) that outputs a binary action.
+- Create an environment wrapper that, given the mask action, selects either the base policy action or a random action, collects the environment reward, and adds a bonus when the mask chooses to blind.
+- Use PPO to train the mask network with the objective of maximizing the cumulative (discounted) sum of these modified rewards.  This directly corresponds to maximizing η(π̄) plus the bonus, which implements the intended objective J(θ) = max η(π̄) (with the bonus serving as a regularizer to encourage blinding).
+- Not use the original StateMask's surrogate loss that minimizes the absolute difference between the original and perturbed policies' returns.
+
+# Reality
+The submission contains code under `Refine_mujoco/masknet/`:
+- `environment.py` defines `Multi2SingleEnv`, a wrapper that implements the interaction between the mask and the base agent.  In `step()`, the mask action (`action`) is used to decide whether to take a random action or the base action.  The environment reward is collected, and a bonus `self.alpha * (1 - action)` is added during training (the paper’s bonus α for blinding, adapted to the action encoding used).  The returned reward is exactly the paper's modified reward.
+- `cus_PPO.py` is a standard PPO implementation (inherits from OnPolicyAlgorithm) with no additional loss terms related to the original StateMask objective.  The policy loss is computed from the advantage of the cumulative reward, which means the mask network is trained to maximize the expected return of the perturbed agent.
+- `train.py` instantiates the environment with `Multi2SingleEnv` for Hopper-v3 and trains a PPO model using `cus_PPO.py`.  This shows the mask network is being optimized via PPO on the modified reward, i.e., the objective is effectively max η(π̄) (with bonus regularization).
+
+The code does not contain any implementation of the original StateMask's objective (e.g., minimizing |η(π) − η(π̄)|).  The training setup matches the description in Section 3.3 and Algorithm 1 for the optimized "Ours" explanation method.
+
+# Score
+1
+
+The submission correctly implements the transformed objective for the MuJoCo mask network training, using a reward bonus and vanilla PPO to maximize the perturbed agent's total reward.  This meets the criterion.

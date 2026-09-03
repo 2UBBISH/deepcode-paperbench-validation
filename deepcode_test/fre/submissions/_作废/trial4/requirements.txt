@@ -1,0 +1,53 @@
+# Functional Reward Encodings (FRE) - Requirements
+# Python 3.8+
+
+# Core Deep Learning
+torch>=1.12.0,<2.0.0
+torchvision>=0.13.0
+
+# Offline RL Datasets
+d4rl @ git+https://github.com/Farama-Foundation/D4RL.git@master
+# Alternative: pip install d4rl (may require mujoco_py)
+
+# MuJoCo (for AntMaze, Walker, Cheetah environments)
+mujoco>=2.1.0,<3.0.0
+# For older D4RL compatibility, you may need:
+# mujoco_py>=2.1.2.14
+
+# Gym / Gymnasium
+gym>=0.23.0,<0.26.0
+# gymnasium>=0.26.0  # newer alternative
+
+# ExORL Dataset Support (dm_control)
+dm_control>=1.0.0
+
+# Numerical & Scientific
+numpy>=1.21.0,<2.0.0
+scipy>=1.7.0
+
+# Visualization & Plotting
+matplotlib>=3.5.0
+
+# Progress Bars
+tqdm>=4.60.0
+
+# Configuration Files
+pyyaml>=6.0
+
+# Logging (optional)
+wandb>=0.13.0
+tensorboard>=2.10.0
+
+# Additional Utilities
+h5py>=3.6.0
+cloudpickle>=2.0.0
+click>=8.0.0
+absl-py>=1.0.0
+
+# For ExORL data loading (if using official ExORL repo)
+# git+https://github.com/denisyarats/exorl.git
+
+# Development (optional)
+# pytest>=7.0.0
+# black>=22.0.0
+# isort>=5.10.0

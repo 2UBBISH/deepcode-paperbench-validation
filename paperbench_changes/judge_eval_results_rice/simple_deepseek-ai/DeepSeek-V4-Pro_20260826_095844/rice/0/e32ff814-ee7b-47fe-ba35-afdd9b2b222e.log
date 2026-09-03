@@ -1,0 +1,65 @@
+2026-08-26 10:01:10 [info     ] Grading leaf: In Experiment II, for the network defence environment, for the "Ours" refinement method, code has been implemented for measuring cumulative reward throughout refinement
+2026-08-26 10:02:10 [info     ] Model file selection raw output:
+Refine_cage_challenge/retrain.py
+Refine_cage_challenge/Agents/PPOAgent_Retrain.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_retrain.py
+Refine_cage_challenge/Agents/rnd_model.py
+Refine_cage_challenge/readme.md
+Refine_cage_challenge/Agents/PPOAgent.py
+Refine_cage_challenge/rollout_ppo.py
+Refine_cage_challenge/Wrappers/utils.py
+Refine_cage_challenge/Agents/MainAgent.py
+Refine_cage_challenge/PPO/ActorCritic.py
+2026-08-26 10:02:10 [info     ] Model file selection raw output:
+Refine_cage_challenge/retrain.py
+Refine_cage_challenge/Agents/PPOAgent_Retrain.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_retrain.py
+Refine_cage_challenge/Agents/rnd_model.py
+Refine_cage_challenge/readme.md
+Refine_cage_challenge/Agents/PPOAgent.py
+Refine_cage_challenge/rollout_ppo.py
+Refine_cage_challenge/Wrappers/utils.py
+Refine_cage_challenge/Agents/MainAgent.py
+Refine_cage_challenge/PPO/ActorCritic.py
+2026-08-26 10:02:46 [info     ] model response: # Expectations
+The criterion requires that in the implementation of RICE's ("Ours") refinement method for the network defence (Cage Challenge 2) environment, there is code that measures cumulative reward throughout the refinement process. According to Experiment II, the refinement method (Algorithm 2) should run a training loop that periodically logs the agent's performance, e.g., the average episode reward, to monitor progress. I expect to find in the submission code that initializes a running reward accumulator, updates it with environment rewards during the training loop, and prints or logs an aggregated reward (cumulative or average) at regular intervals.
+
+# Reality
+The submission includes a file `Refine_cage_challenge/retrain.py`. This script is the main refinement routine for the network defence environment using the "Ours" method. It imports `ChallengeWrapper2_Retrain` (which implements the mixed initial distribution using the explanation mask) and `PPOAgent_Retrain` (which includes the RND exploration bonus).  
+
+Inside the `train` function:
+- A variable `running_reward` is initialized to 0.
+- For each episode and each timestep, the reward is added: `running_reward += reward`.
+- Every `print_interval` episodes, the average training reward is computed and printed:  
+  `running_reward = int((running_reward / print_interval))` and  
+  `print('Episode {} \t Training Avg Reward: {}'.format(i_episode, running_reward))`.
+- Additionally, a simple test evaluation over 5 episodes calculates test rewards and prints the average:  
+  `test_rewards = 0 ... test_rewards += reward ... agent.end_episode()` and then prints the test average.
+
+Thus, the code explicitly measures and reports cumulative reward throughout the refinement process, matching the expectations for this criterion.
+
+# Score
+1
+
+The code in `Refine_cage_challenge/retrain.py` correctly implements measurement of cumulative reward during the refinement training for the network defence environment, satisfying the criterion.
+2026-08-26 10:02:46 [info     ] model response: # Expectations
+The criterion requires that in the implementation of RICE's ("Ours") refinement method for the network defence (Cage Challenge 2) environment, there is code that measures cumulative reward throughout the refinement process. According to Experiment II, the refinement method (Algorithm 2) should run a training loop that periodically logs the agent's performance, e.g., the average episode reward, to monitor progress. I expect to find in the submission code that initializes a running reward accumulator, updates it with environment rewards during the training loop, and prints or logs an aggregated reward (cumulative or average) at regular intervals.
+
+# Reality
+The submission includes a file `Refine_cage_challenge/retrain.py`. This script is the main refinement routine for the network defence environment using the "Ours" method. It imports `ChallengeWrapper2_Retrain` (which implements the mixed initial distribution using the explanation mask) and `PPOAgent_Retrain` (which includes the RND exploration bonus).  
+
+Inside the `train` function:
+- A variable `running_reward` is initialized to 0.
+- For each episode and each timestep, the reward is added: `running_reward += reward`.
+- Every `print_interval` episodes, the average training reward is computed and printed:  
+  `running_reward = int((running_reward / print_interval))` and  
+  `print('Episode {} \t Training Avg Reward: {}'.format(i_episode, running_reward))`.
+- Additionally, a simple test evaluation over 5 episodes calculates test rewards and prints the average:  
+  `test_rewards = 0 ... test_rewards += reward ... agent.end_episode()` and then prints the test average.
+
+Thus, the code explicitly measures and reports cumulative reward throughout the refinement process, matching the expectations for this criterion.
+
+# Score
+1
+
+The code in `Refine_cage_challenge/retrain.py` correctly implements measurement of cumulative reward during the refinement training for the network defence environment, satisfying the criterion.

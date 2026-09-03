@@ -1,0 +1,57 @@
+2026-08-26 09:58:46 [info     ] Grading leaf: For the network defence environment, the "Random" Explanation method has been implemented as outlined in 4.1, wherein critical steps are identified by randomly selecting previously visited states.
+2026-08-26 09:59:46 [info     ] Model file selection raw output:
+Refine_cage_challenge/retrain.py
+Refine_cage_challenge/sample_mask_score.py
+Refine_cage_challenge/replay.py
+Refine_cage_challenge/sample_value_score.py
+Refine_cage_challenge/Agents/PPOAgent_Retrain.py
+Refine_cage_challenge/Agents/PPOAgent_mask.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_retrain.py
+Refine_cage_challenge/rollout_mask.py
+Refine_cage_challenge/rollout_ppo.py
+Refine_cage_challenge/README.md
+2026-08-26 09:59:46 [info     ] Model file selection raw output:
+Refine_cage_challenge/retrain.py
+Refine_cage_challenge/sample_mask_score.py
+Refine_cage_challenge/replay.py
+Refine_cage_challenge/sample_value_score.py
+Refine_cage_challenge/Agents/PPOAgent_Retrain.py
+Refine_cage_challenge/Agents/PPOAgent_mask.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_retrain.py
+Refine_cage_challenge/rollout_mask.py
+Refine_cage_challenge/rollout_ppo.py
+Refine_cage_challenge/README.md
+2026-08-26 09:59:46 [info     ] File /home/deepevol/deepevol/frontier-evals/project/paperbench/data/judge_eval/rice/0/submission/Refine_cage_challenge/README.md not found!
+2026-08-26 09:59:46 [info     ] File /home/deepevol/deepevol/frontier-evals/project/paperbench/data/judge_eval/rice/0/submission/Refine_cage_challenge/README.md not found!
+2026-08-26 10:01:03 [info     ] model response: # Expectations
+The paper describes the "Random" explanation method as a baseline that "identifies critical steps by randomly selecting a visited state as the critical state." For the network defence environment (Cage Challenge 2), the implementation should provide a mechanism to, given a trajectory of previously visited states, randomly pick one state (or time step) as the critical step. This could be used either for fidelity evaluation (replaying episodes and measuring reward change) or for constructing the mixed initial state distribution during refining. We expect to find code that, when invoked, randomly selects an index from a recorded trajectory of states visited by the pre‑trained agent in the CybORG environment.
+
+# Reality
+The submission includes several files for the network defence environment under `Refine_cage_challenge/`. Two files demonstrate a random selection mechanism for critical steps:
+
+1. **`Wrappers/ChallengeWrapper2_retrain.py`**  
+   The `reset` method of `ChallengeWrapper2_Retrain` loads a recorded trajectory (`gen_one_traj()` returns `action_record` and `mask_record`). When `self.random_sampling` is `True`, it picks a random start index from the entire trajectory length (`eps_len`) via `np.random.choice(eps_len)`. This directly implements random selection of a previously visited state.
+
+2. **`replay.py`**  
+   The `rollout` function accepts an argument `method`. When `method == "random"`, it selects a critical segment start index using `best_score_index = np.random.randint(0,30)`. Although the range is hard‑coded (0‑29) rather than using the actual episode length, it still constitutes a random selection of a visited state for fidelity replay purposes. The surrounding code loads pre‑recorded actions (`action_log.txt`) and replays the episode from that random start point.
+
+Both implementations, taken together, provide the required Random explanation method for the CybORG (network defence) environment. The functionality exists and can be activated (e.g., by setting `random_sampling=True` or by passing `--method random` to the replay script).
+
+# Score
+1 – The Random explanation method has been implemented in the submitted code, as seen in `ChallengeWrapper2_retrain.py` and `replay.py`. The code identifies critical steps by randomly selecting a previously visited state, satisfying the criterion.
+2026-08-26 10:01:03 [info     ] model response: # Expectations
+The paper describes the "Random" explanation method as a baseline that "identifies critical steps by randomly selecting a visited state as the critical state." For the network defence environment (Cage Challenge 2), the implementation should provide a mechanism to, given a trajectory of previously visited states, randomly pick one state (or time step) as the critical step. This could be used either for fidelity evaluation (replaying episodes and measuring reward change) or for constructing the mixed initial state distribution during refining. We expect to find code that, when invoked, randomly selects an index from a recorded trajectory of states visited by the pre‑trained agent in the CybORG environment.
+
+# Reality
+The submission includes several files for the network defence environment under `Refine_cage_challenge/`. Two files demonstrate a random selection mechanism for critical steps:
+
+1. **`Wrappers/ChallengeWrapper2_retrain.py`**  
+   The `reset` method of `ChallengeWrapper2_Retrain` loads a recorded trajectory (`gen_one_traj()` returns `action_record` and `mask_record`). When `self.random_sampling` is `True`, it picks a random start index from the entire trajectory length (`eps_len`) via `np.random.choice(eps_len)`. This directly implements random selection of a previously visited state.
+
+2. **`replay.py`**  
+   The `rollout` function accepts an argument `method`. When `method == "random"`, it selects a critical segment start index using `best_score_index = np.random.randint(0,30)`. Although the range is hard‑coded (0‑29) rather than using the actual episode length, it still constitutes a random selection of a visited state for fidelity replay purposes. The surrounding code loads pre‑recorded actions (`action_log.txt`) and replays the episode from that random start point.
+
+Both implementations, taken together, provide the required Random explanation method for the CybORG (network defence) environment. The functionality exists and can be activated (e.g., by setting `random_sampling=True` or by passing `--method random` to the replay script).
+
+# Score
+1 – The Random explanation method has been implemented in the submitted code, as seen in `ChallengeWrapper2_retrain.py` and `replay.py`. The code identifies critical steps by randomly selecting a previously visited state, satisfying the criterion.

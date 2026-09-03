@@ -1,0 +1,70 @@
+Info: docling is unavailable; built-in document converters remain enabled.
+2026-08-27 00:53:12.850 | DEBUG    | core.config:_load_raw:615 - deepcode_config.json not found at /home/deepevol/deepevol/DeepCode/deepcode_config.json; skipping layer
+--- Logging error ---
+Traceback (most recent call last):
+  File "/home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/logging/__init__.py", line 1110, in emit
+    msg = self.format(record)
+          ^^^^^^^^^^^^^^^^^^^
+  File "/home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/logging/__init__.py", line 953, in format
+    return fmt.format(record)
+           ^^^^^^^^^^^^^^^^^^
+  File "/home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/logging/__init__.py", line 687, in format
+    record.message = record.getMessage()
+                     ^^^^^^^^^^^^^^^^^^^
+  File "/home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/logging/__init__.py", line 377, in getMessage
+    msg = msg % self.args
+          ~~~~^~~~~~~~~~~
+TypeError: not all arguments converted during string formatting
+Call stack:
+  File "/home/deepevol/deepevol/stage_b_driver.py", line 93, in <module>
+    asyncio.run(main())
+  File "/home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/asyncio/runners.py", line 190, in run
+    return runner.run(main)
+  File "/home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+  File "/home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/asyncio/base_events.py", line 641, in run_until_complete
+    self.run_forever()
+  File "/home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/asyncio/base_events.py", line 608, in run_forever
+    self._run_once()
+  File "/home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/asyncio/base_events.py", line 1936, in _run_once
+    handle._run()
+  File "/home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/asyncio/events.py", line 84, in _run
+    self._context.run(self._callback, *self._args)
+  File "/home/deepevol/deepevol/stage_b_driver.py", line 51, in main
+    result = await execute_multi_agent_research_pipeline(
+  File "/home/deepevol/deepevol/DeepCode/workflows/agent_orchestration_engine.py", line 1933, in execute_multi_agent_research_pipeline
+    ctx = await prepare_workflow_environment(
+  File "/home/deepevol/deepevol/DeepCode/workflows/environment.py", line 138, in prepare_workflow_environment
+    log.info(
+Message: '🗂️  Workspace={} task_kind={} task_dir={} kind={} resume={}'
+Arguments: (PosixPath('/home/deepevol/deepevol/DeepCode/deepcode_lab'), 'paper2code', 'paper_6bee6db0', 'md', False)
+2026-08-27 00:53:12,906 INFO 📋 Paper ID: 6bee6db0
+2026-08-27 00:53:12,907 INFO 📂 Paper directory: /home/deepevol/deepevol/DeepCode/deepcode_lab/tasks/paper_6bee6db0
+2026-08-27 00:53:12,907 INFO 📥 Processing md: /home/deepevol/deepevol/frontier-evals/project/paperbench/data/papers/fre/paper.md
+2026-08-27 00:53:12,912 INFO ✅ Input acquired:
+[INFO] Copying file (original preserved):
+   Source: /home/deepevol/deepevol/frontier-evals/project/paperbench/data/papers/fre/paper.md
+   Target: /home/deepevol/deepevol/DeepCode/deepcode_lab/tasks/paper_6bee6db0/paper.md
+   Size: 0.05 MB
+
+[SUCCESS] File copied successfully (original preserved)!
+   From: /home/deepevol/deepevol/frontier-evals/project/paperbench/data/papers/fre/paper.md
+   To: /home/deepevol/deepevol/DeepCode/deepcode_lab/tasks/paper_6bee6db0/paper.md
+   Duration: 0.00 seconds
+   [INFO] Document converted to Markdown (built-in)
+   Markdown file: /home/deepevol/deepevol/DeepCode/deepcode_lab/tasks/paper_6bee6db0/paper.md
+   Source format: markdown
+   Conversion time: 0.00 seconds
+   Characters extracted: 57530
+2026-08-27 00:53:12,912 INFO Preparing document segments for: /home/deepevol/deepevol/DeepCode/deepcode_lab/tasks/paper_6bee6db0
+2026-08-27 00:53:13.562 | DEBUG    | core.agent_runtime.tools.mcp:connect_single_server:621 - MCP: registered tool 'mcp_document_segmentation_analyze_and_segment_document' from server 'document-segmentation'
+2026-08-27 00:53:13.562 | DEBUG    | core.agent_runtime.tools.mcp:connect_single_server:621 - MCP: registered tool 'mcp_document_segmentation_read_document_segments' from server 'document-segmentation'
+2026-08-27 00:53:13.562 | DEBUG    | core.agent_runtime.tools.mcp:connect_single_server:621 - MCP: registered tool 'mcp_document_segmentation_get_document_overview' from server 'document-segmentation'
+2026-08-27 00:53:13.565 | INFO     | core.agent_runtime.tools.mcp:connect_single_server:679 - MCP server 'document-segmentation': connected, 3 capabilities registered
+2026-08-27 00:53:13.565 | DEBUG    | core.compat.agent:_connect_servers:520 - Agent 'DocumentSegmentationCoordinator': 1 MCP servers connected, 3 tools registered total
+2026-08-27 00:53:14.768 | INFO     | core.llm_runtime:attach_workflow_llm:125 - Attached workflow LLM: agent=DocumentSegmentationCoordinator phase=planning provider=custom model=deepseek-ai/DeepSeek-V4-Pro reasoning_effort=None
+2026-08-27 00:53:14,768 INFO DocumentSegmentationAgent initialized successfully
+2026-08-27 00:53:14,768 INFO Starting document analysis for: /home/deepevol/deepevol/DeepCode/deepcode_lab/tasks/paper_6bee6db0
+2026-08-27 00:53:19,846 INFO HTTP Request: POST https://api.siliconflow.cn/v1/chat/completions "HTTP/1.1 200 OK"
+2026-08-27 00:53:22,680 INFO HTTP Request: POST https://api.siliconflow.cn/v1/chat/completions "HTTP/1.1 200 OK"
+2026-08-27 00:53:30,620 INFO HTTP Request: POST https://api.siliconflow.cn/v1/chat/completions "HTTP/1.1 200 OK"

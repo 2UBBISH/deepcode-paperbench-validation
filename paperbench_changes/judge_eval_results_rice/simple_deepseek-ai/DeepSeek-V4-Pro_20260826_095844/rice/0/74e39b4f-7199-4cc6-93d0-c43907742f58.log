@@ -1,0 +1,65 @@
+2026-08-26 09:58:46 [info     ] Grading leaf: The (MuJoCo) Sparse Hopper environment is version "Hopper-v3"
+2026-08-26 09:59:23 [info     ] Model file selection raw output:
+Refine_mujoco/environment.py
+Refine_mujoco/retrain.py
+Refine_mujoco/retrain.sh
+Refine_mujoco/masknet/environment.py
+Refine_mujoco/masknet/train.py
+Refine_mujoco/baseline/train.py
+Refine_mujoco/PPO.py
+Refine_mujoco/utils.py
+Refine_mujoco/OnPolicyAlgorithm.py
+Refine_mujoco/base_class.py
+2026-08-26 09:59:23 [info     ] Model file selection raw output:
+Refine_mujoco/environment.py
+Refine_mujoco/retrain.py
+Refine_mujoco/retrain.sh
+Refine_mujoco/masknet/environment.py
+Refine_mujoco/masknet/train.py
+Refine_mujoco/baseline/train.py
+Refine_mujoco/PPO.py
+Refine_mujoco/utils.py
+Refine_mujoco/OnPolicyAlgorithm.py
+Refine_mujoco/base_class.py
+2026-08-26 10:00:25 [info     ] model response: # Expectations
+The paper uses a sparse reward variant of the MuJoCo Hopper environment. According to Appendix C.2, the sparse version is derived from "Hopper-v3" but with a modified reward: it gives the x-position reward only when x > 0.6. The criterion requires that the actual sparse Hopper environment used in the experiments (e.g., for the refining curves in Figure 2) is built on top of "Hopper-v3". Therefore, I expect to find source code that:
+
+- Explicitly creates a gym environment using `gym.make("Hopper-v3")` (or uses an wrapper that loads "Hopper-v3").
+- Overrides or modifies the step function to implement the sparse reward (e.g., rewarding only when the agent's x-coordinate exceeds a threshold, while otherwise giving zero reward or a penalty).
+- Is referenced in the training/refining scripts for the sparse experiments (e.g., in a retrain script that runs on a sparse hopper task).  
+
+Without such an implementation, the requirement cannot be verified.
+
+# Reality
+I examined the provided files in `Refine_mujoco/`. The key files are:
+
+- `environment.py`: Defines a `RetrainEnv` wrapper that enables resetting to previous states but does *not* alter the reward function. It accepts an `env_name` and creates the environment via `gym.make(env_name)`. No sparse reward logic is present.
+- `retrain.py` and `retrain.sh`: These scripts are used for refining agents. The `retrain.sh` passes `--env "Hopper-v3"`, which corresponds to the *dense* Hopper task, not a sparse variant. There is no parameter or code to turn this into a sparse version.
+- `masknet/environment.py` and `masknet/train.py`: These also use `gym.make("Hopper-v3")` directly, with no sparse reward modifications.
+- `baseline/train.py`: Similarly trains a PPO agent on the standard dense Hopper-v3.
+
+Nowhere in the submission is there a custom environment or wrapper that implements the sparse reward (only giving reward when x > 0.6). The code for the sparse Hopper experiments (which the paper reports in Figure 2) is entirely missing; the submission only contains code for the dense environments. Because no sparse Hopper environment is implemented, I cannot confirm that the sparse variant is correctly based on "Hopper-v3".
+
+# Score
+**0** – The submission does not include any implementation of a sparse Hopper environment, let alone one that uses version "Hopper-v3". The provided code exclusively works with the dense Hopper-v3 environment, failing to meet the criterion.
+2026-08-26 10:00:25 [info     ] model response: # Expectations
+The paper uses a sparse reward variant of the MuJoCo Hopper environment. According to Appendix C.2, the sparse version is derived from "Hopper-v3" but with a modified reward: it gives the x-position reward only when x > 0.6. The criterion requires that the actual sparse Hopper environment used in the experiments (e.g., for the refining curves in Figure 2) is built on top of "Hopper-v3". Therefore, I expect to find source code that:
+
+- Explicitly creates a gym environment using `gym.make("Hopper-v3")` (or uses an wrapper that loads "Hopper-v3").
+- Overrides or modifies the step function to implement the sparse reward (e.g., rewarding only when the agent's x-coordinate exceeds a threshold, while otherwise giving zero reward or a penalty).
+- Is referenced in the training/refining scripts for the sparse experiments (e.g., in a retrain script that runs on a sparse hopper task).  
+
+Without such an implementation, the requirement cannot be verified.
+
+# Reality
+I examined the provided files in `Refine_mujoco/`. The key files are:
+
+- `environment.py`: Defines a `RetrainEnv` wrapper that enables resetting to previous states but does *not* alter the reward function. It accepts an `env_name` and creates the environment via `gym.make(env_name)`. No sparse reward logic is present.
+- `retrain.py` and `retrain.sh`: These scripts are used for refining agents. The `retrain.sh` passes `--env "Hopper-v3"`, which corresponds to the *dense* Hopper task, not a sparse variant. There is no parameter or code to turn this into a sparse version.
+- `masknet/environment.py` and `masknet/train.py`: These also use `gym.make("Hopper-v3")` directly, with no sparse reward modifications.
+- `baseline/train.py`: Similarly trains a PPO agent on the standard dense Hopper-v3.
+
+Nowhere in the submission is there a custom environment or wrapper that implements the sparse reward (only giving reward when x > 0.6). The code for the sparse Hopper experiments (which the paper reports in Figure 2) is entirely missing; the submission only contains code for the dense environments. Because no sparse Hopper environment is implemented, I cannot confirm that the sparse variant is correctly based on "Hopper-v3".
+
+# Score
+**0** – The submission does not include any implementation of a sparse Hopper environment, let alone one that uses version "Hopper-v3". The provided code exclusively works with the dense Hopper-v3 environment, failing to meet the criterion.

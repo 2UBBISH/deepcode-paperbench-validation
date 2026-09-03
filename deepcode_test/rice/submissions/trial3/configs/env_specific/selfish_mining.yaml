@@ -1,0 +1,118 @@
+# ============================================================================
+# Environment-Specific Configuration: Selfish Mining
+# ============================================================================
+# Overrides for the selfish mining domain (from pto-selfish-mining repo).
+# Paper Table 3: p=0.25, λ=0.001, α=0.0001
+#
+# The selfish mining environment is a custom Gym environment where an agent
+# controls mining strategy (selfish vs. honest) to maximize relative revenue.
+# State: blockchain state representation (typically ~50-100 dims).
+# Action: discrete (2 actions: honest mine or selfish mine).
+# ============================================================================
+
+# --- Environment Identification ---
+env_name: "SelfishMining-v0"
+env_type: "selfish_mining"
+state_dim: 52          # Typical state dimension for selfish mining (blockchain state features)
+action_dim: 2          # Discrete: honest (0) or selfish (1)
+max_episode_steps: 1000
+discrete_action: true
+num_discrete_actions: 2
+
+# --- Mask Network Architecture ---
+mask_network:
+  hidden_sizes: [128, 128]   # MLP hidden layer sizes for mask network
+  activation: "tanh"         # Activation function
+
+# --- Intrinsic Reward Coefficient for Mask Training ---
+alpha: 0.0001               # α balances masking encouragement vs. performance
+
+# --- PPO Hyperparameters for Mask Network Training ---
+ppo:
+  learning_rate: 3.0e-4
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_epsilon: 0.2
+  value_loss_coef: 0.5
+  entropy_coef: 0.01
+  max_grad_norm: 0.5
+  ppo_epochs: 10
+  batch_size: 64
+
+# --- Mask Network Training Loop ---
+training:
+  total_steps: 300000          # Total environment steps for mask training
+  steps_per_iteration: 2048    # Steps collected per PPO iteration
+  eval_interval: 10            # Evaluate every N iterations
+  eval_episodes: 10            # Number of evaluation episodes
+  save_interval: 50            # Save checkpoint every N iterations
+  seed: 42
+
+# --- Fidelity Evaluation ---
+fidelity:
+  num_episodes: 10             # Episodes for fidelity estimation
+  q_function: null             # Use Monte Carlo returns if no Q-function
+
+# --- Critical State Collection ---
+critical_state:
+  num_episodes: 100            # Episodes to run for collecting critical states
+  top_k_per_episode: 1         # Number of top-importance states per episode
+  max_critical_states: 100     # Maximum number of critical states to store
+
+# --- Mixed Initial Distribution ---
+mixed_init:
+  p_mixed: 0.25                # Probability of resetting to a critical state (Table 3)
+
+# --- RND Exploration Bonus ---
+rnd:
+  lambda_coef: 0.001           # λ: weight for RND exploration bonus (Table 3)
+  hidden_sizes: [64, 64]       # RND network hidden layers
+  embedding_dim: 64            # RND embedding output dimension
+  activation: "relu"           # RND network activation
+  learning_rate: 1.0e-4        # Adam learning rate for predictor
+  normalize_obs: true          # Normalize observations before RND
+  obs_rms_decay: 0.99          # Running mean/std decay for obs normalization
+  normalize_bonus: true        # Normalize RND bonus using running statistics
+  bonus_decay: 0.99            # Running mean/std decay for bonus normalization
+  update_epochs: 4             # Number of epochs to update predictor per trajectory
+  batch_size: 256              # Batch size for RND predictor updates
+
+# --- PPO Hyperparameters for Refinement Phase ---
+refine_ppo:
+  learning_rate: 3.0e-4
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_epsilon: 0.2
+  value_loss_coef: 0.5
+  entropy_coef: 0.01
+  max_grad_norm: 0.5
+  ppo_epochs: 10
+  batch_size: 64
+  normalize_advantages: true
+  normalize_obs: true
+
+# --- Policy Architecture for Refinement ---
+policy:
+  hidden_sizes: [128, 128]     # Policy network hidden layers
+  value_hidden_sizes: [128, 128]  # Value network hidden layers
+  policy_std: 0.0              # Fixed std for continuous actions (not used for discrete)
+  activation: "tanh"
+
+# --- Refinement Training Loop ---
+refine_training:
+  total_steps: 1000000         # Total environment steps for refinement
+  steps_per_iteration: 2048    # Steps collected per PPO iteration
+  eval_interval: 10            # Evaluate every N iterations
+  eval_episodes: 10            # Number of evaluation episodes
+  eval_max_steps: 1000         # Max steps per evaluation episode
+  save_interval: 50            # Save checkpoint every N iterations
+  seed: 42
+
+# --- Device ---
+device: "cuda"                 # "cuda" or "cpu"
+
+# --- Logging ---
+logging:
+  verbose: true
+  log_dir: "./logs/selfish_mining"
+  use_tensorboard: false

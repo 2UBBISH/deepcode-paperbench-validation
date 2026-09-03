@@ -1,0 +1,97 @@
+2026-08-26 09:58:46 [info     ] Grading leaf: For the selfish mining environment, The StateMask ("Ours") Explanation method can be selected for generating rollouts (without training)
+2026-08-26 09:59:53 [info     ] Model file selection raw output:
+Refine_selfish_mining/masknet/replay.py
+Refine_selfish_mining/masknet/replay.sh
+Refine_selfish_mining/masknet/sample_mask_score.py
+Refine_selfish_mining/masknet/fidelity_score.py
+Refine_selfish_mining/masknet/utils.py
+Refine_selfish_mining/masknet/train.py
+Refine_selfish_mining/masknet/sample_value_score.py
+Refine_selfish_mining/masknet/recordings/mask_prob_log.txt
+Refine_selfish_mining/masknet/recordings/reward_log.txt
+Refine_selfish_mining/utils.py
+2026-08-26 09:59:53 [info     ] Model file selection raw output:
+Refine_selfish_mining/masknet/replay.py
+Refine_selfish_mining/masknet/replay.sh
+Refine_selfish_mining/masknet/sample_mask_score.py
+Refine_selfish_mining/masknet/fidelity_score.py
+Refine_selfish_mining/masknet/utils.py
+Refine_selfish_mining/masknet/train.py
+Refine_selfish_mining/masknet/sample_value_score.py
+Refine_selfish_mining/masknet/recordings/mask_prob_log.txt
+Refine_selfish_mining/masknet/recordings/reward_log.txt
+Refine_selfish_mining/utils.py
+2026-08-26 10:00:55 [info     ] model response: # Expectations
+
+The paper proposes an explanation method (referred to as “Ours”) built upon StateMask to produce step‑level importance scores for states visited during a rollout of a pre‑trained policy. Section 3.3 describes training the mask network (Algorithm 1) and, after training, using it to “pinpoint the most important state within the episode τ by assessing the significance of each state”. The subsequent refining algorithm (Algorithm 2) expects that, without further training, we can obtain a trajectory from the pre‑trained policy, pass each state through the mask network, and get an importance score (the probability that the mask net outputs “0”, i.e., does not blind the agent).  
+
+For the selfish mining environment, the criterion “The StateMask (‘Ours’) Explanation method can be selected for generating rollouts (without training)” means the submission must contain actual code that:
+
+- Loads the trained mask‑network (the “Ours” explanation model).
+- Executes a rollout (i.e., runs the environment with the pre‑trained policy) and for each state queries the mask network to obtain an importance score (probability or logit representing how critical the state is).
+- Records or exposes these scores so that later steps (e.g., constructing a mixed initial distribution) can use them.
+- Does this without performing any additional training of the mask network.
+
+I will look for a function or script that explicitly uses the mask model (trained with the “Ours” method) to generate rollouts and collect state‑level importance scores.
+
+# Reality
+
+The submission provides, for the selfish mining environment, a set of Python scripts inside `Refine_selfish_mining/masknet/`. Two files are directly relevant:
+
+1. **`sample_mask_score.py`** – In this script:
+   - The function `load_mask_model(args)` (in `utils.py`) loads a PPO policy that corresponds to the trained “Ours” mask network. It loads a checkpoint (`ckpt1.pth`) and sets it to evaluation mode.
+   - The function `sample_traj(env, num, args, path)`:
+     - Loads both the pre‑trained DQN model (the target policy) and the mask model.
+     - For each episode (`num` episodes), it runs the environment using the DQN model to select actions.
+     - At every step, it passes the current observation through the mask model:  
+       `mask_prob = mask_model(batch).logits[0][0]  # the prob of not doing the mask -> state importance`  
+       It records this value in a list.
+     - After the episode finishes, it saves the collected importance scores to disk as `mask_prob_log.txt` (along with the reward and actions).
+   - The main block calls `sample_traj(env, 500, args, path)`, thus generating 500 rollouts with importance scores from the “Ours” mask network, purely in evaluation mode (no training gradients).
+
+2. **`replay.py`** – This script later reads the stored importance scores (and the action log) to identify critical segments for fidelity evaluation. It also has a command‑line argument `--method` that can be set to `"mask"` (the “Ours” explanation). When `--method mask` is selected, it reads the `mask_prob_log.txt` that was produced by `sample_mask_score.py` and uses those scores to locate the most critical segment. This demonstrates that the “Ours” method can be chosen and its output consumed by downstream procedures.
+
+3. **`utils.py`** – Contains `load_mask_model(args)`, which correctly instantiates an actor‑critic network with the same architecture as used for training the “Ours” mask and loads the saved weights. This function is used by `sample_mask_score.py`.
+
+All three files together show that the “Ours” explanation method can be selected (by pointing to its checkpoint and using the appropriate loader) and used to generate rollouts without any further training of the mask network. The importance score may be a logit rather than a softmax probability, but the code clearly implements the intended workflow of evaluating a pre‑trained mask net to produce per‑step importance values for each rollout.
+
+# Score
+
+**1** – The submission includes concrete code (`sample_mask_score.py`, `utils.py`, `replay.py`) that loads the trained “Ours” mask network, runs rollouts of the pre‑trained policy, and records state‑importance scores without any additional training. The method can be selected and correctly performs the required “generate rollouts” step for the selfish mining environment.
+2026-08-26 10:00:55 [info     ] model response: # Expectations
+
+The paper proposes an explanation method (referred to as “Ours”) built upon StateMask to produce step‑level importance scores for states visited during a rollout of a pre‑trained policy. Section 3.3 describes training the mask network (Algorithm 1) and, after training, using it to “pinpoint the most important state within the episode τ by assessing the significance of each state”. The subsequent refining algorithm (Algorithm 2) expects that, without further training, we can obtain a trajectory from the pre‑trained policy, pass each state through the mask network, and get an importance score (the probability that the mask net outputs “0”, i.e., does not blind the agent).  
+
+For the selfish mining environment, the criterion “The StateMask (‘Ours’) Explanation method can be selected for generating rollouts (without training)” means the submission must contain actual code that:
+
+- Loads the trained mask‑network (the “Ours” explanation model).
+- Executes a rollout (i.e., runs the environment with the pre‑trained policy) and for each state queries the mask network to obtain an importance score (probability or logit representing how critical the state is).
+- Records or exposes these scores so that later steps (e.g., constructing a mixed initial distribution) can use them.
+- Does this without performing any additional training of the mask network.
+
+I will look for a function or script that explicitly uses the mask model (trained with the “Ours” method) to generate rollouts and collect state‑level importance scores.
+
+# Reality
+
+The submission provides, for the selfish mining environment, a set of Python scripts inside `Refine_selfish_mining/masknet/`. Two files are directly relevant:
+
+1. **`sample_mask_score.py`** – In this script:
+   - The function `load_mask_model(args)` (in `utils.py`) loads a PPO policy that corresponds to the trained “Ours” mask network. It loads a checkpoint (`ckpt1.pth`) and sets it to evaluation mode.
+   - The function `sample_traj(env, num, args, path)`:
+     - Loads both the pre‑trained DQN model (the target policy) and the mask model.
+     - For each episode (`num` episodes), it runs the environment using the DQN model to select actions.
+     - At every step, it passes the current observation through the mask model:  
+       `mask_prob = mask_model(batch).logits[0][0]  # the prob of not doing the mask -> state importance`  
+       It records this value in a list.
+     - After the episode finishes, it saves the collected importance scores to disk as `mask_prob_log.txt` (along with the reward and actions).
+   - The main block calls `sample_traj(env, 500, args, path)`, thus generating 500 rollouts with importance scores from the “Ours” mask network, purely in evaluation mode (no training gradients).
+
+2. **`replay.py`** – This script later reads the stored importance scores (and the action log) to identify critical segments for fidelity evaluation. It also has a command‑line argument `--method` that can be set to `"mask"` (the “Ours” explanation). When `--method mask` is selected, it reads the `mask_prob_log.txt` that was produced by `sample_mask_score.py` and uses those scores to locate the most critical segment. This demonstrates that the “Ours” method can be chosen and its output consumed by downstream procedures.
+
+3. **`utils.py`** – Contains `load_mask_model(args)`, which correctly instantiates an actor‑critic network with the same architecture as used for training the “Ours” mask and loads the saved weights. This function is used by `sample_mask_score.py`.
+
+All three files together show that the “Ours” explanation method can be selected (by pointing to its checkpoint and using the appropriate loader) and used to generate rollouts without any further training of the mask network. The importance score may be a logit rather than a softmax probability, but the code clearly implements the intended workflow of evaluating a pre‑trained mask net to produce per‑step importance values for each rollout.
+
+# Score
+
+**1** – The submission includes concrete code (`sample_mask_score.py`, `utils.py`, `replay.py`) that loads the trained “Ours” mask network, runs rollouts of the pre‑trained policy, and records state‑importance scores without any additional training. The method can be selected and correctly performs the required “generate rollouts” step for the selfish mining environment.

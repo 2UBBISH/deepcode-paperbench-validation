@@ -1,0 +1,43 @@
+2026-08-26 09:58:46 [info     ] Grading leaf: For the selfish mining environment, the original StateMask Explanation method can be selected as the explanation method during retraining
+2026-08-26 09:59:28 [info     ] Model file selection raw output:
+Refine_selfish_mining/retrain.py
+Refine_selfish_mining/utils.py
+Refine_selfish_mining/masknet/train.py
+Refine_selfish_mining/masknet/sample_mask_score.py
+Refine_selfish_mining/masknet/fidelity_score.py
+Refine_selfish_mining/masknet/utils.py
+Refine_selfish_mining/masknet/replay.py
+Refine_selfish_mining/masknet/sample_value_score.py
+Refine_selfish_mining/rnd_policy.py
+Refine_selfish_mining/rnd_model.py
+2026-08-26 09:59:28 [info     ] Model file selection raw output:
+Refine_selfish_mining/retrain.py
+Refine_selfish_mining/utils.py
+Refine_selfish_mining/masknet/train.py
+Refine_selfish_mining/masknet/sample_mask_score.py
+Refine_selfish_mining/masknet/fidelity_score.py
+Refine_selfish_mining/masknet/utils.py
+Refine_selfish_mining/masknet/replay.py
+Refine_selfish_mining/masknet/sample_value_score.py
+Refine_selfish_mining/rnd_policy.py
+Refine_selfish_mining/rnd_model.py
+2026-08-26 10:00:49 [info     ] model response: # Expectations
+The criterion requires that, for the selfish mining environment, the retraining (refinement) code provides a way to **select the original StateMask explanation method** (the method from Cheng et al., 2023, not the proposed "Ours" variant) as the explanation provider. In the paper, RICE uses an explanation method to identify critical states; both the original StateMask and the proposed simplified version are used in experiments (e.g., Table 1 compares "StateMask‑R" vs. "Ours"). Therefore a correct implementation must allow the user to choose the original StateMask explanation during retraining—typically via a command‑line flag, a configuration option, or a separate script that loads a mask model trained with the original StateMask procedure.
+
+# Reality
+The submission provides `Refine_selfish_mining/retrain.py` as the main retraining script for the selfish mining environment. This file defines arguments (`--go-prob`, `--wo_exp`, `--rnd-bonus-scale`, etc.) but **has no argument or option to select the explanation method**. The script loads a pre‑trained DQN policy and an RND exploration bonus, but it never loads a mask model (neither the original StateMask nor the "Ours" variant). The retraining environment (`MDPBlockchainSimulatorRetrain`, imported but not included in the provided files) might internally use a mask model, but the code gives no sign of how the model is chosen, and there is no exposed parameter to switch between explanation methods.  
+
+Even if the original StateMask training code exists elsewhere (as required by preceding criteria), the retraining script **lacks any mechanism to select it**. The user cannot direct the refinement to use the original StateMask explanation; the implementation appears hard‑coded or absent. Consequently, the original StateMask explanation method cannot be “selected as the explanation method during retraining” based on the submitted files.
+
+# Score
+0
+2026-08-26 10:00:49 [info     ] model response: # Expectations
+The criterion requires that, for the selfish mining environment, the retraining (refinement) code provides a way to **select the original StateMask explanation method** (the method from Cheng et al., 2023, not the proposed "Ours" variant) as the explanation provider. In the paper, RICE uses an explanation method to identify critical states; both the original StateMask and the proposed simplified version are used in experiments (e.g., Table 1 compares "StateMask‑R" vs. "Ours"). Therefore a correct implementation must allow the user to choose the original StateMask explanation during retraining—typically via a command‑line flag, a configuration option, or a separate script that loads a mask model trained with the original StateMask procedure.
+
+# Reality
+The submission provides `Refine_selfish_mining/retrain.py` as the main retraining script for the selfish mining environment. This file defines arguments (`--go-prob`, `--wo_exp`, `--rnd-bonus-scale`, etc.) but **has no argument or option to select the explanation method**. The script loads a pre‑trained DQN policy and an RND exploration bonus, but it never loads a mask model (neither the original StateMask nor the "Ours" variant). The retraining environment (`MDPBlockchainSimulatorRetrain`, imported but not included in the provided files) might internally use a mask model, but the code gives no sign of how the model is chosen, and there is no exposed parameter to switch between explanation methods.  
+
+Even if the original StateMask training code exists elsewhere (as required by preceding criteria), the retraining script **lacks any mechanism to select it**. The user cannot direct the refinement to use the original StateMask explanation; the implementation appears hard‑coded or absent. Consequently, the original StateMask explanation method cannot be “selected as the explanation method during retraining” based on the submitted files.
+
+# Score
+0

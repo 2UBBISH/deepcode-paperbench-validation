@@ -1,0 +1,57 @@
+2026-08-26 09:58:46 [info     ] Grading leaf: Code for measuring reward throughout pretraining and refinement has been implemented
+2026-08-26 09:59:52 [info     ] Model file selection raw output:
+Refine_mujoco/monitor.py
+Refine_selfish_mining/masknet/fidelity_score.py
+Refine_mujoco/masknet/fid_test.py
+Refine_mujoco/masknet/gen_fid.py
+Refine_mujoco/callback.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/training/callbacks/logging/policy_revenue_text_logging_callback.py
+Refine_mujoco/retrain.py
+Refine_selfish_mining/retrain.py
+Refine_mujoco/baseline/train.py
+Refine_selfish_mining/baseline/train_ppo.py
+2026-08-26 09:59:52 [info     ] Model file selection raw output:
+Refine_mujoco/monitor.py
+Refine_selfish_mining/masknet/fidelity_score.py
+Refine_mujoco/masknet/fid_test.py
+Refine_mujoco/masknet/gen_fid.py
+Refine_mujoco/callback.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/training/callbacks/logging/policy_revenue_text_logging_callback.py
+Refine_mujoco/retrain.py
+Refine_selfish_mining/retrain.py
+Refine_mujoco/baseline/train.py
+Refine_selfish_mining/baseline/train_ppo.py
+2026-08-26 10:00:32 [info     ] model response: # Expectations
+The paper evaluates agent performance before and after refinement, as well as during training. To reproduce the experiments, the code must implement reward measurement (logging of episode returns or evaluation rewards) throughout the pretraining (initial training of the agent) and refinement (retraining with RICE or baselines) phases. This involves typical RL monitoring: recording episode rewards, periodic evaluation metrics, and tensorboard logs. The code should contain concrete implementations of wrappers, callbacks, or training loops that capture and log reward values.
+
+# Reality
+The submission contains multiple scripts that implement reward measurement during both pretraining and refinement:
+
+- **Refine_mujoco/retrain.py** (refinement) uses `VecMonitor` (from `Refine_mujoco/monitor.py`) to track episode returns and an `EvalCallback` to periodically evaluate and save reward statistics. The `CustomCallback` also logs mean rewards.  
+- **Refine_mujoco/baseline/train.py** (pretraining) similarly uses `VecMonitor`, `EvalCallback`, and tensorboard logging to measure reward throughout training.  
+- **Refine_mujoco/masknet/gen_fid.py** and **fid_test.py** collect trajectories and save reward logs to files for explanation evaluation, demonstrating reward measurement from pre-trained policies.  
+- **Refine_selfish_mining/baseline/train_ppo.py** (pretraining) uses Tianshou’s `onpolicy_trainer` with a test collector and `TensorboardLogger`; the `PolicyRevenueTextLoggingCallback` logs reward (revenue) explicitly.  
+- **Refine_selfish_mining/retrain.py** (refinement) uses `offpolicy_trainer` with test collector and logging, saving best models based on reward.  
+- The `VecMonitor` wrapper (in `Refine_mujoco/monitor.py`) explicitly accumulates `episode_returns` and writes them to a file if a filename is provided.
+
+All these files contain actual, working code that logs and records reward values during pretraining and refinement, not just instructions.
+
+# Score
+1 (The submission includes concrete implementations for measuring reward across both pretraining and refinement phases, satisfying the criterion.)
+2026-08-26 10:00:32 [info     ] model response: # Expectations
+The paper evaluates agent performance before and after refinement, as well as during training. To reproduce the experiments, the code must implement reward measurement (logging of episode returns or evaluation rewards) throughout the pretraining (initial training of the agent) and refinement (retraining with RICE or baselines) phases. This involves typical RL monitoring: recording episode rewards, periodic evaluation metrics, and tensorboard logs. The code should contain concrete implementations of wrappers, callbacks, or training loops that capture and log reward values.
+
+# Reality
+The submission contains multiple scripts that implement reward measurement during both pretraining and refinement:
+
+- **Refine_mujoco/retrain.py** (refinement) uses `VecMonitor` (from `Refine_mujoco/monitor.py`) to track episode returns and an `EvalCallback` to periodically evaluate and save reward statistics. The `CustomCallback` also logs mean rewards.  
+- **Refine_mujoco/baseline/train.py** (pretraining) similarly uses `VecMonitor`, `EvalCallback`, and tensorboard logging to measure reward throughout training.  
+- **Refine_mujoco/masknet/gen_fid.py** and **fid_test.py** collect trajectories and save reward logs to files for explanation evaluation, demonstrating reward measurement from pre-trained policies.  
+- **Refine_selfish_mining/baseline/train_ppo.py** (pretraining) uses Tianshou’s `onpolicy_trainer` with a test collector and `TensorboardLogger`; the `PolicyRevenueTextLoggingCallback` logs reward (revenue) explicitly.  
+- **Refine_selfish_mining/retrain.py** (refinement) uses `offpolicy_trainer` with test collector and logging, saving best models based on reward.  
+- The `VecMonitor` wrapper (in `Refine_mujoco/monitor.py`) explicitly accumulates `episode_returns` and writes them to a file if a filename is provided.
+
+All these files contain actual, working code that logs and records reward values during pretraining and refinement, not just instructions.
+
+# Score
+1 (The submission includes concrete implementations for measuring reward across both pretraining and refinement phases, satisfying the criterion.)

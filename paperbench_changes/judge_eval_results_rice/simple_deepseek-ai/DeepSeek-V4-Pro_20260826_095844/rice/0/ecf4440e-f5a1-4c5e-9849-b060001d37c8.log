@@ -1,0 +1,51 @@
+2026-08-26 09:58:46 [info     ] Grading leaf: For the MuJoCo environments, the "Random" Explanation method can be selected as the explanation method during retraining
+2026-08-26 09:59:37 [info     ] Model file selection raw output:
+Refine_mujoco/retrain.py
+Refine_mujoco/utils.py
+Refine_mujoco/retrain.sh
+Refine_mujoco/masknet/gen_fid.py
+Refine_mujoco/masknet/fid_test.py
+Refine_mujoco/environment.py
+Refine_mujoco/PPO.py
+Refine_mujoco/OnPolicyAlgorithm.py
+Refine_mujoco/base_class.py
+Refine_mujoco/models.py
+2026-08-26 09:59:37 [info     ] Model file selection raw output:
+Refine_mujoco/retrain.py
+Refine_mujoco/utils.py
+Refine_mujoco/retrain.sh
+Refine_mujoco/masknet/gen_fid.py
+Refine_mujoco/masknet/fid_test.py
+Refine_mujoco/environment.py
+Refine_mujoco/PPO.py
+Refine_mujoco/OnPolicyAlgorithm.py
+Refine_mujoco/base_class.py
+Refine_mujoco/models.py
+2026-08-26 10:00:20 [info     ] model response: # Expectations
+To meet this criterion, the submitted code for MuJoCo environments must include a concrete implementation of the “Random” explanation method such that it can be selected during the retraining (refinement) phase. According to the paper, “Random identifies critical steps by randomly selecting a visited state as the critical state.” In the code, this means there should be a clear mechanism – for example, a command-line argument or a configuration flag – that, when activated, causes the retraining environment to choose a random state from a pre‑recorded trajectory as the starting point (critical state) instead of using the mask network’s importance scores. The code must actually contain the logic for randomly picking a state index and resetting the environment to that state.
+
+# Reality
+In the submitted files:
+
+- **`environment.py`** defines a wrapper `RetrainEnv`. Its `reset()` method (lines starting around `if np.random.rand() > self.p:`) first collects a trajectory using `gen_one_traj`. Then it checks `if self.random_sampling:`; if true, it sets `start_idx = np.random.choice(traj.eps_len)` (a uniform random index over the trajectory length). Otherwise it uses the mask network’s highest‑probability index (`np.argmax(traj.mask_probs)`). The environment is then reset to that state via `self.env.sim.set_state(traj.state_seq[start_idx])`.  
+- **`retrain.py`** exposes a boolean argument `--random_sampling` (default `False`). Its value is passed as `rand_sampling=args.random_sampling` to `make_retrain_env`, which sets `self.random_sampling` in the `RetrainEnv` instance.  
+- The above logic directly implements the “Random” explanation method: it randomly picks a visited state from the trajectory, exactly as described in the paper. By providing the `--random_sampling True` flag, the user can select this explanation method during retraining for MuJoCo environments.
+
+Thus, the code correctly implements the ability to select the Random explanation method.
+
+# Score
+1
+2026-08-26 10:00:20 [info     ] model response: # Expectations
+To meet this criterion, the submitted code for MuJoCo environments must include a concrete implementation of the “Random” explanation method such that it can be selected during the retraining (refinement) phase. According to the paper, “Random identifies critical steps by randomly selecting a visited state as the critical state.” In the code, this means there should be a clear mechanism – for example, a command-line argument or a configuration flag – that, when activated, causes the retraining environment to choose a random state from a pre‑recorded trajectory as the starting point (critical state) instead of using the mask network’s importance scores. The code must actually contain the logic for randomly picking a state index and resetting the environment to that state.
+
+# Reality
+In the submitted files:
+
+- **`environment.py`** defines a wrapper `RetrainEnv`. Its `reset()` method (lines starting around `if np.random.rand() > self.p:`) first collects a trajectory using `gen_one_traj`. Then it checks `if self.random_sampling:`; if true, it sets `start_idx = np.random.choice(traj.eps_len)` (a uniform random index over the trajectory length). Otherwise it uses the mask network’s highest‑probability index (`np.argmax(traj.mask_probs)`). The environment is then reset to that state via `self.env.sim.set_state(traj.state_seq[start_idx])`.  
+- **`retrain.py`** exposes a boolean argument `--random_sampling` (default `False`). Its value is passed as `rand_sampling=args.random_sampling` to `make_retrain_env`, which sets `self.random_sampling` in the `RetrainEnv` instance.  
+- The above logic directly implements the “Random” explanation method: it randomly picks a visited state from the trajectory, exactly as described in the paper. By providing the `--random_sampling True` flag, the user can select this explanation method during retraining for MuJoCo environments.
+
+Thus, the code correctly implements the ability to select the Random explanation method.
+
+# Score
+1

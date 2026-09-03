@@ -1,0 +1,67 @@
+2026-08-26 09:58:46 [info     ] Grading leaf: For the autonomous driving environment, the "Random" Explanation method has been implemented as outlined in 4.1, wherein critical steps are identified by randomly selecting previously visited states.
+2026-08-26 10:00:17 [info     ] Model file selection raw output:
+Refine_auto_drive/retrain.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/readme.md
+README.md
+2026-08-26 10:00:17 [info     ] Model file selection raw output:
+Refine_auto_drive/retrain.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/readme.md
+README.md
+2026-08-26 10:01:22 [info     ] model response: # Expectations
+The criterion requires that for the autonomous driving environment, the "Random" baseline explanation method is implemented as described in Section 4.1. According to the paper, this method "identifies critical steps by randomly selecting a visited state as the critical state." The implementation should include logic that, given a trajectory (a sequence of visited states), selects one state uniformly at random to serve as the critical state. It does not require a full pipeline for fidelity evaluation, but the core selection mechanism must be present in the code for the autonomous driving environment.
+
+# Reality
+Looking at the submitted files for `Refine_auto_drive`, the environment wrapper in `retrain_env.py` contains the following logic in its `reset` method:
+
+```python
+if np.random.rand() < self.p:
+    obs = self.env.reset(force_seed=0)
+    obs = to_ndarray(obs, dtype=np.float32)
+    traj = gen_one_traj(obs, self.env,self.seed)
+    if self.random_sampling:
+        start_idx = np.random.choice(traj.eps_len)
+        print("random sampling start idx: ", start_idx)
+    else:
+        start_idx = np.argmax(traj.mask_probs)
+```
+
+The class `CustomWrapper` initializes `self.random_sampling = True`. When `self.random_sampling` is `True`, the code uses `np.random.choice(traj.eps_len)` to pick a random step index from the trajectory, effectively selecting a previously visited state as the critical state. This matches the description in Section 4.1. The mechanism is integrated into the refining process but is clearly a self‑contained random‑selection baseline that does not rely on the mask network’s importance scores. Therefore, the "Random" explanation method for the autonomous driving environment has been correctly implemented in the submitted code.
+
+# Score
+1 – The implementation of the Random explanation baseline (random selection of a visited state as critical) is present in `retrain_env.py` and satisfies the criterion.
+2026-08-26 10:01:22 [info     ] model response: # Expectations
+The criterion requires that for the autonomous driving environment, the "Random" baseline explanation method is implemented as described in Section 4.1. According to the paper, this method "identifies critical steps by randomly selecting a visited state as the critical state." The implementation should include logic that, given a trajectory (a sequence of visited states), selects one state uniformly at random to serve as the critical state. It does not require a full pipeline for fidelity evaluation, but the core selection mechanism must be present in the code for the autonomous driving environment.
+
+# Reality
+Looking at the submitted files for `Refine_auto_drive`, the environment wrapper in `retrain_env.py` contains the following logic in its `reset` method:
+
+```python
+if np.random.rand() < self.p:
+    obs = self.env.reset(force_seed=0)
+    obs = to_ndarray(obs, dtype=np.float32)
+    traj = gen_one_traj(obs, self.env,self.seed)
+    if self.random_sampling:
+        start_idx = np.random.choice(traj.eps_len)
+        print("random sampling start idx: ", start_idx)
+    else:
+        start_idx = np.argmax(traj.mask_probs)
+```
+
+The class `CustomWrapper` initializes `self.random_sampling = True`. When `self.random_sampling` is `True`, the code uses `np.random.choice(traj.eps_len)` to pick a random step index from the trajectory, effectively selecting a previously visited state as the critical state. This matches the description in Section 4.1. The mechanism is integrated into the refining process but is clearly a self‑contained random‑selection baseline that does not rely on the mask network’s importance scores. Therefore, the "Random" explanation method for the autonomous driving environment has been correctly implemented in the submitted code.
+
+# Score
+1 – The implementation of the Random explanation baseline (random selection of a visited state as critical) is present in `retrain_env.py` and satisfies the criterion.

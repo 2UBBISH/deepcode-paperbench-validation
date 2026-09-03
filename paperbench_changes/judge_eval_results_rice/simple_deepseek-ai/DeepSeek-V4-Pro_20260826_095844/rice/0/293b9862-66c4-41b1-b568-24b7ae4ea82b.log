@@ -1,0 +1,77 @@
+2026-08-26 10:00:09 [info     ] Grading leaf: For the autonomous driving environment, Random Network Distillation (RND) for exploration has been implemented as outlined in Section 3.3.
+2026-08-26 10:00:58 [info     ] Model file selection raw output:
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/retrain.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/learner.py
+Refine_selfish_mining/rnd_model.py
+Refine_selfish_mining/rnd_policy.py
+Refine_cage_challenge/Agents/rnd_model.py
+Refine_auto_drive/readme.md
+Refine_auto_drive/train_masknet.py
+2026-08-26 10:00:58 [info     ] Model file selection raw output:
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/retrain.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/learner.py
+Refine_selfish_mining/rnd_model.py
+Refine_selfish_mining/rnd_policy.py
+Refine_cage_challenge/Agents/rnd_model.py
+Refine_auto_drive/readme.md
+Refine_auto_drive/train_masknet.py
+2026-08-26 10:03:16 [info     ] model response: # Expectations
+The paper's Section 3.3 describes using Random Network Distillation (RND) for exploration in the refining process. For the autonomous driving environment, a correct implementation should contain:
+- A fixed (random) target network and a trainable predictor network that tries to mimic the target.
+- The intrinsic reward computed as the squared error (or MSE) between predictor and target outputs on the **next state** \( s_{t+1} \).
+- A scaling factor \(\lambda\) that balances the intrinsic reward with the extrinsic task reward.
+- Training of the predictor network to minimize the prediction error on collected states.
+- Integration with the PPO algorithm so that the augmented rewards (task + \(\lambda\)·intrinsic) are used for policy updates.
+
+# Reality
+The submission contains files for autonomous driving refinement. The relevant implementation is found in:
+
+- **`Refine_auto_drive/rnd_reward_model.py`**:  
+  This file defines `RndNetwork` (a torch module with a frozen `target` and a trainable `predictor`) and `RndRewardModel`. In the `estimate` method, it computes the MSE between predictor and target features on the observations extracted from the data. The MSE is then normalised to \([0,1]\) and added to the original reward scaled by `intrinsic_reward_weight` (i.e., \(\lambda\)). The `_train` method updates the predictor network by sampling from collected observations and minimising the MSE loss with Adam.
+
+- **`Refine_auto_drive/retrain_env.py`**:  
+  The environment wrapper’s `step` returns the new observation (`obs` = \(s_{t+1}\)) as the observation field. When the collector stores this data, the `obs` field used in `RndRewardModel` corresponds to \(s_{t+1}\), aligning with the paper’s specification.
+
+- **`Refine_auto_drive/learner.py`**:  
+  The custom `BaseLearner` integrates the RND reward model by calling `collect_data`, `train`, and `estimate` before the policy update. This ensures that the predictor is trained and the intrinsic reward is added before the PPO loss is computed.
+
+- **`Refine_auto_drive/retrain.py`**:  
+  This script instantiates `RndRewardModel` (with configurable `intrinsic_reward_rescale`) and passes it to the learner along with the PPO policy. The overall structure implements the exploration mechanism exactly as described.
+
+The code correctly implements the essential components of RND: dual network (target/predictor), MSE-based intrinsic reward, scaling factor \(\lambda\), and joint training of predictor and policy.
+
+# Score
+1 – The submission contains a correct implementation of Random Network Distillation for exploration in the autonomous driving environment, consistent with the outline in Section 3.3.
+2026-08-26 10:03:16 [info     ] model response: # Expectations
+The paper's Section 3.3 describes using Random Network Distillation (RND) for exploration in the refining process. For the autonomous driving environment, a correct implementation should contain:
+- A fixed (random) target network and a trainable predictor network that tries to mimic the target.
+- The intrinsic reward computed as the squared error (or MSE) between predictor and target outputs on the **next state** \( s_{t+1} \).
+- A scaling factor \(\lambda\) that balances the intrinsic reward with the extrinsic task reward.
+- Training of the predictor network to minimize the prediction error on collected states.
+- Integration with the PPO algorithm so that the augmented rewards (task + \(\lambda\)·intrinsic) are used for policy updates.
+
+# Reality
+The submission contains files for autonomous driving refinement. The relevant implementation is found in:
+
+- **`Refine_auto_drive/rnd_reward_model.py`**:  
+  This file defines `RndNetwork` (a torch module with a frozen `target` and a trainable `predictor`) and `RndRewardModel`. In the `estimate` method, it computes the MSE between predictor and target features on the observations extracted from the data. The MSE is then normalised to \([0,1]\) and added to the original reward scaled by `intrinsic_reward_weight` (i.e., \(\lambda\)). The `_train` method updates the predictor network by sampling from collected observations and minimising the MSE loss with Adam.
+
+- **`Refine_auto_drive/retrain_env.py`**:  
+  The environment wrapper’s `step` returns the new observation (`obs` = \(s_{t+1}\)) as the observation field. When the collector stores this data, the `obs` field used in `RndRewardModel` corresponds to \(s_{t+1}\), aligning with the paper’s specification.
+
+- **`Refine_auto_drive/learner.py`**:  
+  The custom `BaseLearner` integrates the RND reward model by calling `collect_data`, `train`, and `estimate` before the policy update. This ensures that the predictor is trained and the intrinsic reward is added before the PPO loss is computed.
+
+- **`Refine_auto_drive/retrain.py`**:  
+  This script instantiates `RndRewardModel` (with configurable `intrinsic_reward_rescale`) and passes it to the learner along with the PPO policy. The overall structure implements the exploration mechanism exactly as described.
+
+The code correctly implements the essential components of RND: dual network (target/predictor), MSE-based intrinsic reward, scaling factor \(\lambda\), and joint training of predictor and policy.
+
+# Score
+1 – The submission contains a correct implementation of Random Network Distillation for exploration in the autonomous driving environment, consistent with the outline in Section 3.3.

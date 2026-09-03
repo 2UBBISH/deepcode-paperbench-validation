@@ -1,0 +1,114 @@
+# =============================================================================
+# RICE Environment-Specific Configuration: HalfCheetah-v4
+# =============================================================================
+# Overrides default_mask.yaml and default_refine.yaml with values from
+# Table 3 of the RICE paper:
+#   - alpha (intrinsic reward coefficient): 0.0001
+#   - p_mixed (mixed initial distribution probability): 0.5
+#   - lambda_coef (RND exploration bonus weight): 0.01
+# =============================================================================
+
+# --- Environment Identification ---
+env_name: "HalfCheetah-v4"
+env_type: "mujoco"
+state_dim: 17
+action_dim: 6
+max_episode_steps: 1000
+
+# --- Mask Network Architecture ---
+mask_network:
+  hidden_sizes: [128, 128]
+  activation: "tanh"
+
+# --- Intrinsic Reward Coefficient for Mask Training ---
+alpha: 0.0001
+
+# --- PPO Hyperparameters for Mask Network Training ---
+ppo:
+  learning_rate: 3.0e-4
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_epsilon: 0.2
+  value_loss_coef: 0.5
+  entropy_coef: 0.01
+  max_grad_norm: 0.5
+  ppo_epochs: 10
+  batch_size: 64
+
+# --- Mask Network Training Loop ---
+training:
+  total_steps: 300000
+  steps_per_iteration: 2048
+  eval_interval: 10
+  eval_episodes: 10
+  save_interval: 50
+  seed: 42
+
+# --- Fidelity Evaluation ---
+fidelity:
+  num_episodes: 10
+  q_function: null  # Use Monte Carlo returns as proxy
+
+# --- Critical State Collection ---
+critical_state:
+  num_episodes: 100
+  top_k_per_episode: 1
+  max_critical_states: 100
+
+# --- Mixed Initial Distribution ---
+mixed_init:
+  p_mixed: 0.5  # Table 3: HalfCheetah uses p=0.5
+
+# --- RND Exploration Bonus ---
+rnd:
+  lambda_coef: 0.01  # Table 3: HalfCheetah uses lambda=0.01
+  hidden_sizes: [64, 64]
+  embedding_dim: 64
+  activation: "relu"
+  learning_rate: 1.0e-4
+  normalize_obs: true
+  obs_rms_decay: 0.99
+  normalize_bonus: true
+  bonus_decay: 0.99
+  update_epochs: 4
+  batch_size: 256
+
+# --- PPO Hyperparameters for Refining Phase ---
+refine_ppo:
+  learning_rate: 3.0e-4
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_epsilon: 0.2
+  value_loss_coef: 0.5
+  entropy_coef: 0.01
+  max_grad_norm: 0.5
+  ppo_epochs: 10
+  batch_size: 64
+  normalize_advantages: true
+  normalize_obs: true
+
+# --- Policy Architecture for Refining ---
+policy:
+  hidden_sizes: [64, 64]
+  value_hidden_sizes: [64, 64]
+  activation: "tanh"
+  policy_std: 0.0  # 0 = learned log_std
+
+# --- Refining Training Loop ---
+refine_training:
+  total_steps: 1000000
+  steps_per_iteration: 2048
+  eval_interval: 10
+  eval_episodes: 10
+  eval_max_steps: 1000
+  save_interval: 50
+  seed: 42
+
+# --- Device ---
+device: "cuda"
+
+# --- Logging ---
+logging:
+  verbose: true
+  log_dir: "./logs/halfcheetah"
+  use_tensorboard: false

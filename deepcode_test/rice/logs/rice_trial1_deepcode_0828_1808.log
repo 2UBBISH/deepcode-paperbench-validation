@@ -1,0 +1,16 @@
+Info: docling is unavailable; built-in document converters remain enabled.
+2026-08-28 18:08:15.546 | DEBUG    | core.config:_load_raw:615 - deepcode_config.json not found at /home/deepevol/deepevol/DeepCode/deepcode_config.json; skipping layer
+--- Logging error ---
+Traceback (most recent call last):
+  File "/home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/logging/__init__.py", line 1110, in emit
+    msg = self.format(record)
+          ^^^^^^^^^^^^^^^^^^^
+  File "/home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/logging/__init__.py", line 953, in format
+    return fmt.format(record)
+           ^^^^^^^^^^^^^^^^^^
+  File "/home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/logging/__init__.py", line 687, in format
+    record.message = record.getMessage()
+                     ^^^^^^^^^^^^^^^^^^^
+  File "/home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/logging/__init__.py", line 377, in getMessage
+    msg = msg % self.args
+          ~~~~^~~~~~~~~~~

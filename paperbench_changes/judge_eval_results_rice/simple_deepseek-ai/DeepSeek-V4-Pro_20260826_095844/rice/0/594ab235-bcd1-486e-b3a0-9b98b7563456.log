@@ -1,0 +1,49 @@
+2026-08-26 10:00:55 [info     ] Grading leaf: In Experiment II, for the MuJoCo environments, for the "StateMask-R" refinement method, code has been implemented for measuring cumulative reward throughout refinement
+2026-08-26 10:01:56 [info     ] Model file selection raw output:
+Refine_mujoco/retrain.py
+Refine_mujoco/monitor.py
+Refine_mujoco/callback.py
+Refine_mujoco/utils.py
+Refine_mujoco/PPO.py
+Refine_mujoco/OnPolicyAlgorithm.py
+Refine_mujoco/base_class.py
+Refine_mujoco/baseline/train.py
+Refine_mujoco/environment.py
+Refine_mujoco/masknet/cus_PPO.py
+2026-08-26 10:01:56 [info     ] Model file selection raw output:
+Refine_mujoco/retrain.py
+Refine_mujoco/monitor.py
+Refine_mujoco/callback.py
+Refine_mujoco/utils.py
+Refine_mujoco/PPO.py
+Refine_mujoco/OnPolicyAlgorithm.py
+Refine_mujoco/base_class.py
+Refine_mujoco/baseline/train.py
+Refine_mujoco/environment.py
+Refine_mujoco/masknet/cus_PPO.py
+2026-08-26 10:03:10 [info     ] model response: # Expectations
+
+According to the paper, Experiment II compares the performance of the pre‑trained agent after refinement using four methods: PPO fine‑tuning, JSRL, StateMask‑R (fine‑tuning from critical steps), and the authors’ own method (RICE). For the StateMask‑R method, the environment is reset to the critical state identified by the explanation method, and training is resumed from that state without an exploration bonus. The criterion requires that the code submitted for this specific refinement method includes functionality that measures the cumulative reward (or episodic return) during the refinement process—for example, via logging of episodic returns, evaluation callbacks, or monitoring wrappers. I expect to find code that, when executing the StateMask‑R refinement, records and logs the cumulative reward obtained by the agent as training progresses.
+
+# Reality
+
+The submission provides the file `Refine_mujoco/retrain.py`, which is a general refinement script. It creates a custom environment (`RetrainEnv`) that supports resetting to the most critical state (when `go_prob` is set to 1 and `random_sampling=False`) using the explanation mask network, thus implementing the core of the StateMask‑R method.  
+
+In `retrain.py` the environment is wrapped with `VecMonitor` (imported from `Refine_mujoco/monitor.py`). This monitor tracks the “true” cumulative reward per episode (via `info["true_reward"]`) and writes episode statistics (return, length) to a log file. Additionally, an `EvalCallback` is set up to periodically evaluate the current policy during training and log the mean episodic reward, which also measures cumulative reward as refinement proceeds. Therefore, the code that measures cumulative reward throughout refinement is present and will be active when the `StateMask‑R` method is run (by choosing appropriate command‑line arguments, e.g., `--go_prob 1 --bonus None`).
+
+# Score
+
+**1** – The submission contains code that correctly implements cumulative reward measurement during refinement for the StateMask‑R method. The `VecMonitor` and `EvalCallback` in `retrain.py` satisfy the requirement.
+2026-08-26 10:03:10 [info     ] model response: # Expectations
+
+According to the paper, Experiment II compares the performance of the pre‑trained agent after refinement using four methods: PPO fine‑tuning, JSRL, StateMask‑R (fine‑tuning from critical steps), and the authors’ own method (RICE). For the StateMask‑R method, the environment is reset to the critical state identified by the explanation method, and training is resumed from that state without an exploration bonus. The criterion requires that the code submitted for this specific refinement method includes functionality that measures the cumulative reward (or episodic return) during the refinement process—for example, via logging of episodic returns, evaluation callbacks, or monitoring wrappers. I expect to find code that, when executing the StateMask‑R refinement, records and logs the cumulative reward obtained by the agent as training progresses.
+
+# Reality
+
+The submission provides the file `Refine_mujoco/retrain.py`, which is a general refinement script. It creates a custom environment (`RetrainEnv`) that supports resetting to the most critical state (when `go_prob` is set to 1 and `random_sampling=False`) using the explanation mask network, thus implementing the core of the StateMask‑R method.  
+
+In `retrain.py` the environment is wrapped with `VecMonitor` (imported from `Refine_mujoco/monitor.py`). This monitor tracks the “true” cumulative reward per episode (via `info["true_reward"]`) and writes episode statistics (return, length) to a log file. Additionally, an `EvalCallback` is set up to periodically evaluate the current policy during training and log the mean episodic reward, which also measures cumulative reward as refinement proceeds. Therefore, the code that measures cumulative reward throughout refinement is present and will be active when the `StateMask‑R` method is run (by choosing appropriate command‑line arguments, e.g., `--go_prob 1 --bonus None`).
+
+# Score
+
+**1** – The submission contains code that correctly implements cumulative reward measurement during refinement for the StateMask‑R method. The `VecMonitor` and `EvalCallback` in `retrain.py` satisfy the requirement.

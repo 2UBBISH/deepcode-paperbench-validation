@@ -1,0 +1,653 @@
+Info: docling is unavailable; built-in document converters remain enabled.
+2026-08-26 20:23:41.457 | DEBUG    | core.config:_load_raw:615 - deepcode_config.json not found at /home/deepevol/deepevol/DeepCode/deepcode_config.json; skipping layer
+--- Logging error ---
+Traceback (most recent call last):
+  File "/home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/logging/__init__.py", line 1110, in emit
+    msg = self.format(record)
+          ^^^^^^^^^^^^^^^^^^^
+  File "/home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/logging/__init__.py", line 953, in format
+    return fmt.format(record)
+           ^^^^^^^^^^^^^^^^^^
+  File "/home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/logging/__init__.py", line 687, in format
+    record.message = record.getMessage()
+                     ^^^^^^^^^^^^^^^^^^^
+  File "/home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/logging/__init__.py", line 377, in getMessage
+    msg = msg % self.args
+          ~~~~^~~~~~~~~~~
+TypeError: not all arguments converted during string formatting
+Call stack:
+  File "/home/deepevol/deepevol/stage_b_driver.py", line 93, in <module>
+    asyncio.run(main())
+  File "/home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/asyncio/runners.py", line 190, in run
+    return runner.run(main)
+  File "/home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+  File "/home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/asyncio/base_events.py", line 641, in run_until_complete
+    self.run_forever()
+  File "/home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/asyncio/base_events.py", line 608, in run_forever
+    self._run_once()
+  File "/home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/asyncio/base_events.py", line 1936, in _run_once
+    handle._run()
+  File "/home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/asyncio/events.py", line 84, in _run
+    self._context.run(self._callback, *self._args)
+  File "/home/deepevol/deepevol/stage_b_driver.py", line 51, in main
+    result = await execute_multi_agent_research_pipeline(
+  File "/home/deepevol/deepevol/DeepCode/workflows/agent_orchestration_engine.py", line 1928, in execute_multi_agent_research_pipeline
+    ctx = await prepare_workflow_environment(
+  File "/home/deepevol/deepevol/DeepCode/workflows/environment.py", line 138, in prepare_workflow_environment
+    log.info(
+Message: '🗂️  Workspace={} task_kind={} task_dir={} kind={} resume={}'
+Arguments: (PosixPath('/home/deepevol/deepevol/DeepCode/deepcode_lab'), 'paper2code', 'paper_014a3493', 'md', False)
+2026-08-26 20:23:41,485 INFO 📋 Paper ID: 014a3493
+2026-08-26 20:23:41,485 INFO 📂 Paper directory: /home/deepevol/deepevol/DeepCode/deepcode_lab/tasks/paper_014a3493
+2026-08-26 20:23:41,485 INFO 📥 Processing md: /home/deepevol/deepevol/frontier-evals/project/paperbench/data/papers/fre/paper.md
+2026-08-26 20:23:41,491 INFO ✅ Input acquired:
+[INFO] Copying file (original preserved):
+   Source: /home/deepevol/deepevol/frontier-evals/project/paperbench/data/papers/fre/paper.md
+   Target: /home/deepevol/deepevol/DeepCode/deepcode_lab/tasks/paper_014a3493/paper.md
+   Size: 0.05 MB
+
+[SUCCESS] File copied successfully (original preserved)!
+   From: /home/deepevol/deepevol/frontier-evals/project/paperbench/data/papers/fre/paper.md
+   To: /home/deepevol/deepevol/DeepCode/deepcode_lab/tasks/paper_014a3493/paper.md
+   Duration: 0.00 seconds
+   [INFO] Document converted to Markdown (built-in)
+   Markdown file: /home/deepevol/deepevol/DeepCode/deepcode_lab/tasks/paper_014a3493/paper.md
+   Source format: markdown
+   Conversion time: 0.00 seconds
+   Characters extracted: 57530
+2026-08-26 20:23:41,492 INFO Preparing document segments for: /home/deepevol/deepevol/DeepCode/deepcode_lab/tasks/paper_014a3493
+2026-08-26 20:23:41.850 | DEBUG    | core.agent_runtime.tools.mcp:connect_single_server:531 - MCP: registered tool 'mcp_document_segmentation_analyze_and_segment_document' from server 'document-segmentation'
+2026-08-26 20:23:41.850 | DEBUG    | core.agent_runtime.tools.mcp:connect_single_server:531 - MCP: registered tool 'mcp_document_segmentation_read_document_segments' from server 'document-segmentation'
+2026-08-26 20:23:41.850 | DEBUG    | core.agent_runtime.tools.mcp:connect_single_server:531 - MCP: registered tool 'mcp_document_segmentation_get_document_overview' from server 'document-segmentation'
+2026-08-26 20:23:41.853 | INFO     | core.agent_runtime.tools.mcp:connect_single_server:589 - MCP server 'document-segmentation': connected, 3 capabilities registered
+2026-08-26 20:23:41.853 | DEBUG    | core.compat.agent:_connect_servers:520 - Agent 'DocumentSegmentationCoordinator': 1 MCP servers connected, 3 tools registered total
+2026-08-26 20:23:42.296 | INFO     | core.llm_runtime:attach_workflow_llm:125 - Attached workflow LLM: agent=DocumentSegmentationCoordinator phase=planning provider=custom model=deepseek-ai/DeepSeek-V4-Pro reasoning_effort=None
+2026-08-26 20:23:42,296 INFO DocumentSegmentationAgent initialized successfully
+2026-08-26 20:23:42,296 INFO Starting document analysis for: /home/deepevol/deepevol/DeepCode/deepcode_lab/tasks/paper_014a3493
+2026-08-26 20:23:46,544 INFO HTTP Request: POST https://api.siliconflow.cn/v1/chat/completions "HTTP/1.1 200 OK"
+2026-08-26 20:23:49,019 INFO HTTP Request: POST https://api.siliconflow.cn/v1/chat/completions "HTTP/1.1 200 OK"
+2026-08-26 20:23:56,842 INFO HTTP Request: POST https://api.siliconflow.cn/v1/chat/completions "HTTP/1.1 200 OK"
+2026-08-26 20:24:59,259 INFO HTTP Request: POST https://api.siliconflow.cn/v1/chat/completions "HTTP/1.1 200 OK"
+2026-08-26 20:24:59,273 INFO Document analysis completed successfully
+2026-08-26 20:24:59.274 | DEBUG    | core.agent_runtime.tools.registry:aclose:186 - ToolRegistry.aclose: benign anyio teardown noise: Cancelled via cancel scope 7b6286b4b520 by <Task pending name='Task-12' coro=<AsyncExitStack.aclose() running at /home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/contextlib.py:687> cb=[_release_waiter(<Future pendi...ask_wakeup()]>)() at /home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/asyncio/tasks.py:431]>
+2026-08-26 20:24:59,274 INFO Document segments prepared successfully
+2026-08-26 20:24:59,274 INFO Loaded paper markdown for planning: /home/deepevol/deepevol/DeepCode/deepcode_lab/tasks/paper_014a3493/paper.md (57530 chars)
+2026-08-26 20:24:59,275 INFO Planning source markdown: /home/deepevol/deepevol/DeepCode/deepcode_lab/tasks/paper_014a3493/paper.md
+2026-08-26 20:24:59,275 INFO Using segmented planner context derived from document_index.json
+2026-08-26 20:24:59,276 INFO Using single planner path (segmentation=True, segmented_context=True)
+2026-08-26 20:24:59,276 INFO Code planning attempt 1/3 started (timeout=180s, segmentation=True, paper_content_loaded=True)
+2026-08-26 20:24:59.276 | INFO     | core.llm_runtime:attach_workflow_llm:125 - Attached workflow LLM: agent=CodePlannerAgent phase=planning provider=custom model=deepseek-ai/DeepSeek-V4-Pro reasoning_effort=None
+2026-08-26 20:24:59,276 INFO Single-agent planning started (timeout=180s, agent=CodePlannerAgent)
+2026-08-26 20:27:58.335 | WARNING  | core.providers.base:_run_with_retry:829 - LLM transient error (attempt 1/3), retrying in 1s: error calling llm: request timed out.
+2026-08-26 20:30:04,031 INFO HTTP Request: POST https://api.siliconflow.cn/v1/chat/completions "HTTP/1.1 200 OK"
+输入论文: /home/deepevol/deepevol/frontier-evals/project/paperbench/data/papers/fre/paper.md
+模式: 完整(含参考挖掘+索引)
+🚀 Initializing intelligent multi-agent research orchestration system
+🧠 Advanced intelligence analysis enabled - comprehensive workflow
+📁 Workspace : /home/deepevol/deepevol/DeepCode/deepcode_lab
+📂 Task dir  : /home/deepevol/deepevol/DeepCode/deepcode_lab/tasks/paper_014a3493
+🔖 Task ID   : 014a3493
+📊 Progress: 25% - Input Acquisition
+📊 Progress: 40% - Workspace Setup
+🏗️ Intelligent workspace infrastructure synthesized:
+   Workspace root : /home/deepevol/deepevol/DeepCode/deepcode_lab
+   Task directory : /home/deepevol/deepevol/DeepCode/deepcode_lab/tasks/paper_014a3493
+   Markdown source: /home/deepevol/deepevol/DeepCode/deepcode_lab/tasks/paper_014a3493/paper.md
+📊 Progress: 50% - Document Preprocessing
+🔍 Starting adaptive document preprocessing...
+   Paper directory: /home/deepevol/deepevol/DeepCode/deepcode_lab/tasks/paper_014a3493
+📊 Segmentation decision: True
+   Reason: Document size (57,530 chars) exceeds threshold (50,000 chars)
+🔧 Using intelligent document segmentation workflow...
+✅ Document segmentation completed successfully!
+   Segments directory: /home/deepevol/deepevol/DeepCode/deepcode_lab/tasks/paper_014a3493/document_segments
+   🧠 Intelligent segments ready for planning agents
+✅ Document preprocessing completed successfully!
+   📊 Using segmentation: True
+   📁 Segments directory: /home/deepevol/deepevol/DeepCode/deepcode_lab/tasks/paper_014a3493/document_segments
+📊 Progress: 65% - Code Planning
+📊 Planning mode: Segmented
+📄 Found markdown file for analysis: paper.md
+?? Code analysis mode: Segmented
+   ?? Planner architecture: single authoritative planner
+?? Attempting code analysis (attempt 1/3)
+?? Code analysis result:
+```yaml
+complete_reproduction_plan:
+  paper_info:
+    title: "Functional Reward Encodings (FRE) for Zero-Shot Offline Reinforcement Learning"
+    core_contribution: "Pre-train a generalist agent from unlabeled offline trajectories using a transformer-based variational auto-encoder that encodes state-reward samples into a latent task representation, enabling zero-shot adaptation to arbitrary downstream tasks."
+
+  # SECTION 1: File Structure Design
+  file_structure: |
+    project_root/
+    ├── README.md                    # Documentation (implement LAST)
+    ├── requirements.txt             # Dependencies (implement LAST)
+    ├── setup.py                     # Package setup
+    ├── configs/
+    │   ├── default.yaml             # Default hyperparameters
+    │   └── antmaze.yaml             # AntMaze-specific config
+    ├── fre/
+    │   ├── __init__.py
+    │   ├── encoder.py               # Transformer VAE encoder (priority 1)
+    │   ├── decoder.py               # Reward decoder network (priority 1)
+    │   ├── prior.py                 # Prior reward distribution sampling (priority 1)
+    │   ├── iql.py                   # Implicit Q-Learning implementation (priority 2)
+    │   ├── agent.py                 # FRE-conditioned policy, Q, V networks (priority 2)
+    │   ├── train_fre.py             # FRE encoder+decoder training loop (priority 2)
+    │   ├── train_rl.py              # RL training with frozen encoder (priority 2)
+    │   ├── eval.py                  # Zero-shot evaluation on downstream tasks (priority 3)
+    │   ├── data.py                  # Dataset loading (D4RL, ExORL) (priority 3)
+    │   └── utils.py                 # Helpers, reward discretization, etc. (priority 3)
+    ├── scripts/
+    │   ├── run_antmaze.sh           # Experiment launch script
+    │   ├── run_exorl.sh
+    │   └── run_kitchen.sh
+    └── tests/
+        └── test_encoder.py          # Unit tests for components
+
+  # SECTION 2: Implementation Components
+  implementation_components: |
+    === 1. FRE Encoder (encoder.py) ===
+    - Purpose: Encode a set of (state, reward) pairs into a latent task vector z.
+    - Architecture: Permutation-invariant Transformer (no positional encoding, no causal mask).
+    - Input: K states s_k and corresponding scalar rewards η(s_k). Reward is discretized into a learned embedding token space.
+      * Reward discretization: Divide reward range (e.g., [-1, 1]) into B bins (e.g., B=64). Each bin has a learnable embedding vector of dimension d_rew (e.g., 64). Scalar reward is mapped to the embedding of its bin.
+      * State embedding: Linear projection from state_dim to d_state (e.g., 128).
+      * Token construction: Concatenate state embedding and reward embedding → token of dimension d_state + d_rew. Project to d_model (e.g., 256) via linear layer.
+    - Transformer: N layers (e.g., 4), M heads (e.g., 4), feedforward dim 4*d_model. No causal mask; self-attention over all tokens.
+    - Output: Mean pool the final layer representations across the K tokens → vector h. Two linear heads from h to μ_z and log σ_z (diagonal Gaussian). Latent dimension d_z (e.g., 128).
+    - Sampling: z = μ_z + σ_z * ε, ε ~ N(0,I). Use reparameterization.
+    - Key formula: p_θ(z | {(s_k, η(s_k))}) = N(μ_z, σ_z^2 I).
+
+    === 2. FRE Decoder (decoder.py) ===
+    - Purpose: Predict reward η(s) for a given state s and latent z.
+    - Architecture: Feedforward MLP.
+    - Input: Concatenate state s and latent z → input vector. Pass through 2-3 hidden layers (e.g., 256 units each, ReLU). Output: scalar reward prediction.
+    - Training loss: Mean Squared Error (MSE) between predicted reward and true reward η(s) on K' decoder states (different from encoder states).
+    - VAE objective (Equation 6): L_FRE = (1/K') Σ MSE(η(s_d), q_θ(s_d, z)) + β * KL( N(μ_z, σ_z^2 I) || N(0,I) ). β is a hyperparameter (e.g., 1.0).
+
+    === 3. Prior Reward Distribution (prior.py) ===
+    - Purpose: Generate diverse unsupervised reward functions for training.
+    - Mixture of three types (uniform sampling):
+      a) Singleton (Goal-reaching): Sample a goal state g from dataset. Reward η(s) = -1 if ||s - g|| > threshold else 0. (Threshold e.g., 0.5 for AntMaze, task-specific).
+      b) Random Linear: Sample a random vector w ~ Uniform(-1,1) of state_dim. Apply sparse mask (e.g., 80% zeros) to bias towards simple functions. Reward η(s) = dot(w, s).
+      c) Random MLP: Initialize a 2-layer MLP (hidden dim 64) with random weights (e.g., Kaiming uniform). Reward η(s) = MLP(s). Weights fixed per function.
+    - All rewards are normalized to roughly [-1, 1] range via scaling.
+
+    === 4. IQL RL Module (iql.py) ===
+    - Purpose: Offline RL algorithm to train policy π(a|s,z), Q-function Q(s,a,z), and value function V(s,z) conditioned on latent z.
+    - Networks:
+      * V(s,z): MLP with state+s+z input, output scalar.
+      * Q(s,a,z): MLP with state+action+z input, output scalar.
+      * π(a|s,z): Gaussian policy MLP with state+z input, outputs mean and log_std.
+    - IQL losses:
+      * L_V = E_{(s,a)~D}[ L2_τ( Q_target(s,a,z) - V(s,z) ) ] where L2_τ(u) = |τ - 1(u<0)| * u^2. τ is expectile (e.g., 0.7). Q_target uses target network.
+      * L_Q = E_{(s,a,s')~D}[ ( η(s) + γ * V(s',z) - Q(s,a,z) )^2 ].
+      * L_π = E_{(s,a)~D}[ exp( β * (Q(s,a,z) - V(s,z)) ) * log π(a|s,z) ] (AWR). β e.g., 3.0.
+    - z is provided by frozen FRE encoder.
+
+    === 5. Training Loop (train_fre.py, train_rl.py) ===
+    - Strided training scheme:
+      Phase 1 (train_fre.py): Train only encoder+decoder.
+        For each iteration:
+          - Sample reward function η from prior.
+          - Sample K encoder states {s_e} from dataset D, compute rewards.
+          - Sample K' decoder states {s_d} from D, compute rewards.
+          - Encode to get z, decode to predict rewards on s_d.
+          - Compute L_FRE (MSE + KL), update encoder+decoder.
+        Converge when loss plateaus.
+      Phase 2 (train_rl.py): Freeze encoder. Train IQL networks.
+        For each iteration:
+          - Sample reward function η from prior.
+          - Sample K encoder states, encode to z.
+          - Sample RL batch (s,a,s') from D.
+          - Compute IQL losses using η(s) as reward, update V, Q, π.
+    - Algorithm 1 in paper summarizes this.
+
+    === 6. Evaluation (eval.py) ===
+    - Purpose: Zero-shot evaluation on downstream tasks.
+    - Given a new reward function η_test (e.g., goal-reaching, directional), sample K=32 states from dataset, compute rewards, encode to z.
+    - Rollout policy π(a|s,z) in environment, compute average return over 20 episodes.
+    - Tasks implemented:
+      * AntMaze: goal-reaching (multiple goals), directional (move in (x,y) direction), random-simplex (procedural noise), path tasks (edges, loop, center).
+      * ExORL: goal-reaching (random goals), velocity (forward/backward).
+      * Kitchen: 7 subtask reward functions.
+
+    === 7. Data Handling (data.py) ===
+    - Load D4RL AntMaze (antmaze-large-diverse-v2), Kitchen (kitchen-complete-v0).
+    - Load ExORL datasets (walker, cheetah) from standard sources.
+    - Provide normalized state, action, next_state, terminal.
+
+    === 8. Hyperparameters (configs/default.yaml) ===
+    - Encoder: K=32, K'=32, d_model=256, n_layers=4, n_heads=4, d_z=128, d_rew_embed=64, B=64.
+    - Decoder: hidden dims [256,256].
+    - VAE: β=1.0.
+    - IQL: τ=0.7, γ=0.99, β=3.0, lr=3e-4, batch_size=256.
+    - Prior: uniform mixture, goal threshold=0.5, linear sparsity=0.8, MLP hidden=64.
+    - Training: FRE iterations=100k, RL iterations=1M.
+
+  # SECTION 3: Validation & Evaluation
+  validation_approach: |
+    === Experiment 1: AntMaze Zero-Shot ===
+    - Dataset: antmaze-large-diverse-v2 (D4RL).
+    - Tasks: goal-reaching (5 random goals), directional (4 directions), random-simplex (procedural noise), path tasks (edges, loop, center).
+    - Metric: Average return normalized to 0-100 (as in Table 1).
+    - Expected results (from Table 1): FRE should achieve ~48.8 on goal-reaching, ~55.2 on directional, ~21.3 on random-simplex, ~67.2 on path-loop, ~60.0 on path-edges, ~64.4 on path-center. Overall antmaze-all ~52.8.
+    - Success criterion: Mean score across tasks within ±10 of reported values.
+
+    === Experiment 2: ExORL Zero-Shot ===
+    - Datasets: ExORL walker and cheetah (unsupervised exploration data).
+    - Tasks: goal-reaching (goals), velocity (forward/backward).
+    - Expected: walker-goals ~94, cheetah-goals ~58, walker-velocity ~34, cheetah-velocity ~20. Overall exorl-all ~51.5.
+    - Success criterion: Similar ballpark.
+
+    === Experiment 3: Kitchen Zero-Shot ===
+    - Dataset: kitchen-complete-v0 (D4RL).
+    - Tasks: 7 subtask reward functions (e.g., open microwave, flip switch).
+    - Expected: ~66 overall.
+    - Success criterion: Mean score > 50.
+
+    === Experiment 4: Ablation on Prior Diversity (Figure 5) ===
+    - Train FRE agents on subsets of prior types: goals-only, linear-only, MLP-only, goals+linear, etc.
+    - Evaluate on all tasks; verify that FRE-all (full mixture) achieves highest total score.
+
+    === Experiment 5: Domain Knowledge Augmentation (Figure 6) ===
+    - Augment prior with XY-position-only or velocity-only functions.
+    - Show improved performance on corresponding downstream tasks.
+
+    === Validation Procedure ===
+    - For each experiment, train 5 random seeds, report mean and std.
+    - Compare with baseline implementations if available (FB, SF, GC-IQL, GC-BC, OPAL) but primary goal is to reproduce FRE results.
+    - Use the same evaluation protocol: 20 episodes per task, K=32 encoding states.
+
+  # SECTION 4: Environment & Dependencies
+  environment_setup: |
+    - Python 3.8+
+    - PyTorch 1.12+ (with CUDA 11.3+ for GPU)
+    - MuJoCo 2.1+ (for AntMaze, Kitchen, ExORL)
+    - D4RL library (for AntMaze and Kitchen datasets)
+    - ExORL dataset (download from official repository or use provided scripts)
+    - Gym 0.23+
+    - NumPy, SciPy, Matplotlib, tqdm, PyYAML
+    - Hardware: GPU with at least 8GB VRAM (e.g., NVIDIA RTX 2080) for training; CPU-only possible but slow.
+    - Install instructions: `pip install -r requirements.txt`; for MuJoCo, follow official installation.
+
+  # SECTION 5: Implementation Strategy
+  implementation_strategy: |
+    Phase 1: Foundation (Data & Prior)
+    - Implement data.py: D4RL and ExORL loaders, normalization.
+    - Implement prior.py: three reward function types with sampling logic.
+    - Test: Verify reward functions produce reasonable values.
+
+    Phase 2: FRE Encoder-Decoder
+    - Implement encoder.py: reward discretization, token embedding, transformer, mean/std heads.
+    - Implement decoder.py: MLP reward predictor.
+    - Implement train_fre.py: training loop with VAE loss.
+    - Test: Overfit on a single fixed reward function; check reconstruction MSE decreases.
+
+    Phase 3: IQL RL Training
+    - Implement iql.py: V, Q, policy networks, expectile loss, AWR.
+    - Implement agent.py: wrapper that conditions all networks on z.
+    - Implement train_rl.py: strided training (freeze encoder after Phase 2).
+    - Test: On a simple task, verify Q-values converge and policy improves.
+
+    Phase 4: Evaluation Suite
+    - Implement eval.py: task definitions (goal-reaching, directional, etc.), encoding from K examples, rollout.
+    - Implement scripts to run full pipeline on each benchmark.
+    - Test: Run a trained agent on a known task, check if returns are non-trivial.
+
+    Phase 5: Full Reproduction & Tuning
+    - Run complete training on AntMaze, ExORL, Kitchen with default hyperparameters.
+    - Compare results to Table 1; adjust hyperparameters if needed (e.g., K, d_model, β, IQL τ).
+    - Run ablation studies (prior diversity, domain knowledge).
+    - Document final hyperparameters and results in README.
+
+    Phase 6: Documentation (LAST)
+    - Write README.md with setup, usage, and results.
+    - Generate requirements.txt via `pip freeze`.
+    - Clean up code and add comments.
+
+    Missing Details Handling:
+    - If exact reward discretization bins or embedding dim not specified, start with B=64, d_rew=64.
+    - If transformer depth/heads not given, use 4 layers, 4 heads as reasonable for small sequences.
+    - If K' not specified, set equal to K=32.
+    - If IQL hyperparameters not in paper, use standard values from Kostrikov et al. (τ=0.7, β=3.0).
+    - For goal-reaching threshold, use environment-specific distance (e.g., 0.5 for AntMaze, 0.3 for Kitchen).
+    - All choices should be validated against reported performance; iterate if results deviate significantly.
+```2026-08-26 20:30:05.947 | DEBUG    | core.agent_runtime.tools.mcp:connect_single_server:531 - MCP: registered tool 'mcp_filesystem_read_file' from server 'filesystem'
+2026-08-26 20:30:05.948 | DEBUG    | core.agent_runtime.tools.mcp:connect_single_server:531 - MCP: registered tool 'mcp_filesystem_read_text_file' from server 'filesystem'
+2026-08-26 20:30:05.948 | DEBUG    | core.agent_runtime.tools.mcp:connect_single_server:531 - MCP: registered tool 'mcp_filesystem_read_media_file' from server 'filesystem'
+2026-08-26 20:30:05.948 | DEBUG    | core.agent_runtime.tools.mcp:connect_single_server:531 - MCP: registered tool 'mcp_filesystem_read_multiple_files' from server 'filesystem'
+2026-08-26 20:30:05.948 | DEBUG    | core.agent_runtime.tools.mcp:connect_single_server:531 - MCP: registered tool 'mcp_filesystem_write_file' from server 'filesystem'
+2026-08-26 20:30:05,952 ERROR Task exception was never retrieved
+future: <Task finished name='Task-12' coro=<AsyncExitStack.aclose() done, defined at /home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/contextlib.py:685> exception=RuntimeError('Attempted to exit cancel scope in a different task than it was entered in')>
+  + Exception Group Traceback (most recent call last):
+  |   File "/home/deepevol/deepevol/DeepCode/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 815, in __aexit__
+  |     raise BaseExceptionGroup(
+  | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+  +-+---------------- 1 ----------------
+    | Traceback (most recent call last):
+    |   File "/home/deepevol/deepevol/DeepCode/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 819, in __aexit__
+    |     raise exc_val
+    |   File "/home/deepevol/deepevol/DeepCode/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 788, in __aexit__
+    |     await self._on_completed_fut
+    | asyncio.exceptions.CancelledError
+    | 
+    | During handling of the above exception, another exception occurred:
+    | 
+    | Traceback (most recent call last):
+    |   File "/home/deepevol/deepevol/DeepCode/.venv/lib/python3.11/site-packages/mcp/client/stdio/__init__.py", line 189, in stdio_client
+    |     yield read_stream, write_stream
+    |   File "/home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/contextlib.py", line 728, in __aexit__
+    |     cb_suppress = await cb(*exc_details)
+    |                   ^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/deepevol/deepevol/DeepCode/.venv/lib/python3.11/site-packages/mcp/shared/session.py", line 238, in __aexit__
+    |     return await self._task_group.__aexit__(exc_type, exc_val, exc_tb)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/deepevol/deepevol/DeepCode/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 821, in __aexit__
+    |     if self.cancel_scope.__exit__(type(exc), exc, exc.__traceback__):
+    |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/deepevol/deepevol/DeepCode/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 464, in __exit__
+    |     raise RuntimeError(
+    | RuntimeError: Attempted to exit cancel scope in a different task than it was entered in
+    +------------------------------------
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/contextlib.py", line 687, in aclose
+    await self.__aexit__(None, None, None)
+  File "/home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/contextlib.py", line 745, in __aexit__
+    raise exc_details[1]
+  File "/home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/contextlib.py", line 728, in __aexit__
+    cb_suppress = await cb(*exc_details)
+                  ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/contextlib.py", line 231, in __aexit__
+    await self.gen.athrow(typ, value, traceback)
+  File "/home/deepevol/deepevol/DeepCode/.venv/lib/python3.11/site-packages/mcp/client/stdio/__init__.py", line 182, in stdio_client
+    async with (
+  File "/home/deepevol/deepevol/DeepCode/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 821, in __aexit__
+    if self.cancel_scope.__exit__(type(exc), exc, exc.__traceback__):
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/deepevol/deepevol/DeepCode/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 464, in __exit__
+    raise RuntimeError(
+RuntimeError: Attempted to exit cancel scope in a different task than it was entered in
+2026-08-26 20:30:05.948 | DEBUG    | core.agent_runtime.tools.mcp:connect_single_server:531 - MCP: registered tool 'mcp_filesystem_edit_file' from server 'filesystem'
+2026-08-26 20:30:05.976 | DEBUG    | core.agent_runtime.tools.mcp:connect_single_server:531 - MCP: registered tool 'mcp_filesystem_create_directory' from server 'filesystem'
+2026-08-26 20:30:05.977 | DEBUG    | core.agent_runtime.tools.mcp:connect_single_server:531 - MCP: registered tool 'mcp_filesystem_list_directory' from server 'filesystem'
+2026-08-26 20:30:05.977 | DEBUG    | core.agent_runtime.tools.mcp:connect_single_server:531 - MCP: registered tool 'mcp_filesystem_list_directory_with_sizes' from server 'filesystem'
+2026-08-26 20:30:05.977 | DEBUG    | core.agent_runtime.tools.mcp:connect_single_server:531 - MCP: registered tool 'mcp_filesystem_directory_tree' from server 'filesystem'
+2026-08-26 20:30:05.977 | DEBUG    | core.agent_runtime.tools.mcp:connect_single_server:531 - MCP: registered tool 'mcp_filesystem_move_file' from server 'filesystem'
+2026-08-26 20:30:05.977 | DEBUG    | core.agent_runtime.tools.mcp:connect_single_server:531 - MCP: registered tool 'mcp_filesystem_search_files' from server 'filesystem'
+2026-08-26 20:30:05.977 | DEBUG    | core.agent_runtime.tools.mcp:connect_single_server:531 - MCP: registered tool 'mcp_filesystem_get_file_info' from server 'filesystem'
+2026-08-26 20:30:05.977 | DEBUG    | core.agent_runtime.tools.mcp:connect_single_server:531 - MCP: registered tool 'mcp_filesystem_list_allowed_directories' from server 'filesystem'
+2026-08-26 20:30:05.980 | DEBUG    | core.agent_runtime.tools.mcp:connect_single_server:567 - MCP server 'filesystem': resources not supported or failed: Method not found
+2026-08-26 20:30:05.981 | DEBUG    | core.agent_runtime.tools.mcp:connect_single_server:585 - MCP server 'filesystem': prompts not supported or failed: Method not found
+2026-08-26 20:30:05.981 | INFO     | core.agent_runtime.tools.mcp:connect_single_server:589 - MCP server 'filesystem': connected, 14 capabilities registered
+2026-08-26 20:30:09.283 | DEBUG    | core.agent_runtime.tools.mcp:connect_single_server:531 - MCP: registered tool 'mcp_fetch_fetch' from server 'fetch'
+2026-08-26 20:30:09.285 | DEBUG    | core.agent_runtime.tools.mcp:connect_single_server:567 - MCP server 'fetch': resources not supported or failed: Method not found
+2026-08-26 20:30:09.287 | DEBUG    | core.agent_runtime.tools.mcp:connect_single_server:579 - MCP: registered prompt 'mcp_fetch_prompt_fetch' from server 'fetch'
+2026-08-26 20:30:09.287 | INFO     | core.agent_runtime.tools.mcp:connect_single_server:589 - MCP server 'fetch': connected, 2 capabilities registered
+2026-08-26 20:30:09.288 | DEBUG    | core.compat.agent:_connect_servers:520 - Agent 'ReferenceAnalysisAgent': 2 MCP servers connected, 16 tools registered total
+2026-08-26 20:30:09.302 | INFO     | core.llm_runtime:attach_workflow_llm:125 - Attached workflow LLM: agent=ReferenceAnalysisAgent phase=planning provider=custom model=deepseek-ai/DeepSeek-V4-Pro reasoning_effort=None
+2026-08-26 20:30:12,051 INFO HTTP Request: POST https://api.siliconflow.cn/v1/chat/completions "HTTP/1.1 200 OK"
+2026-08-26 20:30:14,779 INFO HTTP Request: POST https://api.siliconflow.cn/v1/chat/completions "HTTP/1.1 200 OK"
+2026-08-26 20:31:43,597 INFO HTTP Request: POST https://api.siliconflow.cn/v1/chat/completions "HTTP/1.1 200 OK"
+2026-08-26 20:32:06,969 INFO HTTP Request: POST https://api.siliconflow.cn/v1/chat/completions "HTTP/1.1 200 OK"
+2026-08-26 20:32:19,818 INFO HTTP Request: POST https://api.siliconflow.cn/v1/chat/completions "HTTP/1.1 200 OK"
+2026-08-26 20:32:34,866 INFO HTTP Request: POST https://api.siliconflow.cn/v1/chat/completions "HTTP/1.1 200 OK"
+2026-08-26 20:32:51,468 INFO HTTP Request: POST https://api.siliconflow.cn/v1/chat/completions "HTTP/1.1 200 OK"
+2026-08-26 20:33:06,711 INFO HTTP Request: POST https://api.siliconflow.cn/v1/chat/completions "HTTP/1.1 200 OK"
+2026-08-26 20:33:25,519 INFO HTTP Request: POST https://api.siliconflow.cn/v1/chat/completions "HTTP/1.1 200 OK"
+2026-08-26 20:33:41,387 INFO HTTP Request: POST https://api.siliconflow.cn/v1/chat/completions "HTTP/1.1 200 OK"
+2026-08-26 20:33:49,110 INFO HTTP Request: POST https://api.siliconflow.cn/v1/chat/completions "HTTP/1.1 200 OK"
+2026-08-26 20:34:03,592 INFO HTTP Request: POST https://api.siliconflow.cn/v1/chat/completions "HTTP/1.1 200 OK"
+2026-08-26 20:34:15,426 INFO HTTP Request: POST https://api.siliconflow.cn/v1/chat/completions "HTTP/1.1 200 OK"
+2026-08-26 20:34:29,111 INFO HTTP Request: POST https://api.siliconflow.cn/v1/chat/completions "HTTP/1.1 200 OK"
+2026-08-26 20:34:41,766 INFO HTTP Request: POST https://api.siliconflow.cn/v1/chat/completions "HTTP/1.1 200 OK"
+2026-08-26 20:34:53,513 INFO HTTP Request: POST https://api.siliconflow.cn/v1/chat/completions "HTTP/1.1 200 OK"
+2026-08-26 20:35:05,746 INFO HTTP Request: POST https://api.siliconflow.cn/v1/chat/completions "HTTP/1.1 200 OK"
+2026-08-26 20:35:19,091 INFO HTTP Request: POST https://api.siliconflow.cn/v1/chat/completions "HTTP/1.1 200 OK"
+2026-08-26 20:35:30,633 INFO HTTP Request: POST https://api.siliconflow.cn/v1/chat/completions "HTTP/1.1 200 OK"
+2026-08-26 20:35:51,775 INFO HTTP Request: POST https://api.siliconflow.cn/v1/chat/completions "HTTP/1.1 200 OK"
+2026-08-26 20:36:03,847 INFO HTTP Request: POST https://api.siliconflow.cn/v1/chat/completions "HTTP/1.1 200 OK"
+2026-08-26 20:36:15,342 INFO HTTP Request: POST https://api.siliconflow.cn/v1/chat/completions "HTTP/1.1 200 OK"
+2026-08-26 20:36:25,196 INFO HTTP Request: POST https://api.siliconflow.cn/v1/chat/completions "HTTP/1.1 200 OK"
+2026-08-26 20:36:36,187 INFO HTTP Request: POST https://api.siliconflow.cn/v1/chat/completions "HTTP/1.1 200 OK"
+2026-08-26 20:36:46,699 INFO HTTP Request: POST https://api.siliconflow.cn/v1/chat/completions "HTTP/1.1 200 OK"
+2026-08-26 20:39:19.699 | WARNING  | core.providers.base:_run_with_retry:829 - LLM transient error (attempt 1/3), retrying in 1s: error calling llm: connection error.
+2026-08-26 20:39:29,940 INFO HTTP Request: POST https://api.siliconflow.cn/v1/chat/completions "HTTP/1.1 200 OK"
+2026-08-26 20:39:42,300 INFO HTTP Request: POST https://api.siliconflow.cn/v1/chat/completions "HTTP/1.1 200 OK"
+2026-08-26 20:39:56,336 INFO HTTP Request: POST https://api.siliconflow.cn/v1/chat/completions "HTTP/1.1 200 OK"
+2026-08-26 20:40:06,460 INFO HTTP Request: POST https://api.siliconflow.cn/v1/chat/completions "HTTP/1.1 200 OK"
+2026-08-26 20:40:17,161 INFO HTTP Request: POST https://api.siliconflow.cn/v1/chat/completions "HTTP/1.1 200 OK"
+2026-08-26 20:40:27,348 INFO HTTP Request: POST https://api.siliconflow.cn/v1/chat/completions "HTTP/1.1 200 OK"
+2026-08-26 20:40:37,445 INFO HTTP Request: POST https://api.siliconflow.cn/v1/chat/completions "HTTP/1.1 200 OK"
+2026-08-26 20:40:47,327 INFO HTTP Request: POST https://api.siliconflow.cn/v1/chat/completions "HTTP/1.1 200 OK"
+2026-08-26 20:40:57,546 INFO HTTP Request: POST https://api.siliconflow.cn/v1/chat/completions "HTTP/1.1 200 OK"
+2026-08-26 20:41:07,437 INFO HTTP Request: POST https://api.siliconflow.cn/v1/chat/completions "HTTP/1.1 200 OK"
+2026-08-26 20:41:16,875 INFO HTTP Request: POST https://api.siliconflow.cn/v1/chat/completions "HTTP/1.1 200 OK"
+2026-08-26 20:41:29,034 INFO HTTP Request: POST https://api.siliconflow.cn/v1/chat/completions "HTTP/1.1 200 OK"
+2026-08-26 20:41:39,694 INFO HTTP Request: POST https://api.siliconflow.cn/v1/chat/completions "HTTP/1.1 200 OK"
+2026-08-26 20:41:49,323 INFO HTTP Request: POST https://api.siliconflow.cn/v1/chat/completions "HTTP/1.1 200 OK"
+2026-08-26 20:42:02,240 INFO HTTP Request: POST https://api.siliconflow.cn/v1/chat/completions "HTTP/1.1 200 OK"
+2026-08-26 20:42:03.670 | DEBUG    | core.agent_runtime.tools.registry:aclose:186 - ToolRegistry.aclose: benign anyio teardown noise: Cancelled via cancel scope 7b627fedd090 by <Task pending name='Task-174' coro=<AsyncExitStack.aclose() running at /home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/contextlib.py:687> cb=[_release_waiter(<Future pendi...ask_wakeup()]>)() at /home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/asyncio/tasks.py:431]>
+2026-08-26 20:42:03.677 | DEBUG    | core.agent_runtime.tools.registry:aclose:186 - ToolRegistry.aclose: benign anyio teardown noise: Cancelled via cancel scope 7b627f59c670 by <Task pending name='Task-175' coro=<AsyncExitStack.aclose() running at /home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/contextlib.py:687> cb=[_release_waiter(<Future cancelled>)() at /home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/asyncio/tasks.py:431]>
+2026-08-26 20:42:10.259 | DEBUG    | core.agent_runtime.tools.mcp:connect_single_server:531 - MCP: registered tool 'mcp_github_downloader_download_github_repo' from server 'github-downloader'
+2026-08-26 20:42:10.264 | DEBUG    | core.agent_runtime.tools.mcp:connect_single_server:531 - MCP: registered tool 'mcp_github_downloader_parse_github_urls' from server 'github-downloader'
+2026-08-26 20:42:10.265 | DEBUG    | core.agent_runtime.tools.mcp:connect_single_server:531 - MCP: registered tool 'mcp_github_downloader_git_clone' from server 'github-downloader'
+2026-08-26 20:42:10.274 | INFO     | core.agent_runtime.tools.mcp:connect_single_server:589 - MCP server 'github-downloader': connected, 3 capabilities registered
+2026-08-26 20:42:10.275 | DEBUG    | core.compat.agent:_connect_servers:520 - Agent 'GithubDownloadAgent': 1 MCP servers connected, 3 tools registered total
+2026-08-26 20:42:10.313 | INFO     | core.llm_runtime:attach_workflow_llm:125 - Attached workflow LLM: agent=GithubDownloadAgent phase=planning provider=custom model=deepseek-ai/DeepSeek-V4-Pro reasoning_effort=None
+2026-08-26 20:42:16,295 INFO HTTP Request: POST https://api.siliconflow.cn/v1/chat/completions "HTTP/1.1 200 OK"
+2026-08-26 20:42:16,314 WARNING Download agent produced no clones; issuing one corrective retry
+2026-08-26 20:42:25,455 INFO HTTP Request: POST https://api.siliconflow.cn/v1/chat/completions "HTTP/1.1 200 OK"
+2026-08-26 20:42:25.460 | DEBUG    | core.agent_runtime.tools.registry:aclose:186 - ToolRegistry.aclose: benign anyio teardown noise: Cancelled via cancel scope 7b627f59c700 by <Task pending name='Task-180' coro=<AsyncExitStack.aclose() running at /home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/contextlib.py:687> cb=[_release_waiter(<Future pendi...ask_wakeup()]>)() at /home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/asyncio/tasks.py:431]>
+2026-08-26 20:42:27,508 ERROR Task exception was never retrieved
+future: <Task finished name='Task-174' coro=<AsyncExitStack.aclose() done, defined at /home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/contextlib.py:685> exception=RuntimeError('Attempted to exit cancel scope in a different task than it was entered in')>
+  + Exception Group Traceback (most recent call last):
+  |   File "/home/deepevol/deepevol/DeepCode/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 815, in __aexit__
+  |     raise BaseExceptionGroup(
+  | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+  +-+---------------- 1 ----------------
+    | Traceback (most recent call last):
+    |   File "/home/deepevol/deepevol/DeepCode/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 819, in __aexit__
+    |     raise exc_val
+    |   File "/home/deepevol/deepevol/DeepCode/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 788, in __aexit__
+    |     await self._on_completed_fut
+    | asyncio.exceptions.CancelledError
+    | 
+    | During handling of the above exception, another exception occurred:
+    | 
+    | Traceback (most recent call last):
+    |   File "/home/deepevol/deepevol/DeepCode/.venv/lib/python3.11/site-packages/mcp/client/stdio/__init__.py", line 189, in stdio_client
+    |     yield read_stream, write_stream
+    |   File "/home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/contextlib.py", line 728, in __aexit__
+    |     cb_suppress = await cb(*exc_details)
+    |                   ^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/deepevol/deepevol/DeepCode/.venv/lib/python3.11/site-packages/mcp/shared/session.py", line 238, in __aexit__
+    |     return await self._task_group.__aexit__(exc_type, exc_val, exc_tb)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/deepevol/deepevol/DeepCode/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 821, in __aexit__
+    |     if self.cancel_scope.__exit__(type(exc), exc, exc.__traceback__):
+    |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/deepevol/deepevol/DeepCode/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 464, in __exit__
+    |     raise RuntimeError(
+    | RuntimeError: Attempted to exit cancel scope in a different task than it was entered in
+    +------------------------------------
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/contextlib.py", line 687, in aclose
+    await self.__aexit__(None, None, None)
+  File "/home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/contextlib.py", line 745, in __aexit__
+    raise exc_details[1]
+  File "/home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/contextlib.py", line 728, in __aexit__
+    cb_suppress = await cb(*exc_details)
+                  ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/contextlib.py", line 231, in __aexit__
+    await self.gen.athrow(typ, value, traceback)
+  File "/home/deepevol/deepevol/DeepCode/.venv/lib/python3.11/site-packages/mcp/client/stdio/__init__.py", line 182, in stdio_client
+    async with (
+  File "/home/deepevol/deepevol/DeepCode/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 821, in __aexit__
+    if self.cancel_scope.__exit__(type(exc), exc, exc.__traceback__):
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/deepevol/deepevol/DeepCode/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 464, in __exit__
+    raise RuntimeError(
+RuntimeError: Attempted to exit cancel scope in a different task than it was entered in
+2026-08-26 20:42:27,513 ERROR Task exception was never retrieved
+future: <Task finished name='Task-175' coro=<AsyncExitStack.aclose() done, defined at /home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/contextlib.py:685> exception=RuntimeError('Attempted to exit cancel scope in a different task than it was entered in')>
+  + Exception Group Traceback (most recent call last):
+  |   File "/home/deepevol/deepevol/DeepCode/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 815, in __aexit__
+  |     raise BaseExceptionGroup(
+  | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+  +-+---------------- 1 ----------------
+    | Traceback (most recent call last):
+    |   File "/home/deepevol/deepevol/DeepCode/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 808, in __aexit__
+    |     await AsyncIOBackend.cancel_shielded_checkpoint()
+    |   File "/home/deepevol/deepevol/DeepCode/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 2521, in cancel_shielded_checkpoint
+    |     await sleep(0)
+    |   File "/home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/asyncio/tasks.py", line 640, in sleep
+    |     await __sleep0()
+    |   File "/home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/asyncio/tasks.py", line 634, in __sleep0
+    |     yield
+    | asyncio.exceptions.CancelledError
+    | 
+    | During handling of the above exception, another exception occurred:
+    | 
+    | Traceback (most recent call last):
+    |   File "/home/deepevol/deepevol/DeepCode/.venv/lib/python3.11/site-packages/mcp/client/stdio/__init__.py", line 189, in stdio_client
+    |     yield read_stream, write_stream
+    |   File "/home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/contextlib.py", line 728, in __aexit__
+    |     cb_suppress = await cb(*exc_details)
+    |                   ^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/deepevol/deepevol/DeepCode/.venv/lib/python3.11/site-packages/mcp/shared/session.py", line 238, in __aexit__
+    |     return await self._task_group.__aexit__(exc_type, exc_val, exc_tb)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/deepevol/deepevol/DeepCode/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 821, in __aexit__
+    |     if self.cancel_scope.__exit__(type(exc), exc, exc.__traceback__):
+    |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/deepevol/deepevol/DeepCode/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 464, in __exit__
+    |     raise RuntimeError(
+    | RuntimeError: Attempted to exit cancel scope in a different task than it was entered in
+    +------------------------------------
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/contextlib.py", line 687, in aclose
+    await self.__aexit__(None, None, None)
+  File "/home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/contextlib.py", line 745, in __aexit__
+    raise exc_details[1]
+  File "/home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/contextlib.py", line 728, in __aexit__
+    cb_suppress = await cb(*exc_details)
+                  ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/contextlib.py", line 231, in __aexit__
+    await self.gen.athrow(typ, value, traceback)
+  File "/home/deepevol/deepevol/DeepCode/.venv/lib/python3.11/site-packages/mcp/client/stdio/__init__.py", line 182, in stdio_client
+    async with (
+  File "/home/deepevol/deepevol/DeepCode/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 821, in __aexit__
+    if self.cancel_scope.__exit__(type(exc), exc, exc.__traceback__):
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/deepevol/deepevol/DeepCode/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 464, in __exit__
+    raise RuntimeError(
+RuntimeError: Attempted to exit cancel scope in a different task than it was entered in
+2026-08-26 20:42:27,520 WARNING Process group termination failed for PID 1100264: [Errno 3] No such process, falling back to simple terminate
+2026-08-26 20:42:27,520 ERROR unhandled exception during asyncio.run() shutdown
+task: <Task finished name='Task-180' coro=<AsyncExitStack.aclose() done, defined at /home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/contextlib.py:685> exception=RuntimeError('Attempted to exit cancel scope in a different task than it was entered in')>
+  + Exception Group Traceback (most recent call last):
+  |   File "/home/deepevol/deepevol/DeepCode/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 815, in __aexit__
+  |     raise BaseExceptionGroup(
+  | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+  +-+---------------- 1 ----------------
+    | Traceback (most recent call last):
+    |   File "/home/deepevol/deepevol/DeepCode/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 819, in __aexit__
+    |     raise exc_val
+    |   File "/home/deepevol/deepevol/DeepCode/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 788, in __aexit__
+    |     await self._on_completed_fut
+    | asyncio.exceptions.CancelledError
+    | 
+    | During handling of the above exception, another exception occurred:
+    | 
+    | Traceback (most recent call last):
+    |   File "/home/deepevol/deepevol/DeepCode/.venv/lib/python3.11/site-packages/mcp/client/stdio/__init__.py", line 189, in stdio_client
+    |     yield read_stream, write_stream
+    |   File "/home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/contextlib.py", line 728, in __aexit__
+    |     cb_suppress = await cb(*exc_details)
+    |                   ^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/deepevol/deepevol/DeepCode/.venv/lib/python3.11/site-packages/mcp/shared/session.py", line 238, in __aexit__
+    |     return await self._task_group.__aexit__(exc_type, exc_val, exc_tb)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/deepevol/deepevol/DeepCode/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 821, in __aexit__
+    |     if self.cancel_scope.__exit__(type(exc), exc, exc.__traceback__):
+    |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/deepevol/deepevol/DeepCode/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 464, in __exit__
+    |     raise RuntimeError(
+    | RuntimeError: Attempted to exit cancel scope in a different task than it was entered in
+    +------------------------------------
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/contextlib.py", line 687, in aclose
+    await self.__aexit__(None, None, None)
+  File "/home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/contextlib.py", line 745, in __aexit__
+    raise exc_details[1]
+  File "/home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/contextlib.py", line 728, in __aexit__
+    cb_suppress = await cb(*exc_details)
+                  ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/contextlib.py", line 231, in __aexit__
+    await self.gen.athrow(typ, value, traceback)
+  File "/home/deepevol/deepevol/DeepCode/.venv/lib/python3.11/site-packages/mcp/client/stdio/__init__.py", line 182, in stdio_client
+    async with (
+  File "/home/deepevol/deepevol/DeepCode/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 821, in __aexit__
+    if self.cancel_scope.__exit__(type(exc), exc, exc.__traceback__):
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/deepevol/deepevol/DeepCode/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 464, in __exit__
+    raise RuntimeError(
+RuntimeError: Attempted to exit cancel scope in a different task than it was entered in
+
+   📋 Required sections: 5/5
+   📏 Content length: 12548 chars
+?? Output completeness score: 1.00/1.0
+??Code analysis completed successfully (length: 12548 chars)
+✅ Initial plan saved to /home/deepevol/deepevol/DeepCode/deepcode_lab/tasks/paper_014a3493/initial_plan.txt (12548 chars)
+📊 Progress: 70% - Reference Analysis
+Reference analyzer: Connected to server, analyzing references...
+Reference analysis saved to /home/deepevol/deepevol/DeepCode/deepcode_lab/tasks/paper_014a3493/reference.txt
+📊 Progress: 75% - Repository Acquisition
+GitHub downloader: Downloading repositories...
+GitHub download results saved to /home/deepevol/deepevol/DeepCode/deepcode_lab/tasks/paper_014a3493/github_download.txt
+Error during GitHub repository download: Code base directory was not created: /home/deepevol/deepevol/DeepCode/deepcode_lab/tasks/paper_014a3493/code_base. Aborting: continuing would run indexed-mode implementation against an empty index.
+GitHub download error saved to /home/deepevol/deepevol/DeepCode/deepcode_lab/tasks/paper_014a3493/github_download.txt
+❌ Error in execute_multi_agent_research_pipeline: Code base directory was not created: /home/deepevol/deepevol/DeepCode/deepcode_lab/tasks/paper_014a3493/code_base. Aborting: continuing would run indexed-mode implementation against an empty index.
+   Error type: RuntimeError
+   Error details: Code base directory was not created: /home/deepevol/deepevol/DeepCode/deepcode_lab/tasks/paper_014a3493/code_base. Aborting: continuing would run indexed-mode implementation against an empty index.
+Traceback (most recent call last):
+  File "/home/deepevol/deepevol/stage_b_driver.py", line 93, in <module>
+    asyncio.run(main())
+  File "/home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/asyncio/runners.py", line 190, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/deepevol/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/asyncio/base_events.py", line 654, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/home/deepevol/deepevol/stage_b_driver.py", line 51, in main
+    result = await execute_multi_agent_research_pipeline(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/deepevol/deepevol/DeepCode/workflows/agent_orchestration_engine.py", line 2227, in execute_multi_agent_research_pipeline
+    raise e
+  File "/home/deepevol/deepevol/DeepCode/workflows/agent_orchestration_engine.py", line 2076, in execute_multi_agent_research_pipeline
+    await automate_repository_acquisition_agent(
+  File "/home/deepevol/deepevol/DeepCode/workflows/agent_orchestration_engine.py", line 1509, in automate_repository_acquisition_agent
+    raise e  # Re-raise to be handled by the main pipeline
+    ^^^^^^^
+  File "/home/deepevol/deepevol/DeepCode/workflows/agent_orchestration_engine.py", line 1496, in automate_repository_acquisition_agent
+    raise RuntimeError(
+RuntimeError: Code base directory was not created: /home/deepevol/deepevol/DeepCode/deepcode_lab/tasks/paper_014a3493/code_base. Aborting: continuing would run indexed-mode implementation against an empty index.

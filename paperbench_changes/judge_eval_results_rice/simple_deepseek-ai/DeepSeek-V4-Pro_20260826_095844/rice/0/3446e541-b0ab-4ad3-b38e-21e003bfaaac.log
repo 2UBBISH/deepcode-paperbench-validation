@@ -1,0 +1,41 @@
+2026-08-26 10:00:21 [info     ] Grading leaf: For the selfish mining environment, the objective being optimized is $J(\theta)=\max \eta(\bar{\pi})$, as outlined in section 3.3.
+2026-08-26 10:01:27 [info     ] Model file selection raw output:
+Refine_selfish_mining/masknet/train.py
+Refine_selfish_mining/baseline/blockchain_simulator/mdp_blockchain_simulator_masknet.py
+Refine_selfish_mining/masknet/utils.py
+Refine_selfish_mining/baseline/blockchain_mdps/base/blockchain_model.py
+Refine_selfish_mining/baseline/blockchain_mdps/bitcoin_bare_fee_model.py
+Refine_selfish_mining/masknet/replay.py
+Refine_selfish_mining/masknet/sample_mask_score.py
+Refine_selfish_mining/masknet/fidelity_score.py
+Refine_selfish_mining/baseline/train_ppo.py
+Refine_selfish_mining/baseline/net.py
+2026-08-26 10:01:27 [info     ] Model file selection raw output:
+Refine_selfish_mining/masknet/train.py
+Refine_selfish_mining/baseline/blockchain_simulator/mdp_blockchain_simulator_masknet.py
+Refine_selfish_mining/masknet/utils.py
+Refine_selfish_mining/baseline/blockchain_mdps/base/blockchain_model.py
+Refine_selfish_mining/baseline/blockchain_mdps/bitcoin_bare_fee_model.py
+Refine_selfish_mining/masknet/replay.py
+Refine_selfish_mining/masknet/sample_mask_score.py
+Refine_selfish_mining/masknet/fidelity_score.py
+Refine_selfish_mining/baseline/train_ppo.py
+Refine_selfish_mining/baseline/net.py
+2026-08-26 10:01:27 [info     ] File /home/deepevol/deepevol/frontier-evals/project/paperbench/data/judge_eval/rice/0/submission/Refine_selfish_mining/baseline/blockchain_simulator/mdp_blockchain_simulator_masknet.py not found!
+2026-08-26 10:01:27 [info     ] File /home/deepevol/deepevol/frontier-evals/project/paperbench/data/judge_eval/rice/0/submission/Refine_selfish_mining/baseline/blockchain_simulator/mdp_blockchain_simulator_masknet.py not found!
+2026-08-26 10:03:27 [info     ] model response: # Expectations
+The paper’s section 3.3 explains that, under Assumption 3.1, the original StateMask objective \(J(\theta)=\min |\eta(\pi)-\eta(\bar{\pi})|\) can be transformed to \(J(\theta)=\max \eta(\bar{\pi})\) because \(\eta(\bar{\pi}) \le \eta(\pi)\).  They then add a reward bonus \(\alpha a_t^m\) to prevent the trivial “never blind” solution and train the mask network with vanilla PPO (Algorithm 1).  For the selfish mining environment, I expect to see code that implements this transformed objective – i.e., the mask network is an RL agent that is trained to maximize its received reward (the reward of the perturbed agent, optionally augmented with a bonus).  The presence of a PPO training loop for the mask network, where the mask network selects masking actions (0 or 1) and is updated by standard PPO to maximize the sum of rewards, would satisfy the criterion.  I will look specifically for the mask network training script and check that it uses a standard policy‑gradient objective (PPO) to maximize expected returns, and not a custom objective like minimizing an absolute difference.
+
+# Reality
+The submission includes the file `Refine_selfish_mining/masknet/train.py`.  This file sets up a PPO policy with `action_shape = 2` (matching the binary mask action) and trains it using Tianshou’s `onpolicy_trainer`.  The environment is `MDPBlockchainSimulatorMaskNet` (imported but not provided), which presumably combines the mask action with the target agent’s policy and returns an (augmented) reward.  The training proceeds exactly as described in Algorithm 1: the mask network is updated by PPO to maximise the cumulative reward collected while interacting with the environment.  There is no indication of a different objective, such as minimising an absolute difference or using a dual‑method optimisation.  The learning process directly implements the transformed objective \(J(\theta)=\max \eta(\bar{\pi})\) (the mask network is trained to maximise the expected return of the perturbed policy).  Even though the exact reward augmentation (bonus) is not visible in the given snippet (it may reside inside the environment code), the objective being optimised remains a maximum‑return objective, consistent with the paper’s description.
+
+# Score
+1 – The code correctly implements the transformed objective \(J(\theta)=\max \eta(\bar{\pi})\) by training the mask network as a PPO agent that aims to maximise expected returns.
+2026-08-26 10:03:27 [info     ] model response: # Expectations
+The paper’s section 3.3 explains that, under Assumption 3.1, the original StateMask objective \(J(\theta)=\min |\eta(\pi)-\eta(\bar{\pi})|\) can be transformed to \(J(\theta)=\max \eta(\bar{\pi})\) because \(\eta(\bar{\pi}) \le \eta(\pi)\).  They then add a reward bonus \(\alpha a_t^m\) to prevent the trivial “never blind” solution and train the mask network with vanilla PPO (Algorithm 1).  For the selfish mining environment, I expect to see code that implements this transformed objective – i.e., the mask network is an RL agent that is trained to maximize its received reward (the reward of the perturbed agent, optionally augmented with a bonus).  The presence of a PPO training loop for the mask network, where the mask network selects masking actions (0 or 1) and is updated by standard PPO to maximize the sum of rewards, would satisfy the criterion.  I will look specifically for the mask network training script and check that it uses a standard policy‑gradient objective (PPO) to maximize expected returns, and not a custom objective like minimizing an absolute difference.
+
+# Reality
+The submission includes the file `Refine_selfish_mining/masknet/train.py`.  This file sets up a PPO policy with `action_shape = 2` (matching the binary mask action) and trains it using Tianshou’s `onpolicy_trainer`.  The environment is `MDPBlockchainSimulatorMaskNet` (imported but not provided), which presumably combines the mask action with the target agent’s policy and returns an (augmented) reward.  The training proceeds exactly as described in Algorithm 1: the mask network is updated by PPO to maximise the cumulative reward collected while interacting with the environment.  There is no indication of a different objective, such as minimising an absolute difference or using a dual‑method optimisation.  The learning process directly implements the transformed objective \(J(\theta)=\max \eta(\bar{\pi})\) (the mask network is trained to maximise the expected return of the perturbed policy).  Even though the exact reward augmentation (bonus) is not visible in the given snippet (it may reside inside the environment code), the objective being optimised remains a maximum‑return objective, consistent with the paper’s description.
+
+# Score
+1 – The code correctly implements the transformed objective \(J(\theta)=\max \eta(\bar{\pi})\) by training the mask network as a PPO agent that aims to maximise expected returns.

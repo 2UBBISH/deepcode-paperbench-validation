@@ -1,0 +1,51 @@
+2026-08-26 10:01:01 [info     ] Grading leaf: In Experiment II, for the selfish mining environment, for the "StateMask-R" refinement method, code has been implemented for measuring cumulative reward throughout refinement
+2026-08-26 10:02:08 [info     ] Model file selection raw output:
+Refine_selfish_mining/retrain.py
+Refine_selfish_mining/utils.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/blockchain_simulator/mdp_blockchain_simulator_retrain.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/training/callbacks/logging/policy_revenue_tensorboard_logging_callback.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/training/callbacks/logging/tensorboard_logging_callback.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/training/callbacks/logging/policy_revenue_text_logging_callback.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/training/callbacks/logging/text_logging_callback.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/training/callbacks/logging/__init__.py
+Refine_selfish_mining/baseline/net.py
+Refine_selfish_mining/baseline/train_ppo.py
+2026-08-26 10:02:08 [info     ] Model file selection raw output:
+Refine_selfish_mining/retrain.py
+Refine_selfish_mining/utils.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/blockchain_simulator/mdp_blockchain_simulator_retrain.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/training/callbacks/logging/policy_revenue_tensorboard_logging_callback.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/training/callbacks/logging/tensorboard_logging_callback.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/training/callbacks/logging/policy_revenue_text_logging_callback.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/training/callbacks/logging/text_logging_callback.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/training/callbacks/logging/__init__.py
+Refine_selfish_mining/baseline/net.py
+Refine_selfish_mining/baseline/train_ppo.py
+2026-08-26 10:03:32 [info     ] model response: # Expectations
+According to the paper, Experiment II involves comparing the “StateMask‑R” refinement method on the selfish mining environment. StateMask‑R fine‑tunes the pre‑trained agent by resetting the environment to the identified critical states and continuing training from there (without a mixed initial distribution and without an exploration bonus). For this criterion we must find code that implements that method **and** measures cumulative reward throughout the refinement process (e.g., logging episode rewards or average reward during fine‑tuning). The reward measurement could be built into the training loop (e.g., a Tianshou logger or custom callback) as long as it is part of the StateMask‑R execution.
+
+# Reality
+The provided submission files are:
+- `Refine_selfish_mining/retrain.py` – this implements the “Ours” refinement (RND exploration with a mixed initial state distribution).
+- `Refine_selfish_mining/utils.py` – helper functions for loading a DQN model and a mask network, and a trajectory class.
+- `Refine_selfish_mining/baseline/train_ppo.py` – a script for training a PPO agent from scratch, not a refinement baseline.
+- Various logging callbacks and a network module, none of which constitute a StateMask‑R refinement loop.
+
+There is **no separate script or clearly isolated code block** that implements the StateMask‑R refinement method for the selfish mining environment. The `retrain.py` script uses an `RNDPolicy` and an intrinsic reward bonus; it also applies a mixture of starting states via `go_prob`. Even if some parameters could be tweaked to disable RND and always start from a critical state, the code is still written as the “Ours” method and does not fulfill the specific criterion of *implementing* StateMask‑R with cumulative reward measurement. The necessary implementation for this baseline is missing.
+
+# Score
+0 – The submission does not contain an implementation of the StateMask‑R refinement method for the selfish mining environment, nor does it include code that measures cumulative reward throughout refinement specifically for that baseline.
+2026-08-26 10:03:32 [info     ] model response: # Expectations
+According to the paper, Experiment II involves comparing the “StateMask‑R” refinement method on the selfish mining environment. StateMask‑R fine‑tunes the pre‑trained agent by resetting the environment to the identified critical states and continuing training from there (without a mixed initial distribution and without an exploration bonus). For this criterion we must find code that implements that method **and** measures cumulative reward throughout the refinement process (e.g., logging episode rewards or average reward during fine‑tuning). The reward measurement could be built into the training loop (e.g., a Tianshou logger or custom callback) as long as it is part of the StateMask‑R execution.
+
+# Reality
+The provided submission files are:
+- `Refine_selfish_mining/retrain.py` – this implements the “Ours” refinement (RND exploration with a mixed initial state distribution).
+- `Refine_selfish_mining/utils.py` – helper functions for loading a DQN model and a mask network, and a trajectory class.
+- `Refine_selfish_mining/baseline/train_ppo.py` – a script for training a PPO agent from scratch, not a refinement baseline.
+- Various logging callbacks and a network module, none of which constitute a StateMask‑R refinement loop.
+
+There is **no separate script or clearly isolated code block** that implements the StateMask‑R refinement method for the selfish mining environment. The `retrain.py` script uses an `RNDPolicy` and an intrinsic reward bonus; it also applies a mixture of starting states via `go_prob`. Even if some parameters could be tweaked to disable RND and always start from a critical state, the code is still written as the “Ours” method and does not fulfill the specific criterion of *implementing* StateMask‑R with cumulative reward measurement. The necessary implementation for this baseline is missing.
+
+# Score
+0 – The submission does not contain an implementation of the StateMask‑R refinement method for the selfish mining environment, nor does it include code that measures cumulative reward throughout refinement specifically for that baseline.

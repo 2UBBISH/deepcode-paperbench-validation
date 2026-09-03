@@ -1,0 +1,36 @@
+# FRE: Functional Reward Encodings for Zero-Shot Offline RL
+# Python 3.8+ required
+
+# Core Deep Learning
+torch>=1.12.0
+torchvision>=0.13.0  # often installed alongside torch
+
+# Numerical & Data
+numpy>=1.21.0
+scipy>=1.7.0
+h5py>=3.6.0
+pyyaml>=6.0
+
+# Environments & Datasets
+gym>=0.23.0,<0.26.0  # D4RL compatibility
+d4rl>=1.1
+mujoco-py>=2.1.2.14  # required by D4RL for MuJoCo 2.1
+# For MuJoCo 2.1, also install mujoco binary: https://github.com/openai/mujoco-py#install-mujoco
+
+# ExORL (optional - for ExORL benchmark datasets)
+# exorl  # install from https://github.com/facebookresearch/controllable_agent
+dm-control>=1.0.0  # required by ExORL environments
+
+# Logging & Monitoring
+wandb>=0.13.0  # optional, for experiment tracking
+tensorboard>=2.10.0  # optional alternative
+
+# Utilities
+tqdm>=4.64.0
+cloudpickle>=2.0.0
+click>=8.0.0  # for CLI
+
+# Development & Testing (optional)
+pytest>=7.0.0
+black>=22.0.0
+isort>=5.10.0

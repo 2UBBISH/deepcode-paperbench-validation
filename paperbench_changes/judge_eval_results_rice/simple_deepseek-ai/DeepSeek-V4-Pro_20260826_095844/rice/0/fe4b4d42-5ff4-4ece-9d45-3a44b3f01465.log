@@ -1,0 +1,59 @@
+2026-08-26 09:58:46 [info     ] Grading leaf: For the network defence environment, the mask network objective $J(\theta)$ has been implemented to match what is outlined in section 3.3, namely $J(\theta)=\min |\eta(\pi)-\eta(\bar{\pi})|$
+2026-08-26 09:59:58 [info     ] Model file selection raw output:
+Refine_cage_challenge/Agents/PPOAgent_mask.py
+Refine_cage_challenge/rollout_mask.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_mask.py
+Refine_cage_challenge/PPO/ActorCritic.py
+Refine_cage_challenge/ppo_train.py
+Refine_cage_challenge/PPO/Memory.py
+Refine_cage_challenge/Agents/MainAgent.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2.py
+Refine_cage_challenge/sample_mask_score.py
+Refine_cage_challenge/replay.py
+2026-08-26 09:59:58 [info     ] Model file selection raw output:
+Refine_cage_challenge/Agents/PPOAgent_mask.py
+Refine_cage_challenge/rollout_mask.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_mask.py
+Refine_cage_challenge/PPO/ActorCritic.py
+Refine_cage_challenge/ppo_train.py
+Refine_cage_challenge/PPO/Memory.py
+Refine_cage_challenge/Agents/MainAgent.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2.py
+Refine_cage_challenge/sample_mask_score.py
+Refine_cage_challenge/replay.py
+2026-08-26 10:01:41 [info     ] model response: # Expectations
+The criterion requires that for the network defence (Cage Challenge 2) environment, the mask network training objective is implemented exactly as described in Section 3.3 of the paper, i.e.,  
+$J(\theta) = \min \left| \eta(\pi) - \eta(\bar{\pi}) \right|$,  
+where $\pi$ is the pre‑trained policy and $\bar{\pi}$ is the perturbed policy (the mixture of $\pi$ and a random policy via the mask network).  
+I expect to see a training loop that explicitly computes or approximates the absolute difference between the expected returns of the two policies and minimizes that difference, rather than simply performing a PPO update on a modified reward signal. Even if the paper later proposes a simplified objective ($\max \eta(\bar{\pi})$), the criterion specifically calls for the original formulation $J(\theta) = \min |\eta(\pi)-\eta(\bar{\pi})|$.
+
+# Reality
+The provided files for the network defence environment are located under `Refine_cage_challenge/`.  
+
+- `PPOAgent_mask.py` defines the mask agent. Its `get_action` method samples from the mask network, combines a baseline policy with a random action when masking, and returns an additional reward (`self.lazy_reward`) if masking occurs.  
+- `rollout_mask.py` is the training script for the mask network. It collects trajectories using the mask agent and calls `agent.store(reward, done)` with the environment reward plus the extra bonus. However, it **never** computes $\eta(\pi)$, $\eta(\bar{\pi})$, nor their absolute difference. There is no loss term that minimizes $|\eta(\pi)-\eta(\bar{\pi})|$.  
+- The training relies on the standard PPO algorithm, which maximises the cumulative discounted reward (including the bonus). This corresponds to the transformed objective $\max \eta(\bar{\pi})$ (with an exploration bonus), not the original $J(\theta) = \min |\eta(\pi)-\eta(\bar{\pi})|$.  
+
+No code in the submission implements the original StateMask objective for this environment; the implementation solely reflects the simplified “Ours” version.
+
+# Score
+0  
+The submission does not contain a correct implementation of $J(\theta) = \min |\eta(\pi)-\eta(\bar{\pi})|$ for the network defence environment. The actual training objective is a standard PPO maximisation of an augmented reward, which differs from the explicitly required formula.
+2026-08-26 10:01:41 [info     ] model response: # Expectations
+The criterion requires that for the network defence (Cage Challenge 2) environment, the mask network training objective is implemented exactly as described in Section 3.3 of the paper, i.e.,  
+$J(\theta) = \min \left| \eta(\pi) - \eta(\bar{\pi}) \right|$,  
+where $\pi$ is the pre‑trained policy and $\bar{\pi}$ is the perturbed policy (the mixture of $\pi$ and a random policy via the mask network).  
+I expect to see a training loop that explicitly computes or approximates the absolute difference between the expected returns of the two policies and minimizes that difference, rather than simply performing a PPO update on a modified reward signal. Even if the paper later proposes a simplified objective ($\max \eta(\bar{\pi})$), the criterion specifically calls for the original formulation $J(\theta) = \min |\eta(\pi)-\eta(\bar{\pi})|$.
+
+# Reality
+The provided files for the network defence environment are located under `Refine_cage_challenge/`.  
+
+- `PPOAgent_mask.py` defines the mask agent. Its `get_action` method samples from the mask network, combines a baseline policy with a random action when masking, and returns an additional reward (`self.lazy_reward`) if masking occurs.  
+- `rollout_mask.py` is the training script for the mask network. It collects trajectories using the mask agent and calls `agent.store(reward, done)` with the environment reward plus the extra bonus. However, it **never** computes $\eta(\pi)$, $\eta(\bar{\pi})$, nor their absolute difference. There is no loss term that minimizes $|\eta(\pi)-\eta(\bar{\pi})|$.  
+- The training relies on the standard PPO algorithm, which maximises the cumulative discounted reward (including the bonus). This corresponds to the transformed objective $\max \eta(\bar{\pi})$ (with an exploration bonus), not the original $J(\theta) = \min |\eta(\pi)-\eta(\bar{\pi})|$.  
+
+No code in the submission implements the original StateMask objective for this environment; the implementation solely reflects the simplified “Ours” version.
+
+# Score
+0  
+The submission does not contain a correct implementation of $J(\theta) = \min |\eta(\pi)-\eta(\bar{\pi})|$ for the network defence environment. The actual training objective is a standard PPO maximisation of an augmented reward, which differs from the explicitly required formula.

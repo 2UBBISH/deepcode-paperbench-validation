@@ -1,0 +1,165 @@
+# =============================================================================
+# ExORL Cheetah Configuration for Functional Reward Encodings (FRE)
+# =============================================================================
+# This config reproduces the ExORL Cheetah domain experiments from the paper:
+# "Functional Reward Encodings for Zero-Shot Offline Reinforcement Learning"
+#
+# Usage: python scripts/train.py --config configs/exorl_cheetah.yaml
+# =============================================================================
+
+# ---------------------------------------------------------------------------
+# Dataset specification
+# ---------------------------------------------------------------------------
+domain: "cheetah"           # ExORL domain: cheetah (DeepMind Control Cheetah Run)
+task: "proto"               # ExORL task: proto (unsupervised exploration dataset)
+version: null               # Not applicable for ExORL
+data_dir: null              # Auto-detect or specify path to ExORL data directory
+
+# ---------------------------------------------------------------------------
+# FRE Encoder / Decoder hyperparameters
+# ---------------------------------------------------------------------------
+latent_dim: 64              # Dimension of latent reward representation z
+d_model: 256                # Transformer hidden dimension
+num_layers: 2               # Number of transformer encoder layers (L)
+num_heads: 4                # Number of attention heads (H)
+d_ff: 1024                  # Feedforward hidden dimension in transformer
+d_emb: 64                   # Reward embedding dimension
+num_bins: 100               # Number of reward discretization bins (B)
+reward_min: -10.0           # Minimum expected reward for binning
+reward_max: 10.0            # Maximum expected reward for binning
+decoder_hidden_dims: [256, 256]  # Decoder MLP hidden layer dimensions
+beta: 0.1                   # KL divergence weight in VAE loss
+dropout: 0.0                # Dropout rate
+max_num_states: 32          # Maximum number of encoding states (K)
+
+# ---------------------------------------------------------------------------
+# Reward Prior hyperparameters
+# ---------------------------------------------------------------------------
+singleton_threshold: 0.5    # Distance threshold for singleton goal-reaching reward
+linear_sparsity: 0.5        # Probability of zeroing each weight in linear rewards
+mlp_hidden_dim: 256         # Hidden dimension for random MLP reward functions
+
+# ---------------------------------------------------------------------------
+# IQL Agent hyperparameters
+# ---------------------------------------------------------------------------
+iql_hidden_dims: [256, 256] # Hidden dimensions for Q, V, and policy networks
+expectile: 0.7              # Expectile parameter tau for V-network
+temperature: 3.0            # Temperature alpha for advantage-weighted regression
+discount: 0.99              # Discount factor gamma
+soft_target_update_rate: 0.005  # Polyak averaging coefficient rho
+log_std_min: -5.0           # Minimum log std for Gaussian policy
+log_std_max: 2.0            # Maximum log std for Gaussian policy
+
+# ---------------------------------------------------------------------------
+# Training hyperparameters
+# ---------------------------------------------------------------------------
+K_encoder: 32               # Number of encoding states for FRE
+K_decoder: 32               # Number of decoding states for FRE
+fre_learning_rate: 1.0e-4   # Learning rate for FRE encoder/decoder
+fre_weight_decay: 1.0e-5    # Weight decay for FRE optimizer
+iql_learning_rate: 3.0e-4   # Learning rate for IQL networks
+iql_weight_decay: 1.0e-5    # Weight decay for IQL optimizer
+fre_steps: 100000           # Number of Phase 1 (FRE pretraining) gradient steps
+rl_steps: 1000000           # Number of Phase 2 (RL training) gradient steps
+rl_batch_size: 256          # Batch size for IQL training
+fre_batch_size: 1           # Number of reward functions per FRE training step
+
+# ---------------------------------------------------------------------------
+# Logging and checkpointing
+# ---------------------------------------------------------------------------
+log_interval: 1000          # Steps between logging metrics
+eval_interval: 10000        # Steps between evaluation runs
+checkpoint_interval: 50000  # Steps between saving checkpoints
+checkpoint_dir: "checkpoints"  # Directory for saving model checkpoints
+
+# ---------------------------------------------------------------------------
+# Hardware and reproducibility
+# ---------------------------------------------------------------------------
+device: "auto"              # Device: "auto", "cuda", "cpu"
+use_amp: false              # Use automatic mixed precision
+seed: 0                     # Random seed (overridden by CLI for multi-seed runs)
+
+# ---------------------------------------------------------------------------
+# Evaluation settings
+# ---------------------------------------------------------------------------
+evaluation:
+  num_episodes: 20          # Number of evaluation episodes per task
+  max_steps: 1000           # Maximum steps per episode
+  deterministic: true       # Use deterministic policy for evaluation
+
+  # Downstream zero-shot evaluation tasks for ExORL Cheetah
+  tasks:
+    # --- Goal-reaching tasks ---
+    # Reach specific (x,z) positions in the Cheetah's locomotion space.
+    # The cheetah moves in the x-z plane; targets are specified as [x_target, z_target].
+    - name: "goal_top_left"
+      type: "goal_reaching"
+      description: "Reach top-left region of the locomotion space"
+      target: [-5.0, 5.0]
+
+    - name: "goal_top_right"
+      type: "goal_reaching"
+      description: "Reach top-right region of the locomotion space"
+      target: [5.0, 5.0]
+
+    - name: "goal_bottom_left"
+      type: "goal_reaching"
+      description: "Reach bottom-left region of the locomotion space"
+      target: [-5.0, -5.0]
+
+    - name: "goal_bottom_right"
+      type: "goal_reaching"
+      description: "Reach bottom-right region of the locomotion space"
+      target: [5.0, -5.0]
+
+    - name: "goal_center"
+      type: "goal_reaching"
+      description: "Reach center of the locomotion space"
+      target: [0.0, 0.0]
+
+    - name: "goal_far_left"
+      type: "goal_reaching"
+      description: "Reach far left region"
+      target: [-8.0, 0.0]
+
+    - name: "goal_far_right"
+      type: "goal_reaching"
+      description: "Reach far right region"
+      target: [8.0, 0.0]
+
+    # --- Velocity tasks ---
+    # Move at specified target velocities (forward/backward, left/right).
+    # Velocity targets are specified as [vx_target, vz_target].
+    - name: "velocity_forward"
+      type: "velocity"
+      description: "Move forward at target speed"
+      target_velocity: [3.0, 0.0]
+
+    - name: "velocity_backward"
+      type: "velocity"
+      description: "Move backward at target speed"
+      target_velocity: [-3.0, 0.0]
+
+    - name: "velocity_left"
+      type: "velocity"
+      description: "Move left at target speed"
+      target_velocity: [0.0, 3.0]
+
+    - name: "velocity_right"
+      type: "velocity"
+      description: "Move right at target speed"
+      target_velocity: [0.0, -3.0]
+
+    - name: "velocity_diagonal"
+      type: "velocity"
+      description: "Move diagonally at target speed"
+      target_velocity: [2.0, 2.0]
+
+# ---------------------------------------------------------------------------
+# Score normalization references (for [0, 100] scaling)
+# ---------------------------------------------------------------------------
+# These should be calibrated against actual environment returns.
+# ref_min_score: minimum return (e.g., random policy)
+# ref_max_score: maximum return (e.g., optimal or near-optimal policy)
+ref_min_score: 0.0
+ref_max_score: 100.0

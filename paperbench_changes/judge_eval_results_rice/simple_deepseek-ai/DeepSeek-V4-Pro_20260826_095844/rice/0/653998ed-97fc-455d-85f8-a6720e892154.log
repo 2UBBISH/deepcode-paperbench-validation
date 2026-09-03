@@ -1,0 +1,117 @@
+2026-08-26 09:58:46 [info     ] Grading leaf: For the network defence environment, code for constructing a mixed initial state distribution by combining default initial states and critical states identified by the "Ours" explanation method has been implemented as described in Section 3.3.
+2026-08-26 09:59:17 [info     ] Model file selection raw output:
+Refine_cage_challenge/retrain.py
+Refine_cage_challenge/Agents/PPOAgent_Retrain.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_retrain.py
+Refine_cage_challenge/sample_mask_score.py
+Refine_cage_challenge/rollout_mask.py
+Refine_cage_challenge/Agents/PPOAgent_mask.py
+Refine_cage_challenge/replay.py
+Refine_cage_challenge/Agents/rnd_model.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_mask.py
+Refine_cage_challenge/ppo_train.py
+2026-08-26 09:59:17 [info     ] Model file selection raw output:
+Refine_cage_challenge/retrain.py
+Refine_cage_challenge/Agents/PPOAgent_Retrain.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_retrain.py
+Refine_cage_challenge/sample_mask_score.py
+Refine_cage_challenge/rollout_mask.py
+Refine_cage_challenge/Agents/PPOAgent_mask.py
+Refine_cage_challenge/replay.py
+Refine_cage_challenge/Agents/rnd_model.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_mask.py
+Refine_cage_challenge/ppo_train.py
+2026-08-26 10:01:02 [info     ] model response: # Expectations
+Section 3.3 of the paper explains that RICE constructs a **mixed initial state distribution** by combining default initial states and critical states identified via the “Ours” explanation method (the improved StateMask). Specifically, they blend:
+
+- the original initial state distribution \(\rho\) (default starting states)
+- the distribution of the most important states \(d_{\rho}^{\hat{\pi}}(s)\) identified by the mask net (the critical / exploration frontiers)
+
+In practice (Algorithm 2), this is implemented by a **reset probability threshold** \(p\): at the start of each episode, with probability \(p\) the environment is reset to the most critical state of a trajectory (obtained by running the pre-trained policy and applying the mask net); with probability \(1-p\) it resets to the default initial state.
+
+For the **network defence (Cage Challenge 2)** environment, I expect to see code that:
+1. Has access to the pre-trained policy and the trained mask network (the “Ours” explanation).
+2. In the environment reset (or training loop), with probability \(p\) runs the pre-trained policy, uses the mask net to pinpoint the step with the highest importance score, and sets the environment to that state (e.g., by restoring the simulator state or by resetting to the default state and replaying actions up to that step).
+3. With probability \(1-p\) performs a normal reset to the environment’s default initial state.
+4. Both branches must correctly return a valid observation so that the agent can start acting.
+
+The submission must contain **actual working code** for this mechanism; mere verbal descriptions are not enough.
+
+# Reality
+The submission includes a wrapper file `Refine_cage_challenge/Wrappers/ChallengeWrapper2_retrain.py` that is used by the retraining script `retrain.py`. The wrapper overrides the `reset` method:
+
+```python
+def reset(self):
+    self.step_counter = 0
+    if np.random.rand() < self.go_prob:
+        action_record, mask_record = gen_one_traj()
+        eps_len = len(action_record)
+        if self.random_sampling:
+            start_idx = np.random.choice(eps_len)
+        else:
+            start_idx = np.argmax(mask_record)
+
+        obs = self.env.reset()
+        for i in range(start_idx):
+            obs, reward, done, info = self.env.step(action_record[i])
+    return obs
+```
+
+It sets `self.go_prob = 0.5` and `self.random_sampling = False`. The intention is clearly to build a mixed initial distribution: with probability \(p\) (here 0.5) it obtains a trajectory and mask scores from `gen_one_traj()`, finds the most critical state (`argmax(mask_record)`), resets the environment, and steps to that state. With the remaining probability it should do a normal reset.
+
+However, the implementation is **broken**:
+- The `if` block is the only place where `obs` is assigned. When `np.random.rand() < self.go_prob` is **false**, the method returns `obs` which has never been defined – it would raise an `UnboundLocalError` and crash.
+- There is no `else` branch that calls `self.env.reset()` to start from the default initial state, so the mixture is not properly implemented.
+- Additionally, the crucial function `gen_one_traj()` is imported from a `utils` module that is not provided among the given files; we cannot verify that it correctly uses the “Ours” explanation (mask net) to generate trajectories and importance scores.
+
+Therefore, while the code shows the intent of implementing the mixed initial state distribution, it is **not correct** – it fails to handle the default initial state case, making the mixture non‑functional.
+
+# Score
+0 – The submitted code for the network defence environment does not contain a correct implementation of constructing a mixed initial state distribution; it has a critical bug that prevents the default initial states from being used, and the missing `utils` module leaves the critical‑state identification unverifiable. This does not meet the criterion.
+2026-08-26 10:01:02 [info     ] model response: # Expectations
+Section 3.3 of the paper explains that RICE constructs a **mixed initial state distribution** by combining default initial states and critical states identified via the “Ours” explanation method (the improved StateMask). Specifically, they blend:
+
+- the original initial state distribution \(\rho\) (default starting states)
+- the distribution of the most important states \(d_{\rho}^{\hat{\pi}}(s)\) identified by the mask net (the critical / exploration frontiers)
+
+In practice (Algorithm 2), this is implemented by a **reset probability threshold** \(p\): at the start of each episode, with probability \(p\) the environment is reset to the most critical state of a trajectory (obtained by running the pre-trained policy and applying the mask net); with probability \(1-p\) it resets to the default initial state.
+
+For the **network defence (Cage Challenge 2)** environment, I expect to see code that:
+1. Has access to the pre-trained policy and the trained mask network (the “Ours” explanation).
+2. In the environment reset (or training loop), with probability \(p\) runs the pre-trained policy, uses the mask net to pinpoint the step with the highest importance score, and sets the environment to that state (e.g., by restoring the simulator state or by resetting to the default state and replaying actions up to that step).
+3. With probability \(1-p\) performs a normal reset to the environment’s default initial state.
+4. Both branches must correctly return a valid observation so that the agent can start acting.
+
+The submission must contain **actual working code** for this mechanism; mere verbal descriptions are not enough.
+
+# Reality
+The submission includes a wrapper file `Refine_cage_challenge/Wrappers/ChallengeWrapper2_retrain.py` that is used by the retraining script `retrain.py`. The wrapper overrides the `reset` method:
+
+```python
+def reset(self):
+    self.step_counter = 0
+    if np.random.rand() < self.go_prob:
+        action_record, mask_record = gen_one_traj()
+        eps_len = len(action_record)
+        if self.random_sampling:
+            start_idx = np.random.choice(eps_len)
+        else:
+            start_idx = np.argmax(mask_record)
+
+        obs = self.env.reset()
+        for i in range(start_idx):
+            obs, reward, done, info = self.env.step(action_record[i])
+    return obs
+```
+
+It sets `self.go_prob = 0.5` and `self.random_sampling = False`. The intention is clearly to build a mixed initial distribution: with probability \(p\) (here 0.5) it obtains a trajectory and mask scores from `gen_one_traj()`, finds the most critical state (`argmax(mask_record)`), resets the environment, and steps to that state. With the remaining probability it should do a normal reset.
+
+However, the implementation is **broken**:
+- The `if` block is the only place where `obs` is assigned. When `np.random.rand() < self.go_prob` is **false**, the method returns `obs` which has never been defined – it would raise an `UnboundLocalError` and crash.
+- There is no `else` branch that calls `self.env.reset()` to start from the default initial state, so the mixture is not properly implemented.
+- Additionally, the crucial function `gen_one_traj()` is imported from a `utils` module that is not provided among the given files; we cannot verify that it correctly uses the “Ours” explanation (mask net) to generate trajectories and importance scores.
+
+Therefore, while the code shows the intent of implementing the mixed initial state distribution, it is **not correct** – it fails to handle the default initial state case, making the mixture non‑functional.
+
+# Score
+0 – The submitted code for the network defence environment does not contain a correct implementation of constructing a mixed initial state distribution; it has a critical bug that prevents the default initial states from being used, and the missing `utils` module leaves the critical‑state identification unverifiable. This does not meet the criterion.

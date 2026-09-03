@@ -1,0 +1,57 @@
+2026-08-26 09:58:46 [info     ] Grading leaf: For the selfish mining environment, the "Random" Explanation method can be selected as the explanation method during retraining
+2026-08-26 09:59:25 [info     ] Model file selection raw output:
+Refine_selfish_mining/retrain.py
+Refine_selfish_mining/utils.py
+Refine_selfish_mining/masknet/sample_mask_score.py
+Refine_selfish_mining/masknet/sample_value_score.py
+Refine_selfish_mining/masknet/fidelity_score.py
+Refine_selfish_mining/masknet/replay.py
+Refine_selfish_mining/masknet/utils.py
+Refine_selfish_mining/masknet/train.py
+Refine_selfish_mining/rnd_policy.py
+Refine_selfish_mining/rnd_model.py
+2026-08-26 09:59:25 [info     ] Model file selection raw output:
+Refine_selfish_mining/retrain.py
+Refine_selfish_mining/utils.py
+Refine_selfish_mining/masknet/sample_mask_score.py
+Refine_selfish_mining/masknet/sample_value_score.py
+Refine_selfish_mining/masknet/fidelity_score.py
+Refine_selfish_mining/masknet/replay.py
+Refine_selfish_mining/masknet/utils.py
+Refine_selfish_mining/masknet/train.py
+Refine_selfish_mining/rnd_policy.py
+Refine_selfish_mining/rnd_model.py
+2026-08-26 10:00:55 [info     ] model response: # Expectations
+
+The paper's RICE algorithm (Algorithm 2) constructs a mixed initial state distribution by sometimes resetting the environment to a critical state identified by an explanation method.  In the refinement (retraining) phase, the user should be able to select which explanation method to use, including the “Random” method described in Section 4.1 – a baseline that randomly selects a previously visited state as the “critical” state.  For the selfish mining environment, I expect to find code in the submission that implements the full retraining loop and contains a mechanism (e.g., a configuration flag, argument, or separate code path) that allows choosing the Random explanation method to identify critical states for environment resets.  In other words, the retraining pipeline for selfish mining should support the Random explanation as a selectable option.
+
+# Reality
+
+I examined all provided files under `Refine_selfish_mining/`.  The main retraining script is `retrain.py`.  It sets up a PPO‑/DQN‑based retraining with Random Network Distillation (RND) exploration and uses an environment `MDPBlockchainSimulatorRetrain` to control resets.  However, `retrain.py` does **not** contain any argument or code path for choosing an explanation method – there is no `--method` flag, no loading of a random‑explanation object, and no conditional logic that would allow a user to select “Random” (or any other explanation) during retraining.  The implementation of `MDPBlockchainSimulatorRetrain` is not included, so I cannot see how critical states are chosen inside the environment, but the script’s own arguments give no indication that the explanation method can be varied.
+
+The `masknet/` directory does contain a fidelity‑evaluation script (`replay.py`) that implements a Random explanation method (randomly selecting a segment of the trajectory as critical).  However, this code is only used to compute fidelity scores and is **not** integrated into the retraining loop.  No other file in the submission provides a retraining pipeline where Random (or any explanation method) is a selectable option.
+
+Because the retraining code lacks any mechanism to select the Random explanation method, the submission does **not** show that this method can actually be used during retraining for the selfish mining environment.
+
+# Score
+
+0
+
+The criterion is not met.  While the Random explanation method exists in an evaluation context, the retraining pipeline for the selfish mining environment does not support selecting it as the explanation method.  The requirement is not satisfied by the provided code.
+2026-08-26 10:00:55 [info     ] model response: # Expectations
+
+The paper's RICE algorithm (Algorithm 2) constructs a mixed initial state distribution by sometimes resetting the environment to a critical state identified by an explanation method.  In the refinement (retraining) phase, the user should be able to select which explanation method to use, including the “Random” method described in Section 4.1 – a baseline that randomly selects a previously visited state as the “critical” state.  For the selfish mining environment, I expect to find code in the submission that implements the full retraining loop and contains a mechanism (e.g., a configuration flag, argument, or separate code path) that allows choosing the Random explanation method to identify critical states for environment resets.  In other words, the retraining pipeline for selfish mining should support the Random explanation as a selectable option.
+
+# Reality
+
+I examined all provided files under `Refine_selfish_mining/`.  The main retraining script is `retrain.py`.  It sets up a PPO‑/DQN‑based retraining with Random Network Distillation (RND) exploration and uses an environment `MDPBlockchainSimulatorRetrain` to control resets.  However, `retrain.py` does **not** contain any argument or code path for choosing an explanation method – there is no `--method` flag, no loading of a random‑explanation object, and no conditional logic that would allow a user to select “Random” (or any other explanation) during retraining.  The implementation of `MDPBlockchainSimulatorRetrain` is not included, so I cannot see how critical states are chosen inside the environment, but the script’s own arguments give no indication that the explanation method can be varied.
+
+The `masknet/` directory does contain a fidelity‑evaluation script (`replay.py`) that implements a Random explanation method (randomly selecting a segment of the trajectory as critical).  However, this code is only used to compute fidelity scores and is **not** integrated into the retraining loop.  No other file in the submission provides a retraining pipeline where Random (or any explanation method) is a selectable option.
+
+Because the retraining code lacks any mechanism to select the Random explanation method, the submission does **not** show that this method can actually be used during retraining for the selfish mining environment.
+
+# Score
+
+0
+
+The criterion is not met.  While the Random explanation method exists in an evaluation context, the retraining pipeline for the selfish mining environment does not support selecting it as the explanation method.  The requirement is not satisfied by the provided code.

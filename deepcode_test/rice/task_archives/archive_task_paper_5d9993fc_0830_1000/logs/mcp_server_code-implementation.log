@@ -1,0 +1,35 @@
+🚀 Code Implementation MCP Server
+📝 Paper Code Implementation Tool Server / Paper Code Implementation Tool Server
+
+Available tools / Available tools:
+  • read_code_mem       - Read code summary from implement_code_summary.md / Read code summary from implement_code_summary.md
+  • write_file          - Write file contents / Write file contents
+  • execute_python      - Execute Python code / Execute Python code
+  • execute_bash        - Execute bash command / Execute bash commands
+  • search_code         - Search code patterns / Search code patterns
+  • get_file_structure  - Get file structure / Get file structure
+  • set_workspace       - Set workspace / Set workspace
+  • get_operation_history - Get operation history / Get operation history
+
+🔧 Server starting...
+INFO:mcp.server.lowlevel.server:Processing request of type ListToolsRequest
+INFO:mcp.server.lowlevel.server:Processing request of type ListResourcesRequest
+INFO:mcp.server.lowlevel.server:Processing request of type ListPromptsRequest
+INFO:mcp.server.lowlevel.server:Processing request of type CallToolRequest
+INFO:__main__:New Workspace: /home/deepevol/deepevol/DeepCode/deepcode_lab/tasks/paper_5d9993fc/generate_code
+INFO:__main__:Command execution sandbox: no sandbox (degraded: approval-first) (writes NOT fenced to workspace)
+INFO:mcp.server.lowlevel.server:Processing request of type CallToolRequest
+INFO:mcp.server.lowlevel.server:Processing request of type CallToolRequest
+INFO:mcp.server.lowlevel.server:Processing request of type CallToolRequest
+INFO:mcp.server.lowlevel.server:Processing request of type CallToolRequest
+INFO:mcp.server.lowlevel.server:Processing request of type CallToolRequest
+INFO:mcp.server.lowlevel.server:Processing request of type CallToolRequest
+INFO:mcp.server.lowlevel.server:Processing request of type CallToolRequest
+INFO:mcp.server.lowlevel.server:Processing request of type CallToolRequest
+INFO:mcp.server.lowlevel.server:Processing request of type CallToolRequest
+INFO:mcp.server.lowlevel.server:Processing request of type CallToolRequest
+INFO:mcp.server.lowlevel.server:Processing request of type CallToolRequest
+INFO:mcp.server.lowlevel.server:Processing request of type CallToolRequest
+INFO:mcp.server.lowlevel.server:Processing request of type CallToolRequest
+INFO:mcp.server.lowlevel.server:Processing request of type CallToolRequest
+INFO:mcp.server.lowlevel.server:Processing request of type CallToolRequest

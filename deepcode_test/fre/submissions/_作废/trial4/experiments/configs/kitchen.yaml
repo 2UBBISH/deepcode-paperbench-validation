@@ -1,0 +1,114 @@
+# =============================================================================
+# FRE Configuration: Kitchen Domain (D4RL)
+# =============================================================================
+# Paper: "Functional Reward Encodings (FRE) for Zero-Shot Offline RL"
+# Dataset: kitchen-complete-v0 (D4RL)
+# Tasks: 7 subtasks (microwave, kettle, light, slide cabinet, hinge cabinet,
+#         top burner, bottom burner)
+# Expected normalized return: ~66 (average over subtasks)
+# =============================================================================
+
+# --- Domain & Environment ---
+domain: "kitchen"
+env_name: "kitchen-complete-v0"
+dataset: "kitchen-complete-v0"  # D4RL dataset name
+state_dim: 30
+action_dim: 9
+max_episode_steps: 280  # Kitchen episodes are ~280 steps
+
+# --- Latent Dimension ---
+d_z: 64  # Latent vector z dimensionality
+
+# --- FRE Encoder (Transformer VAE) ---
+encoder:
+  d_model: 256           # Transformer hidden dimension
+  nhead: 4               # Number of attention heads
+  num_layers: 3          # Number of transformer layers
+  ff_dim: 1024           # Feedforward dimension (4 * d_model)
+  dropout: 0.1           # Dropout rate
+  num_reward_bins: 50    # Reward discretization bins
+  reward_min: -1.0       # Minimum reward value for binning
+  reward_max: 1.0        # Maximum reward value for binning
+  use_sum_tokens: false  # Use concatenation (not sum) for state+reward tokens
+
+# --- FRE Decoder (MLP Reward Predictor) ---
+decoder:
+  hidden_dims: [256, 256]  # MLP hidden layer sizes
+  activation: "relu"       # Activation function
+  dropout: 0.0             # Dropout rate
+
+# --- IQL Agent ---
+iql:
+  hidden_dims: [256, 256]  # Hidden layers for policy, Q, V networks
+  gamma: 0.99              # Discount factor
+  tau: 0.005               # Target network update rate (Polyak averaging)
+  expectile: 0.7            # Expectile for value loss (τ in paper)
+  alpha: 3.0               # Advantage weighting temperature (AWR)
+  lr: 3.0e-4               # Learning rate for all IQL networks
+  clip_advantage: null     # No advantage clipping (use null for None)
+  log_std_min: -5.0        # Minimum log std for Gaussian policy
+  log_std_max: 2.0         # Maximum log std for Gaussian policy
+  dropout: 0.0             # Dropout in IQL networks
+
+# --- Reward Prior Distribution ---
+reward_prior:
+  families: ["goal", "linear", "mlp"]  # All three families mixed uniformly
+  linear_sparsity: 0.8                 # 80% zero weights for linear rewards
+  mlp_hidden_dim: 256                  # Hidden dim for random MLP rewards
+  goal_epsilon: 0.1                    # Goal-reaching threshold
+  use_xy_prior: false                  # No domain-specific XY prior for kitchen
+
+# --- Training (Strided Scheme: Algorithm 1) ---
+training:
+  # Phase 1: VAE (encoder + decoder) training
+  vae_steps: 100000          # Number of VAE gradient steps
+  vae_batch_size: 256        # Batch size for VAE training
+  vae_lr: 3.0e-4             # Learning rate for encoder/decoder
+  K_encoder: 32              # Number of (state, reward) pairs for encoder input
+  K_decoder: 64              # Number of decoder query states (K' in paper)
+  beta: 1.0                  # KL divergence weight (β in paper)
+  vae_eval_interval: 5000    # Steps between VAE evaluation logging
+  vae_grad_clip: 10.0        # Gradient clipping max norm
+
+  # Phase 2: IQL (policy, Q, V) training with frozen encoder
+  iql_steps: 1000000         # Number of IQL gradient steps
+  iql_batch_size: 256        # Batch size for IQL training
+  iql_eval_interval: 10000   # Steps between IQL evaluation logging
+  iql_update_target_every: 1 # Update target networks every N steps
+
+  # General
+  seed: 0                    # Random seed (override via CLI)
+  num_workers: 0             # DataLoader workers (0 = main process)
+
+# --- Evaluation (Zero-Shot) ---
+evaluation:
+  num_episodes: 20           # Episodes per task for evaluation
+  K_encode: 32               # Number of (state, reward) pairs for encoding
+  deterministic: true        # Use deterministic policy for evaluation
+  render: false              # Render environment during evaluation
+
+  # Kitchen subtask definitions
+  # Each subtask is defined by a name and the state indices/thresholds
+  # used to determine task completion.
+  subtasks:
+    - name: "microwave"
+      description: "Open the microwave door"
+    - name: "kettle"
+      description: "Move the kettle to the target position"
+    - name: "light"
+      description: "Turn on the overhead light"
+    - name: "slide_cabinet"
+      description: "Open the slide cabinet"
+    - name: "hinge_cabinet"
+      description: "Open the hinge cabinet"
+    - name: "top_burner"
+      description: "Turn on the top burner"
+    - name: "bottom_burner"
+      description: "Turn on the bottom burner"
+
+# --- Logging & Checkpointing ---
+checkpoint_dir: "./checkpoints/kitchen"
+log_dir: "./logs/kitchen"
+use_wandb: false             # Set to true for Weights & Biases logging
+wandb_project: "fre-kitchen"
+wandb_entity: null

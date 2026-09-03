@@ -1,0 +1,77 @@
+2026-08-26 09:58:46 [info     ] Grading leaf: For the autonomous driving environment, The StateMask ("Ours") Explanation method can be selected for generating rollouts (without training)
+2026-08-26 10:00:21 [info     ] Model file selection raw output:
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/retrain.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/readme.md
+Refine_auto_drive/learner.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/train_baseline.py
+Refine_cage_challenge/rollout_mask.py
+2026-08-26 10:00:21 [info     ] Model file selection raw output:
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/retrain.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/readme.md
+Refine_auto_drive/learner.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/train_baseline.py
+Refine_cage_challenge/rollout_mask.py
+2026-08-26 10:01:05 [info     ] model response: # Expectations
+
+The criterion requires that in the autonomous driving environment, the "Ours" (optimized StateMask) explanation method be available for generating rollouts *without any further training*. That is, the submission must contain code that loads a pre‑trained mask network (the “Ours” explanation), runs it alongside the pre‑trained agent on an episode, and produces for each step an importance score or critical‑state identification. This usage corresponds to how RICE first obtains a trajectory and then uses the explanation to pick the most critical state (Section 3.3, Algorithm 2). The code must not re‑train the mask network during this rollout; it must use a stored checkpoint purely for inference. I therefore expect to find a function or script that:
+- Loads a checkpoint of the trained mask network (the “Ours” version).
+- Interacts with the autonomous driving environment using the pre‑trained agent policy.
+- Simultaneously queries the mask network to obtain per‑step importance scores or “mask probs”.
+- Returns the trajectory together with these scores, thereby enabling later selection of a critical state.
+
+# Reality
+
+The provided files for the autonomous driving environment include `gen_retrain_traj.py`. This file contains:
+
+- A function `fid_play(obs, env, masknet, agent, seed)` that runs an episode using the given `agent` policy. At each step it:
+  - Passes the observation through the mask network (`masknet._model.forward`) and, via softmax on the mask network’s logits, computes an `importance_score`.
+  - Records the action, cumulative reward, and importance score for every step.
+  - Returns a `Traj` object with `mask_probs` (the importance scores).
+
+- A function `gen_one_traj(obs, env, seed)` that:
+  - Loads a pre‑trained **mask network** policy from a checkpoint (`'.../masknet_True_0.0001/ckpt/iteration_10000.pth.tar'`).
+  - Loads the pre‑trained **agent** policy from its own checkpoint.
+  - Calls `fid_play` with these loaded modules, producing a trajectory with importance scores.
+
+The mask network is used only in inference mode; no training loop or parameter updates occur. Thus the code clearly implements the ability to select the “Ours” explanation method for generating rollouts without training. Moreover, in `retrain_env.py`, the `CustomWrapper.reset` method calls `gen_one_traj` to obtain a trajectory with importance scores, and then selects the starting state based on those scores (either randomly or by taking the state with the highest importance). This confirms that the rollout generator feeds directly into the refining process, exactly as described in the paper.
+
+# Score
+
+1 – The submission contains a correct, working implementation (`gen_retrain_traj.py`) that loads a trained “Ours” mask network and uses it to generate trajectories with importance scores, all without any further training. The criterion is fully satisfied.
+2026-08-26 10:01:05 [info     ] model response: # Expectations
+
+The criterion requires that in the autonomous driving environment, the "Ours" (optimized StateMask) explanation method be available for generating rollouts *without any further training*. That is, the submission must contain code that loads a pre‑trained mask network (the “Ours” explanation), runs it alongside the pre‑trained agent on an episode, and produces for each step an importance score or critical‑state identification. This usage corresponds to how RICE first obtains a trajectory and then uses the explanation to pick the most critical state (Section 3.3, Algorithm 2). The code must not re‑train the mask network during this rollout; it must use a stored checkpoint purely for inference. I therefore expect to find a function or script that:
+- Loads a checkpoint of the trained mask network (the “Ours” version).
+- Interacts with the autonomous driving environment using the pre‑trained agent policy.
+- Simultaneously queries the mask network to obtain per‑step importance scores or “mask probs”.
+- Returns the trajectory together with these scores, thereby enabling later selection of a critical state.
+
+# Reality
+
+The provided files for the autonomous driving environment include `gen_retrain_traj.py`. This file contains:
+
+- A function `fid_play(obs, env, masknet, agent, seed)` that runs an episode using the given `agent` policy. At each step it:
+  - Passes the observation through the mask network (`masknet._model.forward`) and, via softmax on the mask network’s logits, computes an `importance_score`.
+  - Records the action, cumulative reward, and importance score for every step.
+  - Returns a `Traj` object with `mask_probs` (the importance scores).
+
+- A function `gen_one_traj(obs, env, seed)` that:
+  - Loads a pre‑trained **mask network** policy from a checkpoint (`'.../masknet_True_0.0001/ckpt/iteration_10000.pth.tar'`).
+  - Loads the pre‑trained **agent** policy from its own checkpoint.
+  - Calls `fid_play` with these loaded modules, producing a trajectory with importance scores.
+
+The mask network is used only in inference mode; no training loop or parameter updates occur. Thus the code clearly implements the ability to select the “Ours” explanation method for generating rollouts without training. Moreover, in `retrain_env.py`, the `CustomWrapper.reset` method calls `gen_one_traj` to obtain a trajectory with importance scores, and then selects the starting state based on those scores (either randomly or by taking the state with the highest importance). This confirms that the rollout generator feeds directly into the refining process, exactly as described in the paper.
+
+# Score
+
+1 – The submission contains a correct, working implementation (`gen_retrain_traj.py`) that loads a trained “Ours” mask network and uses it to generate trajectories with importance scores, all without any further training. The criterion is fully satisfied.

@@ -1,0 +1,94 @@
+# RICE MuJoCo domain configuration
+# Supports dense and sparse reward variants of Hopper-v3, Walker2d-v3,
+# Reacher-v2, and HalfCheetah-v3.
+
+name: mujoco
+env_id: Hopper-v3
+
+env_kwargs:
+  sparse: false
+  normalize_obs: auto
+  terminate_on_unhealthy: true
+
+# Target-agent pre-training hyper-parameters (SB3 PPO)
+target:
+  algorithm: PPO
+  policy_type: MlpPolicy
+  total_timesteps: 2000000
+  learning_rate: 0.0003
+  n_steps: 2048
+  batch_size: 64
+  n_epochs: 10
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_range: 0.2
+  ent_coef: 0.0
+  vf_coef: 0.5
+  max_grad_norm: 0.5
+  normalize_obs: true
+  normalize_reward: true
+  policy_kwargs:
+    net_arch:
+      - dict(pi: [64, 64], vf: [64, 64])
+  eval_episodes: 50
+  save_freq: 100000
+  verbose: 1
+
+# Mask-network training hyper-parameters
+mask:
+  alpha: 0.0001
+  learning_rate: 0.0003
+  n_steps: 2048
+  batch_size: 64
+  n_epochs: 10
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_range: 0.2
+  ent_coef: 0.0
+  vf_coef: 0.5
+  max_grad_norm: 0.5
+  total_timesteps: 100000
+  hidden_sizes: [64, 64]
+  use_action: false
+  continuous_mask: true
+  top_k: 1000
+  percentile: null
+  verbose: 1
+
+# RND exploration-bonus hyper-parameters
+rnd:
+  output_dim: 64
+  hidden_sizes: [64, 64]
+  normalize_inputs: true
+  lambda_coef: 0.01
+
+# Refining hyper-parameters
+refine:
+  p: 0.25
+  lambda_coef: 0.01
+  total_timesteps: 500000
+  learning_rate: 0.0001
+  n_steps: 2048
+  batch_size: 64
+  n_epochs: 10
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_range: 0.2
+  ent_coef: 0.0
+  vf_coef: 0.5
+  max_grad_norm: 0.5
+  eval_episodes: 50
+  save_freq: 50000
+  verbose: 1
+
+# Experiment settings
+sample_budget: 100000
+fidelity_budgets: [1, 2, 3, 5, 10]
+eval_episodes: 50
+
+meta:
+  description: "MuJoCo dense/sparse continuous-control tasks for RICE."
+  sparse_thresholds:
+    Hopper-v3: 0.6
+    Walker2d-v3: 0.6
+    HalfCheetah-v3: 5.0

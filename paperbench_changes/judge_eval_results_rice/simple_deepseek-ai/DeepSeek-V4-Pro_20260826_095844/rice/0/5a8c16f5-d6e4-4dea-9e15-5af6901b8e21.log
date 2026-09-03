@@ -1,0 +1,127 @@
+2026-08-26 09:58:46 [info     ] Grading leaf: For the MuJoCo environments, the explanation fidelity score metric has been implemented as outlined in section 4.1 and 4.2: by forcing a given pretrained policy network agent to take random actions starting from each identified critical time step and measuring the average and maximum reward change.
+2026-08-26 09:59:42 [info     ] Model file selection raw output:
+Refine_mujoco/masknet/fid_test.py
+Refine_mujoco/masknet/gen_fid.py
+Refine_mujoco/masknet/environment.py
+Refine_mujoco/masknet/train.py
+Refine_mujoco/masknet/cus_PPO.py
+Refine_mujoco/masknet/readme.md
+Refine_mujoco/utils.py
+Refine_mujoco/environment.py
+Refine_mujoco/PPO.py
+Refine_mujoco/models.py
+2026-08-26 09:59:42 [info     ] Model file selection raw output:
+Refine_mujoco/masknet/fid_test.py
+Refine_mujoco/masknet/gen_fid.py
+Refine_mujoco/masknet/environment.py
+Refine_mujoco/masknet/train.py
+Refine_mujoco/masknet/cus_PPO.py
+Refine_mujoco/masknet/readme.md
+Refine_mujoco/utils.py
+Refine_mujoco/environment.py
+Refine_mujoco/PPO.py
+Refine_mujoco/models.py
+2026-08-26 10:01:55 [info     ] model response: # Expectations
+
+The paper's Section 4.1 and 4.2 (and the addendum) specify that the explanation fidelity score metric for MuJoCo environments should be implemented as follows:
+
+1. **Explanation method**: Generate step‑level importance scores for each state in a trajectory (e.g., via a trained mask network).  
+2. **Critical segment selection**: Use a sliding window of width \(l = L \times K\) (where \(L\) is the trajectory length, \(K\) is a chosen fraction) to find the **consecutive** segment with the highest **average** importance score.  
+3. **Reward change measurement**:  
+   - Fast‑forward the environment to the start of the identified critical segment (by replaying the original actions or directly restoring the state).  
+   - Force the agent to take **random actions** for the duration \(l\) of that segment.  
+   - After the segment, let the agent continue with its own (deterministic) policy until the episode ends.  
+   - Record the new episode reward \(R'\) and compute \(d = |R' - R|\) where \(R\) is the original reward.  
+4. **Maximum reward change**: Determine \(d_{\max}\) as the largest possible reward value in a single episode for that environment (e.g., based on known maximum episode return).  
+5. **Fidelity score**: For each trajectory compute \(\text{Fidelity} = \log(d / d_{\max}) - \log(l / L)\), then **average** these per‑trajectory scores (or handle them appropriately; the paper reports an aggregated fidelity score).
+
+A correct code implementation must therefore:
+- Actually perform the sliding‑window search with the correct window size.
+- Ensure \(l\) is exactly \(L \times K\) (or at least that the selected window length matches the intended fraction).
+- Compute the fidelity score per‑trajectory and aggregate correctly.
+- Use a \(d_{\max}\) that is justified for the specific MuJoCo environment.
+
+# Reality
+
+The relevant implementation is in `Refine_mujoco/masknet/fid_test.py`.
+
+**Critical‑step selection**  
+The function `select_critical_steps(critical=True, ratio=0.3)`:
+- Reads pre‑computed mask probabilities (importance scores) and episode lengths.
+- Picks the **top‑\(k\) individual steps** (where \(k = \text{int}(L \times ratio)\)) using `np.argpartition`.
+- From those top‑\(k\) steps, it finds the **longest consecutive run** and stores the start/end of that run.
+
+This is **not** a sliding‑window procedure:
+- It does not slide a window of fixed width \(l = L \times K\) across the whole trajectory to find the segment with the maximum average importance.
+- The resulting segment length is not forced to be \(l\); it can be (and often is) shorter than the intended \(L \times K\) because it only uses the top‑\(k\) individual steps. Consequently the ratio \(l/L\) used later in the fidelity formula does not equal the chosen fraction \(K\).
+
+The addendum explicitly states: “A sliding window of size \(l = L \times K\) … is applied to find the most critical segment of consecutive steps.” The code does not implement this.
+
+**Fidelity score computation**  
+The function `cal_fidelity_score(critical_ratios, results, replay_results)`:
+- Creates lists of \(p = l/L\) and \(p_d = |R - R'| / 2000\).
+- Averages \(p\) and \(p_d\) **before** taking the logarithm: `fid_score = np.log(np.mean(p_ls)) - np.log(reward_diff)`.
+- The paper’s formula expects \(\log(d/d_{\max}) - \log(l/L)\) for **each** trajectory, which is not equivalent to averaging the ratios first.
+
+Additionally, `d_max` is hardcoded as **2000** irrespective of the environment (the code loads a HalfCheetah model but uses data from a `hopper_recording` directory and still divides by 2000). The paper states \(d_{\max}\) should be the largest possible reward value for the specific environment; 2000 is neither derived from the environment nor valid for all MuJoCo tasks.
+
+**Other parts**  
+The `replay` function does correctly fast‑forward using recorded actions, take random actions during the chosen segment, and continue with the base policy afterward. However, this alone does not salvage the fidelity score computation because the segment selection and the aggregation of the fidelity score are not implemented as described.
+
+# Score
+
+**0**  
+
+The submitted code fails to implement the fidelity score metric as outlined in the paper and addendum. The selection of the critical segment does not use a sliding window of the required length, the fidelity score is aggregated incorrectly, and the maximum reward change is not properly determined from the environment. These are essential deviations from the specified method.
+2026-08-26 10:01:55 [info     ] model response: # Expectations
+
+The paper's Section 4.1 and 4.2 (and the addendum) specify that the explanation fidelity score metric for MuJoCo environments should be implemented as follows:
+
+1. **Explanation method**: Generate step‑level importance scores for each state in a trajectory (e.g., via a trained mask network).  
+2. **Critical segment selection**: Use a sliding window of width \(l = L \times K\) (where \(L\) is the trajectory length, \(K\) is a chosen fraction) to find the **consecutive** segment with the highest **average** importance score.  
+3. **Reward change measurement**:  
+   - Fast‑forward the environment to the start of the identified critical segment (by replaying the original actions or directly restoring the state).  
+   - Force the agent to take **random actions** for the duration \(l\) of that segment.  
+   - After the segment, let the agent continue with its own (deterministic) policy until the episode ends.  
+   - Record the new episode reward \(R'\) and compute \(d = |R' - R|\) where \(R\) is the original reward.  
+4. **Maximum reward change**: Determine \(d_{\max}\) as the largest possible reward value in a single episode for that environment (e.g., based on known maximum episode return).  
+5. **Fidelity score**: For each trajectory compute \(\text{Fidelity} = \log(d / d_{\max}) - \log(l / L)\), then **average** these per‑trajectory scores (or handle them appropriately; the paper reports an aggregated fidelity score).
+
+A correct code implementation must therefore:
+- Actually perform the sliding‑window search with the correct window size.
+- Ensure \(l\) is exactly \(L \times K\) (or at least that the selected window length matches the intended fraction).
+- Compute the fidelity score per‑trajectory and aggregate correctly.
+- Use a \(d_{\max}\) that is justified for the specific MuJoCo environment.
+
+# Reality
+
+The relevant implementation is in `Refine_mujoco/masknet/fid_test.py`.
+
+**Critical‑step selection**  
+The function `select_critical_steps(critical=True, ratio=0.3)`:
+- Reads pre‑computed mask probabilities (importance scores) and episode lengths.
+- Picks the **top‑\(k\) individual steps** (where \(k = \text{int}(L \times ratio)\)) using `np.argpartition`.
+- From those top‑\(k\) steps, it finds the **longest consecutive run** and stores the start/end of that run.
+
+This is **not** a sliding‑window procedure:
+- It does not slide a window of fixed width \(l = L \times K\) across the whole trajectory to find the segment with the maximum average importance.
+- The resulting segment length is not forced to be \(l\); it can be (and often is) shorter than the intended \(L \times K\) because it only uses the top‑\(k\) individual steps. Consequently the ratio \(l/L\) used later in the fidelity formula does not equal the chosen fraction \(K\).
+
+The addendum explicitly states: “A sliding window of size \(l = L \times K\) … is applied to find the most critical segment of consecutive steps.” The code does not implement this.
+
+**Fidelity score computation**  
+The function `cal_fidelity_score(critical_ratios, results, replay_results)`:
+- Creates lists of \(p = l/L\) and \(p_d = |R - R'| / 2000\).
+- Averages \(p\) and \(p_d\) **before** taking the logarithm: `fid_score = np.log(np.mean(p_ls)) - np.log(reward_diff)`.
+- The paper’s formula expects \(\log(d/d_{\max}) - \log(l/L)\) for **each** trajectory, which is not equivalent to averaging the ratios first.
+
+Additionally, `d_max` is hardcoded as **2000** irrespective of the environment (the code loads a HalfCheetah model but uses data from a `hopper_recording` directory and still divides by 2000). The paper states \(d_{\max}\) should be the largest possible reward value for the specific environment; 2000 is neither derived from the environment nor valid for all MuJoCo tasks.
+
+**Other parts**  
+The `replay` function does correctly fast‑forward using recorded actions, take random actions during the chosen segment, and continue with the base policy afterward. However, this alone does not salvage the fidelity score computation because the segment selection and the aggregation of the fidelity score are not implemented as described.
+
+# Score
+
+**0**  
+
+The submitted code fails to implement the fidelity score metric as outlined in the paper and addendum. The selection of the critical segment does not use a sliding window of the required length, the fidelity score is aggregated incorrectly, and the maximum reward change is not properly determined from the environment. These are essential deviations from the specified method.

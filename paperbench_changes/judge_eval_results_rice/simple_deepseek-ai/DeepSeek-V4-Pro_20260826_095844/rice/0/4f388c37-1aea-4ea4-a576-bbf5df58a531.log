@@ -1,0 +1,67 @@
+2026-08-26 09:58:46 [info     ] Grading leaf: For the selfish mining environment, code for pretraining the policy network agent has been setup
+2026-08-26 09:59:25 [info     ] Model file selection raw output:
+Refine_selfish_mining/baseline/train_ppo.py
+Refine_selfish_mining/baseline/net.py
+Refine_selfish_mining/utils.py
+Refine_selfish_mining/baseline/blockchain_mdps/bitcoin_fee_model.py
+Refine_selfish_mining/baseline/blockchain_mdps/base/blockchain_mdp.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/training/trainer.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/training/rl_algorithm.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/function_approximation/mlp_approximator.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/blockchain_simulator/mdp_blockchain_simulator.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/experience_acquisition/agents/agent.py
+2026-08-26 09:59:25 [info     ] Model file selection raw output:
+Refine_selfish_mining/baseline/train_ppo.py
+Refine_selfish_mining/baseline/net.py
+Refine_selfish_mining/utils.py
+Refine_selfish_mining/baseline/blockchain_mdps/bitcoin_fee_model.py
+Refine_selfish_mining/baseline/blockchain_mdps/base/blockchain_mdp.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/training/trainer.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/training/rl_algorithm.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/function_approximation/mlp_approximator.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/blockchain_simulator/mdp_blockchain_simulator.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/experience_acquisition/agents/agent.py
+2026-08-26 09:59:25 [info     ] File /home/deepevol/deepevol/frontier-evals/project/paperbench/data/judge_eval/rice/0/submission/Refine_selfish_mining/baseline/blockchain_mdps/base/blockchain_mdp.py not found!
+2026-08-26 09:59:25 [info     ] File /home/deepevol/deepevol/frontier-evals/project/paperbench/data/judge_eval/rice/0/submission/Refine_selfish_mining/baseline/blockchain_mdps/base/blockchain_mdp.py not found!
+2026-08-26 10:00:05 [info     ] model response: # Expectations
+The paper describes a selfish mining environment (Section 4.1, Appendix C.2) and states that a pre-trained PPO agent is used for the refining experiments. The criteria specify that the code should set up pretraining of the policy network agent for this environment. In particular, I expect to find:
+
+- Code that defines or imports the selfish mining environment (e.g., using the BitcoinFeeModel or similar blockchain MDP).
+- Construction of a PPO agent with a policy network that is a 4‑layer Multi‑Layer Perceptron (MLP) with hidden sizes [128, 128, 128, 128] as specified in the paper (Appendix C.2).
+- A training loop that runs the PPO algorithm to train the agent (e.g., using an `onpolicy_trainer` or equivalent) and saves the resulting policy (checkpoints or final model).
+
+I am looking for actual implementation code—not just comments or plans.
+
+# Reality
+The submission includes the file `Refine_selfish_mining/baseline/train_ppo.py`. Inside this file:
+
+- The function `create_env(args)` instantiates a `BitcoinFeeModel` (a selfish mining model with fees, matching the whale‑transaction scenario) and wraps it in an `MDPBlockchainSimulatorDQN`.
+- In `train_ppo()`, a `Net` is created with `hidden_sizes` defaulting to `[128, 128, 128, 128]` (the exact four‑layer MLP required). An `Actor`, `Critic`, and `ActorCritic` are built from this network.
+- A `PPOPolicy` is constructed with appropriate hyperparameters, and an `onpolicy_trainer` is invoked to actually train the policy.
+- The training logic includes functions to save checkpoints (`save_checkpoint_fn`) and to store the best policy (`save_best_fn`).
+
+All necessary components for pretraining the PPO agent for selfish mining are present and correctly implemented. The environment, network architecture, and training procedure match the paper’s description.
+
+# Score
+1 – The code for pretraining the policy network agent for the selfish mining environment is fully set up.
+2026-08-26 10:00:05 [info     ] model response: # Expectations
+The paper describes a selfish mining environment (Section 4.1, Appendix C.2) and states that a pre-trained PPO agent is used for the refining experiments. The criteria specify that the code should set up pretraining of the policy network agent for this environment. In particular, I expect to find:
+
+- Code that defines or imports the selfish mining environment (e.g., using the BitcoinFeeModel or similar blockchain MDP).
+- Construction of a PPO agent with a policy network that is a 4‑layer Multi‑Layer Perceptron (MLP) with hidden sizes [128, 128, 128, 128] as specified in the paper (Appendix C.2).
+- A training loop that runs the PPO algorithm to train the agent (e.g., using an `onpolicy_trainer` or equivalent) and saves the resulting policy (checkpoints or final model).
+
+I am looking for actual implementation code—not just comments or plans.
+
+# Reality
+The submission includes the file `Refine_selfish_mining/baseline/train_ppo.py`. Inside this file:
+
+- The function `create_env(args)` instantiates a `BitcoinFeeModel` (a selfish mining model with fees, matching the whale‑transaction scenario) and wraps it in an `MDPBlockchainSimulatorDQN`.
+- In `train_ppo()`, a `Net` is created with `hidden_sizes` defaulting to `[128, 128, 128, 128]` (the exact four‑layer MLP required). An `Actor`, `Critic`, and `ActorCritic` are built from this network.
+- A `PPOPolicy` is constructed with appropriate hyperparameters, and an `onpolicy_trainer` is invoked to actually train the policy.
+- The training logic includes functions to save checkpoints (`save_checkpoint_fn`) and to store the best policy (`save_best_fn`).
+
+All necessary components for pretraining the PPO agent for selfish mining are present and correctly implemented. The environment, network architecture, and training procedure match the paper’s description.
+
+# Score
+1 – The code for pretraining the policy network agent for the selfish mining environment is fully set up.

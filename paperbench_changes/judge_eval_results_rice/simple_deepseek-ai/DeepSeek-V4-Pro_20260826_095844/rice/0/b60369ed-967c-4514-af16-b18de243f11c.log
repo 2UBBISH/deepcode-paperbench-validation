@@ -1,0 +1,69 @@
+2026-08-26 09:58:46 [info     ] Grading leaf: Any version of the (MuJoCo) Hopper environment has been correctly set up and can be initialized can be used to run the experiments (further information about this environment in Appendix C.2).
+2026-08-26 09:59:32 [info     ] Model file selection raw output:
+Refine_mujoco/environment.py
+Refine_mujoco/retrain.py
+Refine_mujoco/baseline/train.py
+Refine_mujoco/masknet/train.py
+Refine_mujoco/PPO.py
+Refine_mujoco/utils.py
+Refine_mujoco/base_class.py
+Refine_mujoco/masknet/environment.py
+Refine_mujoco/retrain.sh
+Refine_mujoco/masknet/fid_test.py
+2026-08-26 09:59:32 [info     ] Model file selection raw output:
+Refine_mujoco/environment.py
+Refine_mujoco/retrain.py
+Refine_mujoco/baseline/train.py
+Refine_mujoco/masknet/train.py
+Refine_mujoco/PPO.py
+Refine_mujoco/utils.py
+Refine_mujoco/base_class.py
+Refine_mujoco/masknet/environment.py
+Refine_mujoco/retrain.sh
+Refine_mujoco/masknet/fid_test.py
+2026-08-26 10:00:43 [info     ] model response: # Expectations
+The paper describes using the Hopper-v3 environment from MuJoCo (Gym) for dense reward experiments (Appendix C.2). For the reproduction to be correct, the code must:
+- Initialize the Hopper-v3 environment via `gym.make("Hopper-v3")` (or equivalent).
+- Provide the ability to run the custom refining experiments, including resetting the environment to specific saved states (using `env.sim.set_state()`) and reconstructing the observation appropriately.
+- Not require modifications that would break the standard Hopper-v3 semantics (dense reward, etc.).
+
+# Reality
+The submission includes multiple files that set up the Hopper-v3 environment correctly:
+- **`Refine_mujoco/baseline/train.py`** (line 10): `env = DummyVecEnv([lambda: gym.make("Hopper-v3")])` – the basic environment for baseline training.
+- **`Refine_mujoco/masknet/environment.py`** (line inside `make_multi2single_env`): calls `gym.make("Hopper-v3")` to create the underlying environment used during explanation training.
+- **`Refine_mujoco/environment.py`**: defines `make_retrain_env` which accepts an environment name (default `"Hopper-v3"` from `retrain.py`) and creates a `RetrainEnv` wrapper. The wrapper’s `reset` method can restore a stored MuJoCo state via `self.env.sim.set_state(traj.state_seq[start_idx])` and then reconstructs the observation for Hopper-v3 with:
+  ```python
+  position = self.env.sim.data.qpos.flat.copy()[1:]
+  velocity = self.env.sim.data.qvel.flat.copy()
+  obs = np.concatenate((position, velocity)).ravel()
+  ```
+  This yields the 11‑dimensional observation used by Hopper‑v3 (positions from root z, rotation, and three hinge joints, plus the corresponding velocities). It aligns with the standard Hopper‑v3 observation space.
+- **`Refine_mujoco/retrain.sh`** explicitly passes `--env "Hopper-v3"`, confirming that the refining script is configured to use this environment.
+
+All necessary components to run the experiments (explanation training, baseline training, and refinement) with Hopper‑v3 are present and appear correctly implemented.
+
+# Score
+**1** – The submission contains a correct, runnable implementation of the Hopper‑v3 environment, meeting the criterion.
+2026-08-26 10:00:43 [info     ] model response: # Expectations
+The paper describes using the Hopper-v3 environment from MuJoCo (Gym) for dense reward experiments (Appendix C.2). For the reproduction to be correct, the code must:
+- Initialize the Hopper-v3 environment via `gym.make("Hopper-v3")` (or equivalent).
+- Provide the ability to run the custom refining experiments, including resetting the environment to specific saved states (using `env.sim.set_state()`) and reconstructing the observation appropriately.
+- Not require modifications that would break the standard Hopper-v3 semantics (dense reward, etc.).
+
+# Reality
+The submission includes multiple files that set up the Hopper-v3 environment correctly:
+- **`Refine_mujoco/baseline/train.py`** (line 10): `env = DummyVecEnv([lambda: gym.make("Hopper-v3")])` – the basic environment for baseline training.
+- **`Refine_mujoco/masknet/environment.py`** (line inside `make_multi2single_env`): calls `gym.make("Hopper-v3")` to create the underlying environment used during explanation training.
+- **`Refine_mujoco/environment.py`**: defines `make_retrain_env` which accepts an environment name (default `"Hopper-v3"` from `retrain.py`) and creates a `RetrainEnv` wrapper. The wrapper’s `reset` method can restore a stored MuJoCo state via `self.env.sim.set_state(traj.state_seq[start_idx])` and then reconstructs the observation for Hopper-v3 with:
+  ```python
+  position = self.env.sim.data.qpos.flat.copy()[1:]
+  velocity = self.env.sim.data.qvel.flat.copy()
+  obs = np.concatenate((position, velocity)).ravel()
+  ```
+  This yields the 11‑dimensional observation used by Hopper‑v3 (positions from root z, rotation, and three hinge joints, plus the corresponding velocities). It aligns with the standard Hopper‑v3 observation space.
+- **`Refine_mujoco/retrain.sh`** explicitly passes `--env "Hopper-v3"`, confirming that the refining script is configured to use this environment.
+
+All necessary components to run the experiments (explanation training, baseline training, and refinement) with Hopper‑v3 are present and appear correctly implemented.
+
+# Score
+**1** – The submission contains a correct, runnable implementation of the Hopper‑v3 environment, meeting the criterion.

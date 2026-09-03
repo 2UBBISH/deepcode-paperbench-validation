@@ -1,0 +1,73 @@
+2026-08-26 10:00:59 [info     ] Grading leaf: In Experiment II, for the selfish mining environment, for the "Ours" refinement method, code has been implemented for measuring cumulative reward throughout refinement
+2026-08-26 10:01:45 [info     ] Model file selection raw output:
+Refine_selfish_mining/retrain.py
+Refine_selfish_mining/utils.py
+Refine_selfish_mining/rnd_policy.py
+Refine_selfish_mining/rnd_model.py
+Refine_selfish_mining/masknet/sample_mask_score.py
+Refine_selfish_mining/masknet/utils.py
+Refine_selfish_mining/masknet/train.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/blockchain_simulator/mdp_blockchain_simulator_retrain.py
+Refine_selfish_mining/baseline/train_ppo.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/training/callbacks/logging/tensorboard_logging_callback.py
+2026-08-26 10:01:45 [info     ] Model file selection raw output:
+Refine_selfish_mining/retrain.py
+Refine_selfish_mining/utils.py
+Refine_selfish_mining/rnd_policy.py
+Refine_selfish_mining/rnd_model.py
+Refine_selfish_mining/masknet/sample_mask_score.py
+Refine_selfish_mining/masknet/utils.py
+Refine_selfish_mining/masknet/train.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/blockchain_simulator/mdp_blockchain_simulator_retrain.py
+Refine_selfish_mining/baseline/train_ppo.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/training/callbacks/logging/tensorboard_logging_callback.py
+2026-08-26 10:02:55 [info     ] model response: # Expectations
+In Experiment II, for the selfish mining environment, the "Ours" refinement method runs a training process that refines the pre‑trained agent using the mixed initial state distribution and RND exploration. The paper expects that the cumulative reward (or average episode reward) is monitored **throughout** this refinement – not only at the end. This typically means the code should contain measurement logic (e.g., periodic evaluation on test environments, logging of mean reward, or recording of best reward) that tracks the agent’s performance during the training loop.
+
+I expect to see:  
+- A test/validation collector that periodically collects reward from test episodes.  
+- Logging or recording of reward values (to TensorBoard, a file, or printed output) as refinement proceeds.  
+- A mechanism that reports the cumulative reward over the course of refinement, not merely a final evaluation after training finishes.
+
+# Reality
+The main refinement code for selfish mining is in `Refine_selfish_mining/retrain.py`. It does the following:
+
+- Creates a `RNDPolicy` that wraps the pre‑trained policy (loaded from checkpoint) and adds an exploration bonus.
+- Sets up parallel training and test environments using `DummyVectorEnv`.  
+- Creates a `test_collector = Collector(policy, test_envs, …)` to collect test episodes.  
+- Provides a `TensorboardLogger` writer and logger to log metrics.  
+- Uses `offpolicy_trainer(…)` from the Tianshou library, which **internally runs test collection at configured intervals** and logs the mean reward (and other statistics) via the logger.  
+- The trainer returns a `result` dictionary that includes `best_reward`.  
+- The `stop_fn` checks `mean_rewards` to decide when to stop, confirming that cumulative reward is being tracked.
+
+Because the `offpolicy_trainer` is used, the code **does implement** the measurement of cumulative reward throughout refinement – the trainer periodically evaluates the policy on the test environments, computes the average episodic reward, and logs it to TensorBoard. The actual evaluation logic is part of the Tianshou framework, but the submission includes the correct setup (collector, logger, trainer call) that causes that measurement to happen.
+
+# Score
+**1**  
+
+The submission contains code (`retrain.py`) that configures a test collector, a logger, and invokes a trainer that automatically measures cumulative reward during the entire refinement process. This meets the requirement that the code implements measurement of cumulative reward throughout refinement for the selfish mining "Ours" method.
+2026-08-26 10:02:55 [info     ] model response: # Expectations
+In Experiment II, for the selfish mining environment, the "Ours" refinement method runs a training process that refines the pre‑trained agent using the mixed initial state distribution and RND exploration. The paper expects that the cumulative reward (or average episode reward) is monitored **throughout** this refinement – not only at the end. This typically means the code should contain measurement logic (e.g., periodic evaluation on test environments, logging of mean reward, or recording of best reward) that tracks the agent’s performance during the training loop.
+
+I expect to see:  
+- A test/validation collector that periodically collects reward from test episodes.  
+- Logging or recording of reward values (to TensorBoard, a file, or printed output) as refinement proceeds.  
+- A mechanism that reports the cumulative reward over the course of refinement, not merely a final evaluation after training finishes.
+
+# Reality
+The main refinement code for selfish mining is in `Refine_selfish_mining/retrain.py`. It does the following:
+
+- Creates a `RNDPolicy` that wraps the pre‑trained policy (loaded from checkpoint) and adds an exploration bonus.
+- Sets up parallel training and test environments using `DummyVectorEnv`.  
+- Creates a `test_collector = Collector(policy, test_envs, …)` to collect test episodes.  
+- Provides a `TensorboardLogger` writer and logger to log metrics.  
+- Uses `offpolicy_trainer(…)` from the Tianshou library, which **internally runs test collection at configured intervals** and logs the mean reward (and other statistics) via the logger.  
+- The trainer returns a `result` dictionary that includes `best_reward`.  
+- The `stop_fn` checks `mean_rewards` to decide when to stop, confirming that cumulative reward is being tracked.
+
+Because the `offpolicy_trainer` is used, the code **does implement** the measurement of cumulative reward throughout refinement – the trainer periodically evaluates the policy on the test environments, computes the average episodic reward, and logs it to TensorBoard. The actual evaluation logic is part of the Tianshou framework, but the submission includes the correct setup (collector, logger, trainer call) that causes that measurement to happen.
+
+# Score
+**1**  
+
+The submission contains code (`retrain.py`) that configures a test collector, a logger, and invokes a trainer that automatically measures cumulative reward during the entire refinement process. This meets the requirement that the code implements measurement of cumulative reward throughout refinement for the selfish mining "Ours" method.

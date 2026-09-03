@@ -1,0 +1,63 @@
+2026-08-26 10:01:07 [info     ] Grading leaf: In Experiment II, for the network defence environment, for the "Ours" refinement method, the optimized StateMask ("Ours") explanation method proposed in the paper is used as the explanation method.
+2026-08-26 10:02:07 [info     ] Model file selection raw output:
+Refine_cage_challenge/retrain.py
+Refine_cage_challenge/rollout_mask.py
+Refine_cage_challenge/sample_mask_score.py
+Refine_cage_challenge/Agents/PPOAgent_mask.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_mask.py
+Refine_cage_challenge/Agents/PPOAgent_Retrain.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_retrain.py
+Refine_cage_challenge/ppo_train.py
+Refine_cage_challenge/Agents/MainAgent.py
+Refine_cage_challenge/readme.md
+2026-08-26 10:02:07 [info     ] Model file selection raw output:
+Refine_cage_challenge/retrain.py
+Refine_cage_challenge/rollout_mask.py
+Refine_cage_challenge/sample_mask_score.py
+Refine_cage_challenge/Agents/PPOAgent_mask.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_mask.py
+Refine_cage_challenge/Agents/PPOAgent_Retrain.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_retrain.py
+Refine_cage_challenge/ppo_train.py
+Refine_cage_challenge/Agents/MainAgent.py
+Refine_cage_challenge/readme.md
+2026-08-26 10:04:39 [info     ] model response: # Expectations
+From the paper, the "Ours" explanation method is the optimized StateMask proposed in Section 3.3, Algorithm 1. It trains a mask network to output blinding actions (0 or 1) using a reformulated objective (maximize η(π̄)) with an additional reward bonus for blinding, optimized via PPO. For Experiment II in the network defence environment, the "Ours" refinement method must use this trained mask network to identify critical states, which are then mixed with default initial states to construct the new initial distribution (Algorithm 2). Therefore, the submission must contain code that:
+
+1. **Implements training of the mask network** for the Cage Challenge 2 environment following Algorithm 1 (i.e., collecting trajectories with the mask agent, adding the reward bonus, and updating the mask policy with PPO).
+2. **Uses that trained mask network** within the refinement wrapper (e.g., `ChallengeWrapper2_retrain`) to obtain step‑level importance scores and select the most critical state in a trajectory.
+
+I will check whether the provided files contain a complete, correct implementation of these steps for the network defence environment.
+
+# Reality
+I examined the submission files related to the network defence environment (`Refine_cage_challenge/`). The relevant files are:
+
+- **`Agents/PPOAgent_mask.py`** – Contains a `PPOAgent_mask` class that represents the mask agent. It includes a `train()` method that performs PPO updates on the mask policy (`self.policy` with 2 actions). The `get_action()` method is supposed to add a reward bonus when the mask action is 1, but the code has a bug: it always returns `self.lazy_reward` (a constant) instead of the conditional `additional_reward`, so the bonus is not correctly tied to the mask decision. More importantly, this class only defines the update mechanism; it does not itself run a training loop.
+- **`rollout_mask.py`** – A script that loads a pre‑trained mask checkpoint and runs episodes **without ever calling `agent.train()`**. It only performs rollouts, not training. Therefore, the training of the mask network (Algorithm 1) is not executed here.
+- **`sample_mask_score.py`** – Loads a mask checkpoint and a baseline PPO checkpoint, then collects mask probabilities and actions for a set of episodes. This is used to record importance scores, but again it does not train the mask network.
+- **`retrain.py`** and **`Wrappers/ChallengeWrapper2_retrain.py`** – The refinement script and wrapper. The wrapper calls `gen_one_traj()` (imported from `utils` but not provided in the submission) to obtain action and mask records; it then uses `np.argmax(mask_record)` to pick the most critical state, implementing the mixed initial distribution. This shows that the refinement *intends* to use a mask network, but the actual training of that mask network for this environment is absent.
+
+There is no separate script that implements the training loop for the mask network (i.e., the equivalent of Algorithm 1 with environment interaction, reward bonus, and PPO updates). The only “training” related code is the `PPOAgent_mask.train()` method, but without a script that collects rollouts and calls this method periodically, the overall implementation is incomplete. The lack of a mask training script means we cannot verify that the “Ours” explanation method was correctly implemented and used for this environment.
+
+# Score
+0 – The submission does not contain a complete correct implementation of the “Ours” explanation method for the network defence environment. The mask network training procedure (Algorithm 1) is not present; only partial, buggy components exist. Consequently, the refinement cannot be said to correctly use the optimized StateMask explanation as required by the criterion.
+2026-08-26 10:04:39 [info     ] model response: # Expectations
+From the paper, the "Ours" explanation method is the optimized StateMask proposed in Section 3.3, Algorithm 1. It trains a mask network to output blinding actions (0 or 1) using a reformulated objective (maximize η(π̄)) with an additional reward bonus for blinding, optimized via PPO. For Experiment II in the network defence environment, the "Ours" refinement method must use this trained mask network to identify critical states, which are then mixed with default initial states to construct the new initial distribution (Algorithm 2). Therefore, the submission must contain code that:
+
+1. **Implements training of the mask network** for the Cage Challenge 2 environment following Algorithm 1 (i.e., collecting trajectories with the mask agent, adding the reward bonus, and updating the mask policy with PPO).
+2. **Uses that trained mask network** within the refinement wrapper (e.g., `ChallengeWrapper2_retrain`) to obtain step‑level importance scores and select the most critical state in a trajectory.
+
+I will check whether the provided files contain a complete, correct implementation of these steps for the network defence environment.
+
+# Reality
+I examined the submission files related to the network defence environment (`Refine_cage_challenge/`). The relevant files are:
+
+- **`Agents/PPOAgent_mask.py`** – Contains a `PPOAgent_mask` class that represents the mask agent. It includes a `train()` method that performs PPO updates on the mask policy (`self.policy` with 2 actions). The `get_action()` method is supposed to add a reward bonus when the mask action is 1, but the code has a bug: it always returns `self.lazy_reward` (a constant) instead of the conditional `additional_reward`, so the bonus is not correctly tied to the mask decision. More importantly, this class only defines the update mechanism; it does not itself run a training loop.
+- **`rollout_mask.py`** – A script that loads a pre‑trained mask checkpoint and runs episodes **without ever calling `agent.train()`**. It only performs rollouts, not training. Therefore, the training of the mask network (Algorithm 1) is not executed here.
+- **`sample_mask_score.py`** – Loads a mask checkpoint and a baseline PPO checkpoint, then collects mask probabilities and actions for a set of episodes. This is used to record importance scores, but again it does not train the mask network.
+- **`retrain.py`** and **`Wrappers/ChallengeWrapper2_retrain.py`** – The refinement script and wrapper. The wrapper calls `gen_one_traj()` (imported from `utils` but not provided in the submission) to obtain action and mask records; it then uses `np.argmax(mask_record)` to pick the most critical state, implementing the mixed initial distribution. This shows that the refinement *intends* to use a mask network, but the actual training of that mask network for this environment is absent.
+
+There is no separate script that implements the training loop for the mask network (i.e., the equivalent of Algorithm 1 with environment interaction, reward bonus, and PPO updates). The only “training” related code is the `PPOAgent_mask.train()` method, but without a script that collects rollouts and calls this method periodically, the overall implementation is incomplete. The lack of a mask training script means we cannot verify that the “Ours” explanation method was correctly implemented and used for this environment.
+
+# Score
+0 – The submission does not contain a complete correct implementation of the “Ours” explanation method for the network defence environment. The mask network training procedure (Algorithm 1) is not present; only partial, buggy components exist. Consequently, the refinement cannot be said to correctly use the optimized StateMask explanation as required by the criterion.

@@ -1,0 +1,69 @@
+2026-08-26 10:00:37 [info     ] Grading leaf: For the network defence environment, for the "StateMask" explanation method, code for measuring training time throughout training as outlined in Appendix C.3 and Table 4 has been implemented.
+2026-08-26 10:01:58 [info     ] Model file selection raw output:
+Refine_cage_challenge/ppo_train.py
+Refine_cage_challenge/rollout_mask.py
+Refine_cage_challenge/Agents/PPOAgent_mask.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_mask.py
+Refine_cage_challenge/readme.md
+Refine_cage_challenge/sample_mask_score.py
+Refine_cage_challenge/replay.py
+Refine_cage_challenge/retrain.py
+Refine_cage_challenge/PPO/ActorCritic.py
+Refine_cage_challenge/PPO/Memory.py
+2026-08-26 10:01:58 [info     ] Model file selection raw output:
+Refine_cage_challenge/ppo_train.py
+Refine_cage_challenge/rollout_mask.py
+Refine_cage_challenge/Agents/PPOAgent_mask.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_mask.py
+Refine_cage_challenge/readme.md
+Refine_cage_challenge/sample_mask_score.py
+Refine_cage_challenge/replay.py
+Refine_cage_challenge/retrain.py
+Refine_cage_challenge/PPO/ActorCritic.py
+Refine_cage_challenge/PPO/Memory.py
+2026-08-26 10:02:47 [info     ] model response: # Expectations
+
+The paper evaluates the efficiency of the explanation method by measuring training time for the mask network using both the StateMask technique and the authors’ own method (Section 4.3, Appendix C.3, Table 4). For the network defence environment (Cage Challenge 2), the rubric requires that the submission contains code that implements the training of the StateMask explanation method and *specifically measures the training time* during that process. This means the code should include functionality (e.g., `time.time()` calls, logging of elapsed seconds or wall‑clock time) to record how long it takes to train the mask network using the StateMask algorithm, and possibly output or store that measurement. The criterion does not demand that the measurement be run or that the resulting numbers be provided; it only checks whether the implementation of the measurement exists.
+
+# Reality
+
+The provided files in the `Refine_cage_challenge` directory are:
+- `ppo_train.py` – trains a PPO agent for the baseline policy, not a mask network.
+- `rollout_mask.py` – trains a mask network using the authors’ simplified method (PPOAgent_mask), not StateMask.
+- `Agents/PPOAgent_mask.py` – defines the mask agent class for the simplified method.
+- `Wrappers/ChallengeWrapper2_mask.py` – a wrapper for the environment, no training logic.
+- `sample_mask_score.py` – records mask probabilities for evaluation, no training.
+- `replay.py` – evaluates the fidelity score by replaying episodes, no training.
+- `retrain.py` – fine‑tunes the policy using RND, no StateMask mask training.
+- `PPO/ActorCritic.py` and `PPO/Memory.py` – standard PPO components.
+
+None of these files contains an implementation of the original StateMask algorithm. There is no code that trains a mask network using the primal‑dual or surrogate function approach described in the StateMask paper. Consequently, there is no code that measures or records the training time for a StateMask mask network. Even if one were to loosely interpret “train the mask network” as any mask training, the only mask‑training script (`rollout_mask.py`) does not include any timing instrumentation – it merely prints average rewards and does not record elapsed time.
+
+The requirement that “code for measuring training time … has been implemented” is therefore completely absent.
+
+# Score
+
+0 – The submission does not implement the required measurement code for the StateMask explanation method in the network defence environment.
+2026-08-26 10:02:47 [info     ] model response: # Expectations
+
+The paper evaluates the efficiency of the explanation method by measuring training time for the mask network using both the StateMask technique and the authors’ own method (Section 4.3, Appendix C.3, Table 4). For the network defence environment (Cage Challenge 2), the rubric requires that the submission contains code that implements the training of the StateMask explanation method and *specifically measures the training time* during that process. This means the code should include functionality (e.g., `time.time()` calls, logging of elapsed seconds or wall‑clock time) to record how long it takes to train the mask network using the StateMask algorithm, and possibly output or store that measurement. The criterion does not demand that the measurement be run or that the resulting numbers be provided; it only checks whether the implementation of the measurement exists.
+
+# Reality
+
+The provided files in the `Refine_cage_challenge` directory are:
+- `ppo_train.py` – trains a PPO agent for the baseline policy, not a mask network.
+- `rollout_mask.py` – trains a mask network using the authors’ simplified method (PPOAgent_mask), not StateMask.
+- `Agents/PPOAgent_mask.py` – defines the mask agent class for the simplified method.
+- `Wrappers/ChallengeWrapper2_mask.py` – a wrapper for the environment, no training logic.
+- `sample_mask_score.py` – records mask probabilities for evaluation, no training.
+- `replay.py` – evaluates the fidelity score by replaying episodes, no training.
+- `retrain.py` – fine‑tunes the policy using RND, no StateMask mask training.
+- `PPO/ActorCritic.py` and `PPO/Memory.py` – standard PPO components.
+
+None of these files contains an implementation of the original StateMask algorithm. There is no code that trains a mask network using the primal‑dual or surrogate function approach described in the StateMask paper. Consequently, there is no code that measures or records the training time for a StateMask mask network. Even if one were to loosely interpret “train the mask network” as any mask training, the only mask‑training script (`rollout_mask.py`) does not include any timing instrumentation – it merely prints average rewards and does not record elapsed time.
+
+The requirement that “code for measuring training time … has been implemented” is therefore completely absent.
+
+# Score
+
+0 – The submission does not implement the required measurement code for the StateMask explanation method in the network defence environment.

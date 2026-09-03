@@ -1,0 +1,784 @@
+diff --git a/core/agent_runtime/tools/mcp.py b/core/agent_runtime/tools/mcp.py
+index efb1de7..28fd54e 100644
+--- a/core/agent_runtime/tools/mcp.py
++++ b/core/agent_runtime/tools/mcp.py
+@@ -13,6 +13,8 @@ Ported from nanobot.agent.tools.mcp. Compared to the upstream version we:
+ from __future__ import annotations
+ 
+ import asyncio
++import os
++import re
+ import time
+ from contextlib import AsyncExitStack
+ from dataclasses import dataclass, field
+@@ -49,13 +51,64 @@ def _normalize_schema_for_openai(schema: Any) -> dict[str, Any]:
+     return normalize_schema_for_openai(schema)
+ 
+ 
++def _denied_urls() -> list[str]:
++    """URL substrings the agent must not retrieve, from ``DEEPCODE_URL_DENYLIST``.
++
++    [local compat][fre] The DeepCode paper (arXiv:2512.07921 §4.1) states that
++    "a source code blacklist is enforced during execution … precludes access to
++    the authors' original repositories … during web browsing", but the released
++    code contains no blacklist logic at all (repo-wide grep for 'blacklist' is
++    empty). Our git ``insteadOf`` block only covers the git protocol, so the
++    reference-mining agent reached the target paper's official repository over
++    plain HTTP through the fetch MCP server (observed 2026-08-26, fre trial 1).
++    The runner supplies the benchmark's own blacklist.txt through this env var,
++    which restores the protocol the paper describes rather than adding to it.
++    """
++    raw = os.environ.get("DEEPCODE_URL_DENYLIST", "")
++    return [p.strip().lower() for p in re.split(r"[,\n]", raw) if p.strip()]
++
++
++def _url_like_values(kwargs: dict[str, Any]) -> list[str]:
++    """Every string argument that could carry a URL."""
++    out: list[str] = []
++    for value in kwargs.values():
++        if isinstance(value, str):
++            out.append(value)
++        elif isinstance(value, (list, tuple)):
++            out.extend(v for v in value if isinstance(v, str))
++    return out
++
++
++# Per-process fetch ledger: (tool, url) -> times served. Guards against the
++# observed failure mode where a model re-requests the same dead URL until its
++# iteration budget is gone (fre trial 1: three nonexistent repos fetched 16x
++# each, burning 48 of 40 allowed iterations).
++_FETCH_COUNTS: dict[tuple[str, str], int] = {}
++_MAX_SAME_URL_FETCHES = 2
++
++
++def _sanitize_exposed_name(name: str) -> str:
++    """Make a model-facing tool name safe for constrained tool-call decoding.
++
++    [local compat][E1] Hyphens are legal per the OpenAI function-name spec,
++    but siliconflow's Kimi-K2.7 endpoint silently fails to emit a structured
++    tool call for any declared name containing '-' (A/B verified 2026-08-26:
++    'mcp_github-downloader_git_clone' -> finish='stop' with zero tool_calls;
++    the same schema as 'mcp_github_downloader_git_clone' -> a correct call).
++    Server names like 'github-downloader' / 'document-segmentation' therefore
++    produced silently dead tools. Routing is unaffected: wrappers call the
++    MCP server via ``_original_name`` + session, never via the exposed name.
++    """
++    return name.replace("-", "_")
++
++
+ class MCPToolWrapper(Tool):
+     """Wraps a single MCP server tool as a native Tool."""
+ 
+     def __init__(self, session, server_name: str, tool_def, tool_timeout: int = 300):
+         self._session = session
+         self._original_name = tool_def.name
+-        self._name = f"mcp_{server_name}_{tool_def.name}"
++        self._name = _sanitize_exposed_name(f"mcp_{server_name}_{tool_def.name}")
+         self._description = tool_def.description or tool_def.name
+         raw_schema = tool_def.inputSchema or {"type": "object", "properties": {}}
+         self._parameters = _normalize_schema_for_openai(raw_schema)
+@@ -83,6 +136,56 @@ class MCPToolWrapper(Tool):
+         status = "ok"
+         error_msg: str | None = None
+         result_text: str = ""
++
++        # [local compat][fre] Benchmark blacklist + repeat-fetch guard. Both
++        # only ever refuse a call; neither rewrites arguments, so a run without
++        # DEEPCODE_URL_DENYLIST behaves exactly as before.
++        arg_strings = _url_like_values(kwargs)
++        for denied in _denied_urls():
++            hit = next((s for s in arg_strings if denied in s.lower()), None)
++            if hit is not None:
++                logger.warning(
++                    "MCP tool '{}' blocked: argument matches blacklisted resource '{}'",
++                    self._name,
++                    denied,
++                )
++                refusal = (
++                    f"BLOCKED: '{hit}' is on this task's blacklist of prohibited "
++                    "resources (the paper's own implementation or a known "
++                    "reference implementation). Accessing it would be cheating. "
++                    "Do not retry this or any other URL under it; continue using "
++                    "only the paper text and unrelated sources."
++                )
++                self._record_observability(
++                    server_name, kwargs, refusal, "blocked", started
++                )
++                return refusal
++
++        fetch_key: tuple[str, str] | None = None
++        if self._original_name == "fetch":
++            url = next((s for s in arg_strings if "://" in s), None)
++            if url is not None:
++                fetch_key = (self._original_name, url)
++                seen = _FETCH_COUNTS.get(fetch_key, 0)
++                if seen >= _MAX_SAME_URL_FETCHES:
++                    logger.warning(
++                        "MCP tool '{}' short-circuited: '{}' already fetched {}x",
++                        self._name,
++                        url,
++                        seen,
++                    )
++                    refusal = (
++                        f"ALREADY FETCHED: '{url}' has been retrieved {seen} times "
++                        "in this session and returned no further information. "
++                        "Re-fetching it will not help — the page is unavailable or "
++                        "does not contain what you need. Move on to a different "
++                        "source, or proceed with the information you already have."
++                    )
++                    self._record_observability(
++                        server_name, kwargs, refusal, "throttled", started
++                    )
++                    return refusal
++
+         try:
+             result = await asyncio.wait_for(
+                 self._session.call_tool(self._original_name, arguments=kwargs),
+@@ -124,6 +227,8 @@ class MCPToolWrapper(Tool):
+             else:
+                 parts.append(str(block))
+         result_text = "\n".join(parts) or "(no output)"
++        if fetch_key is not None:  # [local compat][fre] repeat-fetch ledger
++            _FETCH_COUNTS[fetch_key] = _FETCH_COUNTS.get(fetch_key, 0) + 1
+         self._record_observability(server_name, kwargs, result_text, status, started)
+         return result_text
+ 
+@@ -169,7 +274,9 @@ class MCPResourceWrapper(Tool):
+     ):
+         self._session = session
+         self._uri = resource_def.uri
+-        self._name = f"mcp_{server_name}_resource_{resource_def.name}"
++        self._name = _sanitize_exposed_name(
++            f"mcp_{server_name}_resource_{resource_def.name}"
++        )
+         desc = resource_def.description or resource_def.name
+         self._description = f"[MCP Resource] {desc}\nURI: {self._uri}"
+         self._parameters: dict[str, Any] = {
+@@ -244,7 +351,9 @@ class MCPPromptWrapper(Tool):
+     ):
+         self._session = session
+         self._prompt_name = prompt_def.name
+-        self._name = f"mcp_{server_name}_prompt_{prompt_def.name}"
++        self._name = _sanitize_exposed_name(
++            f"mcp_{server_name}_prompt_{prompt_def.name}"
++        )
+         desc = prompt_def.description or prompt_def.name
+         self._description = (
+             f"[MCP Prompt] {desc}\n"
+@@ -489,10 +598,11 @@ async def connect_mcp_servers(
+             matched_enabled_tools: set[str] = set()
+             available_raw_names = [tool_def.name for tool_def in tools.tools]
+             available_wrapped_names = [
+-                f"mcp_{name}_{tool_def.name}" for tool_def in tools.tools
++                _sanitize_exposed_name(f"mcp_{name}_{tool_def.name}")
++                for tool_def in tools.tools
+             ]
+             for tool_def in tools.tools:
+-                wrapped_name = f"mcp_{name}_{tool_def.name}"
++                wrapped_name = _sanitize_exposed_name(f"mcp_{name}_{tool_def.name}")
+                 if (
+                     not allow_all_tools
+                     and tool_def.name not in enabled_tools
+diff --git a/core/compat/agent.py b/core/compat/agent.py
+index 1243fe9..4a54fba 100644
+--- a/core/compat/agent.py
++++ b/core/compat/agent.py
+@@ -150,7 +150,9 @@ def _apply_tool_filter(
+         if not tool_name.startswith("mcp_"):
+             continue
+         for srv in tool_filter.keys():
+-            if tool_name.startswith(f"mcp_{srv}_"):
++            # [local compat][E1] exposed names are sanitized ('-' -> '_');
++            # match filters against the sanitized prefix.
++            if tool_name.startswith(f"mcp_{srv}_".replace("-", "_")):
+                 registry_servers.add(srv)
+ 
+     for srv in tool_filter.keys():
+@@ -187,7 +189,7 @@ def _apply_tool_filter(
+             continue
+         kept = False
+         for server, allowed in tool_filter.items():
+-            prefix = f"mcp_{server}_"
++            prefix = f"mcp_{server}_".replace("-", "_")  # [local compat][E1]
+             if not tool_name.startswith(prefix):
+                 continue
+             if not allowed:
+diff --git a/core/compat/request_params.py b/core/compat/request_params.py
+index 1121556..79be2bb 100644
+--- a/core/compat/request_params.py
++++ b/core/compat/request_params.py
+@@ -15,6 +15,7 @@ the whole multi-agent pipeline mid-run.
+ 
+ from __future__ import annotations
+ 
++import os
+ from typing import Any
+ 
+ from loguru import logger
+@@ -98,7 +99,10 @@ class RequestParams:
+         max_tool_result_chars: int | None = None,
+         context_window_tokens: int | None = None,
+         context_block_limit: int | None = None,
+-        provider_retry_mode: str = "standard",
++        # [local compat] "persistent" 走无限退避(上限 _PERSISTENT_MAX_DELAY,
++        # 连续同错 _PERSISTENT_IDENTICAL_ERROR_LIMIT 次才收手)。默认仍是官方的
++        # "standard"(1/2/4 秒三次),只允许用环境变量整体切换。
++        provider_retry_mode: str = os.environ.get("DEEPCODE_LLM_RETRY_MODE", "standard"),
+         retry_wait_callback: Any | None = None,
+         checkpoint_callback: Any | None = None,
+         llm_timeout_s: float | None = None,
+diff --git a/core/providers/base.py b/core/providers/base.py
+index 79f2b6f..a8ecbd5 100644
+--- a/core/providers/base.py
++++ b/core/providers/base.py
+@@ -2,6 +2,7 @@
+ 
+ import asyncio
+ import json
++import os
+ import re
+ from abc import ABC, abstractmethod
+ from collections.abc import Awaitable, Callable
+@@ -144,9 +145,17 @@ _SYNTHETIC_USER_CONTENT = "(conversation continued)"
+ class LLMProvider(ABC):
+     """Base class for LLM providers."""
+ 
+-    _CHAT_RETRY_DELAYS = (1, 2, 4)
+-    _PERSISTENT_MAX_DELAY = 60
+-    _PERSISTENT_IDENTICAL_ERROR_LIMIT = 10
++    # [local compat] 三档 1/2/4 秒退避对供应商侧限流几乎无用:白天高峰期
++    # SiliconFlow 的 180s 请求超时会连续命中,三次打完约 10 分钟即放弃,
++    # trial6(2026-08-28 15:24)就因此在写码到 9/24 时整轮报废。
++    # 默认值保持官方原样,仅允许用环境变量覆盖。
++    _CHAT_RETRY_DELAYS = tuple(
++        int(x) for x in os.environ.get("DEEPCODE_CHAT_RETRY_DELAYS", "1,2,4").split(",") if x.strip()
++    ) or (1, 2, 4)
++    _PERSISTENT_MAX_DELAY = int(os.environ.get("DEEPCODE_PERSISTENT_MAX_DELAY", "60"))
++    _PERSISTENT_IDENTICAL_ERROR_LIMIT = int(
++        os.environ.get("DEEPCODE_PERSISTENT_IDENTICAL_ERROR_LIMIT", "10")
++    )
+     _RETRY_HEARTBEAT_CHUNK = 30
+     _TRANSIENT_ERROR_MARKERS = (
+         "429",
+diff --git a/tools/code_indexer.py b/tools/code_indexer.py
+index 9c02e36..a9b6710 100644
+--- a/tools/code_indexer.py
++++ b/tools/code_indexer.py
+@@ -563,7 +563,14 @@ class CodeIndexer:
+             llm_response = await self._call_llm(
+                 filter_prompt,
+                 system_prompt="You are a professional code analysis and project architecture expert, skilled at identifying code file functionality and relevance.",
+-                max_tokens=2000,
++                # [local compat] 2000 token 对大仓库必然截断:预筛要为每个候选文件输出
++                # 一条含 file_path/confidence/relevance_reason 的 JSON 记录,151 个文件的
++                # 仓库就写到约 9000 字符被硬截,json.loads 抛异常 → 静默回退全量索引
++                # (见下方 except 分支与 analyze_repository 的 else 分支)。
++                # 实测(2026-08-29 rice trial1):17 文件的仓库筛选成功,151/239 文件的
++                # 仓库 100% 失败;fre 三轮同样有 20~40% 的仓库在回退状态下建卡。
++                # 默认值保持官方原样,仅允许用环境变量覆盖。
++                max_tokens=int(os.environ.get("DEEPCODE_PREFILTER_MAX_TOKENS", "2000")),
+             )
+ 
+             # Parse JSON response
+diff --git a/utils/loop_detector.py b/utils/loop_detector.py
+index 19bfea3..d3166b3 100644
+--- a/utils/loop_detector.py
++++ b/utils/loop_detector.py
+@@ -89,11 +89,19 @@ class LoopDetector:
+         if len(self.tool_history) >= self.max_repeats:
+             recent_tools = self.tool_history[-self.max_repeats :]
+             if len(set(recent_tools)) == 1:  # All same tool
+-                return {
+-                    "status": "loop_detected",
+-                    "message": f"⚠️ Loop detected: {recent_tools[0]} called {self.max_repeats} times consecutively",
+-                    "should_stop": True,
+-                }
++                # [local compat] Consecutive write_file calls are the NORMAL
++                # working mode in the indexed (2-tool) surface: the agent
++                # writes planned files one after another with different
++                # arguments. This name-only check cannot tell real loops
++                # from healthy progress for write-class tools, so exempt
++                # them; runaway behaviour is still covered by the progress
++                # stall, per-file timeout, error-count, and iteration caps.
++                if recent_tools[0] not in ("write_file", "write_multiple_files"):
++                    return {
++                        "status": "loop_detected",
++                        "message": f"⚠️ Loop detected: {recent_tools[0]} called {self.max_repeats} times consecutively",
++                        "should_stop": True,
++                    }
+ 
+         # Check file timeout
+         if (
+diff --git a/workflows/agent_orchestration_engine.py b/workflows/agent_orchestration_engine.py
+index ed7dc7d..4be17c1 100644
+--- a/workflows/agent_orchestration_engine.py
++++ b/workflows/agent_orchestration_engine.py
+@@ -778,6 +778,63 @@ async def run_code_analyzer(
+                 print(
+                     f"??Code analysis completed successfully (length: {len(result)} chars)"
+                 )
++                # [fix-①][env: DEEPCODE_PLAN_COVERAGE_CHECK=1] 覆盖核查+一次修订。
++                # fre 两轮的计划均漏掉全部对比基线(GC-IQL/GC-BC/OPAL 三项 0 分),
++                # 且文件树定死后写码循环无法补救(实测)。这里在采纳计划前追加
++                # 一次审计-修订调用;修订稿必须通过与原计划相同的校验,否则回退
++                # 原计划。默认关闭,任何异常都不阻断主流程。
++                coverage_info = {"ran": False}
++                if os.environ.get("DEEPCODE_PLAN_COVERAGE_CHECK") == "1":
++                    try:
++                        audit_message = (
++                            f"{message}\n\n==== YOUR CURRENT PLAN ====\n{result}\n\n"
++                            "==== COVERAGE AUDIT TASK ====\n"
++                            "Audit the plan above against the paper for MISSING core "
++                            "components, checking specifically: (1) every BASELINE / "
++                            "comparison method the paper evaluates against, (2) every "
++                            "experiment described in the paper's main body, (3) every "
++                            "environment/dataset the experiments require. Graders assign "
++                            "separate credit to each of these; a plan that omits them "
++                            "forfeits those points.\n"
++                            "If anything is missing, output the COMPLETE revised plan in "
++                            "exactly the same YAML format, with the missing components "
++                            "added to file_structure and implementation_components. "
++                            "If nothing is missing, output the original plan unchanged. "
++                            "Output ONLY the plan."
++                        )
++                        audit_run = await _generate_plan_with_single_agent(
++                            code_planner_agent,
++                            message=audit_message,
++                            request_params=enhanced_params,
++                            timeout_s=request_timeout_s,
++                            logger=logger,
++                        )
++                        revised = (audit_run.final_content or "").strip()
++                        rev_completeness = _assess_output_completeness(revised)
++                        rev_validation = validate_plan_text(revised)
++                        adopted = bool(
++                            revised
++                            and rev_completeness >= 0.8
++                            and rev_validation.get("valid", False)
++                        )
++                        coverage_info = {
++                            "ran": True,
++                            "adopted": adopted,
++                            "chars_before": len(result),
++                            "chars_after": len(revised),
++                        }
++                        if adopted:
++                            result = revised
++                            completeness_score = rev_completeness
++                            plan_validation = rev_validation
++                            print(
++                                f"?? Coverage audit adopted revised plan ({len(revised)} chars)"
++                            )
++                        else:
++                            print("?? Coverage audit kept original plan")
++                    except Exception as cov_err:  # noqa: BLE001 - never block planning
++                        coverage_info = {"ran": True, "error": str(cov_err)[:200]}
++                        logger.warning(f"Plan coverage check failed: {cov_err}")
+                 attempt_record["status"] = "success"
+                 append_planning_attempt(paper_dir, attempt_record)
+                 write_planning_meta(
+@@ -785,6 +842,7 @@ async def run_code_analyzer(
+                     {
+                         "status": "success",
+                         "source": "generated",
++                        "coverage_check": coverage_info,
+                         "mode": planning_mode,
+                         "attempts": attempt,
+                         "stop_reason": run_result.stop_reason,
+@@ -929,14 +987,47 @@ async def github_repo_download(search_result: str, paper_dir: str, logger) -> st
+     Returns:
+         str: Download result
+     """
++    # [local compat][E1-D2] The upstream one-line instruction ("Download
++    # github repo to the directory ...") with the raw reference report as the
++    # user message produced ZERO tool calls on Kimi-K2.7 (E1 2026-08-26): the
++    # model narrated its intent and stopped, so no repository was ever cloned.
++    # The repo's GITHUB_DOWNLOAD_PROMPT was never wired in and cannot be wired
++    # as-is (its JSON braces break .format(); it references an "interpreter"
++    # tool this agent does not have). This replacement states a tool-first
++    # contract against the actual tool surface (git_clone).
++    code_base_dir = os.path.join(paper_dir, "code_base")
++    instruction = (
++        "You are a repository acquisition agent. Your ONLY job is to clone "
++        "GitHub repositories by invoking the `git_clone` tool.\n"
++        "Rules:\n"
++        "1. NEVER answer with prose alone. A response without tool calls is a "
++        "failure; announcing a plan downloads nothing.\n"
++        "2. From the reference report in the user message, take every "
++        "repository listed under `selected_references` "
++        "(field github_info.repository_url).\n"
++        "3. For EACH repository make one git_clone call: "
++        f'git_clone(repo_url=<url>, target_path="{code_base_dir}/<repo-name>"). '
++        "Use absolute target paths only.\n"
++        "4. A failing clone (blocked, missing, auth) is acceptable: report it "
++        "and move on to the next repository. Never retry a blocked URL.\n"
++        "5. Only after every repository has been attempted, reply with a short "
++        "plain-text summary: one line per URL with success/failed."
++    )
+     github_download_agent = Agent(
+         name="GithubDownloadAgent",
+-        instruction="Download github repo to the directory {paper_dir}/code_base".format(
+-            paper_dir=paper_dir
+-        ),
+-        server_names=["filesystem", "github-downloader"],
++        instruction=instruction,
++        server_names=["github-downloader"],
+     )
+ 
++    def _cloned_repos() -> List[str]:
++        if not os.path.isdir(code_base_dir):
++            return []
++        return [
++            d
++            for d in os.listdir(code_base_dir)
++            if os.path.isdir(os.path.join(code_base_dir, d)) and not d.startswith(".")
++        ]
++
+     async with github_download_agent:
+         print("GitHub downloader: Downloading repositories...")
+         downloader = await attach_workflow_llm(
+@@ -946,14 +1037,52 @@ async def github_repo_download(search_result: str, paper_dir: str, logger) -> st
+ 
+         # Set higher token output for GitHub download
+         github_params = RequestParams(
+-            maxTokens=4096,  # Using camelCase
++            # [fix-④b] 下载 agent 输出上限 env 化(默认保持 4096)
++            maxTokens=int(os.environ.get("DEEPCODE_DOWNLOAD_MAX_TOKENS", "4096")),
+             temperature=0.1,
++            # [local compat] see reference_params: default 8 iterations is
++            # too few to clone several candidate repositories via tools.
++            max_iterations=40,
++            # [local compat][E1-D3] narrow the surface to the clone tool only.
++            # 17 unfiltered tools + a loose contract is exactly the
++            # configuration that yielded zero tool calls in E1, while the
++            # reference analyzer (3 filtered tools + tight prompt) looped
++            # tools 9 rounds on the same model.
++            tool_filter={"github-downloader": {"git_clone"}},
+         )
+ 
+-        return await downloader.generate_str(
+-            message=search_result, request_params=github_params
++        framed_message = (
++            "Below is the reference analysis report. Clone every selected "
++            f"repository into {code_base_dir} as instructed.\n\n"
++            "=== REFERENCE REPORT START ===\n"
++            f"{search_result}\n"
++            "=== REFERENCE REPORT END ==="
++        )
++        result = await downloader.generate_str(
++            message=framed_message, request_params=github_params
+         )
+ 
++        # [local compat][E1-D4] one corrective retry for the observed failure
++        # mode (a single prose response, zero tool calls). Self-contained
++        # message: do not assume the first exchange is still in context.
++        if not _cloned_repos():
++            logger.warning(
++                "Download agent produced no clones; issuing one corrective retry"
++            )
++            result = await downloader.generate_str(
++                message=(
++                    "You did not invoke any tool, so NOTHING was downloaded. "
++                    "Call git_clone now, once per repository URL below, with "
++                    f'target_path="{code_base_dir}/<repo-name>". Reply only '
++                    "after the tool calls are done.\n\n"
++                    "=== REFERENCE REPORT START ===\n"
++                    f"{search_result}\n"
++                    "=== REFERENCE REPORT END ==="
++                ),
++                request_params=github_params,
++            )
++        return result
++
+ 
+ async def paper_reference_analyzer(paper_dir: str, logger) -> str:
+     """
+@@ -986,8 +1115,20 @@ Goal: Find the most valuable GitHub repositories from the paper's reference list
+ 
+         # Filter tools to only essential ones for reference analysis
+         reference_params = RequestParams(
+-            maxTokens=4096,
++            # [fix-④][fre trial_fx1 2026-09-02] 五条精选仓库的详版报告超过 8192
++            # token 被截断,续写恢复只留下尾段 → 下载 agent 只看见 1 个 URL,
++            # 整轮语料贫瘠(trial4 同因)。env 可调,默认保持 8192。
++            maxTokens=int(os.environ.get("DEEPCODE_REFERENCE_MAX_TOKENS", "8192")),
+             temperature=0.2,
++            # [local compat] default max_iterations=8 starves this agent: it
++            # must read the (segmented) paper and fetch several pages before
++            # it can write the report. Give it real headroom.
++            # [fre] 40 was tuned for Kimi (~9 rounds). DeepSeek-V4-Pro verifies
++            # each candidate repository individually and exhausted 40 on fre
++            # without emitting a report (67 distinct URLs fetched). With the
++            # repeat-fetch guard now capping wasted retries, 80 covers that
++            # working style; the cap is a backstop, not the expected cost.
++            max_iterations=80,
+             tool_filter={
+                 "filesystem": {"read_text_file", "list_directory"},
+                 "fetch": {"fetch"},
+@@ -1406,21 +1547,24 @@ async def automate_repository_acquisition_agent(
+                     f"Successfully downloaded {len(downloaded_repos)} repositories: {downloaded_repos}"
+                 )
+             else:
+-                print(
+-                    "GitHub download phase completed, but no repositories were found in the code_base directory"
+-                )
+-                print("This might indicate:")
+-                print(
+-                    "1. No relevant repositories were identified in the reference analysis"
+-                )
+-                print(
+-                    "2. Repository downloads failed due to access permissions or network issues"
+-                )
+-                print(
+-                    "3. The download agent encountered errors during the download process"
++                # [local compat][E1-D4] fail fast instead of sailing on. In E1
++                # an empty code_base was merely printed here, so the pipeline
++                # continued into "indexed mode + empty index" — the documented
++                # weakest configuration (RUNBOOK pit 8) — and burned the whole
++                # implementation phase on an invalid setup.
++                raise RuntimeError(
++                    "Repository acquisition produced no repositories in "
++                    f"{code_base_path} (agent narrated without cloning, or every "
++                    "clone failed). Aborting: continuing would run indexed-mode "
++                    "implementation against an empty index."
+                 )
+         else:
+-            print(f"Code base directory was not created: {code_base_path}")
++            # [local compat][E1-D4] same fail-fast as above.
++            raise RuntimeError(
++                f"Code base directory was not created: {code_base_path}. "
++                "Aborting: continuing would run indexed-mode implementation "
++                "against an empty index."
++            )
+ 
+     except Exception as e:
+         print(f"Error during GitHub repository download: {e}")
+@@ -1457,6 +1601,30 @@ async def orchestrate_codebase_intelligence_agent(
+     )
+     await asyncio.sleep(2)  # Brief pause before starting indexing
+ 
++    # [local compat] Every other phase (planning/reference/download) reuses
++    # existing artifacts on resume; indexing alone rebuilt from scratch each
++    # run. Skip when per-repo index files already exist for the current
++    # code_base contents.
++    _idx_dir = os.path.join(dir_info["paper_dir"], "indexes")
++    _cb_dir = os.path.join(dir_info["paper_dir"], "code_base")
++    if os.path.isdir(_idx_dir) and os.path.isdir(_cb_dir):
++        _repos = [
++            d
++            for d in os.listdir(_cb_dir)
++            if os.path.isdir(os.path.join(_cb_dir, d)) and not d.startswith(".")
++        ]
++        _indexed = {
++            f[: -len("_index.json")]
++            for f in os.listdir(_idx_dir)
++            if f.endswith("_index.json")
++        }
++        if _repos and all(r in _indexed for r in _repos):
++            print(f"Reusing existing indexes for {len(_repos)} repositories; skipping rebuild")
++            return {
++                "status": "success",
++                "message": f"Reused existing indexes for {len(_repos)} repositories",
++            }
++
+     # Check if code_base directory exists and has content
+     code_base_path = os.path.join(dir_info["paper_dir"], "code_base")
+     if not os.path.exists(code_base_path):
+diff --git a/workflows/agents/document_segmentation_agent.py b/workflows/agents/document_segmentation_agent.py
+index ec7ba22..37c61a8 100644
+--- a/workflows/agents/document_segmentation_agent.py
++++ b/workflows/agents/document_segmentation_agent.py
+@@ -129,6 +129,8 @@ Use the enhanced document-segmentation tools to deliver superior segmentation re
+             # Use the enhanced document segmentation tool
+             message = f"""Please perform intelligent semantic analysis and segmentation for the document in directory: {paper_dir}
+ 
++CRITICAL: You MUST invoke the analyze_and_segment_document tool via an actual function/tool call. Describing what you would do, or answering in prose without a tool call, is a failure — no segmentation happens unless the tool runs.
++
+ Use the analyze_and_segment_document tool with these parameters:
+ - paper_dir: {paper_dir}
+ - force_refresh: {force_refresh}
+@@ -150,6 +152,31 @@ After segmentation, get a document overview and provide:
+ 
+             result = await self.llm.generate_str(message=message)
+ 
++            # [local compat][E1-D4/F1] Trust artifacts, not the agent's word.
++            # In E1 (Kimi-K2.7) the model narrated instead of calling the
++            # segmentation tool; this method still reported success with
++            # segments_available=True while document_segments/ was never
++            # created, and the planner only noticed via a late fallback.
++            index_path = os.path.join(
++                paper_dir, "document_segments", "document_index.json"
++            )
++            if not os.path.exists(index_path):
++                self.logger.error(
++                    f"Segmentation agent returned without creating {index_path}; "
++                    "treating as failure (agent likely narrated instead of "
++                    "calling analyze_and_segment_document)"
++                )
++                return {
++                    "status": "error",
++                    "paper_dir": paper_dir,
++                    "error_message": (
++                        "analyze_and_segment_document produced no "
++                        "document_index.json — the agent answered in prose "
++                        "without invoking the tool"
++                    ),
++                    "segments_available": False,
++                }
++
+             self.logger.info("Document analysis completed successfully")
+ 
+             # Parse the result and return structured information
+diff --git a/workflows/agents/memory_agent_concise.py b/workflows/agents/memory_agent_concise.py
+index ba9561e..83dbae9 100644
+--- a/workflows/agents/memory_agent_concise.py
++++ b/workflows/agents/memory_agent_concise.py
+@@ -1671,6 +1671,20 @@ class ConciseMemoryAgent:
+             print(f"\n📋 {self.current_next_steps}")
+ 
+         # 1. Add initial plan message (always preserved)
++        # [fix-②][env: DEEPCODE_ALLOW_PLAN_EXTENSION=1] 解冻文件树:
++        # fre 两轮因规划漏掉三个对比基线而各丢三项满权重 0 分,写码循环
++        # 结构上无法补救(实测)。默认关闭,不影响既有口径。
++        _plan_extension_note = ""
++        if os.environ.get("DEEPCODE_ALLOW_PLAN_EXTENSION") == "1":
++            _plan_extension_note = (
++                "\n\n**PLAN COMPLETENESS (overrides the plan):** The plan is a "
++                "starting point, not a limit. Before finishing, audit the paper's "
++                "core contributions: if any BASELINE/comparison method or main-body "
++                "experiment has NO planned file, CREATE a new appropriately-named "
++                "file for it with write_file. Graders assign separate credit to "
++                "each baseline; omitting them forfeits those points."
++            )
++
+         initial_plan_message = {
+             "role": "user",
+             "content": f"""**Task: Implement code based on the following reproduction plan**
+@@ -1688,7 +1702,7 @@ class ConciseMemoryAgent:
+ **Remaining Files to Implement:**
+ {unimplemented_files_list}
+ 
+-**IMPORTANT:** If the remaining files list shows "All files implemented!", you MUST reply with "All files implemented" to complete the task. Do NOT continue calling tools.
++**IMPORTANT:** If the remaining files list shows "All files implemented!", you MUST reply with "All files implemented" to complete the task. Do NOT continue calling tools.{_plan_extension_note}
+ 
+ **Objective:** {"Reply 'All files implemented' to finish" if not unimplemented_files else "Continue implementation by analyzing dependencies and implementing the next required file according to the plan's priority order."}""",
+         }
+diff --git a/workflows/code_implementation_workflow.py b/workflows/code_implementation_workflow.py
+index 4eb37c7..66514ea 100644
+--- a/workflows/code_implementation_workflow.py
++++ b/workflows/code_implementation_workflow.py
+@@ -88,11 +88,51 @@ _MCP_SERVER_NAMES = [
+ ]
+ 
+ _MAX_ITERATIONS = 800
+-_MAX_WALL_SECONDS = 7200  # 120 minutes (2 hours)
++# [local compat][fre] 7200s (2h) truncates reasoning-model implementation runs:
++# DeepSeek-V4-Pro spends most of its output budget on thinking (~225s/call
++# measured before the maxTokens fix), and fre needs two calls per file
++# (write + summary). Hitting the wall mid-run would measure the time budget
++# rather than the model, so the ceiling is raised to 4h. This only permits
++# longer runs; fast models (Kimi finished rice well inside 2h) are unaffected.
++# [rice] 4h still truncates: 33-file plans at ~670 lines/file plus daytime
++# empty-response episodes (30-50 min each, API-load correlated) can push a
++# healthy run past 4h. Env-overridable; default keeps the 4h above.
++_MAX_WALL_SECONDS = int(os.environ.get("DEEPCODE_MAX_WALL_SECONDS", "14400"))
+ _EMERGENCY_TRIM_THRESHOLD = 50
+ _MAX_TOOL_RESULT_CHARS = 60_000
+ 
+ 
++def _try_compile_written_file(rel_or_abs: str) -> str:
++    """[fix-③] Resolve the just-written .py and py_compile it; '' if OK/unresolvable."""
++    import glob as _glob
++    import py_compile as _pyc
++
++    cands = []
++    if os.path.isabs(rel_or_abs):
++        cands.append(rel_or_abs)
++    else:
++        cands.append(os.path.join(os.getcwd(), rel_or_abs))
++        cands.extend(
++            sorted(
++                _glob.glob(
++                    os.path.join(
++                        "deepcode_lab", "tasks", "paper_*", "generate_code", rel_or_abs
++                    )
++                ),
++                key=os.path.getmtime,
++                reverse=True,
++            )
++        )
++    for c in cands:
++        if os.path.isfile(c):
++            try:
++                _pyc.compile(c, doraise=True)
++                return ""
++            except Exception as e:  # noqa: BLE001 - report any compile-time failure
++                return str(e)[:600]
++    return ""
++
++
+ @dataclass
+ class _RunState:
+     """Shared mutable state between the tool wrappers, hook and callbacks."""
+@@ -287,6 +327,20 @@ class _InstrumentedTool(AliasedTool):
+                     "Code implementation progress: "
+                     f"{info['files_completed']}/{info['total_files']} files completed"
+                 )
++            # [fix-③][env: DEEPCODE_POSTWRITE_COMPILE=1] 写后语法自检。
++            # 两个裸跑模型都会自发 py_compile,而本循环从不验证任何产出
++            # (command_executor 全程 0 调用,fre/rice 实测)。失败信息拼回
++            # tool result,模型下一轮即可自修。默认关闭,不影响既有口径。
++            if os.environ.get("DEEPCODE_POSTWRITE_COMPILE") == "1" and str(
++                filename
++            ).endswith(".py"):
++                comp_err = _try_compile_written_file(str(filename))
++                if comp_err:
++                    result = (
++                        f"{result}\n\n⚠️ SYNTAX CHECK FAILED for {filename}:\n"
++                        f"{comp_err}\nRewrite this file with write_file to fix the "
++                        "error before implementing the next file."
++                    )
+         return result
+ 
+ 
+@@ -425,7 +479,19 @@ class CodeImplementationWorkflow:
+         self.logger = self._create_logger()
+         self.mcp_agent = None
+         self.enable_read_tools = True
+-        self.loop_detector = LoopDetector()
++        # [local compat] The default 300s stall threshold assumes ~30s LLM
++        # turns; one transient error + retry + a long truncated-output turn
++        # (observed: 5m34s) trips it during healthy progress. Widen it; the
++        # wall-clock and iteration caps still bound runaway runs.
++        # [fre] 900s still fired twice on DeepSeek-V4-Pro (fre trials, both
++        # aborted at 13/31 and 15/20 files with the core algorithm already
++        # written) — its thinking turns plus retries exceed 15 minutes under
++        # daytime API load. Raised to 1800s; runaway runs remain bounded by
++        # the 4h implementation wall clock and the 800-iteration cap, neither
++        # of which any completed run has approached.
++        self.loop_detector = LoopDetector(
++            stall_threshold=int(os.environ.get("DEEPCODE_STALL_THRESHOLD", "1800"))
++        )
+         self.progress_tracker = ProgressTracker()
+         self._last_run_state: Dict[str, Any] = {
+             "status": "unknown",
+diff --git a/workflows/codebase_index_workflow.py b/workflows/codebase_index_workflow.py
+index 7c5a1f1..3da9e47 100644
+--- a/workflows/codebase_index_workflow.py
++++ b/workflows/codebase_index_workflow.py
+@@ -222,10 +222,11 @@ class CodebaseIndexWorkflow:
+                 preview_lines = file_tree.split("\n")[:8]
+                 for line in preview_lines:
+                     self.logger.info(f"   {line}")
+-                if len(file_tree.split("\n")) > 8:
+-                    self.logger.info(
+-                        f"   ... {len(file_tree.split('\n')) - 8} more lines"
+-                    )
++                # [local compat] Python 3.11 forbids backslashes inside
++                # f-string expressions; hoist the split out of the f-string.
++                total_tree_lines = len(file_tree.split("\n"))
++                if total_tree_lines > 8:
++                    self.logger.info(f"   ... {total_tree_lines - 8} more lines")
+                 return file_tree
+             else:
+                 self.logger.warning("⚠️ Unable to extract file tree from initial plan")

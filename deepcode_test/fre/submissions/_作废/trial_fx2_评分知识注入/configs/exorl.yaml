@@ -1,0 +1,175 @@
+# FRE reproduction configuration for ExORL Walker/Cheetah offline datasets.
+# This file mirrors configs/antmaze.yaml and is consumed by fre.config.get_config
+# and the CLI pipelines (python -m fre.main --config configs/exorl.yaml ...).
+
+name: exorl
+domain: exorl
+task: exorl-walker-goals
+seed: 0
+device: auto
+log_dir: logs/exorl
+checkpoint_dir: checkpoints/exorl
+use_wandb: false
+wandb_project: fre-exorl
+
+data:
+  env_name: walker_walk          # ExORL Walker exploratory dataset; use cheetah_run for Cheetah
+  dataset_name: walker_walk
+  d4rl_data_path: null
+  exorl_data_path: ./exorl_data
+  normalize_states: true
+  normalize_rewards: true
+  batch_size: 256
+  max_episode_steps: 1000
+
+  # Optional domain-specific loader settings.
+  antmaze_env_name: antmaze-large-diverse-v2
+  kitchen_env_name: kitchen-complete-v0
+  exorl_walker_env_name: walker_walk
+  exorl_cheetah_env_name: cheetah_run
+
+reward_sampler:
+  num_encoder_states: 32
+  num_decoder_states: 1024
+
+  # Prior reward-family toggles. All three families are enabled by default,
+  # matching the full FRE prior mixture.
+  singleton_enabled: true
+  linear_enabled: true
+  mlp_enabled: true
+
+  # Legacy aliases kept for compatibility with older config loaders.
+  singleton: true
+  linear: true
+  mlp: true
+
+  # Canonical family weights: [singleton, linear, mlp].
+  weights: [1.0, 1.0, 1.0]
+
+  # Singleton reward settings.
+  singleton_threshold: 1.0
+  singleton_reward_in_bounds: 0.0
+  singleton_reward_out_of_bounds: -1.0
+
+  # Linear reward settings.
+  linear_active_fraction: 0.3
+  linear_normalize: true
+
+  # MLP reward settings.
+  mlp_hidden_dim: 64
+  mlp_num_hidden: 2
+  mlp_output_scale: 1.0
+  mlp_activation: relu
+
+  # Reward normalization range used by reward embedding/decoder.
+  reward_min: -1.0
+  reward_max: 1.0
+
+fre:
+  state_dim: null            # inferred from dataset when null
+  z_dim: 64
+  d_model: 128
+  d_ff: 256
+  n_heads: 4
+  n_layers: 2
+  dropout: 0.0
+  activation: relu
+
+  num_bins: 128
+  use_linear_reward: false
+  reward_min: -1.0
+  reward_max: 1.0
+  normalize_rewards: true
+
+  decoder_hidden_dim: 256
+  decoder_num_hidden: 2
+  beta: 1.0
+
+  lr: 1.0e-4
+  weight_decay: 0.0
+  grad_clip: 1.0
+  pretrain_steps: 200000
+  log_every: 1000
+  checkpoint_every: 20000
+
+iql:
+  state_dim: null             # inferred from dataset when null
+  action_dim: null            # inferred from dataset when null
+  condition_dim: 64           # FRE latent z dimension
+  hidden_dim: 256
+  num_hidden: 2
+  gamma: 0.99
+  tau: 0.7
+  beta: 3.0
+  lr: 3.0e-4
+  target_tau: 0.005
+  weight_decay: 0.0
+  grad_clip: null
+
+  num_encoder_states: 32      # K context states used during RL training
+  train_steps: 1000000
+  batch_size: 256
+  log_every: 1000
+  checkpoint_every: 50000
+
+  # Conservative advantage clamping used by IQL policy update.
+  advantage_clamp: 100.0
+
+baseline:
+  # GC-IQL and GC-BC shared settings.
+  gc_threshold: 1.0
+  gc_iql_original_goal_prob: 0.3
+  gc_bc_original_goal_prob: 0.3
+  gc_hidden_dim: 256
+  gc_num_hidden: 2
+  gc_lr: 3.0e-4
+
+  # OPAL settings.
+  opal_skill_dim: 8
+  opal_chunk_length: 10
+  opal_hidden_dim: 256
+  opal_num_hidden: 2
+  opal_lr: 3.0e-4
+  opal_beta: 1.0
+  opal_learned_prior: false
+  opal_num_skills: 10
+  opal_selection_episodes: 1
+
+  # Forward-Backward settings.
+  fb_feature_dim: 256
+  fb_hidden_dim: 256
+  fb_num_hidden: 2
+  fb_lr: 3.0e-4
+  fb_gamma: 0.99
+  fb_target_tau: 0.005
+  fb_learn_backward: false
+  fb_train_steps: 1000000
+  fb_num_reward_samples: 5120
+
+  # Successor Features settings.
+  sf_feature_dim: 256
+  sf_hidden_dim: 256
+  sf_num_hidden: 2
+  sf_lr: 3.0e-4
+  sf_gamma: 0.99
+  sf_target_tau: 0.005
+  sf_icm_pretrain_steps: 10000
+  sf_train_steps: 1000000
+  sf_num_reward_samples: 5120
+
+eval:
+  num_episodes: 20
+  num_reward_samples: 32      # FRE uses 32 reward examples; FB/SF override to 5120
+  max_episode_steps: 1000
+  normalize_score_0_100: true
+  seeds: [0, 1, 2, 3, 4]
+  deterministic: true
+  save_visualizations: false
+  visualization_dir: figures/exorl
+
+  # ExORL task names evaluated by fre.pipeline.evaluate.evaluate_all_tasks.
+  tasks:
+    - exorl-walker-goals
+    - exorl-cheetah-goals
+    - exorl-walker-velocity
+    - exorl-cheetah-velocity

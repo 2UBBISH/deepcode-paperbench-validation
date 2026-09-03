@@ -1,0 +1,66 @@
+# FRE Configuration for AntMaze Domain
+# Dataset: antmaze-large-diverse-v2 (D4RL)
+
+# Domain
+domain: "antmaze"
+dataset: "antmaze-large-diverse-v2"
+
+# Architecture
+d_z: 64                    # Latent dimension
+encoder:
+  d_model: 256
+  nhead: 4
+  num_layers: 3
+  num_reward_bins: 50
+  reward_min: -1.0
+  reward_max: 1.0
+  dropout: 0.1
+  ff_dim: 1024
+  use_sum_tokens: false
+
+decoder:
+  hidden_dims: [256, 256]
+  activation: "relu"
+  dropout: 0.0
+
+iql:
+  hidden_dims: [256, 256]
+  gamma: 0.99
+  tau: 0.005
+  expectile: 0.7
+  alpha: 3.0
+  lr: 3.0e-4
+  clip_advantage: null
+  log_std_min: -5.0
+  log_std_max: 2.0
+  dropout: 0.0
+
+# Reward Prior
+reward_prior:
+  linear_sparsity: 0.8
+  mlp_hidden_dim: 256
+  goal_epsilon: 0.5
+  reward_families: ["goal", "linear", "mlp"]  # All three families
+  use_xy_prior: true  # AntMaze-specific: restrict to XY position
+
+# Training
+training:
+  vae_steps: 100000       # Phase 1: VAE training steps
+  iql_steps: 1000000      # Phase 2: IQL training steps
+  batch_size: 256
+  K_encoder: 32           # Number of (s, r) pairs for encoder
+  K_decoder: 32           # Number of (s, r) pairs for decoder
+  beta: 1.0               # KL divergence weight
+  vae_lr: 3.0e-4
+  iql_lr: 3.0e-4
+  grad_clip: 10.0
+  eval_interval: 5000     # Steps between evaluations
+  save_interval: 20000    # Steps between checkpoints
+  seed: 0
+
+# Evaluation
+evaluation:
+  num_episodes: 20
+  max_steps: 1000
+  K: 32
+  num_goal_tasks: 10

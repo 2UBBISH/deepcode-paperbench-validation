@@ -1,0 +1,12 @@
+INFO:mcp.server.lowlevel.server:Processing request of type ListToolsRequest
+INFO:mcp.server.lowlevel.server:Processing request of type ListResourcesRequest
+INFO:mcp.server.lowlevel.server:Processing request of type ListPromptsRequest
+INFO:mcp.server.lowlevel.server:Processing request of type CallToolRequest
+INFO:__main__:Document segmentation completed: 8 segments created
+INFO:mcp.server.lowlevel.server:Processing request of type CallToolRequest
+INFO:mcp.server.lowlevel.server:Processing request of type CallToolRequest
+INFO:__main__:Selected 3 segments for algorithm_extraction query
+INFO:mcp.server.lowlevel.server:Processing request of type CallToolRequest
+INFO:__main__:Selected 3 segments for concept_analysis query
+INFO:mcp.server.lowlevel.server:Processing request of type CallToolRequest
+INFO:__main__:Selected 3 segments for code_planning query

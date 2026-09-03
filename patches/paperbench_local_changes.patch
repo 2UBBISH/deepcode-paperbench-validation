@@ -1,0 +1,82 @@
+diff --git a/project/common/preparedness_turn_completer/preparedness_turn_completer/utils.py b/project/common/preparedness_turn_completer/preparedness_turn_completer/utils.py
+index 71e01f9..d6905cf 100644
+--- a/project/common/preparedness_turn_completer/preparedness_turn_completer/utils.py
++++ b/project/common/preparedness_turn_completer/preparedness_turn_completer/utils.py
+@@ -24,6 +24,11 @@ from pydantic import BaseModel
+ logger = structlog.stdlib.get_logger(component=__name__)
+ 
+ CONTEXT_WINDOW_LENGTHS: dict[str, int] = {
++    # [local compat] SiliconFlow-served judge model; ctx per provider spec.
++    # Added because this table is OpenAI-only and has no config override.
++    "deepseek-ai/DeepSeek-V4-Pro": 1_000_000,
++    # [local] Paratera 用裸模型名(无 vendor 前缀),同一权重同一上下文窗口
++    "DeepSeek-V4-Pro": 1_000_000,
+     "gpt-4o-mini": 128_000,
+     "gpt-4o-mini-2024-07-18": 128_000,
+     "gpt-4o": 128_000,
+diff --git a/project/paperbench/paperbench/judge/simple.py b/project/paperbench/paperbench/judge/simple.py
+index 1fc0c2b..8e533df 100644
+--- a/project/paperbench/paperbench/judge/simple.py
++++ b/project/paperbench/paperbench/judge/simple.py
+@@ -1,5 +1,6 @@
+ from __future__ import annotations
+ 
++import os
+ import asyncio
+ import json
+ import logging
+@@ -111,7 +112,12 @@ class SimpleJudge(Judge):
+         self.prompt = build_judge_task_prompt(code_only)
+         self.buffer_tokens = buffer_tokens
+         self.joined_addendum = f"{self.addendum if self.addendum else ''}\n{self.judge_addendum if self.judge_addendum else ''}".strip()
+-        self.leaf_semaphore = asyncio.Semaphore(100)
++        # [local] 并发上限可用 PB_JUDGE_CONCURRENCY 覆盖(默认仍是上游的 100)。
++        # 与 DeepCode 复现轮同时跑判分时,100 路并发会把 SiliconFlow 打到限流,
++        # 进而让复现轮的 LLM 调用空响应重试直至被 stall 护栏掐死。
++        self.leaf_semaphore = asyncio.Semaphore(
++            int(os.environ.get("PB_JUDGE_CONCURRENCY", "100"))
++        )
+         self.max_prior_nodes = max_prior_nodes
+         if self.joined_addendum == "":
+             self.joined_addendum = "(NO ADDENDUM GIVEN)"
+@@ -126,8 +132,11 @@ class SimpleJudge(Judge):
+         If `config` is not provided,
+         we fallback to a default OpenAICompletionsStructuredCompleter config
+         """
++        # [local compat] The structured-parser model was hardcoded to an
++        # OpenAI-only id; allow overriding via env for OpenAI-compatible
++        # gateways (e.g. SiliconFlow). Default behavior unchanged.
+         cfg = config or OpenAICompletionsTurnCompleter.Config(
+-            model="gpt-4o-2024-08-06",
++            model=os.environ.get("PB_STRUCTURED_PARSER_MODEL", "gpt-4o-2024-08-06"),
+             response_format=response_format,
+         )
+         return cfg, cfg.build()
+diff --git a/project/paperbench/paperbench/nano/eval.py b/project/paperbench/paperbench/nano/eval.py
+index 52d2e67..68ebfe6 100644
+--- a/project/paperbench/paperbench/nano/eval.py
++++ b/project/paperbench/paperbench/nano/eval.py
+@@ -55,10 +55,19 @@ class PaperBench(PythonCodingEval):
+     monitor_config: Monitor.Config = chz.field(default_factory=BasicMonitor.Config)
+ 
+     # task args
+-    paper_split: Literal["debug", "dev", "human", "testing", "all"] = chz.field(
+-        default="all",
+-        doc="Paper split to use. One of 'testing' (lca-on-the-line only), 'debug' (rice only), 'dev' (two papers), 'human' (papers used in human baseline), 'all' (full set)",
+-        # should match what is in experiments/splits/
++    # [local compat] This Literal, not the splits/ directory, is the real gate:
++    # get_split_to_expected_papers() globs splits/*.txt, but chz rejects any
++    # value missing here at blueprint time (upstream 'lite.txt' ships in
++    # splits/ yet is unusable for exactly this reason). 'fre' and 'lite' are
++    # added so single-paper runs need no edit to debug.txt — overwriting that
++    # file would silently re-point every historical "debug" run and destroy
++    # the reproducibility of the rice baseline.
++    paper_split: Literal["debug", "dev", "human", "testing", "all", "fre", "rice", "lite"] = (
++        chz.field(
++            default="all",
++            doc="Paper split to use. One of 'testing' (lca-on-the-line only), 'debug' (rice only), 'fre' (fre only), 'dev' (two papers), 'lite' (five papers), 'human' (papers used in human baseline), 'all' (full set)",
++            # should match what is in experiments/splits/
++        )
+     )
+     resume_run_group_id: str | None = chz.field(default=None)
+     resume_no_extend: bool = chz.field(

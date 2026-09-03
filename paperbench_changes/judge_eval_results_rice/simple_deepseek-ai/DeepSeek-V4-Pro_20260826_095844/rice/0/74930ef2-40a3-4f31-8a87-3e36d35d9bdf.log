@@ -1,0 +1,53 @@
+2026-08-26 10:00:38 [info     ] Grading leaf: For the network defence environment, for the "Ours" explanation method, code for measuring training time throughout training as outlined in Appendix C.3 and Table 4 has been implemented.
+2026-08-26 10:01:55 [info     ] Model file selection raw output:
+Refine_cage_challenge/readme.md
+Refine_cage_challenge/ppo_train.py
+Refine_cage_challenge/rollout_mask.py
+Refine_cage_challenge/Agents/PPOAgent_mask.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_mask.py
+Refine_cage_challenge/Agents/PPOAgent.py
+Refine_cage_challenge/Agents/MainAgent.py
+Refine_cage_challenge/PPO/Memory.py
+Refine_cage_challenge/PPO/ActorCritic.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2.py
+2026-08-26 10:01:55 [info     ] Model file selection raw output:
+Refine_cage_challenge/readme.md
+Refine_cage_challenge/ppo_train.py
+Refine_cage_challenge/rollout_mask.py
+Refine_cage_challenge/Agents/PPOAgent_mask.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_mask.py
+Refine_cage_challenge/Agents/PPOAgent.py
+Refine_cage_challenge/Agents/MainAgent.py
+Refine_cage_challenge/PPO/Memory.py
+Refine_cage_challenge/PPO/ActorCritic.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2.py
+2026-08-26 10:02:46 [info     ] model response: # Expectations
+The criterion asks whether the submission contains code that implements measurement of training time for the "Ours" explanation method in the Cage Challenge 2 (network defence) environment. Per Appendix C.3 and Table 4, the authors report training time (seconds) for training mask networks with a fixed number of samples. The code should therefore include a mechanism (e.g., using Python’s `time` module) to record the start and end of the mask‑network training process and compute the elapsed time, outputting it (or logging it) for this environment.
+
+# Reality
+The submission includes files in the `Refine_cage_challenge` directory. I inspected each one:
+
+- **`ppo_train.py`** – trains the baseline PPO policy, not the mask network. No timing code.
+- **`rollout_mask.py`** – loads a saved mask checkpoint and runs evaluation episodes; it does not train the mask network. No timing code.
+- **`Agents/PPOAgent_mask.py`** – contains the mask agent class and its `train()` method, but that method only performs a few epochs of PPO updates on collected memory. It is not a full training loop that runs for many episodes, and it contains no start/end time measurement.
+- Other files (`Wrappers/ChallengeWrapper2*.py`, `PPO/Memory.py`, `PPO/ActorCritic.py`, `Agents/MainAgent.py`, `Agents/PPOAgent.py`) do not contain any mask‑training code at all.
+
+There is no script or function in the submission that implements the complete training of the mask network for this environment *and* records the training time. The code needed to produce the data in Table 4 (a measure of training seconds for a fixed number of samples) is entirely absent.
+
+# Score
+**0** – The required implementation (code to measure training time during mask‑network training for the network defence environment) is not present in the submitted files.
+2026-08-26 10:02:46 [info     ] model response: # Expectations
+The criterion asks whether the submission contains code that implements measurement of training time for the "Ours" explanation method in the Cage Challenge 2 (network defence) environment. Per Appendix C.3 and Table 4, the authors report training time (seconds) for training mask networks with a fixed number of samples. The code should therefore include a mechanism (e.g., using Python’s `time` module) to record the start and end of the mask‑network training process and compute the elapsed time, outputting it (or logging it) for this environment.
+
+# Reality
+The submission includes files in the `Refine_cage_challenge` directory. I inspected each one:
+
+- **`ppo_train.py`** – trains the baseline PPO policy, not the mask network. No timing code.
+- **`rollout_mask.py`** – loads a saved mask checkpoint and runs evaluation episodes; it does not train the mask network. No timing code.
+- **`Agents/PPOAgent_mask.py`** – contains the mask agent class and its `train()` method, but that method only performs a few epochs of PPO updates on collected memory. It is not a full training loop that runs for many episodes, and it contains no start/end time measurement.
+- Other files (`Wrappers/ChallengeWrapper2*.py`, `PPO/Memory.py`, `PPO/ActorCritic.py`, `Agents/MainAgent.py`, `Agents/PPOAgent.py`) do not contain any mask‑training code at all.
+
+There is no script or function in the submission that implements the complete training of the mask network for this environment *and* records the training time. The code needed to produce the data in Table 4 (a measure of training seconds for a fixed number of samples) is entirely absent.
+
+# Score
+**0** – The required implementation (code to measure training time during mask‑network training for the network defence environment) is not present in the submitted files.

@@ -1,0 +1,73 @@
+2026-08-26 09:58:46 [info     ] Grading leaf: For the MuJoCo environments, the explanation method implementation relies on a mask network that outputs "0" for critical steps and "1" otherwise
+2026-08-26 09:59:58 [info     ] Model file selection raw output:
+Refine_mujoco/masknet/environment.py
+Refine_mujoco/masknet/train.py
+Refine_mujoco/masknet/cus_PPO.py
+Refine_mujoco/models.py
+Refine_mujoco/masknet/gen_fid.py
+Refine_mujoco/masknet/fid_test.py
+Refine_mujoco/retrain.py
+Refine_mujoco/base_class.py
+Refine_mujoco/PPO.py
+Refine_mujoco/OnPolicyAlgorithm.py
+2026-08-26 09:59:58 [info     ] Model file selection raw output:
+Refine_mujoco/masknet/environment.py
+Refine_mujoco/masknet/train.py
+Refine_mujoco/masknet/cus_PPO.py
+Refine_mujoco/models.py
+Refine_mujoco/masknet/gen_fid.py
+Refine_mujoco/masknet/fid_test.py
+Refine_mujoco/retrain.py
+Refine_mujoco/base_class.py
+Refine_mujoco/PPO.py
+Refine_mujoco/OnPolicyAlgorithm.py
+2026-08-26 10:01:41 [info     ] model response: # Expectations
+According to the paper (Section 3.3), the proposed explanation method uses a mask network that outputs a binary action a_t^m at each step:
+- a_t^m = 0: the agent’s original action is taken. These steps are considered **critical**.
+- a_t^m = 1: a random action is taken instead (i.e., the agent is “blinded”).
+The training reward is modified with a bonus for outputting 1 (encouraging blinding), and after training, the importance of a step is measured by the probability of the mask network outputting **0**.  
+For the MuJoCo environments, the submission must implement a mask network that adheres to this semantic: it should **output 0 for critical steps** (i.e., when it believes the original action should be preserved) and **output 1 otherwise** (to replace the action with a random one). Moreover, the importance scores used later for identifying exploration frontiers should be based on the probability of outputting 0.
+
+# Reality
+Looking at the provided code for the MuJoCo environments (files in `Refine_mujoco/masknet/`):
+- **`environment.py`** defines the environment wrapper. In `step()`, the mask network’s output `action` determines the actual action:
+  ```python
+  if action == 0:
+      real_action = self.env.action_space.sample()   # random action
+  else:
+      real_action = base_action                     # original agent action
+  ```
+  Therefore **action 0 means random**, and **action 1 means use the agent’s action**. This is the **opposite** of the paper’s definition.
+- The reward bonus for training is `self.alpha * (1 - action)`, which gives a bonus when `action == 0` (i.e., when random action is chosen). This encourages the mask network to output 0 for blinding—again the inverse of the paper’s approach (paper gives bonus for outputting 1, i.e., when blinding).
+- **`gen_fid.py`** records the probability of the mask network outputting the action 1 (`log_prob(torch.Tensor([1]))`) and uses it as the importance score. High probability of 1 is treated as indicating a critical step.
+- **`fid_test.py`** uses these probabilities (the mask network’s probability of outputting 1) to select the most critical steps.
+
+In summary, the implementation systematically uses the opposite labeling: 0 → random (blinding), 1 → agent action (critical). The mask network does **not** output 0 for critical steps; it outputs 1 (or high probability of 1) for critical steps. This directly contradicts the requirement that the mask network “outputs '0' for critical steps and '1' otherwise.”
+
+# Score
+The criterion is **not met**. Regardless of whether the inverted mapping could be considered functionally equivalent, the explicit requirement is that the mask network output 0 for critical steps and 1 otherwise, as described in the paper. The submitted code implements the opposite semantics. Therefore, the score is **0**.
+2026-08-26 10:01:41 [info     ] model response: # Expectations
+According to the paper (Section 3.3), the proposed explanation method uses a mask network that outputs a binary action a_t^m at each step:
+- a_t^m = 0: the agent’s original action is taken. These steps are considered **critical**.
+- a_t^m = 1: a random action is taken instead (i.e., the agent is “blinded”).
+The training reward is modified with a bonus for outputting 1 (encouraging blinding), and after training, the importance of a step is measured by the probability of the mask network outputting **0**.  
+For the MuJoCo environments, the submission must implement a mask network that adheres to this semantic: it should **output 0 for critical steps** (i.e., when it believes the original action should be preserved) and **output 1 otherwise** (to replace the action with a random one). Moreover, the importance scores used later for identifying exploration frontiers should be based on the probability of outputting 0.
+
+# Reality
+Looking at the provided code for the MuJoCo environments (files in `Refine_mujoco/masknet/`):
+- **`environment.py`** defines the environment wrapper. In `step()`, the mask network’s output `action` determines the actual action:
+  ```python
+  if action == 0:
+      real_action = self.env.action_space.sample()   # random action
+  else:
+      real_action = base_action                     # original agent action
+  ```
+  Therefore **action 0 means random**, and **action 1 means use the agent’s action**. This is the **opposite** of the paper’s definition.
+- The reward bonus for training is `self.alpha * (1 - action)`, which gives a bonus when `action == 0` (i.e., when random action is chosen). This encourages the mask network to output 0 for blinding—again the inverse of the paper’s approach (paper gives bonus for outputting 1, i.e., when blinding).
+- **`gen_fid.py`** records the probability of the mask network outputting the action 1 (`log_prob(torch.Tensor([1]))`) and uses it as the importance score. High probability of 1 is treated as indicating a critical step.
+- **`fid_test.py`** uses these probabilities (the mask network’s probability of outputting 1) to select the most critical steps.
+
+In summary, the implementation systematically uses the opposite labeling: 0 → random (blinding), 1 → agent action (critical). The mask network does **not** output 0 for critical steps; it outputs 1 (or high probability of 1) for critical steps. This directly contradicts the requirement that the mask network “outputs '0' for critical steps and '1' otherwise.”
+
+# Score
+The criterion is **not met**. Regardless of whether the inverted mapping could be considered functionally equivalent, the explicit requirement is that the mask network output 0 for critical steps and 1 otherwise, as described in the paper. The submitted code implements the opposite semantics. Therefore, the score is **0**.

@@ -1,0 +1,85 @@
+2026-08-26 09:58:46 [info     ] Grading leaf: For the autonomous driving environment, The StateMask ("Ours") Explanation method can be selected as the explanation method during retraining
+2026-08-26 10:00:12 [info     ] Model file selection raw output:
+Refine_auto_drive/retrain.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/readme.md
+README.md
+2026-08-26 10:00:12 [info     ] Model file selection raw output:
+Refine_auto_drive/retrain.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/readme.md
+README.md
+2026-08-26 10:01:02 [info     ] model response: # Expectations
+The criterion requires that in the autonomous driving environment, the "Ours" (optimized StateMask) explanation method can be selected during the retraining (refining) process. According to the paper (Section 3.3, Algorithm 2), the refinement step uses the trained mask network to identify critical states in a sampled trajectory. These critical states (or a mixture with default initial states) then serve as reset points, after which exploration continues. Therefore, we expect the code for autonomous driving retraining to contain logic that:
+- Loads or accesses the mask network trained with the "Ours" objective (PPO with reward bonus).
+- Uses this mask network to compute importance scores (or probabilities) for each state in a trajectory.
+- Provides a mechanism to select one or more critical states based on these scores (e.g., argmax over importance scores) for use as the reset state during retraining.
+- The selection mechanism should be active or at least togglable (i.e., the "Ours" explanation is not merely mentioned but actually integrated into the retraining loop).
+
+# Reality
+Examining the provided files for autonomous driving retraining:
+
+- **`Refine_auto_drive/retrain.py`** sets up a retraining pipeline using a custom wrapper environment (`CustomWrapper` from `retrain_env.py`). It accepts hyperparameters `--go_prob` and `--bonus_scale`, and loads a pretrained agent checkpoint.
+
+- **`Refine_auto_drive/retrain_env.py`** implements `CustomWrapper`. Its `reset` method, with probability `p`, calls `gen_one_traj` to generate a trajectory with importance scores from the mask network. The code contains:
+  ```python
+  if self.random_sampling:
+      start_idx = np.random.choice(traj.eps_len)
+      print("random sampling start idx: ", start_idx)
+  else:
+      start_idx = np.argmax(traj.mask_probs)
+  ```
+  This shows that when `random_sampling` is set to `False`, the most critical state (highest mask probability) is chosen, implementing selection of the explanation-based critical state.
+
+- **`Refine_auto_drive/gen_retrain_traj.py`** defines `gen_one_traj` and `fid_play`. `gen_one_traj` loads the mask network from `/home/zck7060/DI-drive/masknet_True_0.0001/ckpt/iteration_10000.pth.tar` (the "Ours" mask network, trained via `train_masknet.py` with the transformed objective). Inside `fid_play`, for each step it runs the mask network and computes an importance score (softmax of the mask logit for action 0). These scores are stored in `traj.mask_probs`.
+
+- **`Refine_auto_drive/train_masknet.py`** trains the mask network using the "Ours" method (PPO with reward bonus), as described in Section 3.3 and Algorithm 1.
+
+Thus, the retraining code can indeed use the "Ours" explanation method: it loads the trained mask network, extracts step‑level importance, and (when `random_sampling` is disabled) selects the step with the highest importance to reset the environment. The implementation meets the requirement.
+
+# Score
+Score: 1  
+The submission correctly implements the ability to select the "Ours" (optimized StateMask) explanation method during the autonomous driving retraining process. The code contains all necessary components and allows the explanation‑based critical state selection to be active via a simple flag.
+2026-08-26 10:01:02 [info     ] model response: # Expectations
+The criterion requires that in the autonomous driving environment, the "Ours" (optimized StateMask) explanation method can be selected during the retraining (refining) process. According to the paper (Section 3.3, Algorithm 2), the refinement step uses the trained mask network to identify critical states in a sampled trajectory. These critical states (or a mixture with default initial states) then serve as reset points, after which exploration continues. Therefore, we expect the code for autonomous driving retraining to contain logic that:
+- Loads or accesses the mask network trained with the "Ours" objective (PPO with reward bonus).
+- Uses this mask network to compute importance scores (or probabilities) for each state in a trajectory.
+- Provides a mechanism to select one or more critical states based on these scores (e.g., argmax over importance scores) for use as the reset state during retraining.
+- The selection mechanism should be active or at least togglable (i.e., the "Ours" explanation is not merely mentioned but actually integrated into the retraining loop).
+
+# Reality
+Examining the provided files for autonomous driving retraining:
+
+- **`Refine_auto_drive/retrain.py`** sets up a retraining pipeline using a custom wrapper environment (`CustomWrapper` from `retrain_env.py`). It accepts hyperparameters `--go_prob` and `--bonus_scale`, and loads a pretrained agent checkpoint.
+
+- **`Refine_auto_drive/retrain_env.py`** implements `CustomWrapper`. Its `reset` method, with probability `p`, calls `gen_one_traj` to generate a trajectory with importance scores from the mask network. The code contains:
+  ```python
+  if self.random_sampling:
+      start_idx = np.random.choice(traj.eps_len)
+      print("random sampling start idx: ", start_idx)
+  else:
+      start_idx = np.argmax(traj.mask_probs)
+  ```
+  This shows that when `random_sampling` is set to `False`, the most critical state (highest mask probability) is chosen, implementing selection of the explanation-based critical state.
+
+- **`Refine_auto_drive/gen_retrain_traj.py`** defines `gen_one_traj` and `fid_play`. `gen_one_traj` loads the mask network from `/home/zck7060/DI-drive/masknet_True_0.0001/ckpt/iteration_10000.pth.tar` (the "Ours" mask network, trained via `train_masknet.py` with the transformed objective). Inside `fid_play`, for each step it runs the mask network and computes an importance score (softmax of the mask logit for action 0). These scores are stored in `traj.mask_probs`.
+
+- **`Refine_auto_drive/train_masknet.py`** trains the mask network using the "Ours" method (PPO with reward bonus), as described in Section 3.3 and Algorithm 1.
+
+Thus, the retraining code can indeed use the "Ours" explanation method: it loads the trained mask network, extracts step‑level importance, and (when `random_sampling` is disabled) selects the step with the highest importance to reset the environment. The implementation meets the requirement.
+
+# Score
+Score: 1  
+The submission correctly implements the ability to select the "Ours" (optimized StateMask) explanation method during the autonomous driving retraining process. The code contains all necessary components and allows the explanation‑based critical state selection to be active via a simple flag.

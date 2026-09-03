@@ -1,0 +1,175 @@
+Now I have comprehensive data. Let me compile the final analysis based on all the repositories I've verified.
+
+Based on my thorough analysis of the paper's references and verification of GitHub repositories, here is the final output:
+
+```json
+{
+    "selected_references": [
+        {
+            "rank": 1,
+            "title": "Offline Reinforcement Learning with Implicit Q-Learning",
+            "authors": ["Ilya Kostrikov", "Ashvin Nair", "Sergey Levine"],
+            "year": 2021,
+            "relevance_score": 0.95,
+            "citation_context": "In our experiments, we use implicit Q-learning (Kostrikov et al., 2021) as the offline RL method to train our FRE-conditioned policy. This is a widely used offline RL algorithm that avoids querying out-of-distribution actions.",
+            "key_contributions": [
+                "Introduced Implicit Q-Learning (IQL) for offline RL",
+                "Avoids querying out-of-distribution actions via expectile regression",
+                "State-of-the-art performance on D4RL benchmarks",
+                "Enables stable offline multi-task policy training"
+            ],
+            "implementation_value": "IQL is the core offline RL algorithm used by FRE to train the latent-conditioned policy. The paper's Algorithm 1 explicitly trains π(a|s,z), Q(s,a,z), V(s,z) using IQL. Understanding and reusing this implementation is essential for reproducing FRE's policy training loop, including the expectile regression, AWR policy extraction, and the specific network architectures for value and policy networks.",
+            "github_info": {
+                "repository_url": "https://github.com/ikostrikov/implicit_q_learning",
+                "stars_count": 334,
+                "last_updated": "2026-08-15",
+                "repository_quality": "Official JAX implementation by the first author (Ilya Kostrikov). Clean, well-structured codebase with configs for MuJoCo, AntMaze, Kitchen, and Adroit environments. Includes both training and fine-tuning scripts. MIT licensed. Also referenced PyTorch reimplementation at rail-berkeley/rlkit.",
+                "key_features": [
+                    "JAX-based implementation for fast training",
+                    "Separate configs for locomotion, AntMaze, and Kitchen/Adroit domains",
+                    "Includes fine-tuning scripts for AntMaze",
+                    "Expectile regression for value function learning",
+                    "AWR-based policy extraction",
+                    "Reference PyTorch port available in rlkit"
+                ],
+                "documentation_quality": "Well-documented README with installation instructions, training commands for each environment type, and citation information. Clear dependency management via requirements.txt.",
+                "community_activity": "49 forks, 3 open issues. Widely adopted as the standard IQL reference implementation in the offline RL community. Active community with multiple reimplementations."
+            },
+            "original_reference": "Kostrikov, I., Nair, A., and Levine, S. Offline reinforcement learning with implicit q-learning. arXiv preprint arXiv:2110.06169, 2021."
+        },
+        {
+            "rank": 2,
+            "title": "Does Zero-Shot Reinforcement Learning Exist?",
+            "authors": ["Ahmed Touati", "Jérémy Rapin", "Yann Ollivier"],
+            "year": 2022,
+            "relevance_score": 0.92,
+            "citation_context": "Forward-Backward (FB) method (Touati & Ollivier, 2021), a state-of-the-art zero-shot RL method that jointly learns a pair of representations that represent a family of tasks and their optimal policies. [...] FB and SF are based on DDPG-based policies, and are run via the code provided from (Touati et al., 2022).",
+            "key_contributions": [
+                "Introduced the Forward-Backward (FB) representation for zero-shot RL",
+                "Learns universal value functions without task-specific training",
+                "Achieves zero-shot transfer to new reward functions at test time",
+                "Provides theoretical framework for zero-shot RL existence"
+            ],
+            "implementation_value": "FB is the primary baseline that FRE directly compares against and builds upon. The FB method also learns representations for zero-shot task transfer, but uses linearized value functions while FRE uses a learned functional encoding. Understanding FB's implementation is crucial for: (1) reproducing baseline comparisons, (2) understanding the zero-shot RL evaluation protocol, (3) comparing architectural decisions between linear (FB) and nonlinear (FRE) task representations. The repo includes the full URLB benchmark integration and offline training pipeline.",
+            "github_info": {
+                "repository_url": "https://github.com/facebookresearch/controllable_agent",
+                "stars_count": 81,
+                "last_updated": "2026-08-14",
+                "repository_quality": "Official Facebook Research implementation. Well-structured with separate packages for url_benchmark and controllable_agent. Includes Hydra-based configuration system, offline training support, and a web demo. MIT licensed. Note: repository is archived but functional.",
+                "key_features": [
+                    "Forward-Backward (FB) agent implementation",
+                    "Integration with URLB benchmark suite",
+                    "Offline training from ExORL datasets",
+                    "Hydra configuration system for experiment management",
+                    "Web demo for interactive reward testing",
+                    "Support for multiple unsupervised RL agents",
+                    "HiPlot monitoring integration"
+                ],
+                "documentation_quality": "Comprehensive README with installation instructions, training commands, offline training workflow, and monitoring setup. Includes detailed steps for downloading ExORL datasets and building replay buffers.",
+                "community_activity": "15 forks, 2 open issues. Archived repository but serves as the definitive reference for FB method. Part of the broader URLB ecosystem."
+            },
+            "original_reference": "Touati, A., Rapin, J., and Ollivier, Y. Does zero-shot reinforcement learning exist? arXiv preprint arXiv:2209.14935, 2022."
+        },
+        {
+            "rank": 3,
+            "title": "Neural Processes",
+            "authors": ["Marta Garnelo", "Jonathan Schwarz", "Dan Rosenbaum", "Fabio Viola", "Danilo J. Rezende", "S. M. Ali Eslami", "Yee Whye Teh"],
+            "year": 2018,
+            "relevance_score": 0.88,
+            "citation_context": "The FRE method is similar to a denoising auto-encoder (Vincent et al., 2008) trained on (s, η(s)) pairs sampled from an arbitrary reward function η over s^e, s^d ∼ D, as well as that of neural processes (Garnelo et al., 2018b;a; Kim et al., 2019) in that we aim to map a context set of reward-state pairs to a functional output.",
+            "key_contributions": [
+                "Introduced Neural Processes for learning distributions over functions",
+                "Combines benefits of neural networks and Gaussian processes",
+                "Uses context-set to target-set prediction framework",
+                "Permutation-invariant encoding of context points"
+            ],
+            "implementation_value": "FRE's core architecture is directly inspired by Neural Processes. Both use: (1) a context set of input-output pairs to encode a latent representation, (2) a decoder that predicts outputs for new inputs given the latent code, (3) permutation-invariant encoding. The Neural Processes codebase provides the foundational pattern for how to implement functional encoding over reward functions. Understanding this implementation helps grasp FRE's encoder-decoder design, the context/target split, and the permutation-invariant transformer architecture.",
+            "github_info": {
+                "repository_url": "https://github.com/google-deepmind/neural-processes",
+                "stars_count": 1023,
+                "last_updated": "2026-08-21",
+                "repository_quality": "Official DeepMind implementation with Jupyter notebooks for Conditional NPs, Neural Processes, and Attentive Neural Processes. Clean, educational code designed for understanding. Apache 2.0 licensed. Highly influential reference implementation.",
+                "key_features": [
+                    "Complete implementations of CNP, NP, and ANP variants",
+                    "Interactive Jupyter notebooks runnable in Colab",
+                    "Clear demonstration of context-to-target prediction",
+                    "Permutation-invariant encoder architectures",
+                    "Probabilistic latent variable modeling",
+                    "1D function regression examples for intuition"
+                ],
+                "documentation_quality": "Excellent educational documentation. Notebooks include detailed explanations of model components. Colab links for immediate browser-based execution. Clear citation guidelines for each variant.",
+                "community_activity": "154 forks, 8 open issues. Widely used as the reference for Neural Processes. Active community with 37 subscribers. Maintained by Google DeepMind."
+            },
+            "original_reference": "Garnelo, M., Schwarz, J., Rosenbaum, D., Viola, F., Rezende, D. J., Eslami, S., and Teh, Y. W. Neural processes. arXiv preprint arXiv:1807.01622, 2018b."
+        },
+        {
+            "rank": 4,
+            "title": "D4RL: Datasets for Deep Data-Driven Reinforcement Learning",
+            "authors": ["Justin Fu", "Aviral Kumar", "Ofir Nachum", "George Tucker", "Sergey Levine"],
+            "year": 2020,
+            "relevance_score": 0.85,
+            "citation_context": "Results are presented on standard offline RL benchmarks: the ExORL benchmark for learning from unsupervised data (Yarats et al., 2022) and variants of the AntMaze and Kitchen environments from D4RL (Fu et al., 2020) adapted for evaluating multi-task and goal-conditioned policies.",
+            "key_contributions": [
+                "Standardized benchmark for offline reinforcement learning",
+                "Provides diverse datasets across MuJoCo, AntMaze, Kitchen, and Adroit domains",
+                "Established evaluation protocols for offline RL algorithms",
+                "Enabled reproducible comparison across offline RL methods"
+            ],
+            "implementation_value": "D4RL provides the AntMaze and Kitchen environments used in FRE's main experiments. The antmaze-large-diverse-v2 dataset is the primary benchmark where FRE demonstrates zero-shot transfer. The Kitchen environment provides the multi-task manipulation benchmark. Understanding D4RL's dataset structure, environment APIs, and evaluation protocols is essential for: (1) reproducing FRE's experimental setup, (2) accessing the exact datasets used, (3) implementing proper evaluation metrics, (4) comparing against baselines on standardized benchmarks.",
+            "github_info": {
+                "repository_url": "https://github.com/Farama-Foundation/D4RL",
+                "stars_count": 1700,
+                "last_updated": "2026-08-21",
+                "repository_quality": "Official Farama Foundation repository (formerly rail-berkeley). The standard benchmark for offline RL. Well-maintained with clear API. Note: datasets are being migrated to Minari, but D4RL remains the reference. Apache 2.0 licensed.",
+                "key_features": [
+                    "Standardized Gym API for offline RL environments",
+                    "MuJoCo locomotion datasets (halfcheetah, hopper, walker)",
+                    "AntMaze navigation datasets (umaze, medium, large)",
+                    "Kitchen manipulation environment with 7 subtasks",
+                    "Adroit hand manipulation tasks",
+                    "Automatic dataset downloading and caching",
+                    "qlearning_dataset() utility for standard format"
+                ],
+                "documentation_quality": "Comprehensive documentation with setup instructions, task list, and usage examples. Clear API documentation for get_dataset() and qlearning_dataset(). Wiki with detailed task descriptions.",
+                "community_activity": "308 forks, 107 open issues. The de facto standard for offline RL benchmarking. Very active community. 16 subscribers. Actively maintained by Farama Foundation."
+            },
+            "original_reference": "Fu, J., Kumar, A., Nachum, O., Tucker, G., and Levine, S. D4rl: Datasets for deep data-driven reinforcement learning. arXiv preprint arXiv:2004.07219, 2020."
+        },
+        {
+            "rank": 5,
+            "title": "Efficient Off-Policy Meta-Reinforcement Learning via Probabilistic Context Variables",
+            "authors": ["Kate Rakelly", "Aurick Zhou", "Deirdre Quillen", "Chelsea Finn", "Sergey Levine"],
+            "year": 2019,
+            "relevance_score": 0.82,
+            "citation_context": "Previous works in meta-RL and offline meta-RL have proposed diverse techniques, such as permutation-invariant task encoders, to encode tasks into a latent space (Duan et al., 2016; Rakelly et al., 2019; Li et al., 2020c;b; Dorfman et al., 2021; Pong et al., 2022; Yuan & Lu, 2022), similarly to FRE.",
+            "key_contributions": [
+                "Introduced PEARL: off-policy meta-RL with probabilistic task encodings",
+                "Disentangles task inference from control",
+                "Uses probabilistic filtering of latent context variables",
+                "Achieves 20-100X sample efficiency gains over prior meta-RL methods"
+            ],
+            "implementation_value": "PEARL's probabilistic task encoder is conceptually similar to FRE's reward function encoder. Both use: (1) a probabilistic encoder that maps experience samples to a latent distribution, (2) a KL divergence penalty against a unit Gaussian prior (β-VAE style), (3) the latent code to condition a policy. PEARL demonstrates how to integrate learned task encodings with off-policy RL algorithms (SAC), which parallels FRE's integration with IQL. The implementation provides valuable patterns for: encoder architecture design, KL regularization scheduling, and training stability considerations.",
+            "github_info": {
+                "repository_url": "https://github.com/katerakelly/oyster",
+                "stars_count": 515,
+                "last_updated": "2026-08-11",
+                "repository_quality": "Official reference implementation by the first author. Built on rlkit framework. Includes comprehensive experiment configurations via JSON files. MIT licensed. Well-structured with clear separation of concerns.",
+                "key_features": [
+                    "Probabilistic encoder for task inference from transitions",
+                    "Integration with off-policy SAC algorithm",
+                    "Posterior sampling for structured exploration",
+                    "Support for both MuJoCo and MetaWorld environments",
+                    "JSON-based experiment configuration system",
+                    "Docker support for reproducible execution",
+                    "Includes baseline implementations (MAML-TRPO, RL2, MAESN)"
+                ],
+                "documentation_quality": "Detailed README with installation instructions (local and Docker), experiment configuration, and baseline comparisons. Includes links to pretrained results and baseline implementations. Acknowledges known issues transparently.",
+                "community_activity": "139 forks, 12 open issues. Highly influential in the meta-RL community. 20 subscribers. Active community with ongoing discussions and improvements."
+            },
+            "original_reference": "Rakelly, K., Zhou, A., Finn, C., Levine, S., and Quillen, D. Efficient off-policy meta-reinforcement learning via probabilistic context variables. In International conference on machine learning, pp. 5331-5340. PMLR, 2019."
+        }
+    ],
+    "analysis_summary": "The paper 'Unsupervised Zero-Shot Reinforcement Learning via Functional Reward Encodings' (FRE) proposes learning functional representations of reward functions using a transformer-based variational auto-encoder, enabling zero-shot transfer to new downstream tasks. After analyzing all 60 references in the bibliography, I identified 14 references with verified GitHub repositories. The top 5 were selected based on: (1) direct algorithmic dependency (IQL is the core RL algorithm used by FRE), (2) baseline comparison relevance (FB is the primary baseline FRE improves upon), (3) architectural inspiration (Neural Processes directly inspired FRE's encoder-decoder design), (4) benchmark infrastructure (D4RL provides the essential evaluation environments), and (5) methodological similarity (PEARL's probabilistic task encoder closely parallels FRE's approach). These 5 repositories collectively cover the full implementation stack: the base RL algorithm (IQL), the zero-shot task representation approach (FB), the functional encoding architecture (Neural Processes), the evaluation framework (D4RL), and the probabilistic encoding methodology (PEARL). Additional notable repositories from references include ExORL (139 stars, unsupervised datasets), CQL (490 stars, alternative offline RL), HIQL (97 stars, offline goal-conditioned RL from FRE co-author), URLB (368 stars, unsupervised RL benchmark), and ICM (1,482 stars, curiosity-driven exploration used in SF baselines).",
+    "github_repositories_found": 14
+}
+```

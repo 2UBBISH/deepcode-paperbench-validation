@@ -1,0 +1,67 @@
+2026-08-26 10:00:15 [info     ] Grading leaf: For the autonomous driving environment, the refining method has been implemented as outlined in Algorithm 2, integrating the mixed initial state distribution and RND.
+2026-08-26 10:01:30 [info     ] Model file selection raw output:
+Refine_auto_drive/retrain.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/readme.md
+2026-08-26 10:01:30 [info     ] Model file selection raw output:
+Refine_auto_drive/retrain.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/readme.md
+2026-08-26 10:04:08 [info     ] model response: # Expectations
+The criterion requires that for the autonomous driving environment, the refining method is implemented as outlined in Algorithm 2 of the paper. This algorithm integrates two key components:
+1. **Mixed initial state distribution**: With probability \( p \), a trajectory is generated using the pre-trained policy; the explanation method (StateMask / "Ours" mask network) identifies the most critical state in that trajectory, and the environment is reset to that state. Otherwise, the default initial state is used. This encourages the agent to explore from critical points.
+2. **Random Network Distillation (RND) exploration**: During rollout, an RND intrinsic reward (based on the prediction error of a random target network) is added to the task reward. The policy is updated with PPO using these augmented rewards, and the RND predictor is trained via MSE loss.
+
+A correct implementation must contain actual code that:
+- Loads the pre-trained policy and explanation mask network.
+- Implements the mixed initial state reset (critical states from mask network + default states).
+- Computes the RND bonus and combines it with the environment reward.
+- Trains the policy (PPO) and the RND predictor in the loop.
+
+# Reality
+The submission provides several files for the autonomous driving environment (`Refine_auto_drive/`):
+
+- **`retrain.py`**: Main script that sets up the environment, loads the pre-trained PPO policy, creates a `CustomWrapper` environment (from `retrain_env.py`) that handles the mixed initial state reset, instantiates an `RndRewardModel` for RND, and runs the data collection/training loop using a custom `BaseLearner` (from `learner.py`).
+- **`retrain_env.py`**: Contains `CustomWrapper`, which implements the reset logic. It uses a probability `go_prob` (`p`) to decide whether to start from a critical state or the default initial state. To obtain a critical state, it calls `gen_one_traj` (from `gen_retrain_traj.py`), which uses the mask network to compute importance scores (`mask_probs`). However, the selection of the start index is governed by a hardcoded flag `self.random_sampling = True`. Consequently, the code performs `np.random.choice(traj.eps_len)` regardless of the mask probabilities – it does not use the mask network to identify the *most* critical state, as required by Algorithm 2. The optional `else` branch (`argmax(traj.mask_probs)`) is never executed under the given configuration.
+- **`gen_retrain_traj.py`**: Implements trajectory generation using the mask network and pre-trained agent. It correctly computes importance scores but the caller (reset) ignores them for the actual selection.
+- **`learner.py`** and **`rnd_reward_model.py`**: Implement the RND component. The learner collects data, trains the RND predictor via MSE loss, and adds the normalized RND bonus to rewards before passing data to PPO policy updates. This part correctly reflects Algorithm 2's exploration mechanism.
+
+Although the overall structure integrates a mixed initial state distribution and RND, the critical state identification step does not follow Algorithm 2 because it relies on random selection rather than the state mask. The code therefore does *not* correctly implement the full refining method as outlined.
+
+# Score
+0 – The implementation does not satisfy the requirement because the mixed initial state distribution does not use the explanation method to identify the most critical state; it uses a random index instead, violating the explicit steps of Algorithm 2.
+2026-08-26 10:04:08 [info     ] model response: # Expectations
+The criterion requires that for the autonomous driving environment, the refining method is implemented as outlined in Algorithm 2 of the paper. This algorithm integrates two key components:
+1. **Mixed initial state distribution**: With probability \( p \), a trajectory is generated using the pre-trained policy; the explanation method (StateMask / "Ours" mask network) identifies the most critical state in that trajectory, and the environment is reset to that state. Otherwise, the default initial state is used. This encourages the agent to explore from critical points.
+2. **Random Network Distillation (RND) exploration**: During rollout, an RND intrinsic reward (based on the prediction error of a random target network) is added to the task reward. The policy is updated with PPO using these augmented rewards, and the RND predictor is trained via MSE loss.
+
+A correct implementation must contain actual code that:
+- Loads the pre-trained policy and explanation mask network.
+- Implements the mixed initial state reset (critical states from mask network + default states).
+- Computes the RND bonus and combines it with the environment reward.
+- Trains the policy (PPO) and the RND predictor in the loop.
+
+# Reality
+The submission provides several files for the autonomous driving environment (`Refine_auto_drive/`):
+
+- **`retrain.py`**: Main script that sets up the environment, loads the pre-trained PPO policy, creates a `CustomWrapper` environment (from `retrain_env.py`) that handles the mixed initial state reset, instantiates an `RndRewardModel` for RND, and runs the data collection/training loop using a custom `BaseLearner` (from `learner.py`).
+- **`retrain_env.py`**: Contains `CustomWrapper`, which implements the reset logic. It uses a probability `go_prob` (`p`) to decide whether to start from a critical state or the default initial state. To obtain a critical state, it calls `gen_one_traj` (from `gen_retrain_traj.py`), which uses the mask network to compute importance scores (`mask_probs`). However, the selection of the start index is governed by a hardcoded flag `self.random_sampling = True`. Consequently, the code performs `np.random.choice(traj.eps_len)` regardless of the mask probabilities – it does not use the mask network to identify the *most* critical state, as required by Algorithm 2. The optional `else` branch (`argmax(traj.mask_probs)`) is never executed under the given configuration.
+- **`gen_retrain_traj.py`**: Implements trajectory generation using the mask network and pre-trained agent. It correctly computes importance scores but the caller (reset) ignores them for the actual selection.
+- **`learner.py`** and **`rnd_reward_model.py`**: Implement the RND component. The learner collects data, trains the RND predictor via MSE loss, and adds the normalized RND bonus to rewards before passing data to PPO policy updates. This part correctly reflects Algorithm 2's exploration mechanism.
+
+Although the overall structure integrates a mixed initial state distribution and RND, the critical state identification step does not follow Algorithm 2 because it relies on random selection rather than the state mask. The code therefore does *not* correctly implement the full refining method as outlined.
+
+# Score
+0 – The implementation does not satisfy the requirement because the mixed initial state distribution does not use the explanation method to identify the most critical state; it uses a random index instead, violating the explicit steps of Algorithm 2.

@@ -1,0 +1,4 @@
+# git history of this submission (exported; .git removed for publication)
+3d6befe 2026-08-26 20:33:10 +0800 Add .gitignore to exclude Python cache and other generated files
+a61a084 2026-08-26 20:32:56 +0800 Add opensimplex and tqdm to requirements
+7bb29e5 2026-08-26 20:30:20 +0800 Initial implementation of FRE (Functional Reward Encodings)

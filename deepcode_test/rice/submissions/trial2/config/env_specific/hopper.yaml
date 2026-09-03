@@ -1,0 +1,83 @@
+# Environment-specific configuration for Hopper-v3 (MuJoCo)
+# Overrides default.yaml values for the Hopper environment
+
+agent:
+  # PPO hyperparameters for Hopper
+  policy: "MlpPolicy"
+  n_steps: 2048
+  batch_size: 64
+  n_epochs: 10
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_range: 0.2
+  ent_coef: 0.0
+  vf_coef: 0.5
+  max_grad_norm: 0.5
+  learning_rate: 3.0e-4
+  policy_kwargs:
+    net_arch:
+      pi: [64, 64]
+      vf: [64, 64]
+    activation_fn: "tanh"
+  total_timesteps: 1000000  # 1M steps for Hopper
+  normalize_obs: true
+  normalize_reward: true
+
+mask:
+  # Mask network training for Hopper
+  alpha: 0.0001
+  total_timesteps: 300000  # 3×10⁵ samples (Table 4)
+  hidden_sizes: [64, 64]
+  learning_rate: 3.0e-4
+  n_steps: 2048
+  batch_size: 64
+  n_epochs: 10
+  gamma: 0.99
+  ent_coef: 0.01
+  gae_lambda: 0.95
+  clip_range: 0.2
+  vf_coef: 0.5
+  max_grad_norm: 0.5
+
+explanation:
+  num_trajectories: 100
+  max_steps: 1000
+  buffer_size: 10000
+  top_k_per_trajectory: 1
+  use_perturbed_policy: false
+  deterministic_agent: true
+
+rnd:
+  embedding_dim: 128
+  hidden_sizes: [64, 64]
+  learning_rate: 1.0e-4
+  normalize_obs: true
+  clip_bonus: null
+
+refining:
+  # Refining hyperparameters for Hopper (Table 3)
+  p: 0.5                    # Mixed init probability
+  lambda: 0.01              # RND bonus coefficient
+  total_timesteps: 1000000  # 1M refining steps
+  use_rnd: true
+  use_mixed_init: true
+  ppo_learning_rate: 3.0e-4
+  n_steps: 2048
+  batch_size: 64
+  n_epochs: 10
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_range: 0.2
+  ent_coef: 0.0
+  vf_coef: 0.5
+  max_grad_norm: 0.5
+  rnd_update_freq: 1000
+  rnd_batch_size: 64
+  rnd_n_epochs: 1
+  state_buffer_size: 100000
+
+experiment:
+  eval_episodes: 100
+  eval_freq: 10000
+  num_seeds: 5
+  max_steps: 1000

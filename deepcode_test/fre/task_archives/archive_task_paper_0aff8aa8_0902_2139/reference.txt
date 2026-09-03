@@ -1,0 +1,187 @@
+```json
+{
+    "selected_references": [
+        {
+            "rank": 1,
+            "title": "Stable-Baselines3: Reliable Reinforcement Learning Implementations",
+            "authors": [
+                "Antonin Raffin",
+                "Ashley Hill",
+                "Adam Gleave",
+                "Anssi Kanervisto",
+                "Maximilian Ernestus",
+                "Noah Dormann"
+            ],
+            "year": "2021",
+            "relevance_score": 0.92,
+            "citation_context": "Listed in the References/Bibliography section. While not explicitly cited in the main text, it provides the de facto standard PyTorch implementation of PPO, the algorithm RICE uses for policy refinement.",
+            "key_contributions": [
+                "Reliable, modular PyTorch implementations of state-of-the-art RL algorithms",
+                "Production-quality PPO with extensive testing and reproducibility benchmarks",
+                "Clean API and callback system for customizing training loops"
+            ],
+            "implementation_value": "RICE's refining step is built around PPO. Stable-Baselines3 offers the highest-quality, best-documented PPO codebase among the paper's references, making it the most valuable starting point for reimplementing or extending RICE's policy update loop.",
+            "github_info": {
+                "repository_url": "https://github.com/DLR-RM/stable-baselines3",
+                "stars_count": "14k",
+                "last_updated": "December 2025",
+                "repository_quality": "Excellent - actively maintained, comprehensive CI/CD, high test coverage, and a large contributor base",
+                "key_features": [
+                    "PPO, A2C, DQN, SAC, TD3, DDPG implementations",
+                    "Custom policy and environment support",
+                    "TensorBoard and Weights & Biases integration",
+                    "RL Baselines3 Zoo for hyperparameter tuning and benchmarking"
+                ],
+                "documentation_quality": "Excellent - extensive ReadTheDocs documentation, tutorials, migration guides, and integration examples",
+                "community_activity": "Very active - widely adopted in RL research and industry, with frequent issues, PRs, and releases"
+            },
+            "original_reference": "Raffin, A., Hill, A., Gleave, A., Kanervisto, A., Ernestus, M., and Dormann, N. Stable-baselines3: Reliable reinforcement learning implementations. Journal of Machine Learning Research, 2021."
+        },
+        {
+            "rank": 2,
+            "title": "Exploration by Random Network Distillation",
+            "authors": [
+                "Yuri Burda",
+                "Harri Edwards",
+                "Amos Storkey",
+                "Oleg Klimov"
+            ],
+            "year": "2018",
+            "relevance_score": 0.90,
+            "citation_context": "Cited in Section 3.3 as the exploration bonus adopted by RICE. The paper explicitly states that RICE adds the RND intrinsic reward to the task reward during refining to encourage novel state coverage.",
+            "key_contributions": [
+                "Prediction-based intrinsic reward for exploration in large/continuous state spaces",
+                "Official OpenAI implementation of the RND algorithm",
+                "Demonstrated effectiveness on hard-exploration Atari games"
+            ],
+            "implementation_value": "RICE directly incorporates RND as its exploration mechanism. This repository provides the canonical target/predictor network architecture, reward normalization, and training loop, which can be adapted almost verbatim into RICE's refining procedure.",
+            "github_info": {
+                "repository_url": "https://github.com/openai/random-network-distillation",
+                "stars_count": "930",
+                "last_updated": "November 2018",
+                "repository_quality": "Good but archived - official OpenAI implementation, well-structured, though no longer maintained",
+                "key_features": [
+                    "RND agent training on Atari",
+                    "Target and predictor network implementation",
+                    "MPI support for distributed training",
+                    "Montezuma's Revenge example"
+                ],
+                "documentation_quality": "Minimal - README covers installation and a single usage command; limited inline documentation",
+                "community_activity": "Low - archived repository with no active development, but still referenced as the canonical implementation"
+            },
+            "original_reference": "Burda, Y., Edwards, H., Storkey, A., and Klimov, O. Exploration by random network distillation. In Proc. of ICLR, 2018."
+        },
+        {
+            "rank": 3,
+            "title": "Jump-Start Reinforcement Learning",
+            "authors": [
+                "Ikechukwu Uchendu",
+                "Ted Xiao",
+                "Yao Lu",
+                "Banghua Zhu",
+                "Mengyuan Yan",
+                "Joséphine Simon",
+                "Matthew Bennice",
+                "Chuyuan Fu",
+                "Cong Ma",
+                "Jiantao Jiao",
+                "Sergey Levine",
+                "Karol Hausman"
+            ],
+            "year": "2023",
+            "relevance_score": 0.88,
+            "citation_context": "Cited in Sections 2.2 and 4 as a primary baseline refining method. RICE compares against JSRL and argues that explanation-based critical states outperform JSRL's random curriculum selection for setting exploration frontiers.",
+            "key_contributions": [
+                "Guide-policy curriculum for bootstrapping RL from a pre-trained policy",
+                "Compatibility with any RL algorithm",
+                "Theoretical sample-complexity improvements with a guide policy"
+            ],
+            "implementation_value": "JSRL tackles the same core problem as RICE: improving a pre-trained policy without retraining from scratch. Its implementation demonstrates how to wrap a guide policy around Stable-Baselines3 and construct a curriculum of starting states, offering a direct comparison baseline and reusable code patterns.",
+            "github_info": {
+                "repository_url": "https://github.com/steventango/jumpstart-rl",
+                "stars_count": "37",
+                "last_updated": "January 2024",
+                "repository_quality": "Moderate - third-party implementation built on Stable-Baselines3, clean examples but narrow scope",
+                "key_features": [
+                    "TD3 + JSRL on PointMaze-v3",
+                    "Curriculum-based and random JSRL variants",
+                    "PyPI package `jsrl`",
+                    "Stable-Baselines3 integration"
+                ],
+                "documentation_quality": "Basic - README with installation instructions and pointers to example scripts",
+                "community_activity": "Low - small repository with limited community engagement; primarily a reference implementation"
+            },
+            "original_reference": "Uchendu, I., Xiao, T., Lu, Y., Zhu, B., Yan, M., Simon, J., Bennice, M., Fu, C., Ma, C., Jiao, J., et al. Jump-start reinforcement learning. In Proc. of ICML, 2023."
+        },
+        {
+            "rank": 4,
+            "title": "MetaDrive: Composing Diverse Driving Scenarios for Generalizable Reinforcement Learning",
+            "authors": [
+                "Quanyi Li",
+                "Zhenghao Peng",
+                "Lan Feng",
+                "Qihang Zhang",
+                "Zhenghai Xue",
+                "Bolei Zhou"
+            ],
+            "year": "2022",
+            "relevance_score": 0.82,
+            "citation_context": "Cited in Sections 4 and 5 as the driving simulator used for RICE's autonomous driving real-world application evaluation.",
+            "key_contributions": [
+                "Lightweight, compositional driving simulator",
+                "Procedural generation of infinite driving scenarios",
+                "Support for real-world driving logs and multi-agent settings"
+            ],
+            "implementation_value": "MetaDrive is one of the real-world environments on which RICE is evaluated. Its Gymnasium-compatible API and configurable scenarios make it essential for reproducing RICE's autonomous driving experiments and for testing refining methods on a safety-critical RL task.",
+            "github_info": {
+                "repository_url": "https://github.com/metadriverse/metadrive",
+                "stars_count": "1.2k",
+                "last_updated": "May 2025",
+                "repository_quality": "Very good - actively maintained, CI testing, comprehensive examples, and responsive contributors",
+                "key_features": [
+                    "Procedural map generation",
+                    "Sensor simulation (RGB, depth, LiDAR, semantic maps)",
+                    "Single-agent and multi-agent environments",
+                    "Integration with nuScenes and Waymo datasets"
+                ],
+                "documentation_quality": "Very good - ReadTheDocs documentation, Colab notebooks, video demos, and extensive examples",
+                "community_activity": "Active - regular commits, issue responses, and growing adoption in autonomous driving and RL research"
+            },
+            "original_reference": "Li, Q., Peng, Z., Feng, L., Zhang, Q., Xue, Z., and Zhou, B. Metadrive: Composing diverse driving scenarios for generalizable reinforcement learning. IEEE Transactions on Pattern Analysis and Machine Intelligence, 2022."
+        },
+        {
+            "rank": 5,
+            "title": "Malware Bypass Research using Reinforcement Learning (malware_rl)",
+            "authors": [
+                "Bradley Filar"
+            ],
+            "year": "N/A (GitHub reference)",
+            "relevance_score": 0.78,
+            "citation_context": "Listed as explicit GitHub reference (a) and used in Section 4 for RICE's malware mutation real-world application evaluation. The paper cites Raff et al., 2017 for the underlying MalConv detector model.",
+            "key_contributions": [
+                "Gym environment for malware evasion against static ML classifiers",
+                "Action space of non-breaking PE binary modifications",
+                "Integration with Ember, MalConv, and SOREL-20M detector models"
+            ],
+            "implementation_value": "Provides the exact malware-mutation environment used to evaluate RICE. The action/observation space design and classifier integration are directly relevant for reproducing RICE's security experiments and for adapting the refining scheme to adversarial malware generation.",
+            "github_info": {
+                "repository_url": "https://github.com/bfilar/malware_rl",
+                "stars_count": "109",
+                "last_updated": "April 2024",
+                "repository_quality": "Moderate - focused, domain-specific environment; receives dependency updates via dependabot",
+                "key_features": [
+                    "Gym environments for Ember and MalConv classifiers",
+                    "PE modification action space (imports, sections, overlay, etc.)",
+                    "RandomAgent baseline",
+                    "Support for SOREL-20M models"
+                ],
+                "documentation_quality": "Good - README includes setup instructions, action/observation space details, and baseline evasion results",
+                "community_activity": "Low to moderate - niche security RL community; occasional updates and issue activity"
+            },
+            "original_reference": "GitHub - bfilar/malware_rl: Malware Bypass Research using Reinforcement Learning - github.com. https://github.com/bfilar/malware_rl, a."
+        }
+    ],
+    "analysis_summary": "I extracted all references from the RICE paper and filtered for those with associated GitHub repositories. The target paper's official implementation (https://github.com/chengzelei/RICE) and StateMask (the same authors' precursor explanation method) were excluded per the constraints. The top 5 were selected by balancing GitHub repository quality (40%), implementation relevance to RICE's methodology (30%), technical depth/algorithmic similarity (20%), and academic influence (10%). Stable-Baselines3 ranks first due to its outstanding repository quality and role as the best available PPO implementation for RICE's refining step. RND ranks second because it is a core component of RICE's exploration bonus. JSRL ranks third as the most direct baseline addressing the same pre-trained-policy refinement problem. MetaDrive and malware_rl round out the list as the highest-quality real-world evaluation environments explicitly used in the paper's experiments.",
+    "github_repositories_found": "13+ (five explicit GitHub URLs in the bibliography: malware_rl, cage-challenge-2, cyborg-cage-2, pto-selfish-mining, DI-drive; plus well-known implementations of cited methods: Stable-Baselines3, Tianshou, Random Network Distillation, Jump-Start RL, MetaDrive, PyTorch, OpenAI Baselines, CARLA, and Go-Explore)"
+}
+```

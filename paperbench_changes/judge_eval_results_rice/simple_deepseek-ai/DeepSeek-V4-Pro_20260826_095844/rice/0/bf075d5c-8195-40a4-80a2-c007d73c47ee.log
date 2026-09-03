@@ -1,0 +1,67 @@
+2026-08-26 09:58:46 [info     ] Grading leaf: For the MuJoCo environments, the optimization of the mask network objective now uses PPO rather than the prime-dual method
+2026-08-26 09:59:35 [info     ] Model file selection raw output:
+Refine_mujoco/masknet/train.py
+Refine_mujoco/masknet/cus_PPO.py
+Refine_mujoco/masknet/environment.py
+Refine_mujoco/masknet/readme.md
+Refine_mujoco/PPO.py
+Refine_mujoco/OnPolicyAlgorithm.py
+Refine_mujoco/base_class.py
+Refine_mujoco/models.py
+Refine_mujoco/masknet/gen_fid.py
+Refine_mujoco/masknet/fid_test.py
+2026-08-26 09:59:35 [info     ] Model file selection raw output:
+Refine_mujoco/masknet/train.py
+Refine_mujoco/masknet/cus_PPO.py
+Refine_mujoco/masknet/environment.py
+Refine_mujoco/masknet/readme.md
+Refine_mujoco/PPO.py
+Refine_mujoco/OnPolicyAlgorithm.py
+Refine_mujoco/base_class.py
+Refine_mujoco/models.py
+Refine_mujoco/masknet/gen_fid.py
+Refine_mujoco/masknet/fid_test.py
+2026-08-26 10:00:23 [info     ] model response: # Expectations
+The paper proposes RICE, which includes an optimized explanation method based on StateMask but with a simplified training process. In the original StateMask (Cheng et al., 2023), the objective function was optimized using a carefully designed surrogate function and a prime‑dual method. The paper explicitly states that under Assumption 3.1 they can reformulate the objective, add a reward bonus for blinding, and then train the mask network with vanilla PPO (Proximal Policy Optimization) instead of the prime‑dual approach. Algorithm 1 in the paper describes training the mask network using PPO. Therefore, for the MuJoCo environments I expect to see:
+
+- A mask network that outputs a binary decision (blind / not blind).
+- An environment wrapper that adds the extra bonus reward when the mask network chooses to blind (according to the paper, $R'(s_t, a_t) = R(s_t, a_t) + \alpha a_t^m$, though the exact direction of the bonus may vary).
+- The training loop explicitly using PPO (e.g., from Stable‑Baselines3 or a custom PPO implementation) to update the mask network parameters, rather than any prime‑dual optimisation code.
+
+That is, the submission must contain actual code that performs the mask network training with PPO, avoiding the original prime‑dual method.
+
+# Reality
+The submission’s `Refine_mujoco/masknet/` directory contains the implementation for training the mask network on MuJoCo environments (e.g., `Hopper-v3`).
+
+- **Environment wrapper** (`environment.py`): The `Multi2SingleEnv` step function receives a mask action (0 = blind, 1 = use base action) and adds an intrinsic reward `self.alpha * (1 - action)`. This aligns with giving a bonus when the mask network “blinds” (the sign may differ from the paper’s description but achieves the same purpose). The environment is then used to train the mask policy.
+
+- **Training script** (`train.py`): This script instantiates a `PPO` object from `cus_PPO` and calls `model.learn(total_timesteps=3e5, ...)`. No other optimisation method is imported or called.
+
+- **PPO implementation** (`cus_PPO.py`): This file defines a custom `PPO` class that inherits from `OnPolicyAlgorithm`. It implements the standard PPO clipped surrogate objective, value loss, and entropy bonus. There is no prime‑dual solver, Lagrangian, or dual variable update. The loss is computed as `policy_loss = -th.min(policy_loss_1, policy_loss_2).mean()` with `ratio = th.exp(log_prob - rollout_data.old_log_prob)` and clipping, exactly the PPO algorithm.
+
+Therefore, the mask network training entirely relies on PPO for optimisation; the prime‑dual method from the original StateMask is absent. This satisfies the requirement that for the MuJoCo environments the optimisation of the mask network objective uses PPO rather than the prime‑dual method.
+
+# Score
+1
+2026-08-26 10:00:23 [info     ] model response: # Expectations
+The paper proposes RICE, which includes an optimized explanation method based on StateMask but with a simplified training process. In the original StateMask (Cheng et al., 2023), the objective function was optimized using a carefully designed surrogate function and a prime‑dual method. The paper explicitly states that under Assumption 3.1 they can reformulate the objective, add a reward bonus for blinding, and then train the mask network with vanilla PPO (Proximal Policy Optimization) instead of the prime‑dual approach. Algorithm 1 in the paper describes training the mask network using PPO. Therefore, for the MuJoCo environments I expect to see:
+
+- A mask network that outputs a binary decision (blind / not blind).
+- An environment wrapper that adds the extra bonus reward when the mask network chooses to blind (according to the paper, $R'(s_t, a_t) = R(s_t, a_t) + \alpha a_t^m$, though the exact direction of the bonus may vary).
+- The training loop explicitly using PPO (e.g., from Stable‑Baselines3 or a custom PPO implementation) to update the mask network parameters, rather than any prime‑dual optimisation code.
+
+That is, the submission must contain actual code that performs the mask network training with PPO, avoiding the original prime‑dual method.
+
+# Reality
+The submission’s `Refine_mujoco/masknet/` directory contains the implementation for training the mask network on MuJoCo environments (e.g., `Hopper-v3`).
+
+- **Environment wrapper** (`environment.py`): The `Multi2SingleEnv` step function receives a mask action (0 = blind, 1 = use base action) and adds an intrinsic reward `self.alpha * (1 - action)`. This aligns with giving a bonus when the mask network “blinds” (the sign may differ from the paper’s description but achieves the same purpose). The environment is then used to train the mask policy.
+
+- **Training script** (`train.py`): This script instantiates a `PPO` object from `cus_PPO` and calls `model.learn(total_timesteps=3e5, ...)`. No other optimisation method is imported or called.
+
+- **PPO implementation** (`cus_PPO.py`): This file defines a custom `PPO` class that inherits from `OnPolicyAlgorithm`. It implements the standard PPO clipped surrogate objective, value loss, and entropy bonus. There is no prime‑dual solver, Lagrangian, or dual variable update. The loss is computed as `policy_loss = -th.min(policy_loss_1, policy_loss_2).mean()` with `ratio = th.exp(log_prob - rollout_data.old_log_prob)` and clipping, exactly the PPO algorithm.
+
+Therefore, the mask network training entirely relies on PPO for optimisation; the prime‑dual method from the original StateMask is absent. This satisfies the requirement that for the MuJoCo environments the optimisation of the mask network objective uses PPO rather than the prime‑dual method.
+
+# Score
+1

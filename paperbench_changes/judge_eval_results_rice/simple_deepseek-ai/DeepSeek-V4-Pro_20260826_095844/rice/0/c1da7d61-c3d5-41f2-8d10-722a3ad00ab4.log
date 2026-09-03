@@ -1,0 +1,81 @@
+2026-08-26 10:00:39 [info     ] Grading leaf: For the autonomous driving environment, for the "StateMask" explanation method, code for measuring training time throughout training as outlined in Appendix C.3 and Table 4 has been implemented.
+2026-08-26 10:02:00 [info     ] Model file selection raw output:
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/retrain.py
+Refine_auto_drive/readme.md
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/train_baseline.py
+README.md
+2026-08-26 10:02:00 [info     ] Model file selection raw output:
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/retrain.py
+Refine_auto_drive/readme.md
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/train_baseline.py
+README.md
+2026-08-26 10:02:52 [info     ] model response: # Expectations
+
+The paper presents an explanation method (StateMask) and an improved variant (Ours). Appendix C.3 and Table 4 compare the **training efficiency** of the two methods by reporting the number of seconds required to train each mask network on a fixed number of samples. For the **autonomous driving** environment, the table lists a "Num. of samples" and the training time for StateMask and Ours.
+
+To reproduce this, the submission should implement:
+
+1. Training of the **StateMask** explanation method for the autonomous driving environment (using the original StateMask algorithm, which involves a prime-dual optimization, not the simplified bonus-based version).
+2. Within that training code, **measure the training time** (e.g., recording start/end time and computing elapsed time, or logging duration) while training on the specified number of samples.
+
+The measurement should be clearly present in the code (e.g., using `time.time()`, a custom timer, or similar) so that the values reported in Table 4 can be obtained. The code must be specific to the autonomous driving environment and the StateMask method.
+
+# Reality
+
+The submission provides several Python files under `Refine_auto_drive/`:
+
+- `train_masknet.py` – This trains a mask network using the **Ours** method (it uses an environment wrapper that adds a bonus for blinding, as described in the paper’s Algorithm 1 and Theorem 3.3). It does not implement the original StateMask training procedure (no prime-dual optimization, no separate surrogate function).
+- `custom_masknet_env.py` – Implements the bonus-based mask environment, again for the Ours method.
+- `gen_retrain_traj.py` – Generates trajectories with importance scores using the trained Ours mask network.
+- `learner.py`, `retrain.py`, `rnd_reward_model.py`, `retrain_env.py`, `train_baseline.py` – These are related to refinement, RND, or baseline PPO training, not to training the StateMask explanation method.
+
+There is **no file** that implements training of the original **StateMask** explanation method for the autonomous driving environment (or any environment). Consequently, there is **no code** that measures the training time of StateMask during such training. The only mask training script is for the “Ours” variant, and even that script (`train_masknet.py`) contains **no explicit timing measurement** (e.g., no `time.time()` calls, no logging of training duration).
+
+Thus, the submission completely lacks the required implementation for this criterion.
+
+# Score
+
+**0**
+
+The criterion requires code that measures training time for the StateMask explanation method in the autonomous driving environment. The submission contains no implementation of StateMask training, let alone code to measure its training time. Therefore, the requirement is not met.
+2026-08-26 10:02:52 [info     ] model response: # Expectations
+
+The paper presents an explanation method (StateMask) and an improved variant (Ours). Appendix C.3 and Table 4 compare the **training efficiency** of the two methods by reporting the number of seconds required to train each mask network on a fixed number of samples. For the **autonomous driving** environment, the table lists a "Num. of samples" and the training time for StateMask and Ours.
+
+To reproduce this, the submission should implement:
+
+1. Training of the **StateMask** explanation method for the autonomous driving environment (using the original StateMask algorithm, which involves a prime-dual optimization, not the simplified bonus-based version).
+2. Within that training code, **measure the training time** (e.g., recording start/end time and computing elapsed time, or logging duration) while training on the specified number of samples.
+
+The measurement should be clearly present in the code (e.g., using `time.time()`, a custom timer, or similar) so that the values reported in Table 4 can be obtained. The code must be specific to the autonomous driving environment and the StateMask method.
+
+# Reality
+
+The submission provides several Python files under `Refine_auto_drive/`:
+
+- `train_masknet.py` – This trains a mask network using the **Ours** method (it uses an environment wrapper that adds a bonus for blinding, as described in the paper’s Algorithm 1 and Theorem 3.3). It does not implement the original StateMask training procedure (no prime-dual optimization, no separate surrogate function).
+- `custom_masknet_env.py` – Implements the bonus-based mask environment, again for the Ours method.
+- `gen_retrain_traj.py` – Generates trajectories with importance scores using the trained Ours mask network.
+- `learner.py`, `retrain.py`, `rnd_reward_model.py`, `retrain_env.py`, `train_baseline.py` – These are related to refinement, RND, or baseline PPO training, not to training the StateMask explanation method.
+
+There is **no file** that implements training of the original **StateMask** explanation method for the autonomous driving environment (or any environment). Consequently, there is **no code** that measures the training time of StateMask during such training. The only mask training script is for the “Ours” variant, and even that script (`train_masknet.py`) contains **no explicit timing measurement** (e.g., no `time.time()` calls, no logging of training duration).
+
+Thus, the submission completely lacks the required implementation for this criterion.
+
+# Score
+
+**0**
+
+The criterion requires code that measures training time for the StateMask explanation method in the autonomous driving environment. The submission contains no implementation of StateMask training, let alone code to measure its training time. Therefore, the requirement is not met.

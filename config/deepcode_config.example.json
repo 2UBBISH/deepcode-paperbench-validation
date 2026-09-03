@@ -1,0 +1,123 @@
+{
+  "security": {
+    "accessPreset": "ask"
+  },
+  "providers": {
+    "profiles": {
+      "siliconflow": {
+        "label": "SiliconFlow",
+        "template": "custom",
+        "apiBase": "https://api.siliconflow.cn/v1",
+        "apiKeyEnv": "SILICONFLOW_KEY",
+        "extraHeaders": {},
+        "modelCatalog": "manual",
+        "manualModels": [
+          "deepseek-ai/DeepSeek-V4-Pro",
+          "moonshotai/Kimi-K2.7-Code",
+          "Qwen/Qwen3.6-35B-A3B",
+          "MiniMaxAI/MiniMax-M2.5"
+        ],
+        "enabled": true
+      },
+      "paratera": {
+        "label": "Paratera",
+        "template": "custom",
+        "apiBase": "https://llmapi.paratera.com/v1",
+        "apiKeyEnv": "PARATERA_KEY",
+        "extraHeaders": {},
+        "modelCatalog": "manual",
+        "manualModels": [
+          "DeepSeek-V4-Pro",
+          "GLM-5.1",
+          "GLM-5",
+          "Qwen3.5-Plus",
+          "Qwen3.5-397B-A17B",
+          "MiniMax-M3",
+          "Kimi-K2.5",
+          "Qwen3-Coder-Plus"
+        ],
+        "enabled": true
+      }
+    }
+  },
+  "agents": {
+    "defaults": {
+      "provider": "paratera",
+      "model": "DeepSeek-V4-Pro",
+      "maxTokens": 65536
+    },
+    "implementation": {
+      "model": "DeepSeek-V4-Pro",
+      "maxTokens": 65536,
+      "temperature": 0.2
+    }
+  },
+  "tools": {
+    "defaultSearchServer": "filesystem",
+    "mcpServers": {
+      "code-implementation": {
+        "type": "stdio",
+        "command": "/home/deepevol/deepevol/DeepCode/.venv/bin/python",
+        "args": [
+          "-m",
+          "tools.code_implementation_server"
+        ],
+        "tool_timeout": 600
+      },
+      "code-reference-indexer": {
+        "type": "stdio",
+        "command": "/home/deepevol/deepevol/DeepCode/.venv/bin/python",
+        "args": [
+          "-m",
+          "tools.code_reference_indexer"
+        ],
+        "tool_timeout": 300
+      },
+      "document-segmentation": {
+        "type": "stdio",
+        "command": "/home/deepevol/deepevol/DeepCode/.venv/bin/python",
+        "args": [
+          "-m",
+          "tools.document_segmentation_server"
+        ],
+        "tool_timeout": 300
+      },
+      "filesystem": {
+        "type": "stdio",
+        "command": "npx",
+        "args": [
+          "-y",
+          "@modelcontextprotocol/server-filesystem",
+          "/home/deepevol/deepevol/DeepCode/deepcode_lab"
+        ],
+        "tool_timeout": 300
+      },
+      "fetch": {
+        "type": "stdio",
+        "command": "/home/deepevol/.local/bin/uvx",
+        "args": [
+          "mcp-server-fetch"
+        ],
+        "tool_timeout": 300
+      },
+      "github-downloader": {
+        "type": "stdio",
+        "command": "/home/deepevol/deepevol/DeepCode/.venv/bin/python",
+        "args": [
+          "-m",
+          "tools.git_command"
+        ],
+        "tool_timeout": 600
+      },
+      "command-executor": {
+        "type": "stdio",
+        "command": "/home/deepevol/deepevol/DeepCode/.venv/bin/python",
+        "args": [
+          "-m",
+          "tools.command_executor"
+        ],
+        "tool_timeout": 600
+      }
+    }
+  }
+}

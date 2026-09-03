@@ -1,0 +1,63 @@
+2026-08-26 09:58:46 [info     ] Grading leaf: For the autonomous driving environment, the "PPO fine-tuning" refinement method has been implemented as outlined in section 4.1, i.e. lowering the learning rate and continuing training with the PPO algorithm.
+2026-08-26 09:59:34 [info     ] Model file selection raw output:
+Refine_auto_drive/retrain.py
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/readme.md
+README.md
+2026-08-26 09:59:34 [info     ] Model file selection raw output:
+Refine_auto_drive/retrain.py
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/readme.md
+README.md
+2026-08-26 10:00:11 [info     ] model response: # Expectations
+The paper describes the "PPO fine-tuning" baseline for refining DRL agents: "lowering the learning rate and continuing training with the PPO algorithm" (Section 4.1). For the autonomous driving environment, this requires code that loads a pre‑trained PPO agent (e.g., the one trained in `metadrive_macro_config` and saved to `ckpt_best.pth.tar`) and continues training it with a reduced learning rate, without any additional explanation‑based guidance or exploration bonuses. The implementation should be a distinct script or a clear part of the code that runs fine‑tuning epochs using PPO updates after lowering the learning rate from the original training configuration.
+
+I will check whether the submission includes actual code (not just documentation) that performs this PPO fine‑tuning for the autonomous driving environment.
+
+# Reality
+The provided files for the autonomous driving environment are contained in the `Refine_auto_drive` directory. Examining them:
+
+- `train_baseline.py` is a training script for a PPO agent from scratch, using the default learning rate (`3e-4`). It does **not** load any pre‑trained weights, nor does it lower the learning rate – it is the initial training, not fine‑tuning.
+
+- `train_masknet.py` trains the mask network (the explanation method), not a refining baseline.
+
+- `retrain.py` implements the full RICE refining method (the paper’s **Ours**). It loads a pre‑trained agent, constructs a mixed initial distribution based on the explanation, adds RND exploration bonuses, and continues training. This is **not** the simple PPO fine‑tuning baseline, because it involves resetting to critical states and exploration bonuses.
+
+- There is no other script or code block that loads the pre‑trained PPO agent and continues training with a lowered learning rate, as required for the PPO fine‑tuning baseline.
+
+Consequently, the submission does not contain an implementation of the PPO fine‑tuning method for the autonomous driving environment.
+
+# Score
+0 – The criterion is not met because no actual code for PPO fine‑tuning (lowering learning rate and continuing training with PPO) for the autonomous driving environment is present in the provided files.
+2026-08-26 10:00:11 [info     ] model response: # Expectations
+The paper describes the "PPO fine-tuning" baseline for refining DRL agents: "lowering the learning rate and continuing training with the PPO algorithm" (Section 4.1). For the autonomous driving environment, this requires code that loads a pre‑trained PPO agent (e.g., the one trained in `metadrive_macro_config` and saved to `ckpt_best.pth.tar`) and continues training it with a reduced learning rate, without any additional explanation‑based guidance or exploration bonuses. The implementation should be a distinct script or a clear part of the code that runs fine‑tuning epochs using PPO updates after lowering the learning rate from the original training configuration.
+
+I will check whether the submission includes actual code (not just documentation) that performs this PPO fine‑tuning for the autonomous driving environment.
+
+# Reality
+The provided files for the autonomous driving environment are contained in the `Refine_auto_drive` directory. Examining them:
+
+- `train_baseline.py` is a training script for a PPO agent from scratch, using the default learning rate (`3e-4`). It does **not** load any pre‑trained weights, nor does it lower the learning rate – it is the initial training, not fine‑tuning.
+
+- `train_masknet.py` trains the mask network (the explanation method), not a refining baseline.
+
+- `retrain.py` implements the full RICE refining method (the paper’s **Ours**). It loads a pre‑trained agent, constructs a mixed initial distribution based on the explanation, adds RND exploration bonuses, and continues training. This is **not** the simple PPO fine‑tuning baseline, because it involves resetting to critical states and exploration bonuses.
+
+- There is no other script or code block that loads the pre‑trained PPO agent and continues training with a lowered learning rate, as required for the PPO fine‑tuning baseline.
+
+Consequently, the submission does not contain an implementation of the PPO fine‑tuning method for the autonomous driving environment.
+
+# Score
+0 – The criterion is not met because no actual code for PPO fine‑tuning (lowering learning rate and continuing training with PPO) for the autonomous driving environment is present in the provided files.

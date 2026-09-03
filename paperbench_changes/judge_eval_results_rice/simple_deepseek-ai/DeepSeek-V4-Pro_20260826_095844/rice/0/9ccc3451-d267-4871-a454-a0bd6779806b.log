@@ -1,0 +1,89 @@
+2026-08-26 10:00:27 [info     ] Grading leaf: For the network defence environment, the reward function implemented such that an additional reward is given when the mask net outputs "1", as outlined in section 3.3.
+2026-08-26 10:01:12 [info     ] Model file selection raw output:
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_mask.py
+Refine_cage_challenge/rollout_mask.py
+Refine_cage_challenge/Agents/PPOAgent_mask.py
+Refine_cage_challenge/ppo_train.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2.py
+Refine_cage_challenge/Agents/PPOAgent.py
+Refine_cage_challenge/sample_mask_score.py
+Refine_cage_challenge/sample_value_score.py
+Refine_cage_challenge/Wrappers/utils.py
+Refine_cage_challenge/readme.md
+2026-08-26 10:01:12 [info     ] Model file selection raw output:
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_mask.py
+Refine_cage_challenge/rollout_mask.py
+Refine_cage_challenge/Agents/PPOAgent_mask.py
+Refine_cage_challenge/ppo_train.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2.py
+Refine_cage_challenge/Agents/PPOAgent.py
+Refine_cage_challenge/sample_mask_score.py
+Refine_cage_challenge/sample_value_score.py
+Refine_cage_challenge/Wrappers/utils.py
+Refine_cage_challenge/readme.md
+2026-08-26 10:02:34 [info     ] model response: # Expectations
+According to Section 3.3 of the paper, the mask network training for the proposed explanation method uses a modified reward function. To avoid the trivial solution of always outputting "0" (never blinding), an additional reward bonus is added when the mask net chooses to blind (outputs "1"). The new reward is defined as  
+\( R'(s_t, a_t) = R(s_t, a_t) + \alpha a_t^m \),  
+where \( a_t^m \) is the binary mask action (0 or 1) and \( \alpha \) is a hyperparameter. The implementation for the network defence environment (Cage Challenge 2) should capture this bonus: when the mask net’s action is 1, the reward used to train the mask network should be the environment reward plus an extra amount \( \alpha \); when the action is 0, no bonus is added.
+
+I will look for concrete code in the `Refine_cage_challenge` directory that:
+- Computes the mask action (binary 0/1).
+- Adds an explicit bonus when the mask action equals 1.
+- Stores this augmented reward for subsequent PPO updates of the mask network.
+
+# Reality
+The submitted files relevant to the network defence environment are inside `Refine_cage_challenge/`.  
+
+In `Agents/PPOAgent_mask.py`, the class `PPOAgent_mask` (the mask agent) contains a method `get_action`. It samples a mask action from the mask policy (line `mask_action = self.old_policy.act(...)`). If `mask_action` is not 0 (i.e., 1), the flag `self.mask_this_state` is set to `True`. The method returns an `additional_reward`:
+```python
+additional_reward = self.lazy_reward if self.mask_this_state else 0
+```
+with `self.lazy_reward` initialised to `5`. This directly implements the paper’s bonus, with `lazy_reward` acting as the hyperparameter \(\alpha\).  
+
+In `rollout_mask.py`, the rollout loop calls `agent.get_action(state)`, which returns the action and `additional_reward`. The environment step gives `reward`, and the code explicitly adds the bonus:
+```python
+action, additional_reward = agent.get_action(state)
+state, reward, done, _ = env.step(action)
+reward += additional_reward
+agent.store(reward, done)
+```
+The augmented reward is stored in the mask agent’s memory and later used to train the mask policy with PPO (`agent.train()`).  
+
+Thus, when the mask net outputs `1` (blinding), an additional reward of `5` is added; when it outputs `0`, no bonus is added. This matches the paper’s description exactly.
+
+# Score
+The criterion is met – the code contains a correct implementation of the reward function that gives an extra bonus when the mask net outputs “1”.  
+**Score: 1**
+2026-08-26 10:02:34 [info     ] model response: # Expectations
+According to Section 3.3 of the paper, the mask network training for the proposed explanation method uses a modified reward function. To avoid the trivial solution of always outputting "0" (never blinding), an additional reward bonus is added when the mask net chooses to blind (outputs "1"). The new reward is defined as  
+\( R'(s_t, a_t) = R(s_t, a_t) + \alpha a_t^m \),  
+where \( a_t^m \) is the binary mask action (0 or 1) and \( \alpha \) is a hyperparameter. The implementation for the network defence environment (Cage Challenge 2) should capture this bonus: when the mask net’s action is 1, the reward used to train the mask network should be the environment reward plus an extra amount \( \alpha \); when the action is 0, no bonus is added.
+
+I will look for concrete code in the `Refine_cage_challenge` directory that:
+- Computes the mask action (binary 0/1).
+- Adds an explicit bonus when the mask action equals 1.
+- Stores this augmented reward for subsequent PPO updates of the mask network.
+
+# Reality
+The submitted files relevant to the network defence environment are inside `Refine_cage_challenge/`.  
+
+In `Agents/PPOAgent_mask.py`, the class `PPOAgent_mask` (the mask agent) contains a method `get_action`. It samples a mask action from the mask policy (line `mask_action = self.old_policy.act(...)`). If `mask_action` is not 0 (i.e., 1), the flag `self.mask_this_state` is set to `True`. The method returns an `additional_reward`:
+```python
+additional_reward = self.lazy_reward if self.mask_this_state else 0
+```
+with `self.lazy_reward` initialised to `5`. This directly implements the paper’s bonus, with `lazy_reward` acting as the hyperparameter \(\alpha\).  
+
+In `rollout_mask.py`, the rollout loop calls `agent.get_action(state)`, which returns the action and `additional_reward`. The environment step gives `reward`, and the code explicitly adds the bonus:
+```python
+action, additional_reward = agent.get_action(state)
+state, reward, done, _ = env.step(action)
+reward += additional_reward
+agent.store(reward, done)
+```
+The augmented reward is stored in the mask agent’s memory and later used to train the mask policy with PPO (`agent.train()`).  
+
+Thus, when the mask net outputs `1` (blinding), an additional reward of `5` is added; when it outputs `0`, no bonus is added. This matches the paper’s description exactly.
+
+# Score
+The criterion is met – the code contains a correct implementation of the reward function that gives an extra bonus when the mask net outputs “1”.  
+**Score: 1**

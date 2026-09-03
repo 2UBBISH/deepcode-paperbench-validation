@@ -1,0 +1,75 @@
+2026-08-26 10:00:24 [info     ] Grading leaf: For the selfish mining environment, the additional reward given when the mask net outputs "1" is governed by a mutable hyperparameter, i.e., a hyperparameter whose value can be changed (without having to edit the code directly), corresponding to $\alpha$ in the paper. Alternative hyperparameter names are allowed, as long as the functionality remains the same.
+2026-08-26 10:01:47 [info     ] Model file selection raw output:
+Refine_selfish_mining/baseline/reinforcement_learning/base/blockchain_simulator/mdp_blockchain_simulator_masknet.py
+Refine_selfish_mining/masknet/train.py
+Refine_selfish_mining/masknet/utils.py
+Refine_selfish_mining/utils.py
+Refine_selfish_mining/masknet/replay.py
+Refine_selfish_mining/masknet/sample_mask_score.py
+Refine_selfish_mining/masknet/fidelity_score.py
+Refine_selfish_mining/retrain.py
+Refine_selfish_mining/baseline/net.py
+Refine_selfish_mining/masknet/sample_value_score.py
+2026-08-26 10:01:47 [info     ] Model file selection raw output:
+Refine_selfish_mining/baseline/reinforcement_learning/base/blockchain_simulator/mdp_blockchain_simulator_masknet.py
+Refine_selfish_mining/masknet/train.py
+Refine_selfish_mining/masknet/utils.py
+Refine_selfish_mining/utils.py
+Refine_selfish_mining/masknet/replay.py
+Refine_selfish_mining/masknet/sample_mask_score.py
+Refine_selfish_mining/masknet/fidelity_score.py
+Refine_selfish_mining/retrain.py
+Refine_selfish_mining/baseline/net.py
+Refine_selfish_mining/masknet/sample_value_score.py
+2026-08-26 10:03:07 [info     ] model response: # Expectations
+The paper states that in the optimized StateMask explanation method ("OURS"), the reward function is modified to give an extra bonus when the mask network outputs "1". Specifically, the new reward is $R'(s_t, a_t) = R(s_t, a_t) + \alpha a_t^m$, where $\alpha$ is a hyperparameter. The implementation of this method for the selfish mining environment should therefore expose $\alpha$ as a configurable value (e.g., via a command‑line argument or configuration file) that can be changed without editing the source code. Checking for the criterion means inspecting:
+
+- The training script for the mask network (likely `masknet/train.py`).
+- The environment code that computes the reward during the agent’s steps (here `mdp_blockchain_simulator_masknet.py`).
+- Whether the variable holding the bonus multiplier is assigned from an external argument rather than being hardcoded.
+
+A correct implementation allows the user to specify $\alpha$ (under any variable name) when launching the training, and that value is then used inside the step function.
+
+# Reality
+I examined the submission files relevant to the selfish mining mask network:
+
+- **`masknet/train.py`** – defines command‑line arguments via `argparse`. The `get_args()` function contains many hyperparameters (learning rate, gamma, etc.), but **none** corresponds to the $\alpha$ bonus for mask outputs. The environment is created with `create_env(args)`, which instantiates `MDPBlockchainSimulatorMaskNet` without passing any bonus coefficient.
+- **`baseline/reinforcement_learning/base/blockchain_simulator/mdp_blockchain_simulator_masknet.py`** – contains the `step()` method that computes the modified reward. Inside the constructor, the variable that controls the bonus is:
+  ```python
+  self.lazy_reward = 0.15
+  # self.lazy_reward = 0.05
+  ```
+  No parameter is accepted from outside to set this value; it is hard‑wired in the class. Consequently, changing the bonus requires editing the source code directly.
+
+There is no other mechanism (e.g., config file, environment variable) that allows the user to alter the bonus without modifying the code. The attempted reproduction therefore does not fulfill the requirement of a mutable hyperparameter.
+
+# Score
+0
+
+The criterion is not met because the additional reward given when the mask net outputs “1” is hardcoded and cannot be changed through a command‑line argument or other external configuration.
+2026-08-26 10:03:07 [info     ] model response: # Expectations
+The paper states that in the optimized StateMask explanation method ("OURS"), the reward function is modified to give an extra bonus when the mask network outputs "1". Specifically, the new reward is $R'(s_t, a_t) = R(s_t, a_t) + \alpha a_t^m$, where $\alpha$ is a hyperparameter. The implementation of this method for the selfish mining environment should therefore expose $\alpha$ as a configurable value (e.g., via a command‑line argument or configuration file) that can be changed without editing the source code. Checking for the criterion means inspecting:
+
+- The training script for the mask network (likely `masknet/train.py`).
+- The environment code that computes the reward during the agent’s steps (here `mdp_blockchain_simulator_masknet.py`).
+- Whether the variable holding the bonus multiplier is assigned from an external argument rather than being hardcoded.
+
+A correct implementation allows the user to specify $\alpha$ (under any variable name) when launching the training, and that value is then used inside the step function.
+
+# Reality
+I examined the submission files relevant to the selfish mining mask network:
+
+- **`masknet/train.py`** – defines command‑line arguments via `argparse`. The `get_args()` function contains many hyperparameters (learning rate, gamma, etc.), but **none** corresponds to the $\alpha$ bonus for mask outputs. The environment is created with `create_env(args)`, which instantiates `MDPBlockchainSimulatorMaskNet` without passing any bonus coefficient.
+- **`baseline/reinforcement_learning/base/blockchain_simulator/mdp_blockchain_simulator_masknet.py`** – contains the `step()` method that computes the modified reward. Inside the constructor, the variable that controls the bonus is:
+  ```python
+  self.lazy_reward = 0.15
+  # self.lazy_reward = 0.05
+  ```
+  No parameter is accepted from outside to set this value; it is hard‑wired in the class. Consequently, changing the bonus requires editing the source code directly.
+
+There is no other mechanism (e.g., config file, environment variable) that allows the user to alter the bonus without modifying the code. The attempted reproduction therefore does not fulfill the requirement of a mutable hyperparameter.
+
+# Score
+0
+
+The criterion is not met because the additional reward given when the mask net outputs “1” is hardcoded and cannot be changed through a command‑line argument or other external configuration.

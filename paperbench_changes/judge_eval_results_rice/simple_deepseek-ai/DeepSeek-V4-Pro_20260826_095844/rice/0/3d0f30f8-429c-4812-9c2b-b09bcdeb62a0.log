@@ -1,0 +1,73 @@
+2026-08-26 10:00:55 [info     ] Grading leaf: In Experiment II, for the MuJoCo environments, for the "Ours" refinement method, the optimized StateMask ("Ours") explanation method proposed in the paper is used as the explanation method.
+2026-08-26 10:01:24 [info     ] Model file selection raw output:
+Refine_mujoco/retrain.py
+Refine_mujoco/masknet/train.py
+Refine_mujoco/environment.py
+Refine_mujoco/PPO.py
+Refine_mujoco/masknet/cus_PPO.py
+Refine_mujoco/masknet/environment.py
+Refine_mujoco/utils.py
+Refine_mujoco/retrain.sh
+Refine_mujoco/models.py
+Refine_mujoco/OnPolicyAlgorithm.py
+2026-08-26 10:01:24 [info     ] Model file selection raw output:
+Refine_mujoco/retrain.py
+Refine_mujoco/masknet/train.py
+Refine_mujoco/environment.py
+Refine_mujoco/PPO.py
+Refine_mujoco/masknet/cus_PPO.py
+Refine_mujoco/masknet/environment.py
+Refine_mujoco/utils.py
+Refine_mujoco/retrain.sh
+Refine_mujoco/models.py
+Refine_mujoco/OnPolicyAlgorithm.py
+2026-08-26 10:02:35 [info     ] model response: # Expectations
+
+The criterion requires that in Experiment II for the MuJoCo environments, the "Ours" refinement method (RICE) uses the optimized StateMask explanation method proposed in the paper. That explanation method is described in Section 3.3: it reformulates the StateMask objective, adds a reward bonus for blinding (with hyperparameter α), and trains the mask network via PPO (Algorithm 1). The refinement procedure (Algorithm 2) then uses this trained mask network to identify the most critical state in a trajectory. Therefore, in the submission’s code for the "Ours" refinement method, I expect:
+
+- The mask network is trained with the bonus reward (α · a_t^m) as per the paper.
+- The refinement environment (RetrainEnv) loads this trained mask network.
+- When resetting the environment, the mask network is used to compute mask probabilities and select the most critical state (highest mask probability) to form the mixed initial distribution, unless explicitly overridden by hyperparameters.
+
+I will look for actual code that implements these components.
+
+# Reality
+
+The submission contains the following relevant files:
+
+- **MaskNet training**: `Refine_mujoco/masknet/train.py` trains a mask network using a custom PPO (`cus_PPO.py`) and a wrapped environment (`environment.py`). In `masknet/environment.py`, the `Multi2SingleEnv.step()` method adds a bonus: `reward += self.alpha * (1 - action)` where `action == 0` corresponds to blinding (random action) and `action == 1` corresponds to using the base agent’s action. This exactly matches the paper’s description of adding a bonus `α a_t^m` to encourage blinding (the paper’s \(a_t^m=1\) for blinding; the code inverts the encoding but gives the bonus when blinding). The mask network is trained via PPO (`cus_PPO.py`) on this modified reward, which is the "Ours" explanation method (the simplified StateMask with bonus).
+
+- **Refinement environment**: `Refine_mujoco/environment.py` defines `RetrainEnv`. Its `reset()` method either starts from the default initial state or from a critical state identified via the mask network, depending on the hyperparameter `p`. The function `gen_one_traj` (in `utils.py`) runs the pre-trained policy, uses the loaded mask network (`model = PPO.load(masknet_path)`) to compute mask probabilities for each step, and records them in `traj.mask_probs`. When not using a default reset, the critical state is selected by `start_idx = np.argmax(traj.mask_probs)` (i.e., the most critical step according to the mask network). The environment then restores the simulator state to that critical state.
+
+- **Refinement script**: `Refine_mujoco/retrain.sh` launches the refinement with arguments including `--masknet_path "masknet/best_model"` and `--random_sampling False` (default). Thus, the refinement process indeed uses the mask network trained with the "Ours" explanation method to determine exploration frontiers.
+
+The codebase therefore correctly implements the "Ours" refinement method with the optimized StateMask explanation method for the MuJoCo environments. All necessary components are present: the bonus-based mask network training, its loading in the refinement loop, and its use to pinpoint critical states.
+
+# Score
+
+**1** – The criterion is fully met. The submission provides actual code that implements the "Ours" refinement method in MuJoCo environments while using the optimized StateMask ("Ours") explanation method as described in the paper.
+2026-08-26 10:02:35 [info     ] model response: # Expectations
+
+The criterion requires that in Experiment II for the MuJoCo environments, the "Ours" refinement method (RICE) uses the optimized StateMask explanation method proposed in the paper. That explanation method is described in Section 3.3: it reformulates the StateMask objective, adds a reward bonus for blinding (with hyperparameter α), and trains the mask network via PPO (Algorithm 1). The refinement procedure (Algorithm 2) then uses this trained mask network to identify the most critical state in a trajectory. Therefore, in the submission’s code for the "Ours" refinement method, I expect:
+
+- The mask network is trained with the bonus reward (α · a_t^m) as per the paper.
+- The refinement environment (RetrainEnv) loads this trained mask network.
+- When resetting the environment, the mask network is used to compute mask probabilities and select the most critical state (highest mask probability) to form the mixed initial distribution, unless explicitly overridden by hyperparameters.
+
+I will look for actual code that implements these components.
+
+# Reality
+
+The submission contains the following relevant files:
+
+- **MaskNet training**: `Refine_mujoco/masknet/train.py` trains a mask network using a custom PPO (`cus_PPO.py`) and a wrapped environment (`environment.py`). In `masknet/environment.py`, the `Multi2SingleEnv.step()` method adds a bonus: `reward += self.alpha * (1 - action)` where `action == 0` corresponds to blinding (random action) and `action == 1` corresponds to using the base agent’s action. This exactly matches the paper’s description of adding a bonus `α a_t^m` to encourage blinding (the paper’s \(a_t^m=1\) for blinding; the code inverts the encoding but gives the bonus when blinding). The mask network is trained via PPO (`cus_PPO.py`) on this modified reward, which is the "Ours" explanation method (the simplified StateMask with bonus).
+
+- **Refinement environment**: `Refine_mujoco/environment.py` defines `RetrainEnv`. Its `reset()` method either starts from the default initial state or from a critical state identified via the mask network, depending on the hyperparameter `p`. The function `gen_one_traj` (in `utils.py`) runs the pre-trained policy, uses the loaded mask network (`model = PPO.load(masknet_path)`) to compute mask probabilities for each step, and records them in `traj.mask_probs`. When not using a default reset, the critical state is selected by `start_idx = np.argmax(traj.mask_probs)` (i.e., the most critical step according to the mask network). The environment then restores the simulator state to that critical state.
+
+- **Refinement script**: `Refine_mujoco/retrain.sh` launches the refinement with arguments including `--masknet_path "masknet/best_model"` and `--random_sampling False` (default). Thus, the refinement process indeed uses the mask network trained with the "Ours" explanation method to determine exploration frontiers.
+
+The codebase therefore correctly implements the "Ours" refinement method with the optimized StateMask explanation method for the MuJoCo environments. All necessary components are present: the bonus-based mask network training, its loading in the refinement loop, and its use to pinpoint critical states.
+
+# Score
+
+**1** – The criterion is fully met. The submission provides actual code that implements the "Ours" refinement method in MuJoCo environments while using the optimized StateMask ("Ours") explanation method as described in the paper.

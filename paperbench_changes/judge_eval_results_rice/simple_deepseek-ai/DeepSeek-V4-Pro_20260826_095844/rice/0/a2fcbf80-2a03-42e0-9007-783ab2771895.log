@@ -1,0 +1,39 @@
+2026-08-26 10:00:33 [info     ] Grading leaf: For the non-sparse MuJoCo environments, for the "Ours" explanation method, code for measuring training time throughout training as outlined in Appendix C.3 and Table 4 has been implemented.
+2026-08-26 10:02:01 [info     ] Model file selection raw output:
+Refine_mujoco/masknet/train.py
+Refine_mujoco/masknet/cus_PPO.py
+Refine_mujoco/monitor.py
+Refine_mujoco/masknet/environment.py
+Refine_mujoco/utils.py
+Refine_mujoco/callback.py
+Refine_mujoco/retrain.sh
+Refine_mujoco/masknet/readme.md
+Refine_mujoco/masknet/gen_fid.py
+Refine_mujoco/OnPolicyAlgorithm.py
+2026-08-26 10:02:01 [info     ] Model file selection raw output:
+Refine_mujoco/masknet/train.py
+Refine_mujoco/masknet/cus_PPO.py
+Refine_mujoco/monitor.py
+Refine_mujoco/masknet/environment.py
+Refine_mujoco/utils.py
+Refine_mujoco/callback.py
+Refine_mujoco/retrain.sh
+Refine_mujoco/masknet/readme.md
+Refine_mujoco/masknet/gen_fid.py
+Refine_mujoco/OnPolicyAlgorithm.py
+2026-08-26 10:03:46 [info     ] model response: # Expectations
+The paper’s Appendix C.3 and Table 4 report an efficiency comparison between the “Ours” explanation method and StateMask.  For the “Ours” explanation (the mask network), they need to measure the training time (wall‑clock seconds) when training the mask network for a fixed number of samples.  A correct reproduction must therefore include code that records the elapsed time during mask network training.  This can be accomplished by logging start/end times, using a callback, or relying on the built‑in time‑logging features of the training library (e.g., Stable Baselines3’s `learn` method which logs `time_elapsed` and `fps`).  The implementation should be present in the submission files and be part of the mask network training pipeline.
+
+# Reality
+The submission contains a mask network training script at `masknet/train.py`.  It imports a custom `PPO` class from `cus_PPO.py` and calls `model.learn(total_timesteps=3e5, ...)`.  The custom `PPO` class (in `cus_PPO.py`) inherits from `stable_baselines3.common.on_policy_algorithm.OnPolicyAlgorithm` and does **not** override the `learn` method.  The base `OnPolicyAlgorithm.learn()` (from Stable Baselines3) records a `start_time`, computes `time_elapsed` at each logging interval, and logs it to TensorBoard and the logger.  Consequently, the training time is automatically measured during training of the mask network.  No additional custom time‑measurement code appears in the submission, but the existing implementation (via the standard SB3 loop) fully provides the ability to capture the training time required for Table 4.  The script currently uses the Hopper environment, but the time‑logging mechanism is environment‑agnostic and would work for any of the non‑sparse MuJoCo environments.
+
+# Score
+1 – The code for measuring training time throughout mask network training is effectively implemented through the SB3 training loop, satisfying the criterion.
+2026-08-26 10:03:46 [info     ] model response: # Expectations
+The paper’s Appendix C.3 and Table 4 report an efficiency comparison between the “Ours” explanation method and StateMask.  For the “Ours” explanation (the mask network), they need to measure the training time (wall‑clock seconds) when training the mask network for a fixed number of samples.  A correct reproduction must therefore include code that records the elapsed time during mask network training.  This can be accomplished by logging start/end times, using a callback, or relying on the built‑in time‑logging features of the training library (e.g., Stable Baselines3’s `learn` method which logs `time_elapsed` and `fps`).  The implementation should be present in the submission files and be part of the mask network training pipeline.
+
+# Reality
+The submission contains a mask network training script at `masknet/train.py`.  It imports a custom `PPO` class from `cus_PPO.py` and calls `model.learn(total_timesteps=3e5, ...)`.  The custom `PPO` class (in `cus_PPO.py`) inherits from `stable_baselines3.common.on_policy_algorithm.OnPolicyAlgorithm` and does **not** override the `learn` method.  The base `OnPolicyAlgorithm.learn()` (from Stable Baselines3) records a `start_time`, computes `time_elapsed` at each logging interval, and logs it to TensorBoard and the logger.  Consequently, the training time is automatically measured during training of the mask network.  No additional custom time‑measurement code appears in the submission, but the existing implementation (via the standard SB3 loop) fully provides the ability to capture the training time required for Table 4.  The script currently uses the Hopper environment, but the time‑logging mechanism is environment‑agnostic and would work for any of the non‑sparse MuJoCo environments.
+
+# Score
+1 – The code for measuring training time throughout mask network training is effectively implemented through the SB3 training loop, satisfying the criterion.

@@ -1,0 +1,120 @@
+# =============================================================================
+# RICE Environment-Specific Configuration: Reacher-v4 (MuJoCo)
+# =============================================================================
+# Overrides default_mask.yaml and default_refine.yaml with values from
+# the RICE paper (Table 3): alpha=0.0001, p=0.5, lambda=0.001
+#
+# Reacher-v4 is a 2-DoF arm reaching task with dense rewards.
+# State dim: 11 (cos/sin of angles, angular velocities, target position)
+# Action dim: 2 (torques applied to two joints)
+# Max episode steps: 50 (short horizon)
+# =============================================================================
+
+# --- Environment Identification ---
+env_name: "Reacher-v4"
+env_type: "mujoco"
+state_dim: 11
+action_dim: 2
+max_episode_steps: 50
+
+# --- Mask Network Architecture ---
+mask_network:
+  hidden_sizes: [128, 128]
+  activation: "tanh"
+
+# --- Intrinsic Reward Coefficient (alpha) ---
+# Balances masking encouragement vs. performance.
+# Paper Table 3: alpha = 0.0001 for all environments.
+alpha: 0.0001
+
+# --- PPO Hyperparameters for Mask Network Training ---
+ppo:
+  learning_rate: 3.0e-4
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_epsilon: 0.2
+  value_loss_coef: 0.5
+  entropy_coef: 0.01
+  max_grad_norm: 0.5
+  ppo_epochs: 10
+  batch_size: 64
+
+# --- Mask Network Training Loop ---
+training:
+  total_steps: 300000        # 300k steps for mask training
+  steps_per_iteration: 2048
+  eval_interval: 10
+  eval_episodes: 10
+  save_interval: 50
+  seed: 42
+
+# --- Fidelity Evaluation ---
+fidelity:
+  num_episodes: 10
+  q_function: null           # Use Monte Carlo returns if no Q-function provided
+
+# --- Critical State Collection ---
+critical_state:
+  num_episodes: 100          # Collect from 100 episodes
+  top_k_per_episode: 1       # Top-1 critical state per episode
+  max_critical_states: 100   # Maximum number of stored critical states
+
+# --- Mixed Initial Distribution ---
+# Paper Table 3: p = 0.5 for Reacher
+mixed_init:
+  p_mixed: 0.5
+
+# --- RND Exploration Bonus ---
+# Paper Table 3: lambda = 0.001 for Reacher
+rnd:
+  lambda_coef: 0.001
+  hidden_sizes: [64, 64]
+  embedding_dim: 64
+  activation: "relu"
+  learning_rate: 1.0e-4
+  normalize_obs: true
+  obs_rms_decay: 0.99
+  normalize_bonus: true
+  bonus_decay: 0.99
+  update_epochs: 4
+  batch_size: 256
+
+# --- PPO Hyperparameters for Refining Phase ---
+refine_ppo:
+  learning_rate: 3.0e-4
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_epsilon: 0.2
+  value_loss_coef: 0.5
+  entropy_coef: 0.01
+  max_grad_norm: 0.5
+  ppo_epochs: 10
+  batch_size: 64
+  normalize_advantages: true
+  normalize_obs: true
+
+# --- Policy Architecture for Refining ---
+policy:
+  hidden_sizes: [64, 64]     # Standard MuJoCo PPO policy size
+  value_hidden_sizes: [64, 64]
+  activation: "tanh"
+  policy_std: 0.0            # 0 = learned log_std
+
+# --- Refining Training Loop ---
+refine_training:
+  total_steps: 1000000       # 1M steps for refinement
+  steps_per_iteration: 2048
+  eval_interval: 10
+  eval_episodes: 10
+  eval_max_steps: 50         # Match Reacher's episode length
+  save_interval: 50
+  seed: 42
+
+# --- Device ---
+device: "cuda"
+
+# --- Logging ---
+logging:
+  verbose: true
+  log_dir: "./logs/reacher"
+  use_tensorboard: false

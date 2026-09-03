@@ -1,0 +1,71 @@
+2026-08-26 10:00:54 [info     ] Grading leaf: For the autonomous driving environment, the refining method has been implemented to support the hyperparameter $p$, the probability threshold defining the mixed initial state distribution, as evidenced in Algorithm 2.  The $p$ hyperparameter must be mutable i.e., a hyperparameter whose value can be changed (without having to edit the code directly). Alternative hyperparameter names are allowed, as long as the functionality remains the same.
+2026-08-26 10:02:07 [info     ] Model file selection raw output:
+Refine_auto_drive/retrain.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/readme.md
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/train_baseline.py
+README.md
+2026-08-26 10:02:07 [info     ] Model file selection raw output:
+Refine_auto_drive/retrain.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/readme.md
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/train_baseline.py
+README.md
+2026-08-26 10:02:42 [info     ] model response: # Expectations
+According to the paper's Algorithm 2 and Section 3.3, the refining method uses a hyperparameter \(p\) that determines the probability of resetting to a critical state (identified by the explanation method) versus resetting to the environment's default initial state. This hyperparameter must be mutable—i.e., its value can be changed without directly modifying the code (e.g., via command-line argument, configuration file, or environment variable). The code for the autonomous driving environment should contain an implementation of this feature.
+
+# Reality
+In the submission's `Refine_auto_drive/retrain.py`, there is a command-line argument `--go_prob` (lines 16–19):
+```python
+parser.add_argument('--go_prob', type=float, default=0.5)
+```
+This argument is parsed and passed to the environment wrapper:
+```python
+def custom_env(env_cfg, wrapper_cfg=None):
+    return CustomWrapper(gym.make("Macro-v1", config=env_cfg), wrapper_cfg, go_prob = args.go_prob)
+```
+In `Refine_auto_drive/retrain_env.py`, the `CustomWrapper` class stores this value as `self.p` and uses it in its `reset` method (roughly lines 57–80):
+```python
+if np.random.rand() < self.p:
+    # ... collect a trajectory, identify a critical state, and fast-forward to it
+else:
+    # ... default reset from the environment's initial distribution
+```
+This exactly implements the mixed initial state distribution described in Algorithm 2. The probability threshold is mutable: changing the `--go_prob` command-line argument alters the value without editing the source code. The name `go_prob` is an allowed alternative to \(p\).
+
+# Score
+1. The criterion is fully satisfied: the refining method for the autonomous driving environment supports a mutable hyperparameter that controls the mixed initial state distribution probability (functionally equivalent to \(p\)).
+2026-08-26 10:02:42 [info     ] model response: # Expectations
+According to the paper's Algorithm 2 and Section 3.3, the refining method uses a hyperparameter \(p\) that determines the probability of resetting to a critical state (identified by the explanation method) versus resetting to the environment's default initial state. This hyperparameter must be mutable—i.e., its value can be changed without directly modifying the code (e.g., via command-line argument, configuration file, or environment variable). The code for the autonomous driving environment should contain an implementation of this feature.
+
+# Reality
+In the submission's `Refine_auto_drive/retrain.py`, there is a command-line argument `--go_prob` (lines 16–19):
+```python
+parser.add_argument('--go_prob', type=float, default=0.5)
+```
+This argument is parsed and passed to the environment wrapper:
+```python
+def custom_env(env_cfg, wrapper_cfg=None):
+    return CustomWrapper(gym.make("Macro-v1", config=env_cfg), wrapper_cfg, go_prob = args.go_prob)
+```
+In `Refine_auto_drive/retrain_env.py`, the `CustomWrapper` class stores this value as `self.p` and uses it in its `reset` method (roughly lines 57–80):
+```python
+if np.random.rand() < self.p:
+    # ... collect a trajectory, identify a critical state, and fast-forward to it
+else:
+    # ... default reset from the environment's initial distribution
+```
+This exactly implements the mixed initial state distribution described in Algorithm 2. The probability threshold is mutable: changing the `--go_prob` command-line argument alters the value without editing the source code. The name `go_prob` is an allowed alternative to \(p\).
+
+# Score
+1. The criterion is fully satisfied: the refining method for the autonomous driving environment supports a mutable hyperparameter that controls the mixed initial state distribution probability (functionally equivalent to \(p\)).

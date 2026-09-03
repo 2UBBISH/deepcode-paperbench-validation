@@ -1,0 +1,160 @@
+# =============================================================================
+# ExORL Walker Configuration for FRE (Functional Reward Encodings)
+# =============================================================================
+# Reproduces the ExORL Walker domain experiments from the FRE paper.
+# The Walker domain uses the ExORL benchmark (Yarats et al., 2022) with
+# unsupervised exploration data for pre-training and zero-shot evaluation
+# on downstream tasks (goal-reaching, velocity control).
+
+# ---------------------------------------------------------------------------
+# Dataset Specification
+# ---------------------------------------------------------------------------
+domain: "walker"               # ExORL domain: walker
+task: "proto"                  # Unsupervised proto-task data (exploration)
+version: null                  # Not applicable for ExORL
+data_dir: null                 # Auto-detect or specify path to ExORL data
+
+# ---------------------------------------------------------------------------
+# FRE Encoder / Decoder Hyperparameters
+# ---------------------------------------------------------------------------
+latent_dim: 64                 # Dimension of latent reward representation z
+d_model: 256                   # Transformer hidden dimension
+num_layers: 2                  # Number of transformer encoder layers
+num_heads: 4                   # Number of attention heads
+d_ff: 1024                     # Feedforward hidden dimension in transformer
+d_emb: 64                      # Reward embedding dimension
+num_bins: 100                  # Number of reward discretization bins
+reward_min: -10.0              # Minimum reward value for binning
+reward_max: 10.0               # Maximum reward value for binning
+decoder_hidden_dims: [256, 256]  # Decoder MLP hidden layer dimensions
+beta: 0.1                      # KL divergence weight (beta-VAE)
+dropout: 0.0                   # Dropout rate
+max_num_states: 32             # Maximum number of encoding states
+
+# ---------------------------------------------------------------------------
+# Reward Prior Hyperparameters
+# ---------------------------------------------------------------------------
+singleton_threshold: 0.5       # Distance threshold for singleton goal-reaching
+linear_sparsity: 0.5           # Probability of zeroing each weight in linear rewards
+mlp_hidden_dim: 256            # Hidden dimension for random MLP reward functions
+
+# ---------------------------------------------------------------------------
+# IQL Agent Hyperparameters
+# ---------------------------------------------------------------------------
+iql_hidden_dims: [256, 256]    # Hidden dimensions for Q, V, and policy networks
+expectile: 0.7                 # Expectile for V-function regression
+temperature: 3.0               # Temperature for advantage-weighted regression
+discount: 0.99                 # Discount factor gamma
+soft_target_update_rate: 0.005 # Polyak averaging coefficient for target networks
+log_std_min: -5.0              # Minimum log std for Gaussian policy
+log_std_max: 2.0               # Maximum log std for Gaussian policy
+
+# ---------------------------------------------------------------------------
+# Training Hyperparameters
+# ---------------------------------------------------------------------------
+K_encoder: 32                  # Number of encoding states for reward representation
+K_decoder: 32                  # Number of decoding states for reconstruction loss
+fre_learning_rate: 1.0e-4      # Learning rate for FRE encoder/decoder
+fre_weight_decay: 1.0e-5       # Weight decay for FRE optimizer
+iql_learning_rate: 3.0e-4      # Learning rate for IQL agent
+iql_weight_decay: 1.0e-5       # Weight decay for IQL optimizer
+fre_steps: 100000              # Number of Phase 1 (FRE pre-training) gradient steps
+rl_steps: 1000000              # Number of Phase 2 (RL training) gradient steps
+rl_batch_size: 256             # Batch size for RL training
+fre_batch_size: 1              # Batch size for FRE training (reward functions per step)
+
+# ---------------------------------------------------------------------------
+# Logging & Checkpointing
+# ---------------------------------------------------------------------------
+log_interval: 1000             # Log metrics every N steps
+eval_interval: 10000           # Run evaluation every N steps
+checkpoint_interval: 50000     # Save checkpoint every N steps
+checkpoint_dir: "checkpoints"  # Directory for saving checkpoints
+
+# ---------------------------------------------------------------------------
+# Hardware & Reproducibility
+# ---------------------------------------------------------------------------
+device: "auto"                 # Device: "auto", "cuda", "cpu"
+use_amp: false                 # Automatic mixed precision
+seed: 0                        # Random seed (overridden for multi-seed runs)
+
+# ---------------------------------------------------------------------------
+# Evaluation Configuration
+# ---------------------------------------------------------------------------
+evaluation:
+  num_episodes: 20             # Number of evaluation episodes per task
+  max_steps: 1000              # Maximum steps per episode
+  deterministic: true          # Use deterministic policy for evaluation
+
+  # Downstream zero-shot evaluation tasks for ExORL Walker
+  tasks:
+    # Goal-reaching tasks: reach specific target positions
+    - name: "goal_reaching_forward"
+      type: "goal_reaching"
+      description: "Reach a target position forward from start"
+      target: [4.0, 0.0]       # Target (x, z) position for walker
+
+    - name: "goal_reaching_backward"
+      type: "goal_reaching"
+      description: "Reach a target position backward from start"
+      target: [-4.0, 0.0]
+
+    - name: "goal_reaching_up"
+      type: "goal_reaching"
+      description: "Reach a target position upward"
+      target: [0.0, 2.0]
+
+    - name: "goal_reaching_random_1"
+      type: "goal_reaching"
+      description: "Reach random target position 1"
+      target: [3.0, 1.5]
+
+    - name: "goal_reaching_random_2"
+      type: "goal_reaching"
+      description: "Reach random target position 2"
+      target: [-3.0, 1.5]
+
+    - name: "goal_reaching_random_3"
+      type: "goal_reaching"
+      description: "Reach random target position 3"
+      target: [2.0, -1.0]
+
+    - name: "goal_reaching_random_4"
+      type: "goal_reaching"
+      description: "Reach random target position 4"
+      target: [-2.0, -1.0]
+
+    # Velocity tasks: move at specified speed
+    - name: "velocity_forward"
+      type: "velocity"
+      description: "Move forward at target velocity"
+      target_velocity: 2.0     # Target forward velocity (m/s)
+
+    - name: "velocity_backward"
+      type: "velocity"
+      description: "Move backward at target velocity"
+      target_velocity: -2.0
+
+    - name: "velocity_stand"
+      type: "velocity"
+      description: "Stand still (zero velocity)"
+      target_velocity: 0.0
+
+    - name: "velocity_slow_forward"
+      type: "velocity"
+      description: "Move forward slowly"
+      target_velocity: 0.5
+
+    - name: "velocity_fast_forward"
+      type: "velocity"
+      description: "Move forward fast"
+      target_velocity: 4.0
+
+# ---------------------------------------------------------------------------
+# Reference Scores for Normalization (0-100 scale)
+# ---------------------------------------------------------------------------
+# These are used to normalize raw returns to [0, 100] as per the paper.
+# ref_min_score: expected return of a random/untrained policy
+# ref_max_score: expected return of an optimal policy (or max observed)
+ref_min_score: 0.0
+ref_max_score: 100.0

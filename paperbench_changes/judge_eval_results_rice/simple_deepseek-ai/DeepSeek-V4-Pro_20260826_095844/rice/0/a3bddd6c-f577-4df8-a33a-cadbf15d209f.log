@@ -1,0 +1,65 @@
+2026-08-26 10:00:50 [info     ] Grading leaf: For the network defence environment, the refining method has been implemented to support the hyperparameter $\lambda$ to govern the trade-off between task reward and exploration bonus, as outlined in section 3.3.  The $\lambda$ hyperparameter must be mutable i.e., a hyperparameter whose value can be changed (without having to edit the code directly). Alternative hyperparameter names are allowed, as long as the functionality remains the same.
+2026-08-26 10:01:52 [info     ] Model file selection raw output:
+Refine_cage_challenge/retrain.py
+Refine_cage_challenge/Agents/PPOAgent_Retrain.py
+Refine_cage_challenge/Agents/rnd_model.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_retrain.py
+Refine_cage_challenge/ppo_train.py
+Refine_cage_challenge/rollout_ppo.py
+Refine_cage_challenge/Agents/MainAgent.py
+Refine_cage_challenge/Agents/PPOAgent.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2.py
+Refine_cage_challenge/readme.md
+2026-08-26 10:01:52 [info     ] Model file selection raw output:
+Refine_cage_challenge/retrain.py
+Refine_cage_challenge/Agents/PPOAgent_Retrain.py
+Refine_cage_challenge/Agents/rnd_model.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_retrain.py
+Refine_cage_challenge/ppo_train.py
+Refine_cage_challenge/rollout_ppo.py
+Refine_cage_challenge/Agents/MainAgent.py
+Refine_cage_challenge/Agents/PPOAgent.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2.py
+Refine_cage_challenge/readme.md
+2026-08-26 10:03:11 [info     ] model response: # Expectations
+In Section 3.3, the paper describes the refining method and introduces the exploration bonus from Random Network Distillation (RND).  
+The bonus is added to the task reward with a weighting factor λ:
+`R'(s_t, a_t) = R(s_t, a_t) + λ ||f(s_{t+1}) - \hat{f}(s_{t+1})||^2`  
+The criterion requires that for the **network defence environment** (Cage Challenge 2) the refining implementation **supports a hyperparameter λ** that governs this trade‑off.  
+Crucially, λ must be **mutable** – i.e., a user must be able to change its value **without editing the code directly** (for example, via a command‑line argument, a configuration file, or an environment variable). Different naming (e.g., `bonus_scale`) is acceptable as long as the functionality is identical.
+
+# Reality
+In the submitted files, the refining script for the network defence environment is `Refine_cage_challenge/retrain.py`.  
+- The `train` function accepts a parameter `bonus_scale=0.01`.  
+- Inside the training loop, `bonus_scale` is used to scale the RND bonus before adding it to the reward:
+  ```python
+  bonus = agent.rnd_model.compute_bonus(state)
+  reward += bonus_scale * bonus
+  ```
+This correctly implements the λ hyperparameter in terms of functionality.  
+
+However, the script does **not** provide any mechanism to change λ without editing the source code. There is no argument parser (e.g., `argparse`), no reading of configuration files, and no environment variable lookup. The value is hardcoded as a default function argument and can only be changed by either modifying the default value in the code or by changing the function call inside the `__main__` block – both of which require direct editing of `retrain.py`. Therefore, the λ hyperparameter is **not mutable** in the manner required by the criterion.
+
+# Score
+**0** – The λ hyperparameter exists functionally (“bonus_scale”), but it cannot be changed without editing the code directly. The mutability requirement is not satisfied.
+2026-08-26 10:03:11 [info     ] model response: # Expectations
+In Section 3.3, the paper describes the refining method and introduces the exploration bonus from Random Network Distillation (RND).  
+The bonus is added to the task reward with a weighting factor λ:
+`R'(s_t, a_t) = R(s_t, a_t) + λ ||f(s_{t+1}) - \hat{f}(s_{t+1})||^2`  
+The criterion requires that for the **network defence environment** (Cage Challenge 2) the refining implementation **supports a hyperparameter λ** that governs this trade‑off.  
+Crucially, λ must be **mutable** – i.e., a user must be able to change its value **without editing the code directly** (for example, via a command‑line argument, a configuration file, or an environment variable). Different naming (e.g., `bonus_scale`) is acceptable as long as the functionality is identical.
+
+# Reality
+In the submitted files, the refining script for the network defence environment is `Refine_cage_challenge/retrain.py`.  
+- The `train` function accepts a parameter `bonus_scale=0.01`.  
+- Inside the training loop, `bonus_scale` is used to scale the RND bonus before adding it to the reward:
+  ```python
+  bonus = agent.rnd_model.compute_bonus(state)
+  reward += bonus_scale * bonus
+  ```
+This correctly implements the λ hyperparameter in terms of functionality.  
+
+However, the script does **not** provide any mechanism to change λ without editing the source code. There is no argument parser (e.g., `argparse`), no reading of configuration files, and no environment variable lookup. The value is hardcoded as a default function argument and can only be changed by either modifying the default value in the code or by changing the function call inside the `__main__` block – both of which require direct editing of `retrain.py`. Therefore, the λ hyperparameter is **not mutable** in the manner required by the criterion.
+
+# Score
+**0** – The λ hyperparameter exists functionally (“bonus_scale”), but it cannot be changed without editing the code directly. The mutability requirement is not satisfied.

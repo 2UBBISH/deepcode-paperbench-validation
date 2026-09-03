@@ -1,0 +1,108 @@
+file_structure:
+  root: generate_code
+  files:
+  - path: README.md
+    purpose: Summarize the paper reproduction target and usage.
+  - path: src/main.py
+    purpose: Provide an executable entrypoint for the reproduction scaffold.
+  - path: src/pipeline.py
+    purpose: Implement the core algorithmic pipeline inferred from the paper.
+  - path: tests/test_pipeline.py
+    purpose: Smoke-test the generated pipeline with minimal data.
+implementation_components:
+- name: paper_interpretation
+  description: Convert the planner analysis into concrete modules and APIs.
+- name: core_pipeline
+  description: Implement the main method described by the paper at scaffold fidelity.
+- name: validation_smoke_test
+  description: Add a fast validation path that confirms imports and basic execution.
+validation_approach:
+  strategy: Use lightweight unit and smoke tests because the model did not produce
+    a full experimental protocol.
+  commands:
+  - python -m pytest tests
+environment_setup:
+  language: python
+  dependencies:
+  - pytest
+  notes: Keep dependencies minimal unless the implementation step identifies explicit
+    paper requirements.
+implementation_strategy:
+  approach: Start from the preserved planner analysis, implement a small runnable
+    scaffold, then expand only where the paper details are explicit.
+  paper_dir: /home/deepevol/deepevol/DeepCode/deepcode_lab/tasks/paper_41a5f357
+  planner_analysis: "```yaml\ncomplete_reproduction_plan:\n  paper_info:\n    title:\
+    \ \"RICE: Refining Deep Reinforcement Learning Agents via Importance-based Critical\
+    \ State Exploration\"\n    core_contribution: \"A framework that uses a mask network\
+    \ to explain DRL agent decisions by identifying critical states, then refines\
+    \ the agent by restarting training from a mixed initial distribution (default\
+    \ + critical states) with an exploration bonus (RND). The method provides both\
+    \ faithful explanations and performance improvements across diverse domains (MuJoCo,\
+    \ blockchain, cybersecurity, autonomous driving, malware).\"\n\n  # ============================================================\n\
+    \  # SECTION 1: FILE STRUCTURE\n  # ============================================================\n\
+    \  file_structure: |\n    project_root/\n    ├── README.md                   \
+    \       # (LAST) Documentation and usage instructions\n    ├── requirements.txt\
+    \                   # (LAST) Python dependencies\n    ├── setup.py           \
+    \                # Package installation script\n    ├── configs/             \
+    \              # Hyperparameter configuration files\n    │   ├── default.yaml\
+    \                   # Default hyperparameters (p, λ, α, etc.)\n    │   ├── hopper.yaml\n\
+    \    │   ├── walker2d.yaml\n    │   ├── reacher.yaml\n    │   ├── halfcheetah.yaml\n\
+    \    │   ├── selfish_mining.yaml\n    │   ├── cage2.yaml\n    │   ├── autonomous_driving.yaml\n\
+    \    │   └── malware.yaml\n    ├── rice/                              # Core package\n\
+    \    │   ├── __init__.py\n    │   ├── mask_network/                  # Mask network\
+    \ training and explanation\n    │   │   ├── __init__.py\n    │   │   ├── mask_agent.py\
+    \              # Mask network policy (MLP) and action selection\n    │   │   ├──\
+    \ perturbed_env.py           # Environment wrapper that perturbs actions based\
+    \ on mask\n    │   │   ├── intrinsic_reward.py        # Intrinsic reward for encouraging\
+    \ blinding\n    │   │   └── train_mask.py              # Training loop for mask\
+    \ network using PPO\n    │   ├── explanation/                   # Explanation\
+    \ extraction from mask network\n    │   │   ├── __init__.py\n    │   │   ├── importance.py\
+    \              # Compute state importance scores (1 - ξ(s))\n    │   │   └── critical_states.py\
+    \         # Identify critical states from trajectories\n    │   ├── refining/\
+    \                      # Agent refinement module\n    │   │   ├── __init__.py\n\
+    \    │   │   ├── mixed_initial_dist.py      # Mixed initial state distribution\
+    \ sampler\n    │   │   ├── rnd.py                     # Random Network Distillation\
+    \ implementation\n    │   │   └── refine_agent.py            # Refinement loop\
+    \ (PPO + RND bonus + mixed init)\n    │   ├── utils/                         #\
+    \ Shared utilities\n    │   │   ├── __init__.py\n    │   │   ├── replay_buffer.py\
+    \           # Trajectory storage and retrieval\n    │   │   ├── evaluation.py\
+    \              # Fidelity score, performance evaluation\n    │   │   └── logger.py\
+    \                  # Logging and metric tracking\n    │   └── envs/          \
+    \                # Environment wrappers and custom envs\n    │       ├── __init__.py\n\
+    \    │       ├── mujoco_envs.py             # MuJoCo wrappers (dense/sparse rewards)\n\
+    \    │       ├── selfish_mining_env.py      # Selfish mining environment (from\
+    \ Bar-Zur et al.)\n    │       ├── cage2_env.py               # CAGE Challenge\
+    \ 2 environment\n    │       ├── metadrive_env.py           # MetaDrive autonomous\
+    \ driving wrapper\n    │       └── malware_env.py             # MalConv gym environment\
+    \ wrapper\n    ├── experiments/                       # Experiment scripts\n \
+    \   │   ├── experiment_I_fidelity.py       # Fidelity comparison (Section 5.1)\n\
+    \    │   ├── experiment_II_efficiency.py    # Training efficiency (Section 5.2)\n\
+    \    │   ├── experiment_III_refining.py     # Refining performance on all domains\
+    \ (Section 5.3)\n    │   ├── experiment_IV_sensitivity.py   # Hyperparameter sensitivity\
+    \ (Appendix C.3)\n    │   ├── experiment_V_sparse.py         # Sparse reward MuJoCo\
+    \ experiments (Appendix C.4)\n    │   ├── case_study_malware.py          # Malware\
+    \ mutation case study (Appendix D)\n    │   └── case_study_driving.py        \
+    \  # Autonomous driving qualitative analysis\n    ├── baselines/             \
+    \            # Baseline implementations\n    │   ├── statemask/              \
+    \       # StateMask baseline (from original repo)\n    │   ├── jsrl/         \
+    \                 # Jump-Start RL baseline\n    │   ├── sil/                 \
+    \          # Self-Imitation Learning baseline\n    │   └── random_explanation.py\
+    \          # Random explanation baseline\n    └── tests/                     \
+    \        # Unit tests\n        ├── test_mask_network.py\n        ├── test_explanation.py\n\
+    \        ├── test_refining.py\n        └── test_environments.py\n\n  # ============================================================\n\
+    \  # SECTION 2: IMPLEMENTATION COMPONENTS\n  # ============================================================\n\
+    \  implementation_components: |\n    The paper proposes RICE, which consists of\
+    \ three main stages: (1) train a mask network for explanation, \n    (2) extract\
+    \ critical states using the mask network, and (3) refine the target agent using\
+    \ mixed initial \n    distribution and exploration bonus. Below are all components\
+    \ with algorithms, formulas, and technical details.\n\n    ---\n    ### 2.1 Target\
+    \ Agent Training (Pre-requisite)\n    - **Purpose**: Train a DRL agent to convergence\
+    \ on the target task.\n    - **Algorithm**: Proximal Policy Optimization (PPO)\
+    \ (Schulman et al., 2017).\n    - **Implementation**: Use Stable-Baselines3 PPO\
+    \ for MuJoCo; Tianshou PPO for malware; custom PPO for selfish mining, CAGE2,\
+    \ autonomous driving based on provided references.\n    - **Network Architecture**:\
+    \ \n      - MuJoCo: 2-layer MLP with 64 units each, tanh activation (default SB3).\n\
+    \      - Selfish Mining: 4-layer MLP with hidden sizes [128, 128, 128, 128].\n\
+    \      - CAGE2: As per Cardiff champion scheme (PPO-based).\n      - Autonomous\
+    \ Driving: As per DI-drive implementation.\n      - Malware: As per Tianshou implementation.\n\
+    \    - **Hyperparameters**:\n...[truncated]"

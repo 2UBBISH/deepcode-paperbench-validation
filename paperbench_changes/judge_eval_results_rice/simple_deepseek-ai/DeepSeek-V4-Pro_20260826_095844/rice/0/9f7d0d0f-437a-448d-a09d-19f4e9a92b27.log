@@ -1,0 +1,69 @@
+2026-08-26 09:58:46 [info     ] Grading leaf: For the MuJoCo environments, the "PPO fine-tuning" refinement method has been implemented as outlined in section 4.1, i.e. lowering the learning rate and continuing training with the PPO algorithm.
+2026-08-26 09:59:35 [info     ] Model file selection raw output:
+Refine_mujoco/retrain.py
+Refine_mujoco/PPO.py
+Refine_mujoco/baseline/train.py
+Refine_mujoco/retrain.sh
+Refine_mujoco/OnPolicyAlgorithm.py
+Refine_mujoco/base_class.py
+Refine_mujoco/models.py
+Refine_mujoco/utils.py
+Refine_mujoco/callback.py
+Refine_mujoco/environment.py
+2026-08-26 09:59:35 [info     ] Model file selection raw output:
+Refine_mujoco/retrain.py
+Refine_mujoco/PPO.py
+Refine_mujoco/baseline/train.py
+Refine_mujoco/retrain.sh
+Refine_mujoco/OnPolicyAlgorithm.py
+Refine_mujoco/base_class.py
+Refine_mujoco/models.py
+Refine_mujoco/utils.py
+Refine_mujoco/callback.py
+Refine_mujoco/environment.py
+2026-08-26 10:00:36 [info     ] model response: # Expectations
+The paper’s section 4.1 describes the first baseline refining method as “PPO fine‑tuning” (Schulman et al., 2017) – i.e., lowering the learning rate and continuing to train the pre‑trained agent with the PPO algorithm. For the MuJoCo environments, a correct implementation should provide a way to:
+
+- load an existing PPO agent (policy),
+- reduce the learning rate compared to the original training (e.g., to a value like 1e‑5),
+- proceed to train (fine‑tune) on the same environment starting from the default initial state distribution,
+- without introducing any additional state reset mechanics (critical states) or exploration bonuses.
+
+The code should contain actual runnable logic that performs these steps, not merely a comment or description.
+
+# Reality
+The submission includes the directory `Refine_mujoco/` which contains the scripts for refining agents in MuJoCo environments. The key file is **`Refine_mujoco/retrain.py`**. It accepts command‑line arguments including `--go_prob` (probability of resetting to a critical state), `--bonus` (exploration bonus type), and `--bonus_scale`. When these are set appropriately (e.g., `--go_prob 0`, `--bonus None` or `--bonus_scale 0`), the environment behaves as the default Gym MuJoCo environment without critical‑state resets, and no intrinsic reward is added.
+
+Concretely:
+
+- The environment wrapper in **`Refine_mujoco/environment.py`** contains a `RetrainEnv` whose `reset()` method falls back to the default `self.env.reset()` when the random draw exceeds `go_prob` (so `go_prob=0` always resets to the original initial state).
+- The script loads a pre‑trained PPO model via `PPO.load(...)` and passes `custom_objects={'learning_rate': 1e‑5}`, which reduces the learning rate compared to the typical 3e‑4 default.
+- The training loop then runs `model.learn(total_timesteps=...)`, continuing to optimize the agent with the PPO algorithm. The custom PPO class in **`Refine_mujoco/PPO.py`** (which extends the on‑policy base) implements the standard PPO loss and training logic; when no exploration bonus is active it is exactly the vanilla PPO update.
+
+Thus, the code provides a full implementation of the “PPO fine‑tuning” baseline for MuJoCo environments – lowering the learning rate and continuing PPO training from the original initial distribution.
+
+# Score
+1 – The submission contains a correct, runnable implementation of the PPO fine‑tuning refinement method for MuJoCo environments, as outlined in Section 4.1 of the paper.
+2026-08-26 10:00:36 [info     ] model response: # Expectations
+The paper’s section 4.1 describes the first baseline refining method as “PPO fine‑tuning” (Schulman et al., 2017) – i.e., lowering the learning rate and continuing to train the pre‑trained agent with the PPO algorithm. For the MuJoCo environments, a correct implementation should provide a way to:
+
+- load an existing PPO agent (policy),
+- reduce the learning rate compared to the original training (e.g., to a value like 1e‑5),
+- proceed to train (fine‑tune) on the same environment starting from the default initial state distribution,
+- without introducing any additional state reset mechanics (critical states) or exploration bonuses.
+
+The code should contain actual runnable logic that performs these steps, not merely a comment or description.
+
+# Reality
+The submission includes the directory `Refine_mujoco/` which contains the scripts for refining agents in MuJoCo environments. The key file is **`Refine_mujoco/retrain.py`**. It accepts command‑line arguments including `--go_prob` (probability of resetting to a critical state), `--bonus` (exploration bonus type), and `--bonus_scale`. When these are set appropriately (e.g., `--go_prob 0`, `--bonus None` or `--bonus_scale 0`), the environment behaves as the default Gym MuJoCo environment without critical‑state resets, and no intrinsic reward is added.
+
+Concretely:
+
+- The environment wrapper in **`Refine_mujoco/environment.py`** contains a `RetrainEnv` whose `reset()` method falls back to the default `self.env.reset()` when the random draw exceeds `go_prob` (so `go_prob=0` always resets to the original initial state).
+- The script loads a pre‑trained PPO model via `PPO.load(...)` and passes `custom_objects={'learning_rate': 1e‑5}`, which reduces the learning rate compared to the typical 3e‑4 default.
+- The training loop then runs `model.learn(total_timesteps=...)`, continuing to optimize the agent with the PPO algorithm. The custom PPO class in **`Refine_mujoco/PPO.py`** (which extends the on‑policy base) implements the standard PPO loss and training logic; when no exploration bonus is active it is exactly the vanilla PPO update.
+
+Thus, the code provides a full implementation of the “PPO fine‑tuning” baseline for MuJoCo environments – lowering the learning rate and continuing PPO training from the original initial distribution.
+
+# Score
+1 – The submission contains a correct, runnable implementation of the PPO fine‑tuning refinement method for MuJoCo environments, as outlined in Section 4.1 of the paper.

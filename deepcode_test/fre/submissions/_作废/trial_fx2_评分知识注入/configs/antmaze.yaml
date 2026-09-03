@@ -1,0 +1,127 @@
+name: fre-antmaze
+domain: antmaze
+task: ant-goal-reaching
+seed: 0
+device: auto
+log_dir: ./logs/antmaze
+checkpoint_dir: ./checkpoints/antmaze
+use_wandb: false
+wandb_project: fre-antmaze
+
+data:
+  env_name: antmaze-large-diverse-v2
+  dataset_name: antmaze-large-diverse-v2
+  d4rl_data_path: null
+  exorl_data_path: null
+  normalize_states: true
+  normalize_rewards: false
+  batch_size: 256
+  antmaze_env_name: antmaze-large-diverse-v2
+  kitchen_env_name: kitchen-complete-v0
+  exorl_env_name: walker_walk
+  state_dim: null
+  action_dim: null
+
+reward_sampler:
+  num_encoder_states: 32
+  num_decoder_states: 1024
+  singleton_enabled: true
+  linear_enabled: true
+  mlp_enabled: true
+  singleton: true
+  linear: true
+  mlp: true
+  singleton_weight: 1.0
+  linear_weight: 1.0
+  mlp_weight: 1.0
+  weights: [1.0, 1.0, 1.0]
+  singleton_threshold: 1.0
+  linear_active_fraction: 0.3
+  linear_mask_prob: 0.7
+  mlp_hidden_dim: 64
+  mlp_num_hidden: 2
+  mlp_output_scale: 1.0
+  reward_min: -1.0
+  reward_max: 1.0
+
+fre:
+  state_dim: null
+  z_dim: 64
+  d_model: 128
+  d_ff: 256
+  n_heads: 4
+  n_layers: 2
+  num_bins: 128
+  reward_min: -1.0
+  reward_max: 1.0
+  use_linear_reward: false
+  dropout: 0.0
+  activation: relu
+  decoder_hidden_dim: 256
+  decoder_num_hidden: 2
+  beta: 1.0
+  normalize_rewards: true
+  lr: 1.0e-4
+  num_steps: 200000
+  batch_size: 256
+  num_encoder_states: 32
+  num_decoder_states: 1024
+  grad_clip_norm: 1.0
+  checkpoint_every: 20000
+  log_every: 1000
+
+iql:
+  hidden_dim: 256
+  num_hidden: 2
+  gamma: 0.99
+  tau: 0.7
+  beta: 3.0
+  lr: 3.0e-4
+  target_tau: 0.005
+  batch_size: 256
+  num_steps: 1000000
+  train_steps: 1000000
+  policy_update_every: 1
+  value_update_every: 1
+  q_update_every: 1
+  target_update_every: 1
+  advantage_clamp: 100.0
+  grad_clip_norm: 1.0
+  checkpoint_every: 50000
+  log_every: 1000
+
+baseline:
+  gc_iql_threshold: 1.0
+  gc_iql_original_goal_prob: 0.3
+  gc_iql_tau: 0.7
+  gc_iql_beta: 3.0
+  gc_iql_lr: 3.0e-4
+  gc_bc_lr: 3.0e-4
+  gc_bc_hidden_dim: 256
+  gc_bc_num_hidden: 2
+  gc_bc_deterministic_policy: false
+  opal_hidden_dim: 256
+  opal_skill_dim: 16
+  opal_chunk_length: 16
+  opal_beta: 1.0
+  opal_lr: 3.0e-4
+  opal_num_skills: 10
+  fb_feature_dim: 256
+  fb_hidden_dim: 256
+  fb_num_hidden: 2
+  fb_lr: 3.0e-4
+  fb_learn_backward: false
+  sf_feature_dim: 256
+  sf_hidden_dim: 256
+  sf_num_hidden: 2
+  sf_lr: 3.0e-4
+  num_reward_samples: 5120
+
+eval:
+  num_episodes: 20
+  num_reward_samples: 32
+  seeds: [0, 1, 2, 3, 4]
+  max_episode_steps: 1000
+  normalize_score_0_100: true
+  save_visualizations: false
+  deterministic: true

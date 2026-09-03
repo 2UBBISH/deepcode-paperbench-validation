@@ -1,0 +1,51 @@
+2026-08-26 09:58:46 [info     ] Grading leaf: For the network defence environment, the "Random" Explanation method can be selected for generating rollouts (without training)
+2026-08-26 09:59:56 [info     ] Model file selection raw output:
+Refine_cage_challenge/retrain.py
+Refine_cage_challenge/rollout_ppo.py
+Refine_cage_challenge/rollout_mask.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_retrain.py
+Refine_cage_challenge/Agents/PPOAgent_Retrain.py
+Refine_cage_challenge/sample_mask_score.py
+Refine_cage_challenge/sample_value_score.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2.py
+Refine_cage_challenge/Agents/MainAgent.py
+Refine_cage_challenge/readme.md
+2026-08-26 09:59:56 [info     ] Model file selection raw output:
+Refine_cage_challenge/retrain.py
+Refine_cage_challenge/rollout_ppo.py
+Refine_cage_challenge/rollout_mask.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_retrain.py
+Refine_cage_challenge/Agents/PPOAgent_Retrain.py
+Refine_cage_challenge/sample_mask_score.py
+Refine_cage_challenge/sample_value_score.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2.py
+Refine_cage_challenge/Agents/MainAgent.py
+Refine_cage_challenge/readme.md
+2026-08-26 10:02:22 [info     ] model response: # Expectations
+The paper describes a "Random" explanation method as a baseline that identifies critical steps by randomly selecting a visited state. For the network defence environment (CAGE Challenge 2), there should be a mechanism to use this random explanation method to generate rollouts—i.e., to run episodes using the pretrained policy and produce importance scores or critical step selections without performing any training. This would typically be needed for evaluating explanation fidelity (Experiment I) or for preparing data without modifying the agent. The reproduction should include either a dedicated script or a configurable option that allows selecting "Random" as the explanation method during such rollouts, so that a user can run episodes and obtain random critical step assignments.
+
+# Reality
+The submitted files for the network defence environment (`Refine_cage_challenge/`) contain scripts for various purposes:
+- `rollout_ppo.py` runs the pretrained PPO agent and logs average rewards, but it does not involve any explanation method or critical step selection.
+- `rollout_mask.py` runs the mask network agent, logging mask probabilities—this corresponds to the "Ours" or "StateMask" explanation, not the random baseline.
+- `sample_mask_score.py` and `sample_value_score.py` record importance scores using the mask network and a value-based heuristic, respectively. Neither provides an option for random critical step identification.
+- `retrain.py` is the full refinement training loop. It uses `ChallengeWrapper2_Retrain`, which in its `reset()` method has a `random_sampling` flag (`if self.random_sampling: start_idx = np.random.choice(eps_len)`). This does implement random critical state selection, but only within the context of the training pipeline—it is not exposed as a standalone rollout generator.
+
+There is no script, function, or configurable argument that allows a user to select the "Random" explanation method to generate rollouts without also performing training updates. The random sampling logic exists only inside the training wrapper and is not decoupled for pure rollout generation.
+
+# Score
+0 – The submission does not provide a way to select the "Random" explanation method for generating rollouts without training. While random selection appears in the retraining environment, there is no separate rollout script or mode that uses it outside of the training loop. The criterion remains unmet.
+2026-08-26 10:02:22 [info     ] model response: # Expectations
+The paper describes a "Random" explanation method as a baseline that identifies critical steps by randomly selecting a visited state. For the network defence environment (CAGE Challenge 2), there should be a mechanism to use this random explanation method to generate rollouts—i.e., to run episodes using the pretrained policy and produce importance scores or critical step selections without performing any training. This would typically be needed for evaluating explanation fidelity (Experiment I) or for preparing data without modifying the agent. The reproduction should include either a dedicated script or a configurable option that allows selecting "Random" as the explanation method during such rollouts, so that a user can run episodes and obtain random critical step assignments.
+
+# Reality
+The submitted files for the network defence environment (`Refine_cage_challenge/`) contain scripts for various purposes:
+- `rollout_ppo.py` runs the pretrained PPO agent and logs average rewards, but it does not involve any explanation method or critical step selection.
+- `rollout_mask.py` runs the mask network agent, logging mask probabilities—this corresponds to the "Ours" or "StateMask" explanation, not the random baseline.
+- `sample_mask_score.py` and `sample_value_score.py` record importance scores using the mask network and a value-based heuristic, respectively. Neither provides an option for random critical step identification.
+- `retrain.py` is the full refinement training loop. It uses `ChallengeWrapper2_Retrain`, which in its `reset()` method has a `random_sampling` flag (`if self.random_sampling: start_idx = np.random.choice(eps_len)`). This does implement random critical state selection, but only within the context of the training pipeline—it is not exposed as a standalone rollout generator.
+
+There is no script, function, or configurable argument that allows a user to select the "Random" explanation method to generate rollouts without also performing training updates. The random sampling logic exists only inside the training wrapper and is not decoupled for pure rollout generation.
+
+# Score
+0 – The submission does not provide a way to select the "Random" explanation method for generating rollouts without training. While random selection appears in the retraining environment, there is no separate rollout script or mode that uses it outside of the training loop. The criterion remains unmet.

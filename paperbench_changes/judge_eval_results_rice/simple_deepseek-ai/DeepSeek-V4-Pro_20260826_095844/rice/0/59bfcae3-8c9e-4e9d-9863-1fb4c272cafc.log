@@ -1,0 +1,53 @@
+2026-08-26 09:58:45 [info     ] Grading leaf: The Selfish Mining environment has been correctly set up and can be used to run the experiments (further information about this environment in Appendix C.2).
+2026-08-26 09:59:53 [info     ] Model file selection raw output:
+Refine_selfish_mining/baseline/blockchain_mdps/bitcoin_fee_model.py
+Refine_selfish_mining/baseline/blockchain_mdps/base/state_transitions.py
+Refine_selfish_mining/baseline/blockchain_mdps/base/blockchain_model.py
+Refine_selfish_mining/baseline/blockchain_mdps/base/blockchain_mdps/blockchain_mdp.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/blockchain_simulator/mdp_blockchain_simulator.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/blockchain_simulator/mdp_blockchain_simulator_retrain.py
+Refine_selfish_mining/baseline/blockchain_mdps/base/blockchain_mdps/mdp_matrices/mdp_matrix.py
+Refine_selfish_mining/baseline/blockchain_mdps/bitcoin_model.py
+Refine_selfish_mining/utils.py
+Refine_selfish_mining/baseline/blockchain_mdps/__init__.py
+2026-08-26 09:59:53 [info     ] Model file selection raw output:
+Refine_selfish_mining/baseline/blockchain_mdps/bitcoin_fee_model.py
+Refine_selfish_mining/baseline/blockchain_mdps/base/state_transitions.py
+Refine_selfish_mining/baseline/blockchain_mdps/base/blockchain_model.py
+Refine_selfish_mining/baseline/blockchain_mdps/base/blockchain_mdps/blockchain_mdp.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/blockchain_simulator/mdp_blockchain_simulator.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/blockchain_simulator/mdp_blockchain_simulator_retrain.py
+Refine_selfish_mining/baseline/blockchain_mdps/base/blockchain_mdps/mdp_matrices/mdp_matrix.py
+Refine_selfish_mining/baseline/blockchain_mdps/bitcoin_model.py
+Refine_selfish_mining/utils.py
+Refine_selfish_mining/baseline/blockchain_mdps/__init__.py
+2026-08-26 10:01:59 [info     ] model response: # Expectations
+The paper describes the Selfish Mining environment in Appendix C.2 and Section 4.1. It is an MDP for a selfish mining scenario originally proposed by Bar‑Zur et al. (2023). The environment should implement the Bitcoin Fee Model (BlockchainModel) with parameters: attacker’s mining power (α), ratio of honest miners supporting the attacker’s fork (γ), maximum fork length, a transaction fee (10 for whale transactions), transaction occurrence probability (0.01), and a pool size. The action space must include Adopt(l), Reveal(l), and Mine, along with an appropriate state space representing the blockchain state. A simulator (e.g., MDPBlockchainSimulator) should be provided, allowing reset to an initial (or specified) state, stepping with actions, retrieving legal actions, and computing rewards/difficulty contributions. The environment must be coded and functional so that it can be used to run the RL training and refinement experiments described in the paper.
+
+# Reality
+The submission contains a baseline folder with the following relevant files:
+
+- `baseline/blockchain_mdps/bitcoin_fee_model.py` – Defines the `BitcoinFeeModel` class (inheriting from `BlockchainModel`) with the expected parameters (`alpha`, `gamma`, `max_fork`, `fee`, `transaction_chance`, `max_pool`). It implements the state space (a `MultiDimensionalDiscreteSpace` with block, transaction, fork, pool, and length components), the action space (including `Adopt`, `Reveal`, `Mine` actions plus a parameter), and the full transition logic (`get_state_transitions`) that models the selfish mining dynamics (rewards, probabilities, difficulty contributions).
+- `baseline/reinforcement_learning/base/blockchain_simulator/mdp_blockchain_simulator.py` – Provides `MDPBlockchainSimulator`, which wraps the model and offers `reset()`, `step(action)`, `get_state_legal_actions_tensor()`, and other utility methods needed for RL interaction.
+- `baseline/reinforcement_learning/base/blockchain_simulator/mdp_blockchain_simulator_retrain.py` – A variant simulator (`MDPBlockchainSimulatorRetrain`) used during refinement, supporting reset to critical states and mixed initial distributions.
+- Supporting modules for state spaces, transitions, and the MDP matrix are also present.
+
+These components together constitute a working Selfish Mining environment. The model matches the description in the paper (fee model, action space, etc.) and appears to be derived from the original Bar‑Zur et al. repository (git, d) referenced by the authors. The simulators allow resetting, stepping, and obtaining information necessary for training and evaluating a DRL agent. Therefore, the environment is correctly set up and can be used to run the experiments.
+
+# Score
+**1** – The submission includes a correct, functional implementation of the Selfish Mining environment.
+2026-08-26 10:01:59 [info     ] model response: # Expectations
+The paper describes the Selfish Mining environment in Appendix C.2 and Section 4.1. It is an MDP for a selfish mining scenario originally proposed by Bar‑Zur et al. (2023). The environment should implement the Bitcoin Fee Model (BlockchainModel) with parameters: attacker’s mining power (α), ratio of honest miners supporting the attacker’s fork (γ), maximum fork length, a transaction fee (10 for whale transactions), transaction occurrence probability (0.01), and a pool size. The action space must include Adopt(l), Reveal(l), and Mine, along with an appropriate state space representing the blockchain state. A simulator (e.g., MDPBlockchainSimulator) should be provided, allowing reset to an initial (or specified) state, stepping with actions, retrieving legal actions, and computing rewards/difficulty contributions. The environment must be coded and functional so that it can be used to run the RL training and refinement experiments described in the paper.
+
+# Reality
+The submission contains a baseline folder with the following relevant files:
+
+- `baseline/blockchain_mdps/bitcoin_fee_model.py` – Defines the `BitcoinFeeModel` class (inheriting from `BlockchainModel`) with the expected parameters (`alpha`, `gamma`, `max_fork`, `fee`, `transaction_chance`, `max_pool`). It implements the state space (a `MultiDimensionalDiscreteSpace` with block, transaction, fork, pool, and length components), the action space (including `Adopt`, `Reveal`, `Mine` actions plus a parameter), and the full transition logic (`get_state_transitions`) that models the selfish mining dynamics (rewards, probabilities, difficulty contributions).
+- `baseline/reinforcement_learning/base/blockchain_simulator/mdp_blockchain_simulator.py` – Provides `MDPBlockchainSimulator`, which wraps the model and offers `reset()`, `step(action)`, `get_state_legal_actions_tensor()`, and other utility methods needed for RL interaction.
+- `baseline/reinforcement_learning/base/blockchain_simulator/mdp_blockchain_simulator_retrain.py` – A variant simulator (`MDPBlockchainSimulatorRetrain`) used during refinement, supporting reset to critical states and mixed initial distributions.
+- Supporting modules for state spaces, transitions, and the MDP matrix are also present.
+
+These components together constitute a working Selfish Mining environment. The model matches the description in the paper (fee model, action space, etc.) and appears to be derived from the original Bar‑Zur et al. repository (git, d) referenced by the authors. The simulators allow resetting, stepping, and obtaining information necessary for training and evaluating a DRL agent. Therefore, the environment is correctly set up and can be used to run the experiments.
+
+# Score
+**1** – The submission includes a correct, functional implementation of the Selfish Mining environment.

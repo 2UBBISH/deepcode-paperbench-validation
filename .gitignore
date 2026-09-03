@@ -1,0 +1,13 @@
+# secrets
+.env
+.env.*
+!.env.example
+credentials.json
+# local environments / runtime state
+__pycache__/
+*.pyc
+.venv/
+deepcode_lab/
+# PaperBench is cloned by setup.sh at a pinned commit (see patches/UPSTREAM_BASE.txt)
+frontier-evals/
+run.log

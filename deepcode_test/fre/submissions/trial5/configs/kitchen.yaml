@@ -1,0 +1,158 @@
+# =============================================================================
+# FRE Configuration: Kitchen Domain
+# =============================================================================
+# Overrides default.yaml with Kitchen-specific hyperparameters for training
+# and evaluating the FRE model on the D4RL kitchen-complete-v0 dataset.
+#
+# Kitchen environment: Franka robot in a kitchen scene with 7 subtasks
+# (microwave, kettle, light switch, slide cabinet, hinge cabinet,
+#  bottom burner, top burner). The agent must complete all subtasks
+# in sequence; each subtask is a separate evaluation task.
+# =============================================================================
+
+# ---------------------------------------------------------------------------
+# General settings
+# ---------------------------------------------------------------------------
+general:
+  wandb_project: "fre-kitchen"
+  wandb_name: "fre-kitchen-run"
+
+# ---------------------------------------------------------------------------
+# Dataset configuration
+# ---------------------------------------------------------------------------
+dataset:
+  name: "kitchen-complete-v0"       # D4RL Kitchen dataset (all 7 subtasks)
+  normalize_states: true
+  clip_to_eps: true
+  exorl_data_path: null             # Not used for Kitchen
+
+# ---------------------------------------------------------------------------
+# Prior reward distribution
+# ---------------------------------------------------------------------------
+reward:
+  # Uniform mixture weights (equal probability for each family)
+  singleton_weight: 0.333
+  linear_weight: 0.333
+  mlp_weight: 0.333
+
+  # Singleton (goal-reaching) parameters
+  singleton_threshold: 0.5          # L2 distance threshold for goal reached
+
+  # Random linear reward parameters
+  linear_sparsity: 0.8              # Fraction of zero weights (80% sparse)
+
+  # Random MLP reward parameters
+  mlp_hidden_dim: 256               # Hidden layer size for random MLP
+
+# ---------------------------------------------------------------------------
+# FRE Encoder (Transformer VAE)
+# ---------------------------------------------------------------------------
+encoder:
+  embed_dim: 256                    # Token embedding dimension
+  latent_dim: 64                    # Latent space dimension
+  num_layers: 3                     # Transformer layers
+  num_heads: 4                      # Attention heads
+  dropout: 0.1                      # Dropout rate
+  num_bins: 64                      # Reward discretization bins
+  reward_min: null                  # Adaptive binning (null = per-batch)
+  reward_max: null
+
+# ---------------------------------------------------------------------------
+# FRE Decoder (Reward prediction MLP)
+# ---------------------------------------------------------------------------
+decoder:
+  hidden_dims: [256, 256]           # Hidden layer sizes
+  activation: "ReLU"                # Activation function
+
+# ---------------------------------------------------------------------------
+# IQL Agent
+# ---------------------------------------------------------------------------
+agent:
+  hidden_dims: [256, 256]           # Hidden layers for Q, V, policy
+  activation: "ReLU"
+  expectile: 0.7                    # Expectile for value regression
+  temperature: 3.0                  # AWR temperature (beta)
+  discount: 0.99                    # Discount factor (gamma)
+  target_tau: 0.005                 # Polyak averaging coefficient
+  log_std_min: -5.0                 # Policy log std lower bound
+  log_std_max: 2.0                  # Policy log std upper bound
+
+# ---------------------------------------------------------------------------
+# Phase 1: Encoder/Decoder Training
+# ---------------------------------------------------------------------------
+encoder_training:
+  num_steps: 100000                 # Number of training iterations
+  learning_rate: 3.0e-4             # Adam learning rate
+  K_enc: 64                         # Number of encoding states
+  K_dec: 64                         # Number of decoding states
+  beta_kl: 0.1                      # KL divergence penalty weight
+  grad_clip_norm: 10.0              # Gradient clipping max norm
+  log_interval: 1000                # Steps between log outputs
+  eval_interval: 5000               # Steps between evaluations
+  save_interval: 20000              # Steps between checkpoint saves
+
+# ---------------------------------------------------------------------------
+# Phase 2: IQL Agent Training (with frozen encoder)
+# ---------------------------------------------------------------------------
+rl_training:
+  num_steps: 1000000                # Number of RL training iterations
+  learning_rate: 3.0e-4             # Adam learning rate
+  K_enc: 64                         # Number of encoding states for z
+  batch_size: 256                   # RL batch size
+  grad_clip_norm: 10.0              # Gradient clipping max norm
+  log_interval: 1000                # Steps between log outputs
+  eval_interval: 10000              # Steps between evaluations
+  save_interval: 50000              # Steps between checkpoint saves
+
+# ---------------------------------------------------------------------------
+# Strided training (alternating encoder and RL updates)
+# ---------------------------------------------------------------------------
+strided_training:
+  enabled: false                    # Disabled by default; use sequential
+  encoder_steps_per_stride: 1000    # Encoder steps per stride
+  rl_steps_per_stride: 10000        # RL steps per stride
+  total_strides: 100                # Total number of strides
+
+# ---------------------------------------------------------------------------
+# Evaluation settings
+# ---------------------------------------------------------------------------
+evaluation:
+  K_enc: 32                         # Encoding states for zero-shot eval
+  num_episodes: 20                  # Episodes per task per seed
+  num_seeds: 5                      # Number of training seeds
+  deterministic_policy: true        # Use mean action (no sampling)
+  normalize_returns: true           # Normalize returns to [0, 100]
+  min_return: 0.0                   # Minimum possible return (random policy)
+  max_return: 100.0                 # Maximum possible return (expert policy)
+
+# ---------------------------------------------------------------------------
+# Domain-specific metadata
+# ---------------------------------------------------------------------------
+domain:
+  # Kitchen environment properties
+  state_dim: 60                     # Kitchen state dimension (object + robot states)
+  action_dim: 9                     # Kitchen action dimension (7-DOF arm + gripper)
+  env_name: "kitchen-complete-v0"   # Gym environment name
+
+  # Evaluation tasks (7 subtasks from the paper)
+  tasks:
+    - "microwave"                   # Open/close microwave
+    - "kettle"                      # Move kettle to burner
+    - "light_switch"                # Toggle light switch
+    - "slide_cabinet"               # Open slide cabinet
+    - "hinge_cabinet"               # Open hinge cabinet
+    - "bottom_burner"               # Turn on bottom burner
+    - "top_burner"                  # Turn on top burner
+
+  # Return normalization bounds per task (min, max)
+  # Based on D4RL Kitchen benchmark: random ~0, expert ~4.0 per subtask
+  # but we scale to [0, 100] for reporting
+  normalization:
+    min_return: 0.0
+    max_return: 100.0
+
+  # Expected results from paper (Table 1, kitchen row)
+  # kitchen average: 66 ± 3 (normalized)
+  expected_results:
+    kitchen_average_mean: 66.0
+    kitchen_average_std: 3.0

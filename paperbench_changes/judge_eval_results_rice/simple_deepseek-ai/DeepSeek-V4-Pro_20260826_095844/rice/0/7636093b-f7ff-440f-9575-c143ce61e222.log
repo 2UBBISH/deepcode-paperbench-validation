@@ -1,0 +1,55 @@
+2026-08-26 09:58:46 [info     ] Grading leaf: The autonomous driving environment is the 'Macro-v1' environment powered by the MetaDrive simulator (further information about this environment in Appendix C.2).
+2026-08-26 09:59:38 [info     ] Model file selection raw output:
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/retrain.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/readme.md
+requirements.txt
+2026-08-26 09:59:38 [info     ] Model file selection raw output:
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/retrain.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/readme.md
+requirements.txt
+2026-08-26 10:00:17 [info     ] model response: # Expectations
+The paper (Appendix C.2) specifies that the autonomous driving environment used for experiments is **"Macro-v1"** from the MetaDrive simulator. I expect the submission’s code to clearly instantiate this specific environment (e.g., via `gym.make("Macro-v1", ...)` or an equivalent MetaDrive API) when setting up any autonomous driving experiments. The code should import and use the MetaDrive library, and the environment identifier should match "Macro-v1". The criterion focuses on whether the **implementation correctly selects this environment**; I do not need to verify that the code runs successfully or produces correct results, only that the environment setup matches the paper’s description.
+
+# Reality
+Looking at the provided files under `Refine_auto_drive/`:
+
+- **`retrain_env.py`**: Defines a `CustomWrapper` that wraps an environment, but the environment creation itself is not done here; it receives the env instance.
+- **`train_baseline.py`**: Contains a function `wrapped_env` that returns `DriveEnvWrapper(gym.make("Macro-v1", config=env_cfg), wrapper_cfg)`. It also imports `metadrive`.
+- **`train_masknet.py`**: Similarly, `wrapped_env` returns `DriveEnvWrapper(gym.make("Macro-v1", config=env_cfg), wrapper_cfg)`. `metadrive` is imported.
+- **`retrain.py`**: Has both `custom_env` and `wrapped_env` functions. `custom_env` returns `CustomWrapper(gym.make("Macro-v1", config=env_cfg), ...)` and `wrapped_env` returns `DriveEnvWrapper(gym.make("Macro-v1", config=env_cfg), ...)`. It also imports `metadrive` and uses `gym.make("Macro-v1", ...)` for the collector and evaluator environments.
+- **`gen_retrain_traj.py`**: Contains a commented line `# env = gym.make("Macro-v1", config=config)` but otherwise the actual environment is passed as an argument; the calling code (e.g., `retrain.py`) supplies a "Macro-v1" instance.
+
+All relevant scripts for autonomous driving explicitly create the environment using `gym.make("Macro-v1", ...)`, which corresponds to the MetaDrive simulator’s Macro-v1 environment. There is no use of any other autonomous driving environment.
+
+# Score
+**1** – The submission correctly implements the autonomous driving environment as "Macro-v1" from the MetaDrive simulator, as required by the paper and the rubric criterion.
+2026-08-26 10:00:17 [info     ] model response: # Expectations
+The paper (Appendix C.2) specifies that the autonomous driving environment used for experiments is **"Macro-v1"** from the MetaDrive simulator. I expect the submission’s code to clearly instantiate this specific environment (e.g., via `gym.make("Macro-v1", ...)` or an equivalent MetaDrive API) when setting up any autonomous driving experiments. The code should import and use the MetaDrive library, and the environment identifier should match "Macro-v1". The criterion focuses on whether the **implementation correctly selects this environment**; I do not need to verify that the code runs successfully or produces correct results, only that the environment setup matches the paper’s description.
+
+# Reality
+Looking at the provided files under `Refine_auto_drive/`:
+
+- **`retrain_env.py`**: Defines a `CustomWrapper` that wraps an environment, but the environment creation itself is not done here; it receives the env instance.
+- **`train_baseline.py`**: Contains a function `wrapped_env` that returns `DriveEnvWrapper(gym.make("Macro-v1", config=env_cfg), wrapper_cfg)`. It also imports `metadrive`.
+- **`train_masknet.py`**: Similarly, `wrapped_env` returns `DriveEnvWrapper(gym.make("Macro-v1", config=env_cfg), wrapper_cfg)`. `metadrive` is imported.
+- **`retrain.py`**: Has both `custom_env` and `wrapped_env` functions. `custom_env` returns `CustomWrapper(gym.make("Macro-v1", config=env_cfg), ...)` and `wrapped_env` returns `DriveEnvWrapper(gym.make("Macro-v1", config=env_cfg), ...)`. It also imports `metadrive` and uses `gym.make("Macro-v1", ...)` for the collector and evaluator environments.
+- **`gen_retrain_traj.py`**: Contains a commented line `# env = gym.make("Macro-v1", config=config)` but otherwise the actual environment is passed as an argument; the calling code (e.g., `retrain.py`) supplies a "Macro-v1" instance.
+
+All relevant scripts for autonomous driving explicitly create the environment using `gym.make("Macro-v1", ...)`, which corresponds to the MetaDrive simulator’s Macro-v1 environment. There is no use of any other autonomous driving environment.
+
+# Score
+**1** – The submission correctly implements the autonomous driving environment as "Macro-v1" from the MetaDrive simulator, as required by the paper and the rubric criterion.

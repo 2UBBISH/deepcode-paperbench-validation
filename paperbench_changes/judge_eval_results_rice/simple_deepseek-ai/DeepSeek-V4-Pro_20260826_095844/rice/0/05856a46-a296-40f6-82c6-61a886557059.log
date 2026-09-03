@@ -1,0 +1,81 @@
+2026-08-26 09:58:46 [info     ] Grading leaf: Any version of the network defense environment has been correctly set up and can be initialized can be used to run the experiments (further information about this environment in Appendix C.2).
+2026-08-26 10:00:02 [info     ] Model file selection raw output:
+Refine_cage_challenge/Wrappers/ChallengeWrapper2.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_retrain.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_mask.py
+Refine_cage_challenge/Wrappers/utils.py
+Refine_cage_challenge/Wrappers/BlueTableWrapper.py
+Refine_cage_challenge/Agents/MainAgent.py
+Refine_cage_challenge/Agents/PPOAgent.py
+Refine_cage_challenge/ppo_train.py
+Refine_cage_challenge/retrain.py
+Refine_cage_challenge/readme.md
+2026-08-26 10:00:02 [info     ] Model file selection raw output:
+Refine_cage_challenge/Wrappers/ChallengeWrapper2.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_retrain.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_mask.py
+Refine_cage_challenge/Wrappers/utils.py
+Refine_cage_challenge/Wrappers/BlueTableWrapper.py
+Refine_cage_challenge/Agents/MainAgent.py
+Refine_cage_challenge/Agents/PPOAgent.py
+Refine_cage_challenge/ppo_train.py
+Refine_cage_challenge/retrain.py
+Refine_cage_challenge/readme.md
+2026-08-26 10:01:07 [info     ] model response: # Expectations
+The paper describes using the CAGE Challenge 2 environment for network defense experiments. According to Appendix C.2, the environment is based on CybORG, with a PPO‑based blue agent defending against the red agent “B‑line”. The observation is a vector produced by a BlueTableWrapper, and actions are a set of discrete actions (monitor, analyze, deploy decoys, remove, restore, etc.). To correctly set up the environment, the submission must provide code that:
+
+- Creates a CybORG instance using the appropriate scenario (Scenario2.yaml) and the B‑line red agent.
+- Wraps the raw CybORG environment with a gym‑compatible interface (e.g., `reset()`, `step()` returning `obs, reward, done, info`).
+- Applies the necessary table‑to‑vector wrapper and any other utilities (e.g., `EnumActionWrapper`, `OpenAIGymWrapper`) so that the agent receives a numeric observation vector and can take discrete actions.
+- Allows the environment to be initialized and stepped through for training or evaluation.
+
+The criterion is about the presence of a correct environment setup—not about the full experiment pipeline, but the code must exist and be functional enough to run the described experiments.
+
+# Reality
+The submission contains the following files directly related to the network defense environment:
+
+- **`Wrappers/ChallengeWrapper2.py`** – Defines a wrapper that chains `BlueTableWrapper` (or `RedTableWrapper`), `EnumActionWrapper`, and `OpenAIGymWrapper`. Its `__init__` method accepts a CybORG instance and an agent name, and it exposes `reset()` and `step()` as gym‑style methods. This is the core environment wrapper used for training.
+
+- **`Wrappers/BlueTableWrapper.py`** – Implements the table‑to‑vector transformation described in the paper. It processes raw CybORG observations, detects anomalies, and produces a fixed‑size numeric vector (via `_create_vector`). This matches the expected vector observation for the blue agent.
+
+- **`Wrappers/ChallengeWrapper2_retrain.py`** – Extends the environment for the RICE algorithm. It still builds on the same underlying CybORG + wrappers, but its `reset()` can restore a critical state from a trajectory. This shows the environment is correctly set up and can be adapted for the experiments.
+
+- **`Wrappers/ChallengeWrapper2_mask.py`** – Another variant for mask training, again reusing the same environment wrappers.
+
+- **`ppo_train.py`** – A complete training script that demonstrates using the environment. It creates a CybORG instance with `'Red': B_lineAgent`, wraps it with `ChallengeWrapper2` for the blue agent, defines the action space (restore, analyze, remove, decoy, etc.), and runs a PPO training loop. This proves the environment can be initialized and stepped through for experiments.
+
+- **`retrain.py`** – A retraining script using `ChallengeWrapper2_Retrain`, again initializing the same CybORG scenario and wrapper.
+
+All of these files together show that the network defense environment is correctly set up using CybORG and the CAGE Challenge 2 scenario (Scenario2.yaml), with the vector observations and action space described in the paper. The code can be used to run the experiments (training, retraining) on this environment.
+
+# Score
+**1** – The submission contains a proper, working implementation of the CAGE Challenge 2 network defense environment, fulfilling the criterion.
+2026-08-26 10:01:07 [info     ] model response: # Expectations
+The paper describes using the CAGE Challenge 2 environment for network defense experiments. According to Appendix C.2, the environment is based on CybORG, with a PPO‑based blue agent defending against the red agent “B‑line”. The observation is a vector produced by a BlueTableWrapper, and actions are a set of discrete actions (monitor, analyze, deploy decoys, remove, restore, etc.). To correctly set up the environment, the submission must provide code that:
+
+- Creates a CybORG instance using the appropriate scenario (Scenario2.yaml) and the B‑line red agent.
+- Wraps the raw CybORG environment with a gym‑compatible interface (e.g., `reset()`, `step()` returning `obs, reward, done, info`).
+- Applies the necessary table‑to‑vector wrapper and any other utilities (e.g., `EnumActionWrapper`, `OpenAIGymWrapper`) so that the agent receives a numeric observation vector and can take discrete actions.
+- Allows the environment to be initialized and stepped through for training or evaluation.
+
+The criterion is about the presence of a correct environment setup—not about the full experiment pipeline, but the code must exist and be functional enough to run the described experiments.
+
+# Reality
+The submission contains the following files directly related to the network defense environment:
+
+- **`Wrappers/ChallengeWrapper2.py`** – Defines a wrapper that chains `BlueTableWrapper` (or `RedTableWrapper`), `EnumActionWrapper`, and `OpenAIGymWrapper`. Its `__init__` method accepts a CybORG instance and an agent name, and it exposes `reset()` and `step()` as gym‑style methods. This is the core environment wrapper used for training.
+
+- **`Wrappers/BlueTableWrapper.py`** – Implements the table‑to‑vector transformation described in the paper. It processes raw CybORG observations, detects anomalies, and produces a fixed‑size numeric vector (via `_create_vector`). This matches the expected vector observation for the blue agent.
+
+- **`Wrappers/ChallengeWrapper2_retrain.py`** – Extends the environment for the RICE algorithm. It still builds on the same underlying CybORG + wrappers, but its `reset()` can restore a critical state from a trajectory. This shows the environment is correctly set up and can be adapted for the experiments.
+
+- **`Wrappers/ChallengeWrapper2_mask.py`** – Another variant for mask training, again reusing the same environment wrappers.
+
+- **`ppo_train.py`** – A complete training script that demonstrates using the environment. It creates a CybORG instance with `'Red': B_lineAgent`, wraps it with `ChallengeWrapper2` for the blue agent, defines the action space (restore, analyze, remove, decoy, etc.), and runs a PPO training loop. This proves the environment can be initialized and stepped through for experiments.
+
+- **`retrain.py`** – A retraining script using `ChallengeWrapper2_Retrain`, again initializing the same CybORG scenario and wrapper.
+
+All of these files together show that the network defense environment is correctly set up using CybORG and the CAGE Challenge 2 scenario (Scenario2.yaml), with the vector observations and action space described in the paper. The code can be used to run the experiments (training, retraining) on this environment.
+
+# Score
+**1** – The submission contains a proper, working implementation of the CAGE Challenge 2 network defense environment, fulfilling the criterion.

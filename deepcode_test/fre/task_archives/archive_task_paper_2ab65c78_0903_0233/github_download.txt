@@ -1,0 +1,5 @@
+https://github.com/ikostrikov/implicit_q_learning - success
+https://github.com/Farama-Foundation/D4RL - success
+https://github.com/facebookresearch/controllable_agent - success
+https://github.com/denisyarats/exorl - success
+https://github.com/seohongpark/HIQL - success

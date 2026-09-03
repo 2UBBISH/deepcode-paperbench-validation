@@ -1,0 +1,103 @@
+2026-08-26 10:01:57 [info     ] Grading leaf: For the autonomous driving environment, for the "Ours" explanation method, code has been implemented for measuring cumulative reward throughout refinement
+2026-08-26 10:03:14 [info     ] Model file selection raw output:
+Refine_auto_drive/retrain.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/readme.md
+README.md
+2026-08-26 10:03:14 [info     ] Model file selection raw output:
+Refine_auto_drive/retrain.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/readme.md
+README.md
+2026-08-26 10:04:33 [info     ] model response: # Expectations
+
+The paper's Experiment III (Section 4.2, 4.3) examines how the quality of explanation affects downstream refinement. For the autonomous driving environment, one variant uses the "Ours" explanation method (the mask network) to identify critical states, and then performs refinement. To report the refining performance (e.g., the final reward in Table 1), the implementation must periodically evaluate the refined policy on the original environment and measure the cumulative (episode) reward throughout the refinement process. In the code, this should appear as an evaluation loop that runs episodes and records the mean reward, likely using an evaluator component that logs results (e.g., to TensorBoard). The specific file for autonomous driving refinement is expected to be `Refine_auto_drive/retrain.py`.
+
+Thus, I expect to find:
+- An evaluator object (e.g., `InteractionSerialEvaluator`) that loads the current policy and runs multiple environment episodes.
+- Code that collects the episodic rewards (or final reward) and logs/averages them.
+- The evaluation is triggered periodically during the training (refinement) loop, not just at the very end.
+
+# Reality
+
+In the submission, the autonomous driving refinement code is in `Refine_auto_drive/retrain.py`. The relevant parts are:
+
+- **Evaluator creation**: An `InteractionSerialEvaluator` is instantiated with `evaluator_env`, which uses the `wrapped_env` function. This `wrapped_env` relies on the standard MetaDrive environment (without custom reset logic), ensuring that evaluation measures performance on the default initial distribution.
+  ```python
+  evaluator_env = SyncSubprocessEnvManager(
+      env_fn=[partial(wrapped_env, cfg.env.metadrive) for _ in range(evaluator_env_num)],
+      cfg=cfg.env.manager,
+  )
+  evaluator = InteractionSerialEvaluator(
+      cfg.policy.eval.evaluator, evaluator_env, policy.eval_mode, tb_logger, exp_name=cfg.exp_name
+  )
+  ```
+
+- **Periodic evaluation during refinement**: Inside the training loop, the code calls `evaluator.should_eval(learner.train_iter)` and, when true, executes `evaluator.eval(...)`. The `eval` method returns `stop` and `rate`, where `rate` is the mean episode reward (the DI‑engine evaluator runs multiple episodes according to `n_evaluator_episode` in the config, which is set to `5` in this file). The evaluation results are automatically logged to TensorBoard via `tb_logger`.
+  ```python
+  while True:
+      if evaluator.should_eval(learner.train_iter):
+          stop, rate = evaluator.eval(learner.save_checkpoint, learner.train_iter, 1)
+          if stop:
+              break
+  ```
+
+- **Correct explanation method**: The `CustomWrapper` (used during training) loads the mask network and uses `gen_retrain_traj` to identify the most critical state (the "Ours" explanation). The evaluator, however, runs on the unwrapped environment, providing an unbiased measurement of the refined policy’s performance.
+
+Therefore, the code indeed implements periodic measurement of cumulative reward (mean episode reward) throughout the refinement process for the autonomous driving environment under the "Ours" explanation method.
+
+# Score
+
+1 – The submission contains working code that evaluates and logs the cumulative reward during refinement, satisfying the criterion.
+2026-08-26 10:04:33 [info     ] model response: # Expectations
+
+The paper's Experiment III (Section 4.2, 4.3) examines how the quality of explanation affects downstream refinement. For the autonomous driving environment, one variant uses the "Ours" explanation method (the mask network) to identify critical states, and then performs refinement. To report the refining performance (e.g., the final reward in Table 1), the implementation must periodically evaluate the refined policy on the original environment and measure the cumulative (episode) reward throughout the refinement process. In the code, this should appear as an evaluation loop that runs episodes and records the mean reward, likely using an evaluator component that logs results (e.g., to TensorBoard). The specific file for autonomous driving refinement is expected to be `Refine_auto_drive/retrain.py`.
+
+Thus, I expect to find:
+- An evaluator object (e.g., `InteractionSerialEvaluator`) that loads the current policy and runs multiple environment episodes.
+- Code that collects the episodic rewards (or final reward) and logs/averages them.
+- The evaluation is triggered periodically during the training (refinement) loop, not just at the very end.
+
+# Reality
+
+In the submission, the autonomous driving refinement code is in `Refine_auto_drive/retrain.py`. The relevant parts are:
+
+- **Evaluator creation**: An `InteractionSerialEvaluator` is instantiated with `evaluator_env`, which uses the `wrapped_env` function. This `wrapped_env` relies on the standard MetaDrive environment (without custom reset logic), ensuring that evaluation measures performance on the default initial distribution.
+  ```python
+  evaluator_env = SyncSubprocessEnvManager(
+      env_fn=[partial(wrapped_env, cfg.env.metadrive) for _ in range(evaluator_env_num)],
+      cfg=cfg.env.manager,
+  )
+  evaluator = InteractionSerialEvaluator(
+      cfg.policy.eval.evaluator, evaluator_env, policy.eval_mode, tb_logger, exp_name=cfg.exp_name
+  )
+  ```
+
+- **Periodic evaluation during refinement**: Inside the training loop, the code calls `evaluator.should_eval(learner.train_iter)` and, when true, executes `evaluator.eval(...)`. The `eval` method returns `stop` and `rate`, where `rate` is the mean episode reward (the DI‑engine evaluator runs multiple episodes according to `n_evaluator_episode` in the config, which is set to `5` in this file). The evaluation results are automatically logged to TensorBoard via `tb_logger`.
+  ```python
+  while True:
+      if evaluator.should_eval(learner.train_iter):
+          stop, rate = evaluator.eval(learner.save_checkpoint, learner.train_iter, 1)
+          if stop:
+              break
+  ```
+
+- **Correct explanation method**: The `CustomWrapper` (used during training) loads the mask network and uses `gen_retrain_traj` to identify the most critical state (the "Ours" explanation). The evaluator, however, runs on the unwrapped environment, providing an unbiased measurement of the refined policy’s performance.
+
+Therefore, the code indeed implements periodic measurement of cumulative reward (mean episode reward) throughout the refinement process for the autonomous driving environment under the "Ours" explanation method.
+
+# Score
+
+1 – The submission contains working code that evaluates and logs the cumulative reward during refinement, satisfying the criterion.

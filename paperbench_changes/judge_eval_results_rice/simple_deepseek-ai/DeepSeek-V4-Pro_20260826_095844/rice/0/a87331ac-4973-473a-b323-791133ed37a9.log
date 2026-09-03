@@ -1,0 +1,55 @@
+2026-08-26 09:58:46 [info     ] Grading leaf: For the MuJoCo environments, code for pretraining the policy network agent on each environment has been setup
+2026-08-26 09:59:11 [info     ] Model file selection raw output:
+Refine_mujoco/baseline/train.py
+Refine_mujoco/PPO.py
+Refine_mujoco/models.py
+Refine_mujoco/environment.py
+Refine_mujoco/OnPolicyAlgorithm.py
+Refine_mujoco/base_class.py
+Refine_mujoco/utils.py
+Refine_mujoco/baseline/callback.py
+Refine_mujoco/baseline/readme.md
+Refine_mujoco/callback.py
+2026-08-26 09:59:11 [info     ] Model file selection raw output:
+Refine_mujoco/baseline/train.py
+Refine_mujoco/PPO.py
+Refine_mujoco/models.py
+Refine_mujoco/environment.py
+Refine_mujoco/OnPolicyAlgorithm.py
+Refine_mujoco/base_class.py
+Refine_mujoco/utils.py
+Refine_mujoco/baseline/callback.py
+Refine_mujoco/baseline/readme.md
+Refine_mujoco/callback.py
+2026-08-26 10:00:02 [info     ] model response: # Expectations
+The paper evaluates RICE on four MuJoCo environments: Hopper, Walker2d, Reacher, and HalfCheetah (both dense and sparse variants, though sparse environments are out‑of‑scope for reproduction according to the addendum).  For a proper reproduction, the submission should include code that pretrains a policy network agent (compatible with PPO) for **each** of these environments.  This means there should be concrete scripts, configuration files, or clear parametrisation that allow training on Hopper‑v3, Walker2d‑v3, Reacher‑v2, and HalfCheetah‑v3.  A single script hardcoded to only one environment is not sufficient; the code must be readily set up to run pretraining on all four environments.
+
+# Reality
+The submission provides a directory `Refine_mujoco/baseline/` that contains:
+- `train.py` – a single training script that uses stable‑baselines3 PPO with `gym.make("Hopper-v3")`.  
+- `callback.py` – a helper callback.  
+- `readme.md` – a note stating *“This is the code for obtaining a pre‑trained policy in MuJoCo games. It also applies to sparse MuJoCo games.”*
+
+While the script can be trivially modified by changing the environment string, the submission contains **only** the Hopper variant.  There are no separate scripts, environment‑specific configurations, or command‑line arguments that would demonstrate pretraining code has been set up for Walker2d, Reacher, or HalfCheetah.  The remaining files under `Refine_mujoco/` (custom PPO, environment wrappers, etc.) are supporting classes but do not add environment‑specific pretraining scripts.
+
+Thus the submission lacks concrete code that sets up pretraining for each of the four MuJoCo environments; it provides only a single, environment‑specific example.
+
+# Score
+Score: 0  
+The criterion requires code for pretraining on **each** MuJoCo environment.  The submission only shows a script for Hopper‑v3 and nothing for Walker2d, Reacher, or HalfCheetah.  Without the necessary setup for the other environments, the criterion is not met.
+2026-08-26 10:00:02 [info     ] model response: # Expectations
+The paper evaluates RICE on four MuJoCo environments: Hopper, Walker2d, Reacher, and HalfCheetah (both dense and sparse variants, though sparse environments are out‑of‑scope for reproduction according to the addendum).  For a proper reproduction, the submission should include code that pretrains a policy network agent (compatible with PPO) for **each** of these environments.  This means there should be concrete scripts, configuration files, or clear parametrisation that allow training on Hopper‑v3, Walker2d‑v3, Reacher‑v2, and HalfCheetah‑v3.  A single script hardcoded to only one environment is not sufficient; the code must be readily set up to run pretraining on all four environments.
+
+# Reality
+The submission provides a directory `Refine_mujoco/baseline/` that contains:
+- `train.py` – a single training script that uses stable‑baselines3 PPO with `gym.make("Hopper-v3")`.  
+- `callback.py` – a helper callback.  
+- `readme.md` – a note stating *“This is the code for obtaining a pre‑trained policy in MuJoCo games. It also applies to sparse MuJoCo games.”*
+
+While the script can be trivially modified by changing the environment string, the submission contains **only** the Hopper variant.  There are no separate scripts, environment‑specific configurations, or command‑line arguments that would demonstrate pretraining code has been set up for Walker2d, Reacher, or HalfCheetah.  The remaining files under `Refine_mujoco/` (custom PPO, environment wrappers, etc.) are supporting classes but do not add environment‑specific pretraining scripts.
+
+Thus the submission lacks concrete code that sets up pretraining for each of the four MuJoCo environments; it provides only a single, environment‑specific example.
+
+# Score
+Score: 0  
+The criterion requires code for pretraining on **each** MuJoCo environment.  The submission only shows a script for Hopper‑v3 and nothing for Walker2d, Reacher, or HalfCheetah.  Without the necessary setup for the other environments, the criterion is not met.

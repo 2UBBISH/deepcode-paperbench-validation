@@ -1,0 +1,161 @@
+# =============================================================================
+# RICE: Refining via Critical State Explanation
+# Default Configuration for Refining Phase
+# =============================================================================
+# This file defines the default hyperparameters for the RICE refining algorithm.
+# It can be overridden by environment-specific configs in configs/env_specific/.
+#
+# The refining phase:
+#   1. Collects critical states using a trained mask network
+#   2. Constructs a mixed initial state distribution (p_mixed probability of
+#      resetting to a critical state)
+#   3. Refines the target policy via PPO with an RND exploration bonus
+# =============================================================================
+
+# ---------------------------------------------------------------------------
+# Critical State Collection
+# ---------------------------------------------------------------------------
+critical_state:
+  # Number of episodes to run for collecting critical states
+  num_episodes: 100
+
+  # Number of top-importance states to save per episode
+  # (1 = save only the single most critical state per episode)
+  top_k_per_episode: 1
+
+  # Alternative: total number of critical states to keep (overrides per-episode)
+  # If set to null, uses top_k_per_episode * num_episodes
+  max_critical_states: null
+
+# ---------------------------------------------------------------------------
+# Mixed Initial Distribution
+# ---------------------------------------------------------------------------
+mixed_init:
+  # Probability of resetting to a saved critical state
+  # (1 - p_mixed) probability of using the environment's default reset
+  # Typical values: 0.25 or 0.5 (see Table 3 in paper)
+  p_mixed: 0.25
+
+# ---------------------------------------------------------------------------
+# Random Network Distillation (RND) Exploration Bonus
+# ---------------------------------------------------------------------------
+rnd:
+  # Coefficient λ for the RND exploration bonus in the combined reward:
+  #   r_total = r_env + λ * r_rnd(s)
+  # Typical values: {0.1, 0.01, 0.001} (default 0.01)
+  lambda_coef: 0.01
+
+  # Network architecture
+  hidden_sizes: [64, 64]       # Hidden layer sizes for target & predictor
+  embedding_dim: 64            # Output dimension of RND networks
+  activation: "relu"           # Activation function
+
+  # Optimizer settings
+  learning_rate: 1.0e-4        # Adam learning rate for predictor updates
+
+  # Normalization
+  normalize_obs: true          # Whether to normalize observations before RND
+  obs_rms_decay: 0.99          # Decay rate for observation running mean/std
+  normalize_bonus: true        # Whether to normalize the RND bonus
+  bonus_decay: 0.99            # Decay rate for bonus running statistics
+
+  # Training
+  update_epochs: 4             # Number of epochs to train predictor per update
+  batch_size: 256              # Mini-batch size for predictor training
+
+# ---------------------------------------------------------------------------
+# PPO Hyperparameters for Refining
+# ---------------------------------------------------------------------------
+ppo:
+  # Learning rate for policy and value networks
+  learning_rate: 3.0e-4
+
+  # Discount factor
+  gamma: 0.99
+
+  # GAE lambda parameter
+  gae_lambda: 0.95
+
+  # PPO clip range
+  clip_epsilon: 0.2
+
+  # Value function loss coefficient
+  value_loss_coef: 0.5
+
+  # Entropy bonus coefficient
+  entropy_coef: 0.01
+
+  # Maximum gradient norm for clipping
+  max_grad_norm: 0.5
+
+  # Number of epochs per PPO update
+  ppo_epochs: 10
+
+  # Mini-batch size for PPO updates
+  batch_size: 64
+
+  # Whether to normalize advantages
+  normalize_advantages: true
+
+  # Whether to normalize observations for the policy
+  normalize_obs: true
+
+# ---------------------------------------------------------------------------
+# Policy Network Architecture (for refining)
+# ---------------------------------------------------------------------------
+policy:
+  # Hidden layer sizes for the policy network (mean network)
+  # If null, uses the same architecture as the target policy
+  hidden_sizes: null
+
+  # Hidden layer sizes for the value network
+  value_hidden_sizes: null
+
+  # Initial standard deviation for continuous action policies
+  policy_std: 0.5
+
+  # Activation function
+  activation: "tanh"
+
+# ---------------------------------------------------------------------------
+# Training Loop
+# ---------------------------------------------------------------------------
+training:
+  # Total number of environment steps for refining
+  total_steps: 1_000_000
+
+  # Number of steps to collect per iteration before updating
+  steps_per_iteration: 2048
+
+  # Evaluate the policy every N iterations
+  eval_interval: 10
+
+  # Number of evaluation episodes
+  eval_episodes: 10
+
+  # Maximum steps per evaluation episode
+  eval_max_steps: 1000
+
+  # Save checkpoint every N iterations (null = only save final)
+  save_interval: null
+
+  # Random seed for reproducibility
+  seed: 42
+
+# ---------------------------------------------------------------------------
+# Device
+# ---------------------------------------------------------------------------
+device: "cuda"  # "cuda" or "cpu"
+
+# ---------------------------------------------------------------------------
+# Logging
+# ---------------------------------------------------------------------------
+logging:
+  # Whether to use verbose output during training
+  verbose: true
+
+  # Log directory (null = no file logging)
+  log_dir: null
+
+  # TensorBoard logging
+  use_tensorboard: false

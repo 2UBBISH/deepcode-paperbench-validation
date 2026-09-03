@@ -1,0 +1,140 @@
+# =============================================================================
+# AntMaze Domain Configuration for FRE
+# Overrides default.yaml settings for AntMaze environments.
+# =============================================================================
+
+# ---------------------------------------------------------------------------
+# General settings
+# ---------------------------------------------------------------------------
+general:
+  # Override wandb project name for AntMaze
+  wandb_project: "fre-antmaze"
+  wandb_name: "fre-antmaze-large-diverse"
+
+# ---------------------------------------------------------------------------
+# Dataset settings
+# ---------------------------------------------------------------------------
+dataset:
+  # D4RL AntMaze dataset (large-diverse variant as used in paper)
+  name: "antmaze-large-diverse-v2"
+  normalize_states: true
+  clip_to_eps: true
+
+# ---------------------------------------------------------------------------
+# Reward prior distribution
+# ---------------------------------------------------------------------------
+reward:
+  # Uniform mixture weights (equal probability for all three families)
+  singleton_weight: 0.333
+  linear_weight: 0.333
+  mlp_weight: 0.333
+  # Singleton: goal-reaching threshold (L2 distance in state space)
+  singleton_threshold: 0.5
+  # Linear: sparsity fraction (80% zeros as per paper)
+  linear_sparsity: 0.8
+  # MLP: hidden layer dimension
+  mlp_hidden_dim: 256
+
+# ---------------------------------------------------------------------------
+# Encoder (Transformer VAE) settings
+# ---------------------------------------------------------------------------
+encoder:
+  embed_dim: 256
+  latent_dim: 64
+  num_layers: 3
+  num_heads: 4
+  dropout: 0.1
+  num_bins: 64
+  # Adaptive reward binning (range inferred from data)
+  reward_min: null
+  reward_max: null
+
+# ---------------------------------------------------------------------------
+# Decoder settings
+# ---------------------------------------------------------------------------
+decoder:
+  hidden_dims: [256, 256]
+  activation: "relu"
+
+# ---------------------------------------------------------------------------
+# IQL Agent settings
+# ---------------------------------------------------------------------------
+agent:
+  hidden_dims: [256, 256]
+  activation: "relu"
+  expectile: 0.7        # τ for expectile regression
+  temperature: 3.0      # β for advantage-weighted regression
+  discount: 0.99        # γ discount factor
+  target_tau: 0.005     # Polyak averaging coefficient
+  log_std_min: -5.0
+  log_std_max: 2.0
+
+# ---------------------------------------------------------------------------
+# Phase 1: Encoder training
+# ---------------------------------------------------------------------------
+encoder_training:
+  num_steps: 100000      # 100k iterations as per paper
+  learning_rate: 3.0e-4
+  K_enc: 64              # Number of encoding states
+  K_dec: 64              # Number of decoding states
+  beta_kl: 0.1           # KL penalty coefficient (β-VAE)
+  grad_clip_norm: 10.0
+  log_interval: 1000
+  eval_interval: 5000
+  save_interval: 20000
+
+# ---------------------------------------------------------------------------
+# Phase 2: IQL (RL) training
+# ---------------------------------------------------------------------------
+rl_training:
+  num_steps: 1000000     # 1M iterations as per paper
+  learning_rate: 3.0e-4
+  K_enc: 64              # Number of encoding states for reward encoding
+  batch_size: 256        # RL batch size
+  grad_clip_norm: 10.0
+  log_interval: 1000
+  eval_interval: 10000
+  save_interval: 50000
+
+# ---------------------------------------------------------------------------
+# Strided training (alternating encoder and RL updates)
+# ---------------------------------------------------------------------------
+strided_training:
+  enabled: false         # Sequential training by default
+  encoder_steps_per_stride: 1000
+  rl_steps_per_stride: 10000
+  total_strides: 100
+
+# ---------------------------------------------------------------------------
+# Evaluation settings
+# ---------------------------------------------------------------------------
+evaluation:
+  K_enc: 32              # Number of encoding states for zero-shot eval
+  num_episodes: 20       # Episodes per task per seed
+  num_seeds: 5           # Training seeds for statistical reporting
+  deterministic_policy: true  # Use mean action (no sampling)
+  normalize_returns: true
+  # AntMaze return normalization bounds (based on D4RL benchmarks)
+  # min: random policy (~0), max: expert policy (~100 for goal-reaching)
+  min_return: 0.0
+  max_return: 100.0
+
+# ---------------------------------------------------------------------------
+# Domain-specific metadata (not in default.yaml)
+# ---------------------------------------------------------------------------
+domain:
+  name: "antmaze"
+  # AntMaze state space: 29 dims (2D position + velocities + sensors)
+  # Action space: 8 dims (joint torques)
+  state_dim: 29
+  action_dim: 8
+  # Environment name for Gym/D4RL evaluation
+  env_name: "antmaze-large-diverse-v2"
+  # Evaluation tasks (as described in paper Section 5.1)
+  tasks:
+    - "goal-reaching"      # Random goal positions
+    - "directional"        # Move in specified (x,y) direction
+    - "random-simplex"     # Procedural noise / random Fourier features
+    - "path-loop"          # Follow a loop path
+    - "path-edges"         # Follow edges of the maze
+    - "path-center"        # Navigate to center region

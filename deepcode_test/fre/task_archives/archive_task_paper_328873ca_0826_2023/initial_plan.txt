@@ -1,0 +1,276 @@
+```yaml
+complete_reproduction_plan:
+  paper_info:
+    title: "RICE: Breaking Through the Training Bottlenecks of Reinforcement Learning with Explanation"
+    core_contribution: "A refining scheme that (1) trains a simplified StateMask-style mask network to identify critical states, (2) resets the agent from a mixed initial distribution of default initial states and critical states, and (3) continues PPO training with a Random Network Distillation (RND) exploration bonus to break local optima."
+
+  file_structure: |
+    rice/
+    ├── rice/
+    │   ├── __init__.py
+    │   ├── mask_network.py          # Mask-net policy + Algorithm 1 training loop
+    │   ├── mixed_reset_env.py       # Gym wrapper for mixed initial-state resets
+    │   ├── rnd_module.py            # RND target/predictor networks + normalization
+    │   ├── refine_agent.py          # Algorithm 2: RICE refining loop
+    │   ├── utils.py                 # Critical-state selection, fidelity score, helpers
+    │   └── baselines/
+    │       ├── ppo_finetune.py      # Lower-lr PPO continuation
+    │       ├── statemask_r.py       # Fine-tune only from critical states
+    │       ├── jsrl.py              # Jump-Start RL curriculum
+    │       ├── random_explanation.py
+    │       └── sil.py               # Self-imitation learning baseline
+    ├── envs/
+    │   ├── __init__.py
+    │   ├── mujoco_setup.py          # Hopper/Walker/Reacher/HalfCheetah + sparse variants
+    │   └── real_world_wrappers.py   # Adapters for selfish mining, CAGE, MetaDrive, malware
+    ├── training/
+    │   ├── pretrain_ppo.py          # Train pre-trained PPO agents
+    │   ├── pretrain_sac.py          # Train pre-trained SAC agents
+    │   ├── train_mask.py            # Entry point for Algorithm 1
+    │   ├── train_rice.py            # Entry point for Algorithm 2
+    │   └── train_baselines.py       # Train all baseline refiners
+    ├── evaluation/
+    │   ├── fidelity.py              # Sliding-window fidelity metric
+    │   ├── refine_eval.py           # Final-reward evaluation
+    │   ├── sensitivity.py           # p / lambda / alpha sweeps
+    │   └── plot_results.py
+    ├── configs/
+    │   ├── mujoco.yaml
+    │   └── real_world.yaml
+    ├── scripts/
+    │   ├── run_experiment_i.sh
+    │   ├── run_experiment_ii.sh
+    │   ├── run_experiment_iii.sh
+    │   ├── run_experiment_iv.sh
+    │   └── run_experiment_v.sh
+    ├── main.py                      # Top-level CLI dispatcher
+    ├── run_all_experiments.py       # Reproduce paper experiments I-V
+    ├── requirements.txt             # LAST
+    └── README.md                    # LAST
+
+  implementation_components: |
+    1. Pre-trained policy repository
+       - File: training/pretrain_ppo.py, training/pretrain_sac.py
+       - Train PPO agents for MuJoCo (Hopper-v3, Walker2d-v3, Reacher-v2, HalfCheetah-v3)
+         and the four real-world tasks using Stable-Baselines3 defaults, plus sparse
+         variants (SparseHopper, SparseWalker2d, SparseHalfCheetah) from Mazoure et al.
+       - Train a SAC agent for Experiment IV on Hopper, then use GAIL (imitation library)
+         to learn a PPO-style approximated policy from SAC rollouts.
+
+    2. Mask network (simplified StateMask) — Algorithm 1
+       - File: rice/mask_network.py
+       - Inputs: target policy π, environment env
+       - Output: binary mask policy ˜πθ(a^m | s) where a^m ∈ {0,1}
+       - Action blending:
+           a_t ⊙ a_t^m = { a_t               if a_t^m = 0
+                           { a_random        if a_t^m = 1
+         For continuous actions sample a_random ~ Uniform(action_space.low, action_space.high);
+         for discrete actions sample uniformly over |A|.
+       - Reward reformulation (Theorem 3.3): under Assumption 3.1, η(¯π) ≤ η(π), so
+         maximize J(θ) = η(¯π) with augmented reward
+           R'(s_t,a_t) = R(s_t,a_t) + α · a_t^m
+         where α is the blinding-bonus hyper-parameter.
+       - Training loop:
+         (a) Initialize θ and θ_old ← θ.
+         (b) For each iteration:
+             - Sample s0 ~ ρ.
+             - Rollout T steps: a_t ~ π(·|s_t), a_t^m ~ ˜πθ_old(·|s_t),
+               execute blended action, store (s_t, s_{t+1}, a_t^m, R'_t).
+             - Update θ_old ← θ with PPO on the collected buffer.
+       - Default α = 0.0001 (Table 3); sensitivity sweep {0.01, 0.001, 0.0001}.
+
+    3. Critical-state identification and mixed initial distribution
+       - File: rice/mixed_reset_env.py, rice/utils.py
+       - Given π and ˜π, sample one trajectory τ of length K (typically full episode)
+         by running π.
+       - Compute importance score ξ(s_t) = ˜π(a^m=0 | s_t) for every state.
+       - Select the single most critical state s* = argmax_t ξ(s_t).
+       - Reset distribution implementation: with probability p (per episode) set
+         s0 = s* via env.set_state / state-vector injection; otherwise s0 ~ ρ.
+         This realizes the mixture μ(s) = p · d_ρ^ˆπ(s) + (1-p) · ρ(s).
+       - Default p per task from Table 3 (0.25 or 0.50); sensitivity sweep
+         {0, 0.25, 0.5, 0.75, 1}.
+
+    4. RND exploration bonus
+       - File: rice/rnd_module.py
+       - Fixed random target network f(s) and trainable predictor network ˆf(s).
+       - Intrinsic reward:
+           R_t^RND = || f(s_{t+1}) − ˆf(s_{t+1}) ||^2
+       - Normalize R_t^RND with running mean and standard deviation.
+       - Augmented policy reward:
+           R'(s_t,a_t) = R(s_t,a_t) + λ · R_t^RND
+       - Update ˆf with Adam on MSE loss at each PPO update.
+       - Default λ per task from Table 3 (0.001 or 0.01); sensitivity sweep
+         {0, 0.1, 0.01, 0.001}.
+
+    5. RICE refining loop — Algorithm 2
+       - File: rice/refine_agent.py, training/train_rice.py
+       - Inputs: pre-trained π, mask ˜π, default ρ, reset probability p, RND weight λ
+       - For each iteration:
+         (a) With probability p roll-in π to obtain τ, pick critical state s*, set s0 = s*;
+             else sample s0 ~ ρ.
+         (b) Rollout T steps with current policy πθ, collecting
+             (s_t, s_{t+1}, a_t, R_t + λ·R_t^RND).
+         (c) Optimize πθ with PPO loss on D.
+         (d) Optimize RND predictor ˆf with MSE on D.
+       - Stop when evaluation reward plateaus; report mean/std over 3 seeds.
+
+    6. Baseline refiners
+       - PPO fine-tuning: continue PPO with reduced learning rate, no mixed reset, λ=0.
+       - StateMask-R: always reset to the single most critical state (p=1), λ=0.
+       - JSRL: guide-policy curriculum; start all steps from π_g and progressively
+         reduce guided prefix length while training π_e with PPO.
+       - Random explanation: replace mask-net critical-state selection with a uniform
+         random visited state, then run RICE with p and λ.
+       - SIL (Self-Imitation Learning): prioritize past successful trajectories in replay.
+
+    7. Fidelity evaluation (Experiment I)
+       - File: evaluation/fidelity.py
+       - For each trajectory of length L, slide a window of length l and compute the
+         average importance score in the window.
+       - Select the window with highest average score, randomize actions in that window,
+         complete the episode with π, and measure reward change d.
+       - Fidelity score = log(d / d_max) − log(l / L).
+       - Report for top-K% windows K ∈ {10,20,30,40} over 500 trajectories.
+
+    8. Real-world environment adapters
+       - Selfish mining: wrap github.com/roibarzur/pto-selfish-mining PPO agent.
+       - CAGE Challenge 2: wrap github.com/john-cardiff/-cyborg-cage-2 champion PPO
+         blue agent; reward is sum over trail lengths {30,50,100}.
+       - Autonomous driving: MetaDrive Macro-v1 via DI-drive; BEV state vector,
+         2-D continuous action → steering/acceleration/brake.
+       - Malware mutation: MalConv gym from github.com/bfilar/malware_rl; 16 discrete
+         mutation actions, reward = 10 on evasion else sc0 − sc_t.
+
+  validation_approach: |
+    Reproduce the five experiments reported in Section 4.2 and compare against the
+    numbers in Table 1, Figure 2, Figure 3, and the appendix figures.
+
+    Experiment I — Explanation fidelity and efficiency:
+      - Train the simplified mask network and the original StateMask on each task.
+      - Compute fidelity scores for K = 10%,20%,30%,40% over 500 trajectories.
+      - Success: our method matches StateMask fidelity (Figure 5) while reducing
+        wall-clock time by ~16.8% on average (Table 4).
+      - Measure training time with a fixed sample budget per task (Table 4).
+
+    Experiment II — Refining method comparison:
+      - Fix explanation = our mask network.
+      - Run RICE, PPO fine-tuning, StateMask-R, and JSRL on all eight tasks.
+      - For dense-reward tasks report final mean reward and std over 3 seeds
+        (Table 1). Expected: RICE > JSRL > PPO fine-tune, StateMask-R unstable.
+      - For sparse MuJoCo tasks plot learning curves (Figure 2, Figure 10). Expected:
+        RICE reaches higher final return faster than baselines.
+
+    Experiment III — Explanation quality ablation:
+      - Fix refining method = RICE.
+      - Vary explanation source: Random, StateMask, Ours.
+      - Expected: Ours ≈ StateMask >> Random (Table 1 right half).
+      - Additional: test Integrated Gradients and AIRS on four MuJoCo tasks
+        (Table 6); our mask network should still give the best refining outcome.
+
+    Experiment IV — Refining a non-PPO agent:
+      - Train a SAC agent on Hopper.
+      - Use GAIL to learn an imitated PPO policy from SAC rollouts.
+      - Refine with RICE, PPO fine-tuning, StateMask-R, JSRL, and SAC fine-tuning.
+      - Expected: RICE outperforms all baselines (Figure 3).
+
+    Experiment V — Hyper-parameter sensitivity:
+      - Sweep p ∈ {0,0.25,0.5,0.75,1} with λ fixed at default.
+      - Sweep λ ∈ {0,0.1,0.01,0.001} with p fixed at default.
+      - Sweep α ∈ {0.01,0.001,0.0001} for mask training.
+      - Expected: p=0.25 or 0.5 best; λ>0 improves performance, λ=0.01 generally
+        best; α not highly sensitive (Figures 6-9, 11-13).
+
+    Additional validation:
+      - Reproduce the malware-mutation case study (Table 7): show overfitting when
+        p=1, benefit of mixed reset, and further gain from RND exploration.
+      - Reproduce the MountainCar negative control (Figure 15): RICE should not
+        improve when Assumption 3.2 is violated.
+      - Unit tests: verify mask action blending, RND bonus normalization, mixed
+        reset probabilities, and fidelity score computation on toy trajectories.
+
+  environment_setup: |
+    Core stack:
+      - Python 3.9+
+      - PyTorch 1.13+ or 2.0+
+      - Stable-Baselines3 2.0+ (PPO/SAC training and callbacks)
+      - Gymnasium 0.28+ (or gym 0.21 with shimmy for legacy repos)
+      - MuJoCo 2.3+ and mujoco-py / gymnasium[mujoco]
+      - NumPy, SciPy, Matplotlib, Pandas, PyYAML, TensorBoard
+
+    Real-world task dependencies:
+      - Selfish mining: clone github.com/roibarzur/pto-selfish-mining
+      - CAGE Challenge 2: clone github.com/john-cardiff/-cyborg-cage-2
+      - Autonomous driving: MetaDrive + DI-drive
+        (pip install metadrive-simulator, github.com/opendilab/DI-drive)
+      - Malware mutation: clone github.com/bfilar/malware_rl and install
+        MalConv dependencies (torch, lief, etc.)
+      - Imitation learning for Experiment IV: imitation library (GAIL) or custom
+        adversarial imitation implementation.
+
+    Optional baseline code:
+      - StateMask original: github.com/nuwuxian/RL-state_mask
+      - JSRL: github.com/steventango/jumpstart-rl
+
+    Hardware:
+      - Training: 8× NVIDIA A100 (as used in paper) or equivalent; experiments are
+        feasible on fewer GPUs with longer wall time.
+      - Minimum: one GPU with 12 GB VRAM for MuJoCo mask/refine experiments.
+
+    Installation order:
+      1. Install PyTorch + CUDA.
+      2. Install Stable-Baselines3 and Gymnasium.
+      3. Install MuJoCo bindings.
+      4. Clone and install each real-world task repository in a separate conda env
+         if dependency conflicts arise.
+      5. Install project package: pip install -e .
+      6. Generate requirements.txt from the final working environment (LAST).
+
+  implementation_strategy: |
+    Phase 1 — Infrastructure and pre-training (Week 1):
+      - Set up project skeleton, configs, and logging.
+      - Implement envs/mujoco_setup.py with dense/sparse reward wrappers and a
+        state-setter helper for mixed resets.
+      - Implement real_world_wrappers.py adapters for the four security/RL apps.
+      - Train and save pre-trained PPO policies for all tasks; train SAC Hopper
+        policy for Experiment IV.
+
+    Phase 2 — Mask network (Algorithm 1) (Week 1-2):
+      - Implement rice/mask_network.py: a binary-action policy network trained
+        with PPO, action blending, and reward R' = R + α·a^m.
+      - Verify on a simple environment that increasing α raises the blinding rate
+        without collapsing final perturbed reward.
+      - Train mask networks for all tasks with default α=0.0001.
+      - Compute fidelity scores and compare with StateMask baseline.
+
+    Phase 3 — Mixed reset and RND (Week 2):
+      - Implement rice/mixed_reset_env.py: per-episode reset to critical state
+        with probability p, otherwise default initial state.
+      - Implement rice/rnd_module.py with target/predictor networks, running
+        normalization, and λ-weighted bonus.
+      - Unit-test critical-state selection on saved trajectories.
+
+    Phase 4 — RICE refining (Algorithm 2) (Week 2-3):
+      - Implement rice/refine_agent.py combining mixed reset, PPO updates, and
+        RND predictor updates.
+      - Run RICE on all MuJoCo tasks and real-world tasks using Table 3 defaults.
+      - Implement all baseline refiners (PPO fine-tune, StateMask-R, JSRL, Random,
+        SIL) for fair comparison.
+
+    Phase 5 — Experiments and analysis (Week 3-4):
+      - Run Experiment I-V scripts and collect results.
+      - Generate Table 1, Figure 2, Figure 3, and appendix sensitivity plots.
+      - Reproduce malware case study (Table 7) and MountainCar negative control.
+      - Compare final numbers with paper tolerances; debug discrepancies by
+        checking p/λ/α, RND normalization, and state-reset fidelity.
+
+    Phase 6 — Documentation and packaging (Week 4, LAST):
+      - Finalize requirements.txt from the working environment.
+      - Write README.md with usage: pre-training, mask training, refining,
+        evaluation, and reproducing each experiment.
+      - Add example commands:
+          python training/train_mask.py --task Hopper-v3
+          python training/train_rice.py --task Hopper-v3 --p 0.25 --lambda 0.001
+          python run_all_experiments.py
+      - Archive trained checkpoints and random seeds for reproducibility.
+```

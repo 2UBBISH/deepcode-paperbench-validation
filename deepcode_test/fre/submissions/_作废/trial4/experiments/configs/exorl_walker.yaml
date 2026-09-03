@@ -1,0 +1,108 @@
+# =============================================================================
+# FRE Configuration: ExORL Walker (Unsupervised Exploration)
+# =============================================================================
+# Dataset: ExORL walker (unsupervised RL exploration data from Yarats et al. 2022)
+# Environment: dm_control walker (walker_walk / walker_run)
+# Tasks: goal-reaching (random states), velocity (forward/backward)
+#
+# Paper Reference: Table 1, "Zero-shot transfer on ExORL"
+# Expected Results: walker goals ~94, walker velocity ~34
+
+domain: "exorl_walker"
+env_name: "walker_walk"          # dm_control walker environment
+dataset: "exorl_walker"          # dataset identifier for loading
+state_dim: 18                    # dm_control walker state dimension
+action_dim: 6                    # dm_control walker action dimension
+max_episode_steps: 1000          # standard for ExORL walker
+
+# -----------------------------------------------------------------------------
+# Latent Dimension
+# -----------------------------------------------------------------------------
+d_z: 64                          # latent vector z dimension
+
+# -----------------------------------------------------------------------------
+# FRE Encoder (Transformer VAE)
+# -----------------------------------------------------------------------------
+encoder:
+  d_model: 256                   # transformer hidden dimension
+  nhead: 4                       # number of attention heads
+  num_layers: 3                  # number of transformer layers
+  ff_dim: 1024                   # feedforward dimension (4 * d_model)
+  dropout: 0.1                   # dropout rate
+  num_reward_bins: 50            # reward discretization bins
+  reward_min: -1.0               # minimum reward for binning
+  reward_max: 1.0                # maximum reward for binning
+  use_sum_tokens: false          # use concatenation (not sum) for token fusion
+
+# -----------------------------------------------------------------------------
+# FRE Decoder (MLP Reward Predictor)
+# -----------------------------------------------------------------------------
+decoder:
+  hidden_dims: [256, 256]        # 2-layer MLP
+  activation: "relu"             # ReLU activation
+  dropout: 0.0                   # no dropout in decoder
+
+# -----------------------------------------------------------------------------
+# IQL Agent (Implicit Q-Learning)
+# -----------------------------------------------------------------------------
+iql:
+  hidden_dims: [256, 256]        # shared hidden architecture for Q, V, policy
+  gamma: 0.99                    # discount factor
+  tau: 0.005                     # target network Polyak averaging
+  expectile: 0.7                 # expectile for value loss (τ)
+  alpha: 3.0                     # advantage weighting temperature (AWR)
+  lr: 3.0e-4                     # learning rate for all IQL networks
+  clip_advantage: null           # no advantage clipping (use default 100.0)
+  log_std_min: -5.0              # policy log std minimum
+  log_std_max: 2.0               # policy log std maximum
+  dropout: 0.0                   # no dropout in IQL networks
+
+# -----------------------------------------------------------------------------
+# Reward Prior Distribution
+# -----------------------------------------------------------------------------
+reward_prior:
+  families: ["goal", "linear", "mlp"]  # all three families mixed uniformly
+  linear_sparsity: 0.8            # 80% zero weights for linear reward
+  mlp_hidden_dim: 256            # hidden dim for random MLP reward
+  goal_epsilon: 0.1              # goal-reaching tolerance
+  use_xy_prior: false            # no domain-specific XY prior for walker
+
+# -----------------------------------------------------------------------------
+# Training (Strided Scheme: Algorithm 1)
+# -----------------------------------------------------------------------------
+training:
+  seed: 0                        # random seed (override via CLI)
+  vae_steps: 100000              # Phase 1: VAE pre-training steps
+  iql_steps: 1000000             # Phase 2: IQL training steps
+  vae_batch_size: 256            # batch size for VAE training
+  iql_batch_size: 256            # batch size for IQL training
+  K_encoder: 32                  # number of (s, r) pairs for encoder
+  K_decoder: 32                  # number of (s, r) pairs for decoder
+  beta: 1.0                      # KL divergence weight
+  vae_lr: 3.0e-4                 # learning rate for VAE (encoder + decoder)
+  eval_interval: 5000            # steps between VAE evaluation logging
+  save_interval: 50000           # steps between checkpoint saves
+  log_interval: 100              # steps between training log prints
+
+# -----------------------------------------------------------------------------
+# Evaluation (Zero-Shot)
+# -----------------------------------------------------------------------------
+evaluation:
+  num_episodes: 20               # episodes per task for evaluation
+  K_encode: 32                   # number of (s, r) pairs for encoding
+  deterministic: true            # use deterministic policy for evaluation
+  goal_tasks: 50                 # number of random goal-reaching tasks
+  velocity_tasks:                # velocity-based tasks
+    - direction: [1.0, 0.0]      # forward velocity
+      name: "velocity_forward"
+    - direction: [-1.0, 0.0]     # backward velocity
+      name: "velocity_backward"
+  vel_start_idx: 8               # state index for x-velocity (walker torso)
+  vel_dim: 2                     # x,y velocity dimensions
+
+# -----------------------------------------------------------------------------
+# Logging & Checkpointing
+# -----------------------------------------------------------------------------
+checkpoint_dir: "./checkpoints/exorl_walker"
+log_dir: "./logs/exorl_walker"
+use_wandb: false                 # set to true for Weights & Biases logging

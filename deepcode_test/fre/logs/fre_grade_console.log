@@ -1,0 +1,39 @@
+==== [1/3] 提交清点与非空校验 ====
+  anchor         文件 20   python 15    ✅
+  trial1         文件 26   python 21    ✅
+  trial3         文件 21   python 15    ✅
+
+==== [2/3] 预估与闸门 ====
+  提交份数 : 3  → paperbench.n_tries=3(不设则只判 1 份!)
+  判分叶数 : 306/份(fre rubric 437 叶中 Code Development 占 70%)
+  成本预估 : ¥45~60/份 → 本次约 ¥135~180
+  闸门     : 本计划总预算 ¥500;单轮 trial 熔断 ¥100
+  提示     : 判分前请确认所有 trial 已完成,漏判的提交不会被自动补判
+
+==== [3/3] 判分(code_only · DeepSeek-V4-Pro 裁判恒定)2026-08-27 18:15:52 ====
+ 'other_stats': {'n_is_valid_git_repo': 0,
+                 'n_nontrivial_git_log': 0,
+                 'n_repro_script_exists': 0,
+                 'repro_mean_time': nan},
+ 'params': {'agent': 'direct_submission_solver',
+            'code_only': True,
+            'n_samples': 3,
+            'n_tries': 3,
+            'paper_split': 'fre',
+            'resources_provided': False,
+            'skip_reproduction': False},
+ 'run_group_id': '2026-08-27T10-15-59-GMT_run-group_direct_submission_solver',
+ 'run_health': {'n_gradings_failed': 0,
+                'n_reproductions_failed': 3,
+                'n_rollouts_failed': 0}}
+Evaluated 3 tasks with PaperBench-direct_submission_solver[0m [36mcomponent[0m=[35mnanoeval.evaluation[0m
+[2m2026-08-27T10:50:32.443420Z[0m [[32m[1minfo     [0m] [1m[36m[1mEvalboard Summary: unknown, add in pr?[0m[0m [36mcomponent[0m=[35mnanoeval.evaluation[0m
+ubmission_solver (r_id=260827101559ERQT4RDC, m=nanoeval): 100%|██████████| 3/3 [34:32<00:00, 690.92s/it, corr=0, errs=0, fail=3]
+[2m2026-08-27T10:50:32.445848Z[0m [[33m[1mwarning  [0m] [1mUnable to find model name, using fallback name='nanoeval'[0m [36mcomponent[0m=[35mnanoeval.eval[0m
+[2m2026-08-27T10:50:32.447175Z[0m [[33m[1mwarning  [0m] [1mNo slack integration configured, so not sending user notification[0m [36mcomponent[0m=[35mnanoeval.library_config[0m
+
+==== 完成 2026-08-27 18:50:37。结果: /home/deepevol/deepevol/frontier-evals/project/paperbench/runs/2026-08-27T10-15-59-GMT_run-group_direct_submission_solver/fre_*/grade.json ====
+   fre_0b812e6e-dca5-4c90-baa6-500ee5a15347 → score: 0.5184337524615302 | leaves: None | failed: None
+   fre_dc3b8ce4-cad6-465a-bb25-b16e6f0715e8 → score: 0.43781600601045045 | leaves: None | failed: None
+   fre_fa64789c-cd81-4794-badd-331f47b925eb → score: 0.4838563417035639 | leaves: None | failed: None
+==== 记得回填 FRE_VALIDATION_PLAN.md §6 ====

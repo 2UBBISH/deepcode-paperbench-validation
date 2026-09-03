@@ -1,0 +1,104 @@
+# RICE configuration for MetaDrive autonomous driving (Macro-v1)
+# Action space: Box([-1, -1], [1, 1]) mapped to steering / throttle-brake
+name: metadrive
+env_id: MetaDrive-Macro-v1
+
+env_kwargs:
+  use_render: false
+  map_config:
+    type: block_num
+    config: 3
+  traffic_density: 0.1
+  num_scenarios: 1000
+  start_seed: 0
+  accident_prob: 0.0
+  decision_repeat: 5
+  action_check: false
+  random_traffic: true
+  debug: false
+  cull_scene: true
+  manual_control: false
+  use_chase_camera: false
+  max_steps: 1000
+
+target:
+  algorithm: PPO
+  policy_type: MlpPolicy
+  total_timesteps: 2000000
+  learning_rate: 0.0003
+  n_steps: 2048
+  batch_size: 64
+  n_epochs: 10
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_range: 0.2
+  ent_coef: 0.0
+  vf_coef: 0.5
+  max_grad_norm: 0.5
+  normalize_obs: true
+  normalize_reward: true
+  policy_kwargs:
+    net_arch:
+      - pi: [256, 256]
+        vf: [256, 256]
+  eval_episodes: 50
+  save_freq: 100000
+  verbose: 1
+
+mask:
+  alpha: 0.0001
+  learning_rate: 0.0003
+  n_steps: 2048
+  batch_size: 64
+  n_epochs: 10
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_range: 0.2
+  ent_coef: 0.0
+  vf_coef: 0.5
+  max_grad_norm: 0.5
+  total_timesteps: 500000
+  hidden_sizes: [64, 64]
+  use_action: false
+  continuous_mask: true
+  top_k: 1000
+  percentile: null
+  eval_episodes: 50
+  verbose: 1
+
+rnd:
+  output_dim: 64
+  hidden_sizes: [64, 64]
+  activation: ReLU
+  normalize_inputs: true
+  lambda_coef: 0.01
+
+refine:
+  p: 0.25
+  lambda_coef: 0.01
+  total_timesteps: 500000
+  learning_rate: 0.0001
+  n_steps: 2048
+  batch_size: 64
+  n_epochs: 10
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_range: 0.2
+  ent_coef: 0.0
+  vf_coef: 0.5
+  max_grad_norm: 0.5
+  eval_episodes: 50
+  save_freq: 50000
+  verbose: 1
+
+sample_budget: 500000
+fidelity_budgets: [1, 2, 3, 5, 10]
+eval_episodes: 50
+
+meta:
+  description: "MetaDrive Macro-v1 autonomous driving for RICE case study."
+  action_names: ["steering", "throttle/brake"]
+  notes: >
+    The adapter maps the 2-D normalized action to MetaDrive commands:
+    a[0] -> steering, a[1] > 0 -> throttle, a[1] < 0 -> brake.
+    Observation normalization is enabled during target training.

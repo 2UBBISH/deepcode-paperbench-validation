@@ -1,0 +1,155 @@
+# =============================================================================
+# FRE Configuration: Kitchen Domain
+# =============================================================================
+# Reproduces the Kitchen experiments from the FRE paper.
+# Kitchen is a multi-task manipulation environment with 7 subtasks.
+# Dataset: D4RL kitchen-complete-v0 (or kitchen-partial-v0, kitchen-mixed-v0)
+#
+# Evaluation: 0 = 0 subtasks completed, 100 = all 7 subtasks completed.
+# =============================================================================
+
+# ---------------------------------------------------------------------------
+# Dataset specification
+# ---------------------------------------------------------------------------
+domain: "kitchen"
+task: "complete"          # Options: complete, partial, mixed
+version: "v0"             # D4RL version
+data_dir: null            # Uses default D4RL data directory (null = auto)
+
+# ---------------------------------------------------------------------------
+# FRE Encoder / Decoder hyperparameters
+# ---------------------------------------------------------------------------
+latent_dim: 64            # Dimension of latent vector z
+d_model: 256              # Transformer hidden dimension
+num_layers: 2             # Number of transformer encoder layers
+num_heads: 4              # Number of attention heads
+d_ff: 1024                # Feedforward hidden dimension in transformer
+d_emb: 64                 # Reward embedding dimension
+num_bins: 100             # Number of reward discretization bins
+reward_min: -10.0         # Minimum expected reward value
+reward_max: 10.0          # Maximum expected reward value
+decoder_hidden_dims: [256, 256]  # Decoder MLP hidden layer sizes
+beta: 0.1                 # KL divergence weight (beta-VAE)
+dropout: 0.0              # Dropout rate
+max_num_states: 32        # Maximum number of encoding states (K)
+
+# ---------------------------------------------------------------------------
+# Reward Prior hyperparameters
+# ---------------------------------------------------------------------------
+singleton_threshold: 0.5  # Distance threshold for singleton goal-reaching reward
+linear_sparsity: 0.5      # Probability of zeroing each weight in linear rewards
+mlp_hidden_dim: 256       # Hidden dimension for random MLP reward functions
+
+# ---------------------------------------------------------------------------
+# IQL Agent hyperparameters
+# ---------------------------------------------------------------------------
+iql_hidden_dims: [256, 256]  # Hidden layer sizes for Q, V, and policy networks
+expectile: 0.7            # Expectile for V-function regression (tau)
+temperature: 3.0          # Temperature for advantage-weighted regression (alpha)
+discount: 0.99            # Discount factor (gamma)
+soft_target_update_rate: 0.005  # Polyak averaging coefficient (rho)
+log_std_min: -5.0         # Minimum log std for Gaussian policy
+log_std_max: 2.0          # Maximum log std for Gaussian policy
+
+# ---------------------------------------------------------------------------
+# Training hyperparameters
+# ---------------------------------------------------------------------------
+K_encoder: 32             # Number of encoding states
+K_decoder: 32             # Number of decoding states
+fre_learning_rate: 1.0e-4 # Learning rate for FRE encoder/decoder
+fre_weight_decay: 1.0e-5  # Weight decay for FRE optimizer
+iql_learning_rate: 3.0e-4 # Learning rate for IQL agent
+iql_weight_decay: 1.0e-4  # Weight decay for IQL optimizer
+fre_steps: 100000         # Number of Phase 1 (FRE pretraining) gradient steps
+rl_steps: 1000000         # Number of Phase 2 (RL training) gradient steps
+rl_batch_size: 256        # Batch size for RL training
+fre_batch_size: 1         # Number of reward functions per FRE training step
+
+# ---------------------------------------------------------------------------
+# Logging & Checkpointing
+# ---------------------------------------------------------------------------
+log_interval: 1000        # Log metrics every N steps
+eval_interval: 10000      # Run evaluation every N steps
+checkpoint_interval: 50000  # Save checkpoint every N steps
+checkpoint_dir: "./checkpoints"  # Directory for saving checkpoints
+
+# ---------------------------------------------------------------------------
+# Hardware & Reproducibility
+# ---------------------------------------------------------------------------
+device: "auto"            # Device: "auto", "cuda", "cpu"
+use_amp: false            # Use automatic mixed precision
+seed: 0                   # Random seed (overridden by CLI for multi-seed runs)
+
+# ---------------------------------------------------------------------------
+# Evaluation settings
+# ---------------------------------------------------------------------------
+evaluation:
+  num_episodes: 20        # Number of evaluation episodes per task
+  max_steps: 280          # Maximum steps per episode (Kitchen episodes are ~280 steps)
+  deterministic: true     # Use deterministic policy for evaluation
+
+  # Downstream tasks for zero-shot evaluation
+  # Kitchen has 7 subtasks; each task is defined by a specific reward function
+  # that gives +1 for completing the target subtask.
+  tasks:
+    # --- Individual subtask completion tasks ---
+    - name: "open_microwave"
+      type: "subtask"
+      description: "Open the microwave door"
+      subtask_id: 0
+
+    - name: "flip_light_switch"
+      type: "subtask"
+      description: "Flip the light switch"
+      subtask_id: 1
+
+    - name: "slide_cabinet"
+      type: "subtask"
+      description: "Slide the cabinet door open"
+      subtask_id: 2
+
+    - name: "open_hinge_cabinet"
+      type: "subtask"
+      description: "Open the hinge cabinet"
+      subtask_id: 3
+
+    - name: "turn_knob"
+      type: "subtask"
+      description: "Turn the knob on the stove"
+      subtask_id: 4
+
+    - name: "turn_on_burner"
+      type: "subtask"
+      description: "Turn on the burner"
+      subtask_id: 5
+
+    - name: "turn_on_light"
+      type: "subtask"
+      description: "Turn on the overhead light"
+      subtask_id: 6
+
+    # --- Multi-subtask composite tasks ---
+    - name: "all_subtasks"
+      type: "composite"
+      description: "Complete all 7 subtasks (full kitchen task)"
+      subtask_ids: [0, 1, 2, 3, 4, 5, 6]
+
+    - name: "microwave_and_light"
+      type: "composite"
+      description: "Open microwave and turn on light"
+      subtask_ids: [0, 6]
+
+    - name: "cabinet_and_knob"
+      type: "composite"
+      description: "Slide cabinet and turn knob"
+      subtask_ids: [2, 4]
+
+# ---------------------------------------------------------------------------
+# Score normalization references
+# ---------------------------------------------------------------------------
+# Kitchen returns are normalized to [0, 100] where:
+#   0   = 0 subtasks completed
+#   100 = all 7 subtasks completed
+# Raw returns: each completed subtask gives +1 reward (max 7 per episode).
+ref_min_score: 0.0
+ref_max_score: 7.0        # Maximum raw return (7 subtasks × 1.0 each)

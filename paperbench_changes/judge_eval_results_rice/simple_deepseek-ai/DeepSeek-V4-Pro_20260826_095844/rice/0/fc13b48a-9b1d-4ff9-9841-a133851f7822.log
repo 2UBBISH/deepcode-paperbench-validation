@@ -1,0 +1,77 @@
+2026-08-26 09:58:46 [info     ] Grading leaf: For the MuJoCo environments, StateMask fine-tuning, aka "StateMask-R" has been implemented as outlined in section 4.1 and Cheng et al., 2023, i.e. resetting to the identified critical states and continuing training from there.
+2026-08-26 09:59:32 [info     ] Model file selection raw output:
+Refine_mujoco/retrain.py
+Refine_mujoco/retrain.sh
+Refine_mujoco/masknet/gen_fid.py
+Refine_mujoco/masknet/fid_test.py
+Refine_mujoco/masknet/train.py
+Refine_mujoco/masknet/environment.py
+Refine_mujoco/environment.py
+Refine_mujoco/utils.py
+Refine_mujoco/PPO.py
+Refine_mujoco/callback.py
+2026-08-26 09:59:32 [info     ] Model file selection raw output:
+Refine_mujoco/retrain.py
+Refine_mujoco/retrain.sh
+Refine_mujoco/masknet/gen_fid.py
+Refine_mujoco/masknet/fid_test.py
+Refine_mujoco/masknet/train.py
+Refine_mujoco/masknet/environment.py
+Refine_mujoco/environment.py
+Refine_mujoco/utils.py
+Refine_mujoco/PPO.py
+Refine_mujoco/callback.py
+2026-08-26 10:01:25 [info     ] model response: # Expectations
+The criterion requires that for MuJoCo environments, the StateMask-R baseline has been implemented. According to the paper (Section 4.1), StateMask-R is a refinement method that resets the environment to the identified critical states (found via explanation) and continues training (fine‑tuning) from those critical states, without mixing with default initial states. The implementation should:
+
+- Use the mask network to identify the most critical state(s) in a trajectory.
+- Reset the environment to that critical state (using simulator state restoration or equivalent) as the starting point for new episodes.
+- Continue training the agent (e.g., with PPO) from the pre‑trained weights, starting from those critical states.
+- Not include additional exploration bonuses or a mixed distribution (i.e., all resets are to the critical state).
+
+In the submission, I will look for code that implements this specific behavior, either as a dedicated script/class or as a configurable mode in the refining pipeline.
+
+# Reality
+The submission provides a refining framework in `Refine_mujoco/retrain.py` and supporting files. The relevant parts are:
+
+- **`environment.py`**: Defines `RetrainEnv`, a wrapper that overrides `reset()`. It decides whether to reset to a critical state (based on a probability `self.p` = `go_prob`). The critical state selection is done by running a trajectory with `gen_one_traj` (from `utils.py`), which uses the mask network (`masknet_path`) to obtain mask probabilities, then `start_idx = np.argmax(traj.mask_probs)` picks the most critical state. The environment state is restored via `self.env.sim.set_state(traj.state_seq[start_idx])`. Observations are reconstructed appropriately for each MuJoCo game.
+
+- **`retrain.py`**: Loads a pretrained agent and mask net, sets up the `RetrainEnv`, and then continues training with PPO. Hyperparameters `--go_prob`, `--bonus`, `--bonus_scale` allow configuring the reset probability and exploration bonus. For StateMask‑R, one would need `--go_prob` set such that the environment **always** resets to the critical state (i.e., no default initial states) and no exploration bonus (e.g., `--bonus 'None' --bonus_scale 0`).
+
+- **`utils.py`**: Contains `gen_one_traj`, which collects a full trajectory, records the mask probabilities, and returns a `Traj` object with the sequence of states and rewards.
+
+- **`retrain.sh`**: The provided shell script uses `--go_prob 1` and `--bonus_scale 0`, but careful inspection shows the code logic is: `if np.random.rand() > self.p: ...` (critical reset) else (default reset). With `go_prob=1`, the condition is never true, so **all resets go to the default initial state** — this corresponds to standard fine‑tuning, **not** StateMask‑R. However, the code can be reconfigured to run StateMask‑R by setting `go_prob=0` (which makes the condition always true, thus always resetting to the critical state). No separate script or class is dedicated solely to StateMask‑R, but the underlying mechanism (reset to critical state, continue training) is correctly implemented and can be selected via parameters.
+
+The implementation correctly follows the description: it uses the mask network to find the most critical state, restores the MuJoCo environment to that state, and resumes PPO training. Therefore, the required functionality for StateMask‑R is present in the code.
+
+# Score
+Score = 1
+
+The submission contains the necessary code to implement StateMask‑R for MuJoCo environments: it identifies critical states via the mask network, resets the environment to the most critical state, and continues training from there. Although the provided shell script does not showcase StateMask‑R, the implementation is fully parameterized and supports the baseline. The criteria are met.
+2026-08-26 10:01:25 [info     ] model response: # Expectations
+The criterion requires that for MuJoCo environments, the StateMask-R baseline has been implemented. According to the paper (Section 4.1), StateMask-R is a refinement method that resets the environment to the identified critical states (found via explanation) and continues training (fine‑tuning) from those critical states, without mixing with default initial states. The implementation should:
+
+- Use the mask network to identify the most critical state(s) in a trajectory.
+- Reset the environment to that critical state (using simulator state restoration or equivalent) as the starting point for new episodes.
+- Continue training the agent (e.g., with PPO) from the pre‑trained weights, starting from those critical states.
+- Not include additional exploration bonuses or a mixed distribution (i.e., all resets are to the critical state).
+
+In the submission, I will look for code that implements this specific behavior, either as a dedicated script/class or as a configurable mode in the refining pipeline.
+
+# Reality
+The submission provides a refining framework in `Refine_mujoco/retrain.py` and supporting files. The relevant parts are:
+
+- **`environment.py`**: Defines `RetrainEnv`, a wrapper that overrides `reset()`. It decides whether to reset to a critical state (based on a probability `self.p` = `go_prob`). The critical state selection is done by running a trajectory with `gen_one_traj` (from `utils.py`), which uses the mask network (`masknet_path`) to obtain mask probabilities, then `start_idx = np.argmax(traj.mask_probs)` picks the most critical state. The environment state is restored via `self.env.sim.set_state(traj.state_seq[start_idx])`. Observations are reconstructed appropriately for each MuJoCo game.
+
+- **`retrain.py`**: Loads a pretrained agent and mask net, sets up the `RetrainEnv`, and then continues training with PPO. Hyperparameters `--go_prob`, `--bonus`, `--bonus_scale` allow configuring the reset probability and exploration bonus. For StateMask‑R, one would need `--go_prob` set such that the environment **always** resets to the critical state (i.e., no default initial states) and no exploration bonus (e.g., `--bonus 'None' --bonus_scale 0`).
+
+- **`utils.py`**: Contains `gen_one_traj`, which collects a full trajectory, records the mask probabilities, and returns a `Traj` object with the sequence of states and rewards.
+
+- **`retrain.sh`**: The provided shell script uses `--go_prob 1` and `--bonus_scale 0`, but careful inspection shows the code logic is: `if np.random.rand() > self.p: ...` (critical reset) else (default reset). With `go_prob=1`, the condition is never true, so **all resets go to the default initial state** — this corresponds to standard fine‑tuning, **not** StateMask‑R. However, the code can be reconfigured to run StateMask‑R by setting `go_prob=0` (which makes the condition always true, thus always resetting to the critical state). No separate script or class is dedicated solely to StateMask‑R, but the underlying mechanism (reset to critical state, continue training) is correctly implemented and can be selected via parameters.
+
+The implementation correctly follows the description: it uses the mask network to find the most critical state, restores the MuJoCo environment to that state, and resumes PPO training. Therefore, the required functionality for StateMask‑R is present in the code.
+
+# Score
+Score = 1
+
+The submission contains the necessary code to implement StateMask‑R for MuJoCo environments: it identifies critical states via the mask network, resets the environment to the most critical state, and continues training from there. Although the provided shell script does not showcase StateMask‑R, the implementation is fully parameterized and supports the baseline. The criteria are met.

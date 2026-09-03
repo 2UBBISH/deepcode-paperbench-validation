@@ -1,0 +1,160 @@
+Based on my comprehensive analysis of the paper's references and GitHub repositories, here are the results:
+
+```json
+{
+    "selected_references": [
+        {
+            "rank": 1,
+            "title": "Offline Reinforcement Learning with Implicit Q-Learning",
+            "authors": ["Ilya Kostrikov", "Ashvin Nair", "Sergey Levine"],
+            "year": "2021",
+            "relevance_score": 0.96,
+            "citation_context": "In our experiments, we use implicit Q-learning (Kostrikov et al., 2021) as the offline RL method to train our FRE-conditioned policy. This is a widely used offline RL algorithm that avoids querying out-of-distribution actions.",
+            "key_contributions": [
+                "Introduced Implicit Q-Learning (IQL) for offline RL",
+                "Avoids querying out-of-distribution actions via expectile regression",
+                "Enables effective multi-task offline RL without policy constraints",
+                "State-of-the-art performance on D4RL benchmarks"
+            ],
+            "implementation_value": "IQL is the core RL algorithm used by FRE. The official repository provides the exact implementation that FRE builds upon, including the expectile regression loss, value function architecture, and advantage-weighted regression policy extraction. Essential for reproducing FRE's training pipeline.",
+            "github_info": {
+                "repository_url": "https://github.com/ikostrikov/implicit_q_learning",
+                "stars_count": "334",
+                "last_updated": "2022-01-23",
+                "repository_quality": "Official author implementation with clean, well-structured PyTorch code. MIT licensed. Contains complete training scripts for D4RL environments including AntMaze and Kitchen.",
+                "key_features": [
+                    "Complete IQL implementation with expectile regression",
+                    "Support for AntMaze, Kitchen, and locomotion environments",
+                    "Advantage-weighted regression (AWR) policy extraction",
+                    "Clean modular code structure with separate Q, V, and policy networks"
+                ],
+                "documentation_quality": "Good documentation with clear README, hyperparameter configurations, and training commands. Code is well-commented and follows standard RL conventions.",
+                "community_activity": "49 forks, 3 open issues. Widely used as baseline in offline RL research. Active community adoption despite no recent updates."
+            },
+            "original_reference": "Kostrikov, I., Nair, A., and Levine, S. Offline reinforcement learning with implicit q-learning. arXiv preprint arXiv:2110.06169, 2021."
+        },
+        {
+            "rank": 2,
+            "title": "Does Zero-Shot Reinforcement Learning Exist?",
+            "authors": ["Ahmed Touati", "Jérémy Rapin", "Yann Ollivier"],
+            "year": "2022",
+            "relevance_score": 0.93,
+            "citation_context": "Forward-Backward (FB) method (Touati & Ollivier, 2021), a state-of-the-art zero-shot RL method that jointly learns a pair of representations that represent a family of tasks and their optimal policies... FB and SF are based on DDPG-based policies, and are run via the code provided from (Touati et al., 2022).",
+            "key_contributions": [
+                "Introduced the Forward-Backward (FB) representation for zero-shot RL",
+                "Proposed a principled framework for learning universal value functions",
+                "Demonstrated zero-shot transfer to novel reward functions",
+                "Established benchmarks for zero-shot RL evaluation"
+            ],
+            "implementation_value": "FB is the primary baseline that FRE compares against and improves upon. The official Facebook Research repository provides the complete FB training and evaluation pipeline. Understanding this code is essential for reproducing comparisons and understanding the zero-shot RL problem formulation that FRE addresses.",
+            "github_info": {
+                "repository_url": "https://github.com/facebookresearch/controllable_agent",
+                "stars_count": "81",
+                "last_updated": "2023-07-17",
+                "repository_quality": "Official Facebook Research implementation. Well-structured codebase with DDPG-based policies. MIT licensed. Note: repository is archived but fully functional.",
+                "key_features": [
+                    "Complete FB representation learning implementation",
+                    "Zero-shot policy evaluation on ExORL benchmarks",
+                    "Support for multiple unsupervised reward families",
+                    "DDPG-based actor-critic architecture for continuous control"
+                ],
+                "documentation_quality": "Good documentation with setup instructions, configuration files, and evaluation scripts. Includes pre-trained model loading and zero-shot evaluation procedures.",
+                "community_activity": "15 forks, 2 open issues. Archived repository but remains the canonical implementation. Cited and used by numerous follow-up works."
+            },
+            "original_reference": "Touati, A., Rapin, J., and Ollivier, Y. Does zero-shot reinforcement learning exist? arXiv preprint arXiv:2209.14935, 2022."
+        },
+        {
+            "rank": 3,
+            "title": "D4RL: Datasets for Deep Data-Driven Reinforcement Learning",
+            "authors": ["Justin Fu", "Aviral Kumar", "Ofir Nachum", "George Tucker", "Sergey Levine"],
+            "year": "2020",
+            "relevance_score": 0.90,
+            "citation_context": "Results are presented on standard offline RL benchmarks: the ExORL benchmark for learning from unsupervised data (Yarats et al., 2022) and variants of the AntMaze and Kitchen environments from D4RL (Fu et al., 2020) adapted for evaluating multi-task and goal-conditioned policies.",
+            "key_contributions": [
+                "Established standard offline RL benchmark datasets",
+                "Introduced AntMaze, Kitchen, and locomotion domains for offline RL",
+                "Provided standardized evaluation protocols for offline RL",
+                "Enabled reproducible research in offline RL"
+            ],
+            "implementation_value": "D4RL provides the AntMaze and Kitchen datasets that FRE uses for its main experiments. The repository includes dataset loading, environment wrappers, and evaluation protocols. Essential for reproducing FRE's experimental results on these domains.",
+            "github_info": {
+                "repository_url": "https://github.com/Farama-Foundation/D4RL",
+                "stars_count": "1700",
+                "last_updated": "2024-11-18",
+                "repository_quality": "Now maintained by Farama Foundation (formerly OpenAI Gym maintainers). High-quality, well-tested codebase. Apache 2.0 licensed. Extensive environment coverage.",
+                "key_features": [
+                    "Standardized offline RL datasets (AntMaze, Kitchen, Adroit, MuJoCo)",
+                    "Easy-to-use dataset loading API",
+                    "Environment wrappers compatible with Gym/Gymnasium",
+                    "Comprehensive documentation and tutorials"
+                ],
+                "documentation_quality": "Excellent documentation with setup guides, dataset descriptions, and usage examples. Well-maintained by the Farama Foundation with active issue resolution.",
+                "community_activity": "308 forks, 107 open issues. The de facto standard for offline RL benchmarking. Very active community with regular maintenance and updates."
+            },
+            "original_reference": "Fu, J., Kumar, A., Nachum, O., Tucker, G., and Levine, S. D4rl: Datasets for deep data-driven reinforcement learning. arXiv preprint arXiv:2004.07219, 2020."
+        },
+        {
+            "rank": 4,
+            "title": "HIQL: Offline Goal-Conditioned RL with Latent States as Actions",
+            "authors": ["Seohong Park", "Dibya Ghosh", "Benjamin Eysenbach", "Sergey Levine"],
+            "year": "2023",
+            "relevance_score": 0.87,
+            "citation_context": "Goal-conditioned RL... There have been proposed a variety of methods for online and offline goal-conditioned RL... (Park et al., 2023a).",
+            "key_contributions": [
+                "Proposed Hierarchical Implicit Q-Learning for offline goal-conditioned RL",
+                "Introduced latent subgoal representation for long-horizon tasks",
+                "Achieved state-of-the-art on challenging AntMaze navigation tasks",
+                "Demonstrated effective use of IQL for goal-conditioned settings"
+            ],
+            "implementation_value": "HIQL is by the same research group (Seohong Park, Sergey Levine) and shares significant technical overlap with FRE. Both use IQL as the base offline RL algorithm for multi-task/goal-conditioned settings. The code structure, training loop design, and environment handling provide valuable reference for implementing FRE's policy training component.",
+            "github_info": {
+                "repository_url": "https://github.com/seohongpark/HIQL",
+                "stars_count": "97",
+                "last_updated": "2024-12-01",
+                "repository_quality": "Official author implementation. Clean, well-organized PyTorch codebase. MIT licensed. Recently maintained with updates.",
+                "key_features": [
+                    "Hierarchical IQL implementation for goal-conditioned RL",
+                    "Subgoal representation learning with latent actions",
+                    "AntMaze and Kitchen environment configurations",
+                    "Comprehensive training and evaluation scripts"
+                ],
+                "documentation_quality": "Well-documented with clear README, configuration files, and training commands. Code structure is logical and follows best practices for RL research code.",
+                "community_activity": "9 forks, 1 open issue. Relatively new but gaining adoption. Active maintenance by the author."
+            },
+            "original_reference": "Park, S., Ghosh, D., Eysenbach, B., and Levine, S. Hiql: Offline goal-conditioned rl with latent states as actions. arXiv preprint arXiv:2307.11949, 2023a."
+        },
+        {
+            "rank": 5,
+            "title": "Neural Processes",
+            "authors": ["Marta Garnelo", "Jonathan Schwarz", "Dan Rosenbaum", "Fabio Viola", "Danilo J. Rezende", "S. M. Ali Eslami", "Yee Whye Teh"],
+            "year": "2018",
+            "relevance_score": 0.84,
+            "citation_context": "The FRE method is similar to a denoising auto-encoder (Vincent et al., 2008) trained on (s, η(s)) pairs sampled from an arbitrary reward function η over s^e, s^d ∼ D, as well as that of neural processes (Garnelo et al., 2018b;a; Kim et al., 2019) in that we aim to map a context set of reward-state pairs to a functional output.",
+            "key_contributions": [
+                "Introduced Neural Processes for learning distributions over functions",
+                "Proposed context-set to prediction mapping via latent variables",
+                "Combined benefits of neural networks and Gaussian processes",
+                "Enabled meta-learning of function representations from samples"
+            ],
+            "implementation_value": "FRE's core architecture—encoding a set of (state, reward) pairs into a latent representation and decoding to predict rewards for new states—is directly inspired by Neural Processes. The DeepMind repository provides reference implementations of CNPs, NPs, and ANPs that illuminate the architectural patterns FRE adapts for reward function encoding. Understanding NPs is key to grasping FRE's encoder-decoder design.",
+            "github_info": {
+                "repository_url": "https://github.com/google-deepmind/neural-processes",
+                "stars_count": "~500+",
+                "last_updated": "Actively maintained by Google DeepMind",
+                "repository_quality": "Official DeepMind implementation with Jupyter notebooks. High-quality reference code demonstrating Conditional NPs, Neural Processes, and Attentive Neural Processes. Well-tested and documented.",
+                "key_features": [
+                    "Implementations of CNP, NP, and ANP variants",
+                    "Context-set to target-set prediction framework",
+                    "Permutation-invariant encoder architectures",
+                    "Interactive notebook demonstrations"
+                ],
+                "documentation_quality": "Excellent educational documentation with detailed notebooks explaining each variant. Code is clean and serves as a reference implementation for the neural process family.",
+                "community_activity": "Widely referenced and used. Canonical implementation of neural processes. Active research community building on these foundations."
+            },
+            "original_reference": "Garnelo, M., Schwarz, J., Rosenbaum, D., Viola, F., Rezende, D. J., Eslami, S., and Teh, Y. W. Neural processes. arXiv preprint arXiv:1807.01622, 2018b."
+        }
+    ],
+    "analysis_summary": "The FRE paper presents an unsupervised zero-shot RL method using functional reward encodings with a transformer-based VAE and IQL for offline RL. After analyzing all 60+ references, I identified approximately 25 references with GitHub repositories. The top 5 were selected based on: (1) IQL—the core offline RL algorithm directly used by FRE (334 stars, essential for reproduction); (2) FB/Controllable Agent—the primary baseline method FRE compares against (81 stars, official Facebook Research implementation); (3) D4RL—the benchmark dataset provider for AntMaze and Kitchen environments (1700 stars, industry standard); (4) HIQL—a closely related offline goal-conditioned RL method by the same research group that also builds on IQL (97 stars, shares code patterns); and (5) Neural Processes—the technical foundation for FRE's context-set encoding architecture (canonical DeepMind implementation). Together these repositories cover the algorithmic backbone (IQL), competitive baseline (FB), experimental infrastructure (D4RL), closely related methodology (HIQL), and architectural inspiration (Neural Processes) needed for a complete implementation reference.",
+    "github_repositories_found": "25 out of approximately 60 references have identifiable GitHub repositories"
+}
+```

@@ -1,0 +1,61 @@
+2026-08-26 10:00:35 [info     ] Grading leaf: For the selfish mining environment, for the "StateMask" explanation method, code for measuring training time throughout training as outlined in Appendix C.3 and Table 4 has been implemented.
+2026-08-26 10:02:01 [info     ] Model file selection raw output:
+Refine_selfish_mining/masknet/train.py
+Refine_selfish_mining/masknet/utils.py
+Refine_selfish_mining/masknet/replay.py
+Refine_selfish_mining/masknet/fidelity_score.py
+Refine_selfish_mining/masknet/sample_mask_score.py
+Refine_selfish_mining/masknet/sample_value_score.py
+Refine_selfish_mining/utils.py
+Refine_selfish_mining/retrain.py
+Refine_selfish_mining/baseline/train_ppo.py
+Refine_selfish_mining/baseline/net.py
+2026-08-26 10:02:01 [info     ] Model file selection raw output:
+Refine_selfish_mining/masknet/train.py
+Refine_selfish_mining/masknet/utils.py
+Refine_selfish_mining/masknet/replay.py
+Refine_selfish_mining/masknet/fidelity_score.py
+Refine_selfish_mining/masknet/sample_mask_score.py
+Refine_selfish_mining/masknet/sample_value_score.py
+Refine_selfish_mining/utils.py
+Refine_selfish_mining/retrain.py
+Refine_selfish_mining/baseline/train_ppo.py
+Refine_selfish_mining/baseline/net.py
+2026-08-26 10:03:04 [info     ] model response: # Expectations
+The paper reports in Appendix C.3 and Table 4 that the authors measured the training time of the mask network (explanation method) for each environment, including the selfish mining task. For the "StateMask" explanation method, they must have recorded the number of seconds taken to train the mask network for a fixed number of samples. In a reproduction attempt, I would expect to find actual code that:
+
+- Implements the training of the mask network using the **original StateMask algorithm** (the prime‑dual optimization, not the simplified PPO‑based "Ours" variant) for the selfish mining environment.
+- Explicitly measures and logs the wall‑clock time of that training process (e.g., by recording `time.time()` before and after training, or via a callback that writes the elapsed time).  
+- This timing code is part of the submitted files, enabling the reproduction of the efficiency results shown in Table 4.
+
+Without such an implementation, the criterion cannot be satisfied.
+
+# Reality
+I examined all the files provided for the selfish mining portion of the submission (`Refine_selfish_mining/`) and the supporting utilities.
+
+- The only training script for a mask network is `masknet/train.py`. This script uses the tianshou `PPOPolicy` and incorporates an intrinsic reward bonus (`alpha` to encourage blinding), which corresponds to the **"Ours"** explanation method described in the paper (Theorem 3.3, reformulated objective). It does **not** implement the original StateMask training procedure (e.g., the prime‑dual optimisation or the surrogate function from Cheng et al. 2023).
+- Nowhere in this script (or in any other provided file) is there code that records training time explicitly. There is no `time.time()` measurement, no logging of elapsed seconds, and no output that could reproduce the "Cost time" column of Table 4.
+- Other files such as `sample_mask_score.py`, `replay.py`, `fidelity_score.py` only load pre‑trained models and compute fidelity scores; they do not train a mask network at all.
+- Since the submission does not contain any implementation of StateMask‑style mask training for the selfish mining environment, it logically cannot contain timing code for that training.
+
+# Score
+0 – The submission does not include code that implements training‑time measurement for the StateMask explanation method on the selfish mining environment. Therefore the criterion is not met.
+2026-08-26 10:03:04 [info     ] model response: # Expectations
+The paper reports in Appendix C.3 and Table 4 that the authors measured the training time of the mask network (explanation method) for each environment, including the selfish mining task. For the "StateMask" explanation method, they must have recorded the number of seconds taken to train the mask network for a fixed number of samples. In a reproduction attempt, I would expect to find actual code that:
+
+- Implements the training of the mask network using the **original StateMask algorithm** (the prime‑dual optimization, not the simplified PPO‑based "Ours" variant) for the selfish mining environment.
+- Explicitly measures and logs the wall‑clock time of that training process (e.g., by recording `time.time()` before and after training, or via a callback that writes the elapsed time).  
+- This timing code is part of the submitted files, enabling the reproduction of the efficiency results shown in Table 4.
+
+Without such an implementation, the criterion cannot be satisfied.
+
+# Reality
+I examined all the files provided for the selfish mining portion of the submission (`Refine_selfish_mining/`) and the supporting utilities.
+
+- The only training script for a mask network is `masknet/train.py`. This script uses the tianshou `PPOPolicy` and incorporates an intrinsic reward bonus (`alpha` to encourage blinding), which corresponds to the **"Ours"** explanation method described in the paper (Theorem 3.3, reformulated objective). It does **not** implement the original StateMask training procedure (e.g., the prime‑dual optimisation or the surrogate function from Cheng et al. 2023).
+- Nowhere in this script (or in any other provided file) is there code that records training time explicitly. There is no `time.time()` measurement, no logging of elapsed seconds, and no output that could reproduce the "Cost time" column of Table 4.
+- Other files such as `sample_mask_score.py`, `replay.py`, `fidelity_score.py` only load pre‑trained models and compute fidelity scores; they do not train a mask network at all.
+- Since the submission does not contain any implementation of StateMask‑style mask training for the selfish mining environment, it logically cannot contain timing code for that training.
+
+# Score
+0 – The submission does not include code that implements training‑time measurement for the StateMask explanation method on the selfish mining environment. Therefore the criterion is not met.

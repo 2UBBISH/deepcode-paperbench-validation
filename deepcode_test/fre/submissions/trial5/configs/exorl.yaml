@@ -1,0 +1,195 @@
+# ===========================================================================
+# ExORL Configuration for FRE (Functional Reward Encodings)
+# ===========================================================================
+# Domain-specific hyperparameters for training and evaluating FRE on the
+# ExORL benchmark (Yarats et al., 2022), covering both Walker and Cheetah
+# domains with goal-reaching and velocity downstream tasks.
+#
+# This file overrides defaults from configs/default.yaml.
+# The specific domain (walker/cheetah) is selected via the dataset name
+# or --domain CLI argument.
+# ===========================================================================
+
+# ---------------------------------------------------------------------------
+# General settings (override defaults)
+# ---------------------------------------------------------------------------
+general:
+  wandb_project: "fre-exorl"
+  wandb_name: "fre-exorl"
+
+# ---------------------------------------------------------------------------
+# Dataset settings
+# ---------------------------------------------------------------------------
+dataset:
+  # Default dataset name; override via CLI (e.g., --dataset exorl_walker)
+  name: "exorl_walker"
+  normalize_states: true
+  clip_to_eps: false  # ExORL datasets don't use D4RL's clip_to_eps convention
+  # Path to downloaded ExORL data (set via CLI or environment variable)
+  exorl_data_path: null
+
+# ---------------------------------------------------------------------------
+# Reward prior distribution
+# ---------------------------------------------------------------------------
+reward:
+  # Uniform mixture weights (equal probability for each family)
+  singleton_weight: 0.333
+  linear_weight: 0.333
+  mlp_weight: 0.333
+  # Singleton (goal-reaching) reward parameters
+  singleton_threshold: 0.5
+  # Random linear reward parameters
+  linear_sparsity: 0.8
+  # Random MLP reward parameters
+  mlp_hidden_dim: 256
+
+# ---------------------------------------------------------------------------
+# FRE Encoder architecture
+# ---------------------------------------------------------------------------
+encoder:
+  embed_dim: 256
+  latent_dim: 64
+  num_layers: 3
+  num_heads: 4
+  dropout: 0.1
+  num_bins: 64
+  reward_min: null   # Adaptive binning (computed from batch)
+  reward_max: null
+
+# ---------------------------------------------------------------------------
+# FRE Decoder architecture
+# ---------------------------------------------------------------------------
+decoder:
+  hidden_dims: [256, 256]
+  activation: "relu"
+
+# ---------------------------------------------------------------------------
+# IQL Agent hyperparameters
+# ---------------------------------------------------------------------------
+agent:
+  hidden_dims: [256, 256]
+  activation: "relu"
+  expectile: 0.7       # τ for expectile regression
+  temperature: 3.0     # β for advantage-weighted regression
+  discount: 0.99       # γ discount factor
+  target_tau: 0.005    # Polyak averaging coefficient
+  log_std_min: -5.0
+  log_std_max: 2.0
+
+# ---------------------------------------------------------------------------
+# Phase 1: Encoder/Decoder training
+# ---------------------------------------------------------------------------
+encoder_training:
+  num_steps: 100000     # 100k iterations
+  learning_rate: 3.0e-4
+  K_enc: 64             # Number of encoding states
+  K_dec: 64             # Number of decoding states
+  beta_kl: 0.1          # KL divergence penalty weight (β-VAE)
+  grad_clip_norm: 10.0
+  log_interval: 1000
+  eval_interval: 5000
+  save_interval: 20000
+
+# ---------------------------------------------------------------------------
+# Phase 2: IQL Agent training (with frozen encoder)
+# ---------------------------------------------------------------------------
+rl_training:
+  num_steps: 1000000    # 1M iterations
+  learning_rate: 3.0e-4
+  K_enc: 64             # Number of encoding states for z
+  batch_size: 256       # RL batch size
+  grad_clip_norm: 10.0
+  log_interval: 1000
+  eval_interval: 10000
+  save_interval: 50000
+
+# ---------------------------------------------------------------------------
+# Strided training (optional alternating encoder/RL updates)
+# ---------------------------------------------------------------------------
+strided_training:
+  enabled: false        # Disabled by default; use sequential Phase 1 → Phase 2
+  encoder_steps_per_stride: 1000
+  rl_steps_per_stride: 10000
+  total_strides: 100
+
+# ---------------------------------------------------------------------------
+# Evaluation settings
+# ---------------------------------------------------------------------------
+evaluation:
+  K_enc: 32             # Number of encoding states for zero-shot eval
+  num_episodes: 20      # Episodes per task per seed
+  num_seeds: 5          # Training seeds for statistical reporting
+  deterministic_policy: true  # Use mean action (no sampling)
+  normalize_returns: true
+  # Return normalization bounds (per domain, overridden below)
+  min_return: 0.0
+  max_return: 100.0
+
+# ---------------------------------------------------------------------------
+# Domain metadata
+# ---------------------------------------------------------------------------
+domain:
+  # Default to walker; override via dataset name or CLI
+  env_name: "exorl_walker"
+
+  # -----------------------------------------------------------------------
+  # Walker domain
+  # -----------------------------------------------------------------------
+  walker:
+    state_dim: 24       # Walker state dimensionality (proprioceptive)
+    action_dim: 6       # Walker action dimensionality
+    env_name: "exorl_walker"
+    # Evaluation tasks for walker (from paper Table 1)
+    tasks:
+      - "goal-reaching"   # Reach random goal positions
+      - "velocity"        # Match target velocities (forward/backward)
+    # Return normalization: [min_return, max_return] for scaling to [0, 100]
+    # Based on ExORL benchmark: random ~0, expert ~1000 for walker
+    normalization:
+      min_return: 0.0
+      max_return: 1000.0
+
+  # -----------------------------------------------------------------------
+  # Cheetah domain
+  # -----------------------------------------------------------------------
+  cheetah:
+    state_dim: 17       # Cheetah state dimensionality (proprioceptive)
+    action_dim: 6       # Cheetah action dimensionality
+    env_name: "exorl_cheetah"
+    # Evaluation tasks for cheetah (from paper Table 1)
+    tasks:
+      - "goal-reaching"   # Reach random goal positions
+      - "velocity"        # Match target velocities (forward/backward)
+    # Return normalization: [min_return, max_return] for scaling to [0, 100]
+    # Based on ExORL benchmark: random ~0, expert ~800 for cheetah
+    normalization:
+      min_return: 0.0
+      max_return: 800.0
+
+# ---------------------------------------------------------------------------
+# Per-domain expected results (from paper Table 1, for validation)
+# ---------------------------------------------------------------------------
+expected_results:
+  walker:
+    goal-reaching:
+      mean: 94.0
+      std: 2.0
+    velocity:
+      mean: 34.0
+      std: 13.0
+    average:
+      mean: 64.0
+      std: 7.5
+  cheetah:
+    goal-reaching:
+      mean: 58.0
+      std: 8.0
+    velocity:
+      mean: 20.0
+      std: 2.0
+    average:
+      mean: 39.0
+      std: 5.0
+  overall_average:
+    mean: 51.5
+    std: 6.3

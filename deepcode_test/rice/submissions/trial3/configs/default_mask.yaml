@@ -1,0 +1,51 @@
+# =============================================================================
+# Default Hyperparameters for Mask Network Training (RICE)
+# =============================================================================
+# These are the default values used across all environments unless overridden
+# by environment-specific configs in configs/env_specific/
+#
+# The mask network learns a binary policy π̃(a^e|s) that decides whether to
+# keep the target agent's action (a^e=0) or randomize it (a^e=1).
+# The probability ξ(s) = π̃(a^e=0|s) serves as the importance score.
+# =============================================================================
+
+# --- Mask Network Architecture ---
+mask_network:
+  hidden_sizes: [128, 128]       # Hidden layer sizes for the MLP
+  activation: "tanh"             # Activation function: "tanh", "relu", or "elu"
+
+# --- Intrinsic Reward ---
+alpha: 0.0001                    # Coefficient for intrinsic reward α·I(a^e=1)
+                                 # Balances masking encouragement vs. performance
+                                 # Paper reports α=0.0001 for all environments
+                                 # (Some text mentions 0.01; configurable here)
+
+# --- PPO Hyperparameters for Mask Network Training ---
+ppo:
+  learning_rate: 3.0e-4          # Adam learning rate
+  gamma: 0.99                    # Discount factor
+  gae_lambda: 0.95               # GAE λ parameter
+  clip_epsilon: 0.2              # PPO clipping parameter ε
+  value_loss_coef: 0.5           # Value function loss coefficient
+  entropy_coef: 0.01             # Entropy bonus coefficient
+  max_grad_norm: 0.5             # Maximum gradient norm for clipping
+  ppo_epochs: 10                 # Number of PPO epochs per update
+  batch_size: 64                 # Mini-batch size for PPO updates
+
+# --- Training Loop ---
+training:
+  total_steps: 300000            # Total environment steps for mask training
+  steps_per_iteration: 2048      # Steps collected per PPO iteration
+  eval_interval: 10              # Evaluate fidelity every N iterations
+  eval_episodes: 10              # Number of episodes for fidelity evaluation
+  save_interval: 50              # Save checkpoint every N iterations
+  seed: 42                       # Random seed
+
+# --- Fidelity Evaluation ---
+fidelity:
+  num_episodes: 10               # Episodes to collect for fidelity computation
+  q_function: null               # Optional: pre-computed Q-function for fidelity
+                                 # If null, uses Monte Carlo returns as proxy
+
+# --- Device ---
+device: "cuda"                   # "cuda" or "cpu"

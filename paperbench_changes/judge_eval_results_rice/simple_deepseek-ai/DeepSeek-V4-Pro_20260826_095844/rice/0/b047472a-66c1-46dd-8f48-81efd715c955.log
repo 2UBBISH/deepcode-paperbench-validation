@@ -1,0 +1,89 @@
+2026-08-26 10:00:07 [info     ] Grading leaf: For the autonomous driving environment, code for constructing a mixed initial state distribution by combining default initial states and critical states identified by the "Ours" explanation method has been implemented as described in Section 3.3.
+2026-08-26 10:01:36 [info     ] Model file selection raw output:
+Refine_auto_drive/retrain.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/readme.md
+README.md
+2026-08-26 10:01:36 [info     ] Model file selection raw output:
+Refine_auto_drive/retrain.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/readme.md
+README.md
+2026-08-26 10:03:38 [info     ] model response: # Expectations
+
+According to Section 3.3 of the paper, the mixed initial state distribution for the “Ours” refining method is constructed as follows:
+
+- With probability \(p\) (a hyper‑parameter), run the pre‑trained policy \(\pi\) to generate a trajectory \(\tau\).
+- Apply the trained mask network (the “Ours” explanation method) to assess the importance of each state in \(\tau\).
+- Identify the **most critical state** (the state with the highest importance score) in that trajectory.
+- Set the environment’s initial state to that critical state (effectively “fast‑forward” the environment to that state by replaying the actions up to that point).
+- With probability \(1-p\), reset the environment to the original default initial state.
+
+In the autonomous driving environment, this logic should be implemented in the refining code (e.g., inside a custom environment wrapper’s `reset` method or the training loop) so that the agent is sometimes started from a default state and sometimes from a critical state identified by the mask network.
+
+# Reality
+
+The submission contains a dedicated refining setup for autonomous driving under the `Refine_auto_drive` directory. The relevant files are:
+
+**`Refine_auto_drive/retrain_env.py`** – Defines `CustomWrapper`, a Gym wrapper that overrides the `reset` method.  
+- It receives `go_prob` (the mixing probability \(p\)).  
+- Inside `reset`, if `np.random.rand() < self.p` it calls `gen_one_traj(obs, self.env, self.seed)` to obtain a trajectory with importance scores (`traj.mask_probs`).  
+- The code contains a conditional branch:  
+  `if self.random_sampling:` chooses a random index; **else** `start_idx = np.argmax(traj.mask_probs)`, which picks the index of the **most critical state** according to the mask network.  
+- The environment is then reset and fast‑forwarded to `start_idx` by replaying the recorded actions, effectively starting the episode from that critical state.  
+- When the random number exceeds `p`, the default `env.reset()` is used, giving the original initial distribution.  
+
+**`Refine_auto_drive/gen_retrain_traj.py`** – Implements `gen_one_traj`, which loads a pre‑trained mask network (trained via `train_masknet.py`, which follows the “Ours” explanation method with a reward bonus for blinding). It executes a trajectory using both the original agent policy and the mask network, recording the importance score (probability of *not* masking) for each step.  
+
+**`Refine_auto_drive/retrain.py`** – The main refining script instantiates `CustomWrapper` and passes the `go_prob` argument, thereby activating the mixed initial state distribution.
+
+Thus, the code **does** contain a faithful implementation of the mixed initial state distribution as described in Section 3.3: it can identify the most critical state via the mask network and mix those critical states with default states using the probability \(p\). (The fact that the default for `random_sampling` is `True` is a configuration choice; the correct logic (`argmax`) is present in the code, satisfying the implementation requirement.)
+
+# Score
+
+**1** – The criterion is met. The submission includes actual code that constructs a mixed initial state distribution for the autonomous driving environment by combining default initial states and critical states identified by the “Ours” explanation method, following the procedure outlined in the paper.
+2026-08-26 10:03:38 [info     ] model response: # Expectations
+
+According to Section 3.3 of the paper, the mixed initial state distribution for the “Ours” refining method is constructed as follows:
+
+- With probability \(p\) (a hyper‑parameter), run the pre‑trained policy \(\pi\) to generate a trajectory \(\tau\).
+- Apply the trained mask network (the “Ours” explanation method) to assess the importance of each state in \(\tau\).
+- Identify the **most critical state** (the state with the highest importance score) in that trajectory.
+- Set the environment’s initial state to that critical state (effectively “fast‑forward” the environment to that state by replaying the actions up to that point).
+- With probability \(1-p\), reset the environment to the original default initial state.
+
+In the autonomous driving environment, this logic should be implemented in the refining code (e.g., inside a custom environment wrapper’s `reset` method or the training loop) so that the agent is sometimes started from a default state and sometimes from a critical state identified by the mask network.
+
+# Reality
+
+The submission contains a dedicated refining setup for autonomous driving under the `Refine_auto_drive` directory. The relevant files are:
+
+**`Refine_auto_drive/retrain_env.py`** – Defines `CustomWrapper`, a Gym wrapper that overrides the `reset` method.  
+- It receives `go_prob` (the mixing probability \(p\)).  
+- Inside `reset`, if `np.random.rand() < self.p` it calls `gen_one_traj(obs, self.env, self.seed)` to obtain a trajectory with importance scores (`traj.mask_probs`).  
+- The code contains a conditional branch:  
+  `if self.random_sampling:` chooses a random index; **else** `start_idx = np.argmax(traj.mask_probs)`, which picks the index of the **most critical state** according to the mask network.  
+- The environment is then reset and fast‑forwarded to `start_idx` by replaying the recorded actions, effectively starting the episode from that critical state.  
+- When the random number exceeds `p`, the default `env.reset()` is used, giving the original initial distribution.  
+
+**`Refine_auto_drive/gen_retrain_traj.py`** – Implements `gen_one_traj`, which loads a pre‑trained mask network (trained via `train_masknet.py`, which follows the “Ours” explanation method with a reward bonus for blinding). It executes a trajectory using both the original agent policy and the mask network, recording the importance score (probability of *not* masking) for each step.  
+
+**`Refine_auto_drive/retrain.py`** – The main refining script instantiates `CustomWrapper` and passes the `go_prob` argument, thereby activating the mixed initial state distribution.
+
+Thus, the code **does** contain a faithful implementation of the mixed initial state distribution as described in Section 3.3: it can identify the most critical state via the mask network and mix those critical states with default states using the probability \(p\). (The fact that the default for `random_sampling` is `True` is a configuration choice; the correct logic (`argmax`) is present in the code, satisfying the implementation requirement.)
+
+# Score
+
+**1** – The criterion is met. The submission includes actual code that constructs a mixed initial state distribution for the autonomous driving environment by combining default initial states and critical states identified by the “Ours” explanation method, following the procedure outlined in the paper.

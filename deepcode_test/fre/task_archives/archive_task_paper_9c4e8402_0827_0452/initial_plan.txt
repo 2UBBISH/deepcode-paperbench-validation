@@ -1,0 +1,259 @@
+```yaml
+complete_reproduction_plan:
+  paper_info:
+    title: "Functional Reward Encodings (FRE) for Zero-Shot Offline Reinforcement Learning"
+    core_contribution: "A general unsupervised method for zero-shot offline RL that learns functional representations of arbitrary reward functions via a transformer-based variational auto-encoder, enabling pre-training on diverse random reward functions and zero-shot adaptation to novel downstream tasks."
+
+  # SECTION 1: File Structure Design
+  file_structure: |
+    project_root/
+    ├── README.md                          # Documentation (implement LAST)
+    ├── requirements.txt                   # Dependencies (implement LAST)
+    ├── setup.py                           # Package setup
+    ├── configs/                           # Configuration files
+    │   ├── default.yaml                   # Default hyperparameters
+    │   ├── antmaze.yaml                   # AntMaze-specific config
+    │   ├── exorl.yaml                     # ExORL-specific config
+    │   └── kitchen.yaml                   # Kitchen-specific config
+    ├── data/                              # Data loading and processing
+    │   ├── dataset.py                     # Offline dataset loader (D4RL, ExORL)
+    │   └── replay_buffer.py              # Replay buffer for offline data
+    ├── models/                            # Neural network modules
+    │   ├── fre_encoder.py                # Transformer-based VAE encoder
+    │   ├── fre_decoder.py                # Feedforward reward decoder
+    │   ├── iql_networks.py               # IQL Q, V, policy networks (conditioned on z)
+    │   └── reward_functions.py           # Prior reward distribution (singleton, linear, MLP)
+    ├── training/                          # Training loops
+    │   ├── train_encoder.py              # Phase 1: Train FRE encoder/decoder
+    │   ├── train_rl.py                   # Phase 2: Train IQL with frozen encoder
+    │   └── train_fre.py                  # Main orchestration script (entry point)
+    ├── evaluation/                        # Evaluation and metrics
+    │   ├── evaluate.py                   # Zero-shot evaluation on downstream tasks
+    │   ├── metrics.py                    # Normalized return computation
+    │   └── visualize.py                  # Generate figures (decoded rewards, value functions)
+    ├── utils/                             # Utilities
+    │   ├── logger.py                     # Logging and checkpointing
+    │   └── helpers.py                    # Miscellaneous helpers
+    └── experiments/                       # Experiment scripts
+        ├── run_antmaze.py                # AntMaze experiments
+        ├── run_exorl.py                  # ExORL experiments
+        ├── run_kitchen.py                # Kitchen experiments
+        └── run_ablation.py               # Ablation studies (scaling, domain knowledge)
+
+  # SECTION 2: Implementation Components
+  implementation_components: |
+    ## 1. Prior Reward Distribution (reward_functions.py)
+    - **Purpose**: Generate diverse random unsupervised reward functions for training.
+    - **Mixture of three types** (uniform sampling):
+      a) **Singleton Goal-Reaching**: Reward = -1 for every timestep where goal not reached, 0 otherwise. Goal state sampled uniformly from dataset states.
+      b) **Random Linear Functions**: Reward = dot(w, s) where w ~ Uniform(-1,1) with sparse mask (e.g., 80% zeros) to bias towards simple functions.
+      c) **Random MLPs**: 2-layer MLP with random initialization (weights ~ Xavier uniform, biases ~ Uniform(-0.1,0.1)), hidden dim 256, ReLU activation. Output single scalar reward.
+    - **Implementation**: Class `PriorRewardDistribution` with method `sample()` returning a callable reward function `η(s)`.
+
+    ## 2. FRE Encoder (fre_encoder.py)
+    - **Purpose**: Encode a set of (state, reward) pairs into a latent representation z.
+    - **Architecture**: Permutation-invariant transformer (no positional encodings, no causal masking).
+      - Input: K encoder states {s_k^e} and their scalar rewards {η(s_k^e)}.
+      - Reward discretization: Scalar reward is discretized into a learned embedding token space (e.g., 256 bins, embedding dim 64). Alternatively, use a small MLP to embed continuous reward.
+      - State embedding: Linear projection of state to embedding dim (e.g., 128).
+      - Concatenate reward embedding and state embedding as input tokens.
+      - Transformer: 3 layers, 4 attention heads, feedforward dim 512, dropout 0.1.
+      - Output: Average of final layer representations across all K tokens.
+      - Two linear projections (mean and log_std) to parameterize Gaussian distribution p_θ(z | {(s_k^e, η(s_k^e))}).
+      - Latent dimension: 64 (or 128).
+    - **Implementation**: Class `FREEncoder` with `encode(context_pairs)` returning mean, log_std; `sample_z(mean, log_std)` using reparameterization trick.
+
+    ## 3. FRE Decoder (fre_decoder.py)
+    - **Purpose**: Predict reward for a given state s conditioned on latent z.
+    - **Architecture**: Feedforward neural network.
+      - Input: Concatenation of state s and latent z.
+      - Hidden layers: 3 layers, dims [256, 256, 256], ReLU activation.
+      - Output: Single scalar predicted reward η̂(s).
+    - **Implementation**: Class `FREDecoder` with `forward(s, z)`.
+
+    ## 4. VAE Training Loss (Equation 6)
+    - **Loss**: L = MSE(η̂(s_k^d), η(s_k^d)) + β * KL( N(μ, σ^2) || N(0, I) )
+      - Reconstruction: Mean squared error between predicted and true rewards on K' decoder states (sampled independently from encoder states).
+      - KL divergence: Standard Gaussian prior, β=1.0 (or tuned).
+    - **Training**: Jointly train encoder and decoder. Optimizer: Adam, lr=1e-4, batch size 256 reward functions, each with K=32 encoder states, K'=32 decoder states.
+
+    ## 5. IQL Networks (iql_networks.py)
+    - **Purpose**: Offline RL components conditioned on latent z.
+    - **Q-function**: Q(s, a, z) - MLP with 3 hidden layers [256,256,256], input: state s, action a, latent z concatenated.
+    - **Value function**: V(s, z) - MLP with 3 hidden layers [256,256,256], input: state s, latent z.
+    - **Policy**: π(a|s, z) - Gaussian policy (for continuous actions) or Categorical (for discrete). MLP with 3 hidden layers [256,256,256], output mean and log_std. For AntMaze (8-DoF), continuous actions.
+    - **IQL Losses**:
+      - Value loss: L_V = E[(τ - Q(s,a,z))^2] where τ is expectile (e.g., 0.7) regression target.
+      - Q loss: L_Q = E[(r + γ V(s',z) - Q(s,a,z))^2] with target network.
+      - Policy loss: L_π = E[exp(β * (Q(s,a,z) - V(s,z))) * log π(a|s,z)] (advantage-weighted regression, AWR).
+    - **Implementation**: Classes `IQLQNetwork`, `IQLValueNetwork`, `IQLPolicy`, with methods for loss computation.
+
+    ## 6. Training Procedure (Algorithm 1)
+    - **Phase 1: Encoder Training** (train_encoder.py)
+      - Loop until convergence (e.g., 100k steps):
+        - Sample reward function η ~ p(η).
+        - Sample K=32 encoder states {s_k^e} from offline dataset.
+        - Sample K'=32 decoder states {s_k^d} from offline dataset.
+        - Compute encoder output (μ, σ), sample z.
+        - Decode rewards for decoder states, compute VAE loss.
+        - Backpropagate, update encoder and decoder.
+    - **Phase 2: RL Training** (train_rl.py)
+      - Freeze encoder weights.
+      - Loop until convergence (e.g., 1M steps):
+        - Sample reward function η ~ p(η).
+        - Sample K=32 encoder states, encode to z (deterministic: use μ).
+        - Sample batch of (s, a, s') from offline dataset.
+        - Compute rewards r = η(s).
+        - Compute IQL losses for Q, V, π conditioned on z.
+        - Update Q, V, π networks.
+    - **Strided training**: Phase 1 first, then Phase 2. No joint training.
+
+    ## 7. Zero-Shot Evaluation (evaluate.py)
+    - **Input**: Trained FRE encoder (frozen), trained IQL policy (conditioned on z).
+    - **For each downstream task** (e.g., goal-reaching, directional):
+      - Define true reward function η_test (e.g., goal location, velocity direction).
+      - Sample K=32 states from dataset, compute rewards, encode to z_test.
+      - Rollout policy π(a|s, z_test) in environment for 20 episodes.
+      - Compute average normalized return (0-100 scale).
+    - **Normalization**: Return normalized by max possible return or baseline random policy return.
+
+    ## 8. Baselines (for comparison)
+    - **FB**: Forward-Backward representations (Touati & Ollivier, 2021). Use provided code, evaluate with 5120 reward samples.
+    - **SF**: Successor Features with ICM features. Use provided code.
+    - **GC-IQL**: Goal-conditioned IQL with hindsight relabeling. Implement in same codebase.
+    - **GC-BC**: Goal-conditioned behavioral cloning. Implement.
+    - **OPAL**: Skill discovery via trajectory autoencoding. Re-implement.
+
+  # SECTION 3: Validation & Evaluation
+  validation_approach: |
+    ## 1. Datasets
+    - **ExORL**: Walker and Cheetah domains from DeepMind Control Suite. Download from ExORL benchmark (Yarats et al., 2022). Use unsupervised exploratory data.
+    - **AntMaze**: D4RL antmaze-large-diverse-v2 dataset. Contains trajectories of Ant robot navigating large maze.
+    - **Kitchen**: D4RL kitchen-complete-v0 dataset. Robot hand performing various tasks.
+
+    ## 2. Evaluation Tasks
+    - **AntMaze** (6 tasks):
+      - Goal-reaching: Navigate to random goal locations in maze. Reward: -1 per step until within threshold of goal, then 0.
+      - Directional: Move in given (x,y) direction. Reward: dot(velocity, direction vector).
+      - Random-simplex: Procedural noise generator reward (e.g., Perlin noise over maze coordinates).
+      - Path tasks: path-loop (follow loop), path-edges (navigate to edges), path-center (follow central corridor). Hand-designed reward functions.
+    - **ExORL** (4 tasks):
+      - Walker goals: Goal-reaching in Walker domain.
+      - Cheetah goals: Goal-reaching in Cheetah domain.
+      - Walker velocity: Forward/backward velocity reward.
+      - Cheetah velocity: Forward/backward velocity reward.
+    - **Kitchen** (7 tasks): Each of the 7 subtasks (microwave, light switch, etc.). Reward: 1 if subtask completed, 0 otherwise.
+
+    ## 3. Metrics
+    - **Normalized Return**: Scale returns between 0 (random policy) and 100 (expert or optimal). Use standard normalization from D4RL/ExORL.
+    - **Mean and Standard Deviation**: Over 5 random seeds, 20 evaluation episodes per seed.
+    - **Table 1 Reproduction**: Compare FRE against FB, SF, GC-IQL, GC-BC, OPAL on all tasks. Expected: FRE achieves highest or competitive scores, especially on AntMaze goal-reaching (48.8±6), directional (55.2±8), Kitchen (66±3). Overall average: FRE 57±9 vs FB 24±12 vs SF 18±5 vs OPAL 33±12.
+
+    ## 4. Ablation Studies
+    - **Scaling properties (Figure 5)**: Train FRE agents on subsets of reward types (goals only, linear only, MLPs only, goals+linear, goals+MLPs, linear+MLPs, all). Evaluate on all tasks. Expected: FRE-all (uniform mixture) achieves highest total score and competitive performance across all tasks.
+    - **Domain knowledge (Figure 6)**: Augment prior with domain-specific rewards (e.g., XY-position dependent, velocity dependent). Show improved performance on relevant tasks without algorithmic changes.
+
+    ## 5. Qualitative Analysis (Figure 3)
+    - Visualize for AntMaze: True reward function projected on maze, encoding states (non-black), decoded reward from decoder, policy behavior (trajectories from start), predicted value function. Verify that value function captures expected returns and policy maximizes it.
+
+    ## 6. Success Criteria
+    - FRE encoder converges (VAE loss stabilizes).
+    - IQL training converges (Q-values, policy loss stabilize).
+    - Zero-shot evaluation returns match paper's Table 1 within reasonable statistical variation (e.g., within 1-2 std devs).
+    - Ablation results confirm scaling and domain knowledge benefits.
+
+  # SECTION 4: Environment & Dependencies
+  environment_setup: |
+    - **Programming Language**: Python 3.8+
+    - **Deep Learning Framework**: PyTorch 1.10+ (with CUDA 11.3+ for GPU)
+    - **Key Libraries**:
+      - numpy, scipy
+      - gym 0.23+ (for environments)
+      - d4rl 1.1+ (for AntMaze, Kitchen datasets)
+      - dm_control (for ExORL environments)
+      - exorl (or custom loader for ExORL datasets)
+      - tensorboard (logging)
+      - tqdm (progress bars)
+      - hydra-core (configuration management)
+      - matplotlib, seaborn (visualization)
+    - **Hardware**: GPU with at least 8GB VRAM (e.g., NVIDIA RTX 2080 or better). Training on AntMaze may require 16GB+ for larger models. CPU with 8+ cores for data loading.
+    - **Installation**:
+      - Clone repository: `git clone https://github.com/kvfrans/fre`
+      - Install dependencies: `pip install -r requirements.txt`
+      - Install D4RL: `pip install git+https://github.com/Farama-Foundation/D4RL`
+      - Install ExORL: follow official instructions (Yarats et al., 2022)
+    - **Optional**: Weights & Biases (wandb) for experiment tracking.
+
+  # SECTION 5: Implementation Strategy
+  implementation_strategy: |
+    ## Phase 1: Foundation Setup (Days 1-2)
+    - Set up project structure, virtual environment, install all dependencies.
+    - Implement data loading: `dataset.py` to load D4RL (AntMaze, Kitchen) and ExORL datasets into replay buffers.
+    - Implement `replay_buffer.py` with sampling methods for states, state-action pairs.
+    - Verify data loading by visualizing trajectories and state distributions.
+
+    ## Phase 2: Prior Reward Functions (Day 3)
+    - Implement `reward_functions.py` with three reward types:
+      - Singleton goal-reaching: sample goal state, define reward function.
+      - Random linear: generate sparse random vector, define dot product reward.
+      - Random MLP: initialize random 2-layer MLP, define forward pass as reward.
+    - Create `PriorRewardDistribution` class that uniformly samples among types.
+    - Test by evaluating reward functions on sample states, ensure diversity.
+
+    ## Phase 3: FRE Encoder/Decoder (Days 4-6)
+    - Implement `fre_encoder.py`: Transformer encoder with reward discretization (learned embedding bins), state projection, concatenation, transformer layers, average pooling, mean/log_std heads.
+    - Implement `fre_decoder.py`: MLP decoder.
+    - Implement VAE training loop in `train_encoder.py`:
+      - Sample reward functions, encoder states, decoder states.
+      - Forward pass, compute loss (MSE + KL), backprop.
+      - Log losses, save checkpoints.
+    - Verify encoder convergence on simple reward functions (e.g., only linear). Check reconstruction quality.
+
+    ## Phase 4: IQL Implementation (Days 7-9)
+    - Implement `iql_networks.py`: Q, V, policy networks conditioned on z.
+    - Implement IQL losses: expectile regression for V, TD learning for Q, AWR for policy.
+    - Implement `train_rl.py`: Phase 2 training loop with frozen encoder.
+      - Sample reward function, encode to z, sample batch, compute rewards, update networks.
+    - Test on simple environment (e.g., AntMaze with goal-reaching) to ensure IQL learns.
+
+    ## Phase 5: Full Training Pipeline (Day 10)
+    - Integrate Phase 1 and Phase 2 into `train_fre.py` with strided scheme.
+    - Add configuration files for each domain (antmaze.yaml, exorl.yaml, kitchen.yaml) with hyperparameters:
+      - Encoder: K=32, K'=32, latent_dim=64, transformer layers=3, heads=4, lr=1e-4.
+      - IQL: γ=0.99, τ=0.7, β=3.0 (AWR temperature), lr=3e-4, batch_size=256.
+      - Training steps: Encoder 100k, RL 1M.
+    - Run full training on one domain (e.g., AntMaze) and verify that encoder and policy converge.
+
+    ## Phase 6: Evaluation and Baselines (Days 11-13)
+    - Implement `evaluate.py`: Load trained models, for each test task, encode reward, rollout policy, compute normalized returns.
+    - Implement baseline methods:
+      - GC-IQL: Modify IQL to condition on goal state instead of z, use hindsight relabeling.
+      - GC-BC: Behavioral cloning conditioned on goal.
+      - OPAL: Trajectory autoencoder for skill discovery (re-implement based on paper).
+      - FB and SF: Use official codebases, adapt to our evaluation protocol.
+    - Run evaluations for all methods on all tasks, collect results.
+    - Generate Table 1 and verify against paper's numbers.
+
+    ## Phase 7: Ablation Studies (Days 14-15)
+    - Implement `run_ablation.py`:
+      - Train FRE agents on subsets of reward types (7 combinations).
+      - Evaluate on all tasks, generate Figure 5.
+      - Augment prior with domain-specific rewards (e.g., XY-position for AntMaze), evaluate, generate Figure 6.
+    - Analyze results: check scaling trends, domain knowledge benefits.
+
+    ## Phase 8: Visualization and Documentation (Days 16-17)
+    - Implement `visualize.py`: For AntMaze, plot true reward, encoding states, decoded reward, policy trajectories, value function (Figure 3).
+    - Write README.md with instructions for setup, training, evaluation.
+    - Finalize requirements.txt with exact versions.
+    - Clean code, add docstrings, ensure reproducibility.
+
+    ## Handling Missing Details
+    - **Reward discretization**: If not fully specified, implement as 256 uniform bins over expected reward range (e.g., [-1, 1]) with learned embeddings.
+    - **Transformer specifics**: Use standard PyTorch TransformerEncoder with batch_first=True, no positional encoding, no causal mask.
+    - **IQL hyperparameters**: Use values from Kostrikov et al. (2021) paper: τ=0.7, β=3.0, γ=0.99, target network update rate 0.005.
+    - **Network sizes**: Use 256 hidden units for all MLPs unless specified otherwise.
+    - **Optimizer**: Adam with default betas (0.9, 0.999).
+    - **Batch sizes**: 256 for both encoder and RL training.
+    - **Evaluation protocol**: 20 episodes per task, 5 seeds, report mean ± std.
+    - **Normalization**: For AntMaze, use D4RL standard (0 = random, 100 = expert). For ExORL, use benchmark normalization. For Kitchen, normalize by number of subtasks completed.
+```

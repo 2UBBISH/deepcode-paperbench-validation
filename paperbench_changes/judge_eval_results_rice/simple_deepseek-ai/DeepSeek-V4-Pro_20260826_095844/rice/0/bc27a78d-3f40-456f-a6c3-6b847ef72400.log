@@ -1,0 +1,73 @@
+2026-08-26 09:58:46 [info     ] Grading leaf: For the selfish mining environment, the optimization of the mask network objective now uses PPO rather than the prime-dual method
+2026-08-26 09:59:53 [info     ] Model file selection raw output:
+Refine_selfish_mining/masknet/train.py
+Refine_selfish_mining/masknet/utils.py
+Refine_selfish_mining/baseline/train_ppo.py
+Refine_selfish_mining/masknet/sample_mask_score.py
+Refine_selfish_mining/masknet/fidelity_score.py
+Refine_selfish_mining/utils.py
+Refine_selfish_mining/retrain.py
+Refine_selfish_mining/masknet/replay.py
+Refine_selfish_mining/masknet/sample_value_score.py
+README.md
+2026-08-26 09:59:53 [info     ] Model file selection raw output:
+Refine_selfish_mining/masknet/train.py
+Refine_selfish_mining/masknet/utils.py
+Refine_selfish_mining/baseline/train_ppo.py
+Refine_selfish_mining/masknet/sample_mask_score.py
+Refine_selfish_mining/masknet/fidelity_score.py
+Refine_selfish_mining/utils.py
+Refine_selfish_mining/retrain.py
+Refine_selfish_mining/masknet/replay.py
+Refine_selfish_mining/masknet/sample_value_score.py
+README.md
+2026-08-26 10:00:46 [info     ] model response: # Expectations
+
+The paper proposes a refined explanation method that builds upon StateMask, simplifying its training by replacing the prime-dual optimization with a standard PPO algorithm. According to Section 3.3 and Algorithm 1, after reformulating the objective to maximize the perturbed agent’s expected total reward (with a bonus for masking), the mask network is trained using PPO. For the selfish mining environment, a correct implementation should therefore:
+
+- Instantiate the mask network as a PPO policy, with the action space corresponding to a binary mask decision.
+- Use a PPO training loop (e.g., the `onpolicy_trainer` from Tianshou, or an equivalent PPO routine) to optimize the mask network’s parameters.
+- Not rely on any prime-dual method or constrained optimization for the mask network training.
+
+# Reality
+
+The submission includes code for training the mask network in the selfish mining environment under the directory `Refine_selfish_mining/masknet/`. The relevant file is:
+
+- **`Refine_selfish_mining/masknet/train.py`**  
+
+In this file:
+- The function `test_ppo()` creates a PPOPolicy with `action_shape = 2` (the binary mask action).  
+- It uses `Actor` and `Critic` networks, a categorical distribution, and standard PPO hyperparameters (clipping, GAE, advantage normalization, etc.).  
+- Training is conducted via Tianshou’s `onpolicy_trainer`, which is the typical PPO training loop.  
+- There is no sign of prime-dual or Lagrangian-based optimization; the mask network is trained entirely with PPO.  
+
+Thus, the optimization of the mask network objective uses PPO, exactly as described in the paper. The code satisfies the criterion.
+
+# Score
+
+**1** – The implementation correctly uses PPO (not a prime-dual method) to train the mask network for the selfish mining environment.
+2026-08-26 10:00:46 [info     ] model response: # Expectations
+
+The paper proposes a refined explanation method that builds upon StateMask, simplifying its training by replacing the prime-dual optimization with a standard PPO algorithm. According to Section 3.3 and Algorithm 1, after reformulating the objective to maximize the perturbed agent’s expected total reward (with a bonus for masking), the mask network is trained using PPO. For the selfish mining environment, a correct implementation should therefore:
+
+- Instantiate the mask network as a PPO policy, with the action space corresponding to a binary mask decision.
+- Use a PPO training loop (e.g., the `onpolicy_trainer` from Tianshou, or an equivalent PPO routine) to optimize the mask network’s parameters.
+- Not rely on any prime-dual method or constrained optimization for the mask network training.
+
+# Reality
+
+The submission includes code for training the mask network in the selfish mining environment under the directory `Refine_selfish_mining/masknet/`. The relevant file is:
+
+- **`Refine_selfish_mining/masknet/train.py`**  
+
+In this file:
+- The function `test_ppo()` creates a PPOPolicy with `action_shape = 2` (the binary mask action).  
+- It uses `Actor` and `Critic` networks, a categorical distribution, and standard PPO hyperparameters (clipping, GAE, advantage normalization, etc.).  
+- Training is conducted via Tianshou’s `onpolicy_trainer`, which is the typical PPO training loop.  
+- There is no sign of prime-dual or Lagrangian-based optimization; the mask network is trained entirely with PPO.  
+
+Thus, the optimization of the mask network objective uses PPO, exactly as described in the paper. The code satisfies the criterion.
+
+# Score
+
+**1** – The implementation correctly uses PPO (not a prime-dual method) to train the mask network for the selfish mining environment.

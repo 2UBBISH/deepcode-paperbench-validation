@@ -1,0 +1,107 @@
+# Environment-specific configuration for CAGE Challenge 2
+# Overrides default.yaml for the network defense environment.
+# Values taken from RICE paper Tables 3, 4, and 7.
+
+agent:
+  # PPO hyperparameters for base agent training
+  policy: "MlpPolicy"
+  n_steps: 2048
+  batch_size: 64
+  n_epochs: 10
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_range: 0.2
+  ent_coef: 0.01
+  vf_coef: 0.5
+  max_grad_norm: 0.5
+  learning_rate: 3.0e-4
+  total_timesteps: 2000000  # 2M timesteps for CAGE
+  normalize_obs: true
+  normalize_reward: true
+  policy_kwargs:
+    net_arch:
+      pi: [128, 128, 128, 128]  # 4-layer MLP, 128 hidden (non-MuJoCo)
+      vf: [128, 128, 128, 128]
+    activation_fn: "tanh"
+    use_layer_norm: false
+
+mask:
+  # Mask network training hyperparameters
+  alpha: 0.0001  # Intrinsic reward coefficient for blinding
+  total_timesteps: 10000000  # 1×10⁷ samples (Table 4)
+  hidden_sizes: [128, 128, 128, 128]  # Same architecture as agent
+  features_dim: 128
+  learning_rate: 3.0e-4
+  n_steps: 2048
+  batch_size: 64
+  n_epochs: 10
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_range: 0.2
+  ent_coef: 0.01
+  vf_coef: 0.5
+  max_grad_norm: 0.5
+  use_sde: false
+  deterministic_agent: true
+
+explanation:
+  # Critical state identification parameters
+  num_trajectories: 100
+  max_steps: 500  # CAGE episodes are shorter
+  buffer_size: 10000
+  use_perturbed_policy: false
+  deterministic_agent: true
+  top_k_per_trajectory: 1
+
+rnd:
+  # Random Network Distillation parameters
+  embedding_dim: 128
+  hidden_sizes: [128, 128, 128, 128]
+  learning_rate: 1.0e-4
+  normalize_obs: true
+  clip_bonus: null
+
+refining:
+  # Refining process hyperparameters
+  p: 0.5  # Probability of resetting to critical state
+  lambda: 0.01  # RND bonus coefficient
+  total_timesteps: 1000000  # 1M refining timesteps
+  use_rnd: true
+  use_mixed_init: true
+  ppo_learning_rate: 3.0e-4
+  n_steps: 2048
+  batch_size: 64
+  n_epochs: 10
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_range: 0.2
+  ent_coef: 0.01
+  vf_coef: 0.5
+  max_grad_norm: 0.5
+  rnd_update_freq: 1000
+  rnd_batch_size: 64
+  rnd_n_epochs: 1
+  state_buffer_size: 100000
+
+experiment:
+  # Evaluation and experiment settings
+  eval_episodes: 100
+  eval_freq: 10000
+  num_seeds: 5
+  max_steps: 500
+  save_videos: false
+  deterministic_eval: true
+
+env_kwargs:
+  # CAGE-specific environment parameters
+  num_hosts: 5
+  num_services: 3
+  max_steps: 500
+  red_activity_prob: 0.3
+  red_success_prob: 0.5
+  analyze_detection_prob: 0.7
+  remove_success_prob: 0.8
+  restore_success_prob: 0.9
+  decoy_effectiveness: 0.6
+  monitor_intel_gain: 0.2
+  reward_scale: 1.0

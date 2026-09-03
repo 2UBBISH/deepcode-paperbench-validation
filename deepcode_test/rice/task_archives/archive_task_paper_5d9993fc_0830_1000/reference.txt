@@ -1,0 +1,176 @@
+Now I have all the data I need. Let me compile the final analysis.
+
+Based on my thorough analysis of the paper's references section and verification of GitHub repositories, here is my selection:
+
+---
+
+## Analysis Summary
+
+The RICE paper proposes a refining scheme for RL that combines explanation methods (improved StateMask), mixed initial state distribution, and exploration (RND) with PPO-based training. After analyzing all 57 references, I identified **17 references with GitHub repositories**. The selection focuses on references that provide the most valuable code implementations for reproducing or building upon RICE, excluding the authors' own repositories (StateMask, RICE).
+
+### Selection Rationale:
+
+- **PPO (Schulman et al., 2017)** is the foundational training algorithm used throughout RICE for both mask network training and agent refining. The OpenAI Baselines repository provides the canonical implementation with 16,761 stars and extensive community adoption.
+
+- **RND (Burda et al., 2018)** provides the exploration bonus mechanism directly integrated into RICE's Algorithm 2. The official OpenAI implementation is the definitive reference for understanding and reproducing the exploration component.
+
+- **Stable-Baselines3 (Raffin et al., 2021)** is the most widely-adopted PyTorch RL library (13,737 stars) that provides reliable PPO implementations. RICE's experiments likely build upon this infrastructure, making it essential for practical implementation.
+
+- **JSRL (Uchendu et al., 2023)** is the primary baseline that RICE directly compares against and improves upon. Understanding JSRL's implementation is crucial for contextualizing RICE's contributions and reproducing comparative evaluations.
+
+- **SAC (Haarnoja et al., 2018)** is used in RICE's Experiment IV to demonstrate cross-algorithm versatility. The official implementation provides the reference SAC agent needed to replicate the experiment showing RICE works with non-PPO pre-trained agents.
+
+```json
+{
+    "selected_references": [
+        {
+            "rank": 1,
+            "title": "Proximal Policy Optimization Algorithms",
+            "authors": ["John Schulman", "Filip Wolski", "Prafulla Dhariwal", "Alec Radford", "Oleg Klimov"],
+            "year": "2017",
+            "relevance_score": 0.96,
+            "citation_context": "Cited in methodology as the core training algorithm: 'we utilize the Proximal Policy Optimization (PPO) algorithm (Schulman et al., 2017) for refining the DRL agent' and 'we can utilize the vanilla PPO algorithm to train the state mask without sacrificing the theoretical guarantee.' PPO is used for both mask network training (Algorithm 1) and agent refining (Algorithm 2).",
+            "key_contributions": [
+                "Introduced PPO algorithm with clipped surrogate objective for stable policy updates",
+                "Provided monotonic improvement guarantees for policy optimization",
+                "Established the dominant on-policy RL algorithm used in RICE's entire training pipeline"
+            ],
+            "implementation_value": "Essential for implementing RICE's core training loop. The PPO algorithm is used in both Algorithm 1 (mask network training) and Algorithm 2 (agent refining with RND bonus). Understanding the PPO implementation is critical for reproducing RICE's monotonic improvement properties and the overall refining scheme.",
+            "github_info": {
+                "repository_url": "https://github.com/openai/baselines",
+                "stars_count": "16,761",
+                "last_updated": "2024-08-01",
+                "repository_quality": "Excellent - Canonical RL implementation repository from OpenAI with high-quality, well-tested code. MIT licensed with extensive community adoption (4,931 forks).",
+                "key_features": [
+                    "Production-ready PPO implementation with MPI support",
+                    "Includes PPO2 variant with optimized vectorized environments",
+                    "Comprehensive benchmarking on MuJoCo and Atari environments",
+                    "Well-documented codebase with clear algorithmic structure"
+                ],
+                "documentation_quality": "Good - Clear README with installation and usage instructions. Code is well-commented with references to the original paper. Integration examples provided.",
+                "community_activity": "Very high - 16,761 stars, 4,931 forks, 502 open issues indicating active community engagement. Widely used as the standard RL baseline implementation."
+            },
+            "original_reference": "Schulman, J., Wolski, F., Dhariwal, P., Radford, A., and Klimov, O. Proximal policy optimization algorithms. arXiv preprint arXiv:1707.06347, 2017."
+        },
+        {
+            "rank": 2,
+            "title": "Exploration by Random Network Distillation",
+            "authors": ["Yuri Burda", "Harri Edwards", "Amos Storkey", "Oleg Klimov"],
+            "year": "2018",
+            "relevance_score": 0.93,
+            "citation_context": "Directly integrated into RICE's exploration mechanism: 'we adopt Random Network Distillation (RND) (Burda et al., 2018) which is proved to be an effective exploration bonus, especially in large and continuous state spaces.' The RND intrinsic reward is added to the task reward in Algorithm 2: R'(s_t, a_t) = R(s_t, a_t) + λ||f(s_{t+1}) - f̂(s_{t+1})||².",
+            "key_contributions": [
+                "Introduced Random Network Distillation for exploration bonus in RL",
+                "Demonstrated effectiveness in large continuous state spaces where count-based methods fail",
+                "Provided a simple yet powerful method for quantifying state novelty through prediction error"
+            ],
+            "implementation_value": "Critical for implementing RICE's exploration component. The RND bonus computation (predictor network f̂ regressing to target network f) is a core part of Algorithm 2. The implementation shows how to normalize intrinsic rewards and balance them with extrinsic task rewards via the λ hyperparameter.",
+            "github_info": {
+                "repository_url": "https://github.com/openai/random-network-distillation",
+                "stars_count": "800+ (estimated from community activity)",
+                "last_updated": "2020-10-01 (archived - code provided as-is)",
+                "repository_quality": "Good - Official OpenAI implementation with clean, readable code. Archived but complete and functional. Includes Atari training scripts with MPI support for distributed training.",
+                "key_features": [
+                    "Clean RND implementation with predictor and target networks",
+                    "Atari training scripts demonstrating RND on Montezuma's Revenge",
+                    "MPI-based distributed training support",
+                    "Intrinsic reward normalization implementation"
+                ],
+                "documentation_quality": "Adequate - README with installation and basic usage. Blog post link provides conceptual explanation. Code is self-documenting but lacks extensive comments.",
+                "community_activity": "Moderate - Archived repository but widely referenced and forked. The technique has been integrated into many downstream RL libraries."
+            },
+            "original_reference": "Burda, Y., Edwards, H., Storkey, A., and Klimov, O. Exploration by random network distillation. In Proc. of ICLR, 2018."
+        },
+        {
+            "rank": 3,
+            "title": "Stable-Baselines3: Reliable Reinforcement Learning Implementations",
+            "authors": ["Antonin Raffin", "Ashley Hill", "Adam Gleave", "Anssi Kanervisto", "Maximilian Ernestus", "Noah Dormann"],
+            "year": "2021",
+            "relevance_score": 0.88,
+            "citation_context": "Cited as the foundational RL implementation library. RICE's experiments use PyTorch-based implementations, and Stable-Baselines3 provides the standard PPO implementation that RICE likely builds upon for both mask network training and agent refining.",
+            "key_contributions": [
+                "Provided reliable, well-tested PyTorch implementations of major RL algorithms including PPO",
+                "Established a standardized RL codebase used across research and industry",
+                "Enabled reproducible RL research through consistent API design and extensive documentation"
+            ],
+            "implementation_value": "Provides the production-ready PPO implementation that serves as the foundation for implementing RICE. The modular design allows easy integration of custom components like RND exploration bonuses and modified initial state distributions. The extensive documentation and tutorials accelerate RICE implementation.",
+            "github_info": {
+                "repository_url": "https://github.com/DLR-RM/stable-baselines3",
+                "stars_count": "13,737",
+                "last_updated": "2026-08-17 (actively maintained)",
+                "repository_quality": "Excellent - Industry-standard RL library with comprehensive test suite (95%+ coverage), CI/CD pipeline, and semantic versioning. MIT licensed with professional-grade documentation.",
+                "key_features": [
+                    "Production-ready PPO implementation with extensive configuration options",
+                    "Modular policy architecture supporting custom feature extractors and networks",
+                    "Built-in evaluation framework and callback system",
+                    "Comprehensive documentation with tutorials and migration guides",
+                    "VecEnv abstraction for parallelized training"
+                ],
+                "documentation_quality": "Excellent - Full documentation site (stable-baselines3.readthedocs.io) with API reference, user guide, tutorials, and examples. Includes RL baselines zoo for pre-trained agents.",
+                "community_activity": "Very high - 13,737 stars, 1,334 forks, active issue resolution. Regular releases and responsive maintainers. Widely adopted as the standard PyTorch RL library."
+            },
+            "original_reference": "Raffin, A., Hill, A., Gleave, A., Kanervisto, A., Ernestus, M., and Dormann, N. Stable-baselines3: Reliable reinforcement learning implementations. Journal of Machine Learning Research, 2021."
+        },
+        {
+            "rank": 4,
+            "title": "Jump-Start Reinforcement Learning",
+            "authors": ["Ike Uchendu", "Ted Xiao", "Yao Lu", "Banghua Zhu", "Mengyuan Yan", "Joséphine Simon", "Matthew Bennice", "Chuyuan Fu", "Cong Ma", "Jiantao Jiao", "et al."],
+            "year": "2023",
+            "relevance_score": 0.85,
+            "citation_context": "Primary baseline comparison: 'The most recent example is Jump-Start Reinforcement Learning (JSRL) proposed by Uchendu et al. (2023) which leverages a pre-trained policy to design a curriculum to guide the training of a self-improving exploration policy.' RICE explicitly compares against JSRL in all experiments and claims theoretical improvements over JSRL's random exploration frontier selection.",
+            "key_contributions": [
+                "Introduced curriculum-based approach leveraging pre-trained policies for exploration",
+                "Proposed roll-in with guide policy followed by self-improving exploration policy",
+                "Demonstrated effective reuse of prior computation for accelerating RL training"
+            ],
+            "implementation_value": "Essential for reproducing RICE's comparative evaluations. Understanding JSRL's curriculum design and exploration frontier selection mechanism is critical for implementing the baseline and validating RICE's claimed improvements. The implementation demonstrates how to integrate guide policies with exploration policies.",
+            "github_info": {
+                "repository_url": "https://github.com/steventango/jumpstart-rl",
+                "stars_count": "37",
+                "last_updated": "2024-01-12",
+                "repository_quality": "Good - Clean implementation built on Stable-Baselines3 with PyPI package availability. Provides modular JSRL implementation with configurable curriculum and exploration policies.",
+                "key_features": [
+                    "JSRL implementation integrated with Stable-Baselines3",
+                    "Configurable guide policy and exploration policy",
+                    "Curriculum-based exploration frontier scheduling",
+                    "PyPI package for easy installation (pip install jsrl)"
+                ],
+                "documentation_quality": "Good - Clear README with installation and usage examples. PyPI package with version management. Code structure follows Stable-Baselines3 conventions.",
+                "community_activity": "Moderate - 37 stars, relatively new repository. Active development through 2024. Small but focused community."
+            },
+            "original_reference": "Uchendu, I., Xiao, T., Lu, Y., Zhu, B., Yan, M., Simon, J., Bennice, M., Fu, C., Ma, C., Jiao, J., et al. Jump-start reinforcement learning. In Proc. of ICML, 2023."
+        },
+        {
+            "rank": 5,
+            "title": "Soft Actor-Critic: Off-Policy Maximum Entropy Deep Reinforcement Learning with a Stochastic Actor",
+            "authors": ["Tuomas Haarnoja", "Aurick Zhou", "Pieter Abbeel", "Sergey Levine"],
+            "year": "2018",
+            "relevance_score": 0.80,
+            "citation_context": "Used in Experiment IV to demonstrate RICE's versatility across training algorithms: 'To show the versatility of our method, we examine the refining performance when the pre-trained agent was trained by other algorithms such as Soft Actor-Critic (SAC) (Haarnoja et al., 2018).' RICE uses GAIL to learn an approximated policy network from a pre-trained SAC agent, then applies RICE refining.",
+            "key_contributions": [
+                "Introduced maximum entropy RL framework with stochastic actor-critic",
+                "Achieved state-of-the-art sample efficiency and stability in continuous control",
+                "Provided off-policy algorithm that serves as alternative to PPO for pre-training"
+            ],
+            "implementation_value": "Needed to reproduce Experiment IV which validates RICE's cross-algorithm generalizability. The official SAC implementation provides the pre-trained agent that RICE refines, demonstrating that RICE works beyond PPO-based agents. Understanding SAC's architecture is essential for the GAIL policy distillation step.",
+            "github_info": {
+                "repository_url": "https://github.com/haarnoja/sac",
+                "stars_count": "1,301",
+                "last_updated": "2023-11-29",
+                "repository_quality": "Very good - Official author implementation with clean, well-structured code. Provides reference SAC implementation used across the research community.",
+                "key_features": [
+                    "Reference SAC implementation for continuous control tasks",
+                    "MuJoCo environment integration",
+                    "Clear separation of algorithm components (actor, critic, replay buffer)",
+                    "Training scripts with hyperparameter configurations"
+                ],
+                "documentation_quality": "Good - Clear README with installation and usage instructions. Code is well-structured and follows the paper's algorithmic description closely.",
+                "community_activity": "High - 1,301 stars, 252 forks. Widely cited and used as reference implementation. Active issue discussions."
+            },
+            "original_reference": "Haarnoja, T., Zhou, A., Abbeel, P., and Levine, S. Soft actor-critic: Off-policy maximum entropy deep reinforcement learning with a stochastic actor. In Proc. of ICML, pp. 1861-1870, 2018."
+        }
+    ],
+    "analysis_summary": "The RICE paper contains 57 references, of which 17 have identifiable GitHub repositories. The selection process prioritized references that provide essential code implementations for reproducing RICE's methodology: (1) PPO as the core training algorithm used throughout both mask network training and agent refining, (2) RND as the exploration mechanism directly integrated into Algorithm 2, (3) Stable-Baselines3 as the production-grade RL infrastructure, (4) JSRL as the primary baseline that RICE theoretically and empirically improves upon, and (5) SAC as the cross-algorithm validation component from Experiment IV. References to the authors' own work (StateMask, RICE) were excluded per constraints. The selected repositories represent a complete implementation stack: from foundational RL algorithms (PPO, SAC) through exploration methods (RND) to baseline comparisons (JSRL) and infrastructure (Stable-Baselines3).",
+    "github_repositories_found": 17
+}
+```

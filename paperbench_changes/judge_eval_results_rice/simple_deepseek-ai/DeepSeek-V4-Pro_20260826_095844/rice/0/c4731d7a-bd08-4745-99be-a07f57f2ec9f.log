@@ -1,0 +1,75 @@
+2026-08-26 09:58:46 [info     ] Grading leaf: For the selfish mining environment, the policy network agents has been implemented.  The network architecture of the PPO agent is a 4-layer Multi-Layer Perceptron (MLP) with a hidden size of 128, 128, 128, and 128 in each layer
+2026-08-26 09:59:30 [info     ] Model file selection raw output:
+Refine_selfish_mining/baseline/net.py
+Refine_selfish_mining/baseline/train_ppo.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/function_approximation/mlp_approximator.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/function_approximation/approximator.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/experience_acquisition/agents/agent.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/training/trainer.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/training/rl_algorithm.py
+Refine_selfish_mining/retrain.py
+Refine_selfish_mining/rnd_policy.py
+Refine_selfish_mining/baseline/reinforcement_learning/dqn/dqn_algorithm.py
+2026-08-26 09:59:30 [info     ] Model file selection raw output:
+Refine_selfish_mining/baseline/net.py
+Refine_selfish_mining/baseline/train_ppo.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/function_approximation/mlp_approximator.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/function_approximation/approximator.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/experience_acquisition/agents/agent.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/training/trainer.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/training/rl_algorithm.py
+Refine_selfish_mining/retrain.py
+Refine_selfish_mining/rnd_policy.py
+Refine_selfish_mining/baseline/reinforcement_learning/dqn/dqn_algorithm.py
+2026-08-26 10:00:03 [info     ] model response: # Expectations
+According to the paper (Section 4.1 and the addendum), for the Selfish Mining environment, the PPO agent is implemented as a 4‑layer Multi‑Layer Perceptron (MLP) with hidden sizes [128, 128, 128, 128]. This means the policy network should have four hidden layers, each containing 128 units, built on top of the state input and before the action/value outputs (or shared base). I need to check the actual code files to confirm that such an architecture is truly implemented and used for the PPO agent in the selfisih mining environment.
+
+# Reality
+The key file is `Refine_selfish_mining/baseline/train_ppo.py`. It defines `get_args()` with `--hidden-sizes` defaulting to `[128, 128, 128, 128]`. Inside `train_ppo()`, a network is created:
+
+```python
+net = Net(
+    args.state_shape,
+    args.action_shape,
+    hidden_sizes=args.hidden_sizes,
+    device=args.device,
+)
+actor = Actor(net, args.action_shape, device=args.device, softmax_output=False)
+critic = Critic(net, device=args.device)
+actor_critic = ActorCritic(actor, critic)
+```
+
+The `Net` class (from `net.py`) constructs an MLP via the internal `MLP` class, which takes `hidden_sizes` (the list of intermediate layer sizes) and builds a sequential model with linear layers of those sizes, each followed by ReLU (and optional dropout/norm). The resulting architecture has exactly four hidden layers of 128 neurons each, plus the final linear layer(s) for action/value. This matches the paper's description exactly.
+
+Additionally, the PPO policy is instantiated using this network, confirming that the agent's policy network is the required 4‑layer MLP.
+
+# Score
+1
+
+The code correctly implements the PPO agent's network architecture for the Selfish Mining environment as per the paper's specification.
+2026-08-26 10:00:03 [info     ] model response: # Expectations
+According to the paper (Section 4.1 and the addendum), for the Selfish Mining environment, the PPO agent is implemented as a 4‑layer Multi‑Layer Perceptron (MLP) with hidden sizes [128, 128, 128, 128]. This means the policy network should have four hidden layers, each containing 128 units, built on top of the state input and before the action/value outputs (or shared base). I need to check the actual code files to confirm that such an architecture is truly implemented and used for the PPO agent in the selfisih mining environment.
+
+# Reality
+The key file is `Refine_selfish_mining/baseline/train_ppo.py`. It defines `get_args()` with `--hidden-sizes` defaulting to `[128, 128, 128, 128]`. Inside `train_ppo()`, a network is created:
+
+```python
+net = Net(
+    args.state_shape,
+    args.action_shape,
+    hidden_sizes=args.hidden_sizes,
+    device=args.device,
+)
+actor = Actor(net, args.action_shape, device=args.device, softmax_output=False)
+critic = Critic(net, device=args.device)
+actor_critic = ActorCritic(actor, critic)
+```
+
+The `Net` class (from `net.py`) constructs an MLP via the internal `MLP` class, which takes `hidden_sizes` (the list of intermediate layer sizes) and builds a sequential model with linear layers of those sizes, each followed by ReLU (and optional dropout/norm). The resulting architecture has exactly four hidden layers of 128 neurons each, plus the final linear layer(s) for action/value. This matches the paper's description exactly.
+
+Additionally, the PPO policy is instantiated using this network, confirming that the agent's policy network is the required 4‑layer MLP.
+
+# Score
+1
+
+The code correctly implements the PPO agent's network architecture for the Selfish Mining environment as per the paper's specification.

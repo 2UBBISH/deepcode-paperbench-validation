@@ -1,0 +1,43 @@
+2026-08-26 10:01:39 [info     ] Grading leaf: For the selfish mining environment, for the "Ours" explanation method, code has been implemented for measuring cumulative reward throughout refinement
+2026-08-26 10:02:29 [info     ] Model file selection raw output:
+Refine_selfish_mining/retrain.py
+Refine_selfish_mining/utils.py
+Refine_selfish_mining/rnd_model.py
+Refine_selfish_mining/rnd_policy.py
+Refine_selfish_mining/masknet/replay.py
+Refine_selfish_mining/masknet/train.py
+Refine_selfish_mining/masknet/sample_mask_score.py
+Refine_selfish_mining/masknet/fidelity_score.py
+Refine_selfish_mining/masknet/utils.py
+Refine_selfish_mining/masknet/replay.sh
+2026-08-26 10:02:29 [info     ] Model file selection raw output:
+Refine_selfish_mining/retrain.py
+Refine_selfish_mining/utils.py
+Refine_selfish_mining/rnd_model.py
+Refine_selfish_mining/rnd_policy.py
+Refine_selfish_mining/masknet/replay.py
+Refine_selfish_mining/masknet/train.py
+Refine_selfish_mining/masknet/sample_mask_score.py
+Refine_selfish_mining/masknet/fidelity_score.py
+Refine_selfish_mining/masknet/utils.py
+Refine_selfish_mining/masknet/replay.sh
+2026-08-26 10:03:46 [info     ] model response: # Expectations
+The criterion asks to verify that for the selfish mining environment, when using the "Ours" explanation method, the code includes logic to measure cumulative reward throughout the refinement process. The paper describes refinement as retraining the agent from a mixed initial distribution (using critical states from the mask network) together with exploration. Measuring cumulative reward typically means tracking the agent’s total or average return per episode (or over a fixed number of steps) as training progresses, and recording/logging it. In a Tianshou-based training script this is usually done by the trainer loop (test/collector) and logged to TensorBoard or similar.
+
+# Reality
+The submission provides `Refine_selfish_mining/retrain.py`, which implements the refinement stage for selfish mining using RICE ("Ours" refining method). This script sets up a training environment (`MDPBlockchainSimulatorRetrain`), creates a `RNDPolicy` (incorporating exploration bonus), and runs an off‑policy trainer via `offpolicy_trainer`. The trainer automatically collects test episodes with `test_collector`, computes the mean reward (cumulative reward), and logs it to a `SummaryWriter`. The script also saves the best policy based on reward thresholds. Thus, code that measures cumulative reward is present and active during refinement.
+
+The script does not explicitly load a mask network; however, the integration of critical states is presumably handled inside `MDPBlockchainSimulatorRetrain` (not provided in the submission, but the measurement code itself exists regardless). The logging and reward collection functions inside `offpolicy_trainer` clearly satisfy the requirement of measuring cumulative reward throughout refinement.
+
+# Score
+1. The code implements reward measurement during refinement (via the off‑policy trainer and TensorBoard logger). The fact that it is part of the refinement script intended for the "Ours" explanation method meets the criterion.
+2026-08-26 10:03:46 [info     ] model response: # Expectations
+The criterion asks to verify that for the selfish mining environment, when using the "Ours" explanation method, the code includes logic to measure cumulative reward throughout the refinement process. The paper describes refinement as retraining the agent from a mixed initial distribution (using critical states from the mask network) together with exploration. Measuring cumulative reward typically means tracking the agent’s total or average return per episode (or over a fixed number of steps) as training progresses, and recording/logging it. In a Tianshou-based training script this is usually done by the trainer loop (test/collector) and logged to TensorBoard or similar.
+
+# Reality
+The submission provides `Refine_selfish_mining/retrain.py`, which implements the refinement stage for selfish mining using RICE ("Ours" refining method). This script sets up a training environment (`MDPBlockchainSimulatorRetrain`), creates a `RNDPolicy` (incorporating exploration bonus), and runs an off‑policy trainer via `offpolicy_trainer`. The trainer automatically collects test episodes with `test_collector`, computes the mean reward (cumulative reward), and logs it to a `SummaryWriter`. The script also saves the best policy based on reward thresholds. Thus, code that measures cumulative reward is present and active during refinement.
+
+The script does not explicitly load a mask network; however, the integration of critical states is presumably handled inside `MDPBlockchainSimulatorRetrain` (not provided in the submission, but the measurement code itself exists regardless). The logging and reward collection functions inside `offpolicy_trainer` clearly satisfy the requirement of measuring cumulative reward throughout refinement.
+
+# Score
+1. The code implements reward measurement during refinement (via the off‑policy trainer and TensorBoard logger). The fact that it is part of the refinement script intended for the "Ours" explanation method meets the criterion.

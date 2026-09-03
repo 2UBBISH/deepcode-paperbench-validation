@@ -1,0 +1,63 @@
+2026-08-26 09:58:46 [info     ] Grading leaf: For the network defence environment, the policy network agents has been implemented
+2026-08-26 09:59:14 [info     ] Model file selection raw output:
+Refine_cage_challenge/PPO/ActorCritic.py
+Refine_cage_challenge/Agents/PPOAgent.py
+Refine_cage_challenge/Agents/PPOAgent_Retrain.py
+Refine_cage_challenge/Agents/PPOAgent_mask.py
+Refine_cage_challenge/ppo_train.py
+Refine_cage_challenge/Agents/MainAgent.py
+Refine_cage_challenge/Agents/rnd_model.py
+Refine_cage_challenge/retrain.py
+Refine_cage_challenge/rollout_ppo.py
+Refine_cage_challenge/readme.md
+2026-08-26 09:59:14 [info     ] Model file selection raw output:
+Refine_cage_challenge/PPO/ActorCritic.py
+Refine_cage_challenge/Agents/PPOAgent.py
+Refine_cage_challenge/Agents/PPOAgent_Retrain.py
+Refine_cage_challenge/Agents/PPOAgent_mask.py
+Refine_cage_challenge/ppo_train.py
+Refine_cage_challenge/Agents/MainAgent.py
+Refine_cage_challenge/Agents/rnd_model.py
+Refine_cage_challenge/retrain.py
+Refine_cage_challenge/rollout_ppo.py
+Refine_cage_challenge/readme.md
+2026-08-26 10:00:22 [info     ] model response: # Expectations
+The paper uses the CAGE Challenge 2 environment as its network defence task. According to Section 4 and Appendix C.2, a PPO-based blue agent is pre-trained to defend a network against a red agent. The agent uses an MLP policy network and is trained with the PPO algorithm. The submission should therefore contain actual code (not just descriptions) that implements such a policy network agent for this specific environment: defining the actor‑critic architecture, handling the environment’s observation/action spaces, and providing a PPO training loop. The implementation must be compatible with the CAGE environment and should be loadable/usable for later refinement.
+
+# Reality
+The submission includes a directory `Refine_cage_challenge` with several Python files that implement policy network agents for the CAGE Challenge 2 environment:
+
+- **`PPO/ActorCritic.py`** defines an `ActorCritic` class containing an MLP actor and a critic network (2 hidden layers of 64 units each), designed to work with discrete actions.
+
+- **`Agents/PPOAgent.py`** implements `PPOAgent` – a full PPO agent that uses the `ActorCritic`. It handles the specific CAGE action space (including decoy actions and restore mappings), pads observations with a scan state, and includes a complete PPO training method (`train()`). It can restore a pre‑trained policy from a checkpoint.
+
+- **`Agents/PPOAgent_Retrain.py`** extends `PPOAgent` for the RICE refinement phase, adding a Random Network Distillation (RND) model and an exploration bonus, exactly as described in the paper’s Algorithm 2.
+
+- **`Agents/PPOAgent_mask.py`** implements a separate mask network agent used for the step‑level explanation (as in Algorithm 1), with its own actor‑critic and a baseline policy loader.
+
+- **Training/evaluation scripts** (`ppo_train.py`, `rollout_ppo.py`, `retrain.py`) demonstrate that these agents are intended to be trained and evaluated within the CybORG/CAGE environment (using `ChallengeWrapper2`).
+
+All of these files contain concrete, executable code that correctly implements policy network agents for the network defence environment, following the paper’s description. The agents are designed to interact with the CAGE environment and are capable of supervised pre‑training, loading, and refinement.
+
+# Score
+**1** – The submission provides actual Python code that implements the required policy network agents for the network defence environment, satisfying the criterion.
+2026-08-26 10:00:22 [info     ] model response: # Expectations
+The paper uses the CAGE Challenge 2 environment as its network defence task. According to Section 4 and Appendix C.2, a PPO-based blue agent is pre-trained to defend a network against a red agent. The agent uses an MLP policy network and is trained with the PPO algorithm. The submission should therefore contain actual code (not just descriptions) that implements such a policy network agent for this specific environment: defining the actor‑critic architecture, handling the environment’s observation/action spaces, and providing a PPO training loop. The implementation must be compatible with the CAGE environment and should be loadable/usable for later refinement.
+
+# Reality
+The submission includes a directory `Refine_cage_challenge` with several Python files that implement policy network agents for the CAGE Challenge 2 environment:
+
+- **`PPO/ActorCritic.py`** defines an `ActorCritic` class containing an MLP actor and a critic network (2 hidden layers of 64 units each), designed to work with discrete actions.
+
+- **`Agents/PPOAgent.py`** implements `PPOAgent` – a full PPO agent that uses the `ActorCritic`. It handles the specific CAGE action space (including decoy actions and restore mappings), pads observations with a scan state, and includes a complete PPO training method (`train()`). It can restore a pre‑trained policy from a checkpoint.
+
+- **`Agents/PPOAgent_Retrain.py`** extends `PPOAgent` for the RICE refinement phase, adding a Random Network Distillation (RND) model and an exploration bonus, exactly as described in the paper’s Algorithm 2.
+
+- **`Agents/PPOAgent_mask.py`** implements a separate mask network agent used for the step‑level explanation (as in Algorithm 1), with its own actor‑critic and a baseline policy loader.
+
+- **Training/evaluation scripts** (`ppo_train.py`, `rollout_ppo.py`, `retrain.py`) demonstrate that these agents are intended to be trained and evaluated within the CybORG/CAGE environment (using `ChallengeWrapper2`).
+
+All of these files contain concrete, executable code that correctly implements policy network agents for the network defence environment, following the paper’s description. The agents are designed to interact with the CAGE environment and are capable of supervised pre‑training, loading, and refinement.
+
+# Score
+**1** – The submission provides actual Python code that implements the required policy network agents for the network defence environment, satisfying the criterion.

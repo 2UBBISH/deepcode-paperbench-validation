@@ -1,0 +1,85 @@
+2026-08-26 10:00:32 [info     ] Grading leaf: For the autonomous driving environment, the additional reward given when the mask net outputs "1" is governed by a mutable hyperparameter, i.e., a hyperparameter whose value can be changed (without having to edit the code directly), corresponding to $\alpha$ in the paper. Alternative hyperparameter names are allowed, as long as the functionality remains the same.
+2026-08-26 10:01:19 [info     ] Model file selection raw output:
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/readme.md
+README.md
+Refine_auto_drive/retrain.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/train_baseline.py
+2026-08-26 10:01:19 [info     ] Model file selection raw output:
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/readme.md
+README.md
+Refine_auto_drive/retrain.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/train_baseline.py
+2026-08-26 10:02:16 [info     ] model response: # Expectations
+
+The paper describes a reinforcement learning refining scheme called RICE. In Section 3.3, the mask network (explanation method) is trained with a modified objective that avoids trivial solutions (always outputting 0). A key part of this modification is:
+
+> we add an additional reward by giving an extra bonus when the mask net outputs "1". The new reward can be written as $R'\left(s_t, a_t\right) = R\left(s_t, a_t\right) + \alpha a_t^m$ where $\alpha$ is a hyper-parameter.
+
+The criterion states that in the autonomous driving environment implementation, this bonus reward hyperparameter (α) must be **mutable** — i.e., its value can be changed without directly editing the source code (e.g., via command‑line argument, configuration file, etc.). The exact name of the hyperparameter can differ (e.g., `lamb`, `bonus`, `alpha`) as long as the functionality is the same.
+
+I expect to find:
+- A clearly defined variable or field (e.g., `self.alpha`, `self.bonus_weight`) that scales the bonus given when the mask output is 1.
+- A mechanism to set this variable from outside the immediate class/file, such as reading from a configuration dictionary, parsing a command‑line flag, or pulling from a settings file.
+- The value should not be a numeric literal buried in the code (e.g., `rew += 0.001 * mask`) that requires editing the source to change.
+
+# Reality
+
+The relevant files for the autonomous driving mask network are `Refine_auto_drive/train_masknet.py` and `Refine_auto_drive/custom_masknet_env.py`.
+
+In `custom_masknet_env.py`, the class `DriveEnvWrapper` implements the mask‑based reward modification. Inside `__init__`, the line  
+`self.lamb = 1e-4`  
+hard‑codes the bonus weight. This value is used later in the `step` method:
+
+- `if not self.bonus_last: rew += self.lamb * mask`
+- `if self.bonus_last: rew += self.lamb * self.accu_mask`
+
+This `self.lamb` acts as the α hyperparameter. However, it is set internally as a literal constant; there is no code to accept it from an external configuration. The `__init__` method receives an optional `cfg` argument (passed from `train_masknet.py` as `wrapper_cfg`), but the implementation never extracts an `alpha` or `lamb` value from it. In fact, `train_masknet.py` defines an environment configuration dictionary `metadrive_macro_config` with a `wrapper=dict()` entry, but that dictionary is not populated with any parameter related to the bonus, and no command‑line argument parsing is present.
+
+Because the hyperparameter is a numeric literal inside the class definition, a user would need to edit `custom_masknet_env.py` and change `1e-4` to a different value. There is no command‑line flag, environment variable, or configuration file mechanism to adjust α without editing the code directly.
+
+# Score
+
+**0** – The criterion is not met. The implementation hard‑codes the bonus weight (`self.lamb = 1e-4`) inside the environment wrapper, and there is no provision for changing it without modifying the source code.
+2026-08-26 10:02:16 [info     ] model response: # Expectations
+
+The paper describes a reinforcement learning refining scheme called RICE. In Section 3.3, the mask network (explanation method) is trained with a modified objective that avoids trivial solutions (always outputting 0). A key part of this modification is:
+
+> we add an additional reward by giving an extra bonus when the mask net outputs "1". The new reward can be written as $R'\left(s_t, a_t\right) = R\left(s_t, a_t\right) + \alpha a_t^m$ where $\alpha$ is a hyper-parameter.
+
+The criterion states that in the autonomous driving environment implementation, this bonus reward hyperparameter (α) must be **mutable** — i.e., its value can be changed without directly editing the source code (e.g., via command‑line argument, configuration file, etc.). The exact name of the hyperparameter can differ (e.g., `lamb`, `bonus`, `alpha`) as long as the functionality is the same.
+
+I expect to find:
+- A clearly defined variable or field (e.g., `self.alpha`, `self.bonus_weight`) that scales the bonus given when the mask output is 1.
+- A mechanism to set this variable from outside the immediate class/file, such as reading from a configuration dictionary, parsing a command‑line flag, or pulling from a settings file.
+- The value should not be a numeric literal buried in the code (e.g., `rew += 0.001 * mask`) that requires editing the source to change.
+
+# Reality
+
+The relevant files for the autonomous driving mask network are `Refine_auto_drive/train_masknet.py` and `Refine_auto_drive/custom_masknet_env.py`.
+
+In `custom_masknet_env.py`, the class `DriveEnvWrapper` implements the mask‑based reward modification. Inside `__init__`, the line  
+`self.lamb = 1e-4`  
+hard‑codes the bonus weight. This value is used later in the `step` method:
+
+- `if not self.bonus_last: rew += self.lamb * mask`
+- `if self.bonus_last: rew += self.lamb * self.accu_mask`
+
+This `self.lamb` acts as the α hyperparameter. However, it is set internally as a literal constant; there is no code to accept it from an external configuration. The `__init__` method receives an optional `cfg` argument (passed from `train_masknet.py` as `wrapper_cfg`), but the implementation never extracts an `alpha` or `lamb` value from it. In fact, `train_masknet.py` defines an environment configuration dictionary `metadrive_macro_config` with a `wrapper=dict()` entry, but that dictionary is not populated with any parameter related to the bonus, and no command‑line argument parsing is present.
+
+Because the hyperparameter is a numeric literal inside the class definition, a user would need to edit `custom_masknet_env.py` and change `1e-4` to a different value. There is no command‑line flag, environment variable, or configuration file mechanism to adjust α without editing the code directly.
+
+# Score
+
+**0** – The criterion is not met. The implementation hard‑codes the bonus weight (`self.lamb = 1e-4`) inside the environment wrapper, and there is no provision for changing it without modifying the source code.

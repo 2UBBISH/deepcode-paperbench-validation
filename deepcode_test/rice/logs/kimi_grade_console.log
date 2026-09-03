@@ -1,0 +1,42 @@
+==== [0/4] 前置检查 ====
+  ✅ Docker 在跑
+  ✅ 提交根目录只含合法 paper id
+==== [1/4] 提交清点与非空校验 ====
+  trial_k1       文件 43   python 36    ✅
+  trial_k2       文件 40   python 32    ✅
+
+==== [2/4] 预估与闸门 ====
+  论文     : rice
+  提交份数 : 2  → paperbench.n_tries=2(不设则只判 1 份!)
+  成本预估 : 实测约 ¥38/份 → 本次约 ¥76(脚本报价上限 ¥120)
+  闸门     : 本计划总预算 ¥600(2026-08-28 由 ¥500 上调)
+  ⚠️ 已判过的提交请先移出 /home/deepevol/pb_submissions/rice,否则会重判、白花钱
+
+==== [3/4] 判分(code_only · DeepSeek-V4-Pro 裁判恒定)2026-09-02 15:27:42 ====
+ 'other_stats': {'n_is_valid_git_repo': 0,
+                 'n_nontrivial_git_log': 0,
+                 'n_repro_script_exists': 0,
+                 'repro_mean_time': nan},
+ 'params': {'agent': 'direct_submission_solver',
+            'code_only': True,
+            'n_samples': 2,
+            'n_tries': 2,
+            'paper_split': 'rice',
+            'resources_provided': False,
+            'skip_reproduction': False},
+ 'run_group_id': '2026-09-02T07-27-45-GMT_run-group_direct_submission_solver',
+ 'run_health': {'n_gradings_failed': 0,
+                'n_reproductions_failed': 2,
+                'n_rollouts_failed': 0}}
+Evaluated 2 tasks with PaperBench-direct_submission_solver[0m [36mcomponent[0m=[35mnanoeval.evaluation[0m
+[2m2026-09-02T07:45:33.486221Z[0m [[32m[1minfo     [0m] [1m[36m[1mEvalboard Summary: unknown, add in pr?[0m[0m [36mcomponent[0m=[35mnanoeval.evaluation[0m
+ubmission_solver (r_id=260902072745UVWX2WZO, m=nanoeval): 100%|██████████| 2/2 [17:47<00:00, 533.76s/it, corr=0, errs=0, fail=2]
+[2m2026-09-02T07:45:33.486417Z[0m [[33m[1mwarning  [0m] [1mUnable to find model name, using fallback name='nanoeval'[0m [36mcomponent[0m=[35mnanoeval.eval[0m
+[2m2026-09-02T07:45:33.486669Z[0m [[33m[1mwarning  [0m] [1mNo slack integration configured, so not sending user notification[0m [36mcomponent[0m=[35mnanoeval.library_config[0m
+
+==== [4/4] 结果与有效性核验 2026-09-02 15:45:34 ====
+  rice_4740a21e-4aa4-4  score=0.2815  叶=178  无效叶=0  OK
+  rice_9b6604bd-234d-4  score=0.4760  叶=178  无效叶=0  OK
+
+  判分结果已复制到 /home/deepevol/deepevol/deepcode_test/scripts/../rice/grades
+==== 记得回填 docs/HANDOFF_FRE.md ====

@@ -1,0 +1,47 @@
+2026-08-26 10:01:54 [info     ] Grading leaf: For the autonomous driving environment, the "StateMask" explanation method has been utilized to identify the critical step to refine from
+2026-08-26 10:03:59 [info     ] Model file selection raw output:
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/retrain.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/readme.md
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/rnd_reward_model.py
+README.md
+2026-08-26 10:03:59 [info     ] Model file selection raw output:
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/retrain.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/readme.md
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/rnd_reward_model.py
+README.md
+2026-08-26 10:05:13 [info     ] model response: # Expectations
+I expect the submission to include code for the autonomous driving environment that uses the original **StateMask** explanation method (as described in Cheng et al., 2023) to identify a critical state during the refining process. In the paper’s Experiment III, they fix the refining method and vary the explanation method among Random, StateMask, and their own “Ours” variant. For the autonomous driving environment specifically, there must be a way to load a mask network trained with the original StateMask objective (without the reward bonus reformulation) and use it to select the most critical step in a trajectory. The refining code should be able to use this StateMask‑trained model to pick the exploration frontier, either via a dedicated script or a configuration option.
+
+# Reality
+The submission for the autonomous driving environment (directory `Refine_auto_drive`) contains:
+- `train_masknet.py` and `custom_masknet_env.py` – these train a mask network using the **“Ours”** explanation method (reformulated objective with a reward bonus for blinding, as described in Algorithm 1 of the paper).
+- `retrain.py`, `retrain_env.py`, and `gen_retrain_traj.py` – these handle the refining procedure. The critical step is obtained by loading the mask network checkpoint from `masknet_True_0.0001/ckpt/iteration_10000.pth.tar` (trained with the “Ours” method) and using it inside `gen_one_traj()` to compute importance scores.
+
+Nowhere in these files is there any code that loads or uses a mask network trained with the original **StateMask** algorithm (which does not add an explicit blinding bonus and has a different training objective). There is no separate script that trains a StateMask‑style mask network for autonomous driving, nor any condition that allows switching to the original StateMask explanation during refining. The submitted files only use the “Ours” explanation method to identify the critical step.
+
+# Score
+**0** – The submission does not contain a correct implementation of using the **StateMask** explanation method to identify the critical step in the autonomous driving environment. It exclusively employs the “Ours” explanation variant. The criterion is not met.
+2026-08-26 10:05:13 [info     ] model response: # Expectations
+I expect the submission to include code for the autonomous driving environment that uses the original **StateMask** explanation method (as described in Cheng et al., 2023) to identify a critical state during the refining process. In the paper’s Experiment III, they fix the refining method and vary the explanation method among Random, StateMask, and their own “Ours” variant. For the autonomous driving environment specifically, there must be a way to load a mask network trained with the original StateMask objective (without the reward bonus reformulation) and use it to select the most critical step in a trajectory. The refining code should be able to use this StateMask‑trained model to pick the exploration frontier, either via a dedicated script or a configuration option.
+
+# Reality
+The submission for the autonomous driving environment (directory `Refine_auto_drive`) contains:
+- `train_masknet.py` and `custom_masknet_env.py` – these train a mask network using the **“Ours”** explanation method (reformulated objective with a reward bonus for blinding, as described in Algorithm 1 of the paper).
+- `retrain.py`, `retrain_env.py`, and `gen_retrain_traj.py` – these handle the refining procedure. The critical step is obtained by loading the mask network checkpoint from `masknet_True_0.0001/ckpt/iteration_10000.pth.tar` (trained with the “Ours” method) and using it inside `gen_one_traj()` to compute importance scores.
+
+Nowhere in these files is there any code that loads or uses a mask network trained with the original **StateMask** algorithm (which does not add an explicit blinding bonus and has a different training objective). There is no separate script that trains a StateMask‑style mask network for autonomous driving, nor any condition that allows switching to the original StateMask explanation during refining. The submitted files only use the “Ours” explanation method to identify the critical step.
+
+# Score
+**0** – The submission does not contain a correct implementation of using the **StateMask** explanation method to identify the critical step in the autonomous driving environment. It exclusively employs the “Ours” explanation variant. The criterion is not met.

@@ -1,0 +1,93 @@
+2026-08-26 09:58:46 [info     ] Grading leaf: For the MuJoCo environments, The StateMask ("Ours") Explanation method can be selected as the explanation method during retraining
+2026-08-26 09:59:38 [info     ] Model file selection raw output:
+Refine_mujoco/retrain.py
+Refine_mujoco/utils.py
+Refine_mujoco/masknet/gen_fid.py
+Refine_mujoco/masknet/train.py
+Refine_mujoco/environment.py
+Refine_mujoco/retrain.sh
+Refine_mujoco/PPO.py
+Refine_mujoco/OnPolicyAlgorithm.py
+Refine_mujoco/base_class.py
+Refine_mujoco/models.py
+2026-08-26 09:59:38 [info     ] Model file selection raw output:
+Refine_mujoco/retrain.py
+Refine_mujoco/utils.py
+Refine_mujoco/masknet/gen_fid.py
+Refine_mujoco/masknet/train.py
+Refine_mujoco/environment.py
+Refine_mujoco/retrain.sh
+Refine_mujoco/PPO.py
+Refine_mujoco/OnPolicyAlgorithm.py
+Refine_mujoco/base_class.py
+Refine_mujoco/models.py
+2026-08-26 10:00:46 [info     ] model response: # Expectations
+
+The criterion requires that for MuJoCo environments, the **"Ours" explanation method** (i.e., the optimized StateMask described in Section 3.3 and Algorithm 1) can be selected as the explanation method during the retraining/refinement process. According to Algorithm 2 in the paper, the refinement procedure should:
+
+- Load a pre‑trained policy and its corresponding mask network (the "Ours" explanation method).
+- With probability \( p \), run the pre‑trained policy to obtain a trajectory, then use the mask network to identify the **most critical state** in that trajectory.
+- Set the initial state to that critical state when \( p \) triggers; otherwise use the default initial state.
+
+Therefore, the code must provide a mechanism that:
+- Accepts a path to a trained mask network (representing the Ours method).
+- Uses that mask network to score states in a trajectory.
+- Selects the state with the highest importance (as defined by the mask network) to be used as the reset state during retraining.
+
+I will look for concrete code that implements this selection and that can be toggled to use the Ours explanation rather than a random baseline.
+
+# Reality
+
+I examined the relevant files in the submission:
+
+- **`Refine_mujoco/retrain.py`** – The main retraining script. It accepts arguments `--masknet_path`, `--random_sampling`, `--go_prob`, etc. It creates the retraining environment via `make_retrain_env(..., masknet_path=args.masknet_path, rand_sampling=args.random_sampling)`.  
+
+- **`Refine_mujoco/environment.py`** – Defines `RetrainEnv` and `make_retrain_env`. Inside `RetrainEnv.reset()`:
+  - If a random number exceeds `go_prob` (i.e., with probability `p = go_prob`), it calls `gen_one_traj()` to produce a trajectory under the pre‑trained policy, recording the mask network’s per‑state scores (`traj.mask_probs`).
+  - If `self.random_sampling` is `False`, the critical state is chosen as `start_idx = np.argmax(traj.mask_probs)`. If `True`, a random index is chosen.
+  - The environment state is then reset to that selected critical state via `self.env.sim.set_state(traj.state_seq[start_idx])`.
+
+- **`Refine_mujoco/utils.py`** – Contains `gen_one_traj()`, which loads the mask network from `masknet_path`, runs the pre‑trained policy, and at each step computes `mask_prob` (the probability of the mask network outputting 1). These probabilities are stored and later used to identify the most critical step.
+
+- **`Refine_mujoco/retrain.sh`** – A sample launch script that passes `--masknet_path "masknet/best_model"` and omits `--random_sampling`, so it defaults to `False`, thereby selecting the Ours explanation method.
+
+These pieces together allow the retraining process to explicitly use the mask network (the Ours explanation method) to pick the most critical state when `random_sampling=False`. The code thus implements the required functionality: the Ours explanation method can be selected as the explanation method during retraining.
+
+# Score
+
+**1** – The submission contains code that implements the ability to select the Ours (StateMask) explanation method during retraining for the MuJoCo environments. The `RetrainEnv` loads the mask network, uses it to score states, and picks the state with the highest score when `random_sampling` is `False`. This matches the expected behavior described in Algorithm 2 and the problem setup.
+2026-08-26 10:00:46 [info     ] model response: # Expectations
+
+The criterion requires that for MuJoCo environments, the **"Ours" explanation method** (i.e., the optimized StateMask described in Section 3.3 and Algorithm 1) can be selected as the explanation method during the retraining/refinement process. According to Algorithm 2 in the paper, the refinement procedure should:
+
+- Load a pre‑trained policy and its corresponding mask network (the "Ours" explanation method).
+- With probability \( p \), run the pre‑trained policy to obtain a trajectory, then use the mask network to identify the **most critical state** in that trajectory.
+- Set the initial state to that critical state when \( p \) triggers; otherwise use the default initial state.
+
+Therefore, the code must provide a mechanism that:
+- Accepts a path to a trained mask network (representing the Ours method).
+- Uses that mask network to score states in a trajectory.
+- Selects the state with the highest importance (as defined by the mask network) to be used as the reset state during retraining.
+
+I will look for concrete code that implements this selection and that can be toggled to use the Ours explanation rather than a random baseline.
+
+# Reality
+
+I examined the relevant files in the submission:
+
+- **`Refine_mujoco/retrain.py`** – The main retraining script. It accepts arguments `--masknet_path`, `--random_sampling`, `--go_prob`, etc. It creates the retraining environment via `make_retrain_env(..., masknet_path=args.masknet_path, rand_sampling=args.random_sampling)`.  
+
+- **`Refine_mujoco/environment.py`** – Defines `RetrainEnv` and `make_retrain_env`. Inside `RetrainEnv.reset()`:
+  - If a random number exceeds `go_prob` (i.e., with probability `p = go_prob`), it calls `gen_one_traj()` to produce a trajectory under the pre‑trained policy, recording the mask network’s per‑state scores (`traj.mask_probs`).
+  - If `self.random_sampling` is `False`, the critical state is chosen as `start_idx = np.argmax(traj.mask_probs)`. If `True`, a random index is chosen.
+  - The environment state is then reset to that selected critical state via `self.env.sim.set_state(traj.state_seq[start_idx])`.
+
+- **`Refine_mujoco/utils.py`** – Contains `gen_one_traj()`, which loads the mask network from `masknet_path`, runs the pre‑trained policy, and at each step computes `mask_prob` (the probability of the mask network outputting 1). These probabilities are stored and later used to identify the most critical step.
+
+- **`Refine_mujoco/retrain.sh`** – A sample launch script that passes `--masknet_path "masknet/best_model"` and omits `--random_sampling`, so it defaults to `False`, thereby selecting the Ours explanation method.
+
+These pieces together allow the retraining process to explicitly use the mask network (the Ours explanation method) to pick the most critical state when `random_sampling=False`. The code thus implements the required functionality: the Ours explanation method can be selected as the explanation method during retraining.
+
+# Score
+
+**1** – The submission contains code that implements the ability to select the Ours (StateMask) explanation method during retraining for the MuJoCo environments. The `RetrainEnv` loads the mask network, uses it to score states, and picks the state with the highest score when `random_sampling` is `False`. This matches the expected behavior described in Algorithm 2 and the problem setup.

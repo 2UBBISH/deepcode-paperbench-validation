@@ -1,0 +1,55 @@
+2026-08-26 10:00:57 [info     ] Grading leaf: In Experiment II, for the MuJoCo environments, for the "PPO fine-tuning" refinement method, code has been implemented for measuring cumulative reward throughout refinement
+2026-08-26 10:01:33 [info     ] Model file selection raw output:
+Refine_mujoco/retrain.py
+Refine_mujoco/baseline/train.py
+Refine_mujoco/monitor.py
+Refine_mujoco/utils.py
+Refine_mujoco/callback.py
+Refine_mujoco/PPO.py
+Refine_mujoco/OnPolicyAlgorithm.py
+Refine_mujoco/base_class.py
+Refine_mujoco/environment.py
+Refine_mujoco/retrain.sh
+2026-08-26 10:01:33 [info     ] Model file selection raw output:
+Refine_mujoco/retrain.py
+Refine_mujoco/baseline/train.py
+Refine_mujoco/monitor.py
+Refine_mujoco/utils.py
+Refine_mujoco/callback.py
+Refine_mujoco/PPO.py
+Refine_mujoco/OnPolicyAlgorithm.py
+Refine_mujoco/base_class.py
+Refine_mujoco/environment.py
+Refine_mujoco/retrain.sh
+2026-08-26 10:06:15 [info     ] model response: # Expectations
+The paper's Experiment II compares refinement methods for MuJoCo environments. For the "PPO fine-tuning" method, the procedure is to lower the learning rate and continue training the pre-trained agent with Proximal Policy Optimization. The paper reports the agent's final reward after refining, which implies that cumulative reward (or periodic performance) was measured during the refinement process. The code for this method should therefore contain implementation of reward measurement throughout the fine-tuning, e.g., using callbacks, evaluation wrappers, or monitor logs that record episode returns or evaluation scores at regular intervals. The code does not need to be in a separate file solely for PPO fine‑tuning, but it must exist and be correct.
+
+# Reality
+The submission includes `Refine_mujoco/retrain.py`, a general refining script. Although it is also used for the full RICE method, it can be configured to perform PPO fine‑tuning by setting `--go_prob 1` (the environment reset branch always uses the original initial state) and `--bonus None` (no exploration bonus). The script loads a pre‑trained PPO agent with a reduced learning rate of `1e-5` (line `custom_objects = { 'learning_rate': 1e-5}`) and resumes training.
+
+For measuring cumulative reward during refinement, the script includes the following concrete implementations:
+- A `VecMonitor` wrapper (imported and used in `retrain.py`) that records episode returns and lengths into a log.
+- An `EvalCallback` (lines `eval_callback = EvalCallback(...)`) that evaluates the agent on a separate evaluation environment every `eval_freq` steps and logs the mean reward.
+- A `CustomCallback` (from `callback.py`) that computes and logs the mean reward over the last 100 episodes.
+These components actively collect and write reward information while the agent fine‑tunes, satisfying the requirement of measuring cumulative reward throughout the process.
+
+No separate script named “PPO fine‑tuning” is provided, but the existing `retrain.py` with the appropriate arguments correctly implements the PPO fine‑tuning procedure and its reward measurement.
+
+# Score
+The code contains a proper implementation of cumulative reward measurement (via callbacks and monitor) that is active when the PPO fine‑tuning method is used. Therefore the criterion is met. Score: 1.
+2026-08-26 10:06:15 [info     ] model response: # Expectations
+The paper's Experiment II compares refinement methods for MuJoCo environments. For the "PPO fine-tuning" method, the procedure is to lower the learning rate and continue training the pre-trained agent with Proximal Policy Optimization. The paper reports the agent's final reward after refining, which implies that cumulative reward (or periodic performance) was measured during the refinement process. The code for this method should therefore contain implementation of reward measurement throughout the fine-tuning, e.g., using callbacks, evaluation wrappers, or monitor logs that record episode returns or evaluation scores at regular intervals. The code does not need to be in a separate file solely for PPO fine‑tuning, but it must exist and be correct.
+
+# Reality
+The submission includes `Refine_mujoco/retrain.py`, a general refining script. Although it is also used for the full RICE method, it can be configured to perform PPO fine‑tuning by setting `--go_prob 1` (the environment reset branch always uses the original initial state) and `--bonus None` (no exploration bonus). The script loads a pre‑trained PPO agent with a reduced learning rate of `1e-5` (line `custom_objects = { 'learning_rate': 1e-5}`) and resumes training.
+
+For measuring cumulative reward during refinement, the script includes the following concrete implementations:
+- A `VecMonitor` wrapper (imported and used in `retrain.py`) that records episode returns and lengths into a log.
+- An `EvalCallback` (lines `eval_callback = EvalCallback(...)`) that evaluates the agent on a separate evaluation environment every `eval_freq` steps and logs the mean reward.
+- A `CustomCallback` (from `callback.py`) that computes and logs the mean reward over the last 100 episodes.
+These components actively collect and write reward information while the agent fine‑tunes, satisfying the requirement of measuring cumulative reward throughout the process.
+
+No separate script named “PPO fine‑tuning” is provided, but the existing `retrain.py` with the appropriate arguments correctly implements the PPO fine‑tuning procedure and its reward measurement.
+
+# Score
+The code contains a proper implementation of cumulative reward measurement (via callbacks and monitor) that is active when the PPO fine‑tuning method is used. Therefore the criterion is met. Score: 1.

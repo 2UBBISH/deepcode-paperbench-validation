@@ -1,0 +1,41 @@
+2026-08-26 10:00:35 [info     ] Grading leaf: For the selfish mining environment, for the "Ours" explanation method, code for measuring training time throughout training as outlined in Appendix C.3 and Table 4 has been implemented.
+2026-08-26 10:05:09 [info     ] Model file selection raw output:
+Refine_selfish_mining/masknet/train.py
+Refine_selfish_mining/masknet/utils.py
+Refine_selfish_mining/masknet/replay.py
+Refine_selfish_mining/masknet/replay.sh
+Refine_selfish_mining/masknet/fidelity_score.py
+Refine_selfish_mining/masknet/sample_mask_score.py
+Refine_selfish_mining/masknet/sample_value_score.py
+Refine_selfish_mining/utils.py
+Refine_selfish_mining/retrain.py
+Refine_selfish_mining/rnd_model.py
+2026-08-26 10:05:09 [info     ] Model file selection raw output:
+Refine_selfish_mining/masknet/train.py
+Refine_selfish_mining/masknet/utils.py
+Refine_selfish_mining/masknet/replay.py
+Refine_selfish_mining/masknet/replay.sh
+Refine_selfish_mining/masknet/fidelity_score.py
+Refine_selfish_mining/masknet/sample_mask_score.py
+Refine_selfish_mining/masknet/sample_value_score.py
+Refine_selfish_mining/utils.py
+Refine_selfish_mining/retrain.py
+Refine_selfish_mining/rnd_model.py
+2026-08-26 10:06:03 [info     ] model response: # Expectations
+The paper, in Appendix C.3 and Table 4, describes an efficiency comparison between the "StateMask" explanation method and the proposed "Ours" explanation method. They report the cost time (in seconds) and number of samples used when training the mask network for each application, including the selfish mining environment.  
+For the criterion to be satisfied, the submission must include actual code (not just instructions) that implements measuring training time during the training of the mask network for selfish mining using the "Ours" method. This could be done by wrapping the training loop with timing calls (e.g., `time.time()`, `time.perf_counter()`) and logging/printing the elapsed time, or by having a separate script that runs the training and records the duration. The presence of timing measurement code is necessary to reproduce the data shown in Table 4.
+
+# Reality
+The provided files for the selfish mining environment include `Refine_selfish_mining/masknet/train.py`, which trains the mask network using PPO (the "Ours" method). However, a thorough inspection shows that this script contains no timing code whatsoever—there is no import of `time`, no recording of start/end times, and no calculation of elapsed time. The training is performed via the Tianshou `onpolicy_trainer`, which might internally log steps but does not include explicit wall‑clock timing that would correspond to the "cost time" reported in Table 4. No other file in the submission adds timing measurement for the mask network training in this environment. Therefore, the code for measuring training time as required by the criterion has not been implemented.
+
+# Score
+Score = 0. The submission does not contain the required implementation for measuring training time during the mask network training for the selfish mining environment. The criterion is not met.
+2026-08-26 10:06:03 [info     ] model response: # Expectations
+The paper, in Appendix C.3 and Table 4, describes an efficiency comparison between the "StateMask" explanation method and the proposed "Ours" explanation method. They report the cost time (in seconds) and number of samples used when training the mask network for each application, including the selfish mining environment.  
+For the criterion to be satisfied, the submission must include actual code (not just instructions) that implements measuring training time during the training of the mask network for selfish mining using the "Ours" method. This could be done by wrapping the training loop with timing calls (e.g., `time.time()`, `time.perf_counter()`) and logging/printing the elapsed time, or by having a separate script that runs the training and records the duration. The presence of timing measurement code is necessary to reproduce the data shown in Table 4.
+
+# Reality
+The provided files for the selfish mining environment include `Refine_selfish_mining/masknet/train.py`, which trains the mask network using PPO (the "Ours" method). However, a thorough inspection shows that this script contains no timing code whatsoever—there is no import of `time`, no recording of start/end times, and no calculation of elapsed time. The training is performed via the Tianshou `onpolicy_trainer`, which might internally log steps but does not include explicit wall‑clock timing that would correspond to the "cost time" reported in Table 4. No other file in the submission adds timing measurement for the mask network training in this environment. Therefore, the code for measuring training time as required by the criterion has not been implemented.
+
+# Score
+Score = 0. The submission does not contain the required implementation for measuring training time during the mask network training for the selfish mining environment. The criterion is not met.

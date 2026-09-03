@@ -1,0 +1,71 @@
+2026-08-26 09:58:46 [info     ] Grading leaf: For the autonomous driving environment, the original StateMask Explanation method can be selected as the explanation method during retraining
+2026-08-26 09:59:55 [info     ] Model file selection raw output:
+Refine_auto_drive/retrain.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/readme.md
+Refine_auto_drive/rnd_reward_model.py
+requirements.txt
+2026-08-26 09:59:55 [info     ] Model file selection raw output:
+Refine_auto_drive/retrain.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/readme.md
+Refine_auto_drive/rnd_reward_model.py
+requirements.txt
+2026-08-26 10:01:09 [info     ] model response: # Expectations
+The criterion requires that for the autonomous driving environment, the code allows selection of the *original* StateMask explanation method (from Cheng et al. 2023) as the explanation method during the retraining (refining) phase. 
+
+According to the paper, the original StateMask uses a different training setup than the proposed "Ours": it minimizes `J(θ) = min |η(π) - η(π̄)|` and employs a prime‑dual optimization method to train the mask network (Section 3.3). In contrast, "Ours" reformulates the objective and uses PPO with an added reward bonus. 
+
+To meet this criterion, the submission must include:
+- An implementation of the original StateMask explanation method (mask network trained via prime‑dual optimization, using the original objective) for the autonomous driving environment.
+- A mechanism in the retraining pipeline that allows the developer to *select* either the original StateMask method or another explanation method (e.g. "Ours" or Random) for identifying critical states during refinement (Algorithm 2 and Experiment III).
+
+I will therefore look for concrete code that trains a mask network in the original StateMask manner, and a retraining script that can switch between this original StateMask and other explanation methods.
+
+# Reality
+Examining the provided files for the autonomous driving environment:
+
+- **`Refine_auto_drive/train_masknet.py`** — Trains a mask network, but only according to the "Ours" approach: it uses PPO and a reward bonus (the `custom_masknet_env.py` wrapper adds `self.lamb * mask` to the reward). There is no prime‑dual optimizer, no implementation of `J(θ) = min |η(π) - η(π̄)|`.
+- **`Refine_auto_drive/custom_masknet_env.py`** — Implements the environment wrapper for training the mask network. The reward modification (`rew += self.lamb * mask`) and the overall training loop match the "Ours" reformulation, not the original StateMask.
+- **`Refine_auto_drive/retrain.py`** — The retraining script that calls `CustomWrapper` → `gen_one_traj`. It loads a single, fixed mask network checkpoint (`/home/zck7060/DI-drive/masknet_True_0.0001/ckpt/iteration_10000.pth.tar`) via `gen_one_traj`. There is **no argument, flag, or configuration option** to choose between different explanation methods (e.g., original StateMask vs. Ours vs. Random).
+- **`Refine_auto_drive/gen_retrain_traj.py`** — Uses the loaded mask network to obtain importance scores for trajectory steps. It has no logic to switch explanation methods; it always relies on the same mask network.
+- No other file (e.g., `train_baseline.py`, `learner.py`, `rnd_reward_model.py`) implements the original StateMask training or selection mechanism.
+
+In summary, the submission only implements the proposed "Ours" mask network training and hard‑codes its use during retraining. The original StateMask explanation method is neither implemented nor selectable in the retraining pipeline.
+
+# Score
+**0** — The criterion is not met. The code does not implement the original StateMask explanation method for the autonomous driving environment, nor does it provide any way to select it (or any alternative) during the retraining process. The retraining simply loads a single fixed "Ours" mask network.
+2026-08-26 10:01:09 [info     ] model response: # Expectations
+The criterion requires that for the autonomous driving environment, the code allows selection of the *original* StateMask explanation method (from Cheng et al. 2023) as the explanation method during the retraining (refining) phase. 
+
+According to the paper, the original StateMask uses a different training setup than the proposed "Ours": it minimizes `J(θ) = min |η(π) - η(π̄)|` and employs a prime‑dual optimization method to train the mask network (Section 3.3). In contrast, "Ours" reformulates the objective and uses PPO with an added reward bonus. 
+
+To meet this criterion, the submission must include:
+- An implementation of the original StateMask explanation method (mask network trained via prime‑dual optimization, using the original objective) for the autonomous driving environment.
+- A mechanism in the retraining pipeline that allows the developer to *select* either the original StateMask method or another explanation method (e.g. "Ours" or Random) for identifying critical states during refinement (Algorithm 2 and Experiment III).
+
+I will therefore look for concrete code that trains a mask network in the original StateMask manner, and a retraining script that can switch between this original StateMask and other explanation methods.
+
+# Reality
+Examining the provided files for the autonomous driving environment:
+
+- **`Refine_auto_drive/train_masknet.py`** — Trains a mask network, but only according to the "Ours" approach: it uses PPO and a reward bonus (the `custom_masknet_env.py` wrapper adds `self.lamb * mask` to the reward). There is no prime‑dual optimizer, no implementation of `J(θ) = min |η(π) - η(π̄)|`.
+- **`Refine_auto_drive/custom_masknet_env.py`** — Implements the environment wrapper for training the mask network. The reward modification (`rew += self.lamb * mask`) and the overall training loop match the "Ours" reformulation, not the original StateMask.
+- **`Refine_auto_drive/retrain.py`** — The retraining script that calls `CustomWrapper` → `gen_one_traj`. It loads a single, fixed mask network checkpoint (`/home/zck7060/DI-drive/masknet_True_0.0001/ckpt/iteration_10000.pth.tar`) via `gen_one_traj`. There is **no argument, flag, or configuration option** to choose between different explanation methods (e.g., original StateMask vs. Ours vs. Random).
+- **`Refine_auto_drive/gen_retrain_traj.py`** — Uses the loaded mask network to obtain importance scores for trajectory steps. It has no logic to switch explanation methods; it always relies on the same mask network.
+- No other file (e.g., `train_baseline.py`, `learner.py`, `rnd_reward_model.py`) implements the original StateMask training or selection mechanism.
+
+In summary, the submission only implements the proposed "Ours" mask network training and hard‑codes its use during retraining. The original StateMask explanation method is neither implemented nor selectable in the retraining pipeline.
+
+# Score
+**0** — The criterion is not met. The code does not implement the original StateMask explanation method for the autonomous driving environment, nor does it provide any way to select it (or any alternative) during the retraining process. The retraining simply loads a single fixed "Ours" mask network.

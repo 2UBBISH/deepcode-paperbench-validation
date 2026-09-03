@@ -1,0 +1,50 @@
+==== [0/4] 前置检查 ====
+  ✅ Docker 在跑
+  ✅ 提交根目录只含合法 paper id
+==== [1/4] 提交清点与非空校验 ====
+  bare_kimi      文件 38   python 18    ✅
+  bare_v4        文件 24   python 11    ✅
+  trial2         文件 56   python 22    ✅
+  trial3         文件 90   python 39    ✅
+  trial_k1       文件 79   python 36    ✅
+  trial_k2       文件 71   python 32    ✅
+
+==== [2/4] 预估与闸门 ====
+  论文     : rice
+  提交份数 : 6  → paperbench.n_tries=6(不设则只判 1 份!)
+  成本预估 : 实测约 ¥38/份 → 本次约 ¥228(脚本报价上限 ¥360)
+  闸门     : 本计划总预算 ¥600(2026-08-28 由 ¥500 上调)
+  ⚠️ 已判过的提交请先移出 /home/deepevol/pb_submissions/rice,否则会重判、白花钱
+
+==== [3/4] 判分(code_only · DeepSeek-V4-Pro 裁判恒定)2026-09-03 09:28:58 ====
+ 'other_stats': {'n_is_valid_git_repo': 0,
+                 'n_nontrivial_git_log': 0,
+                 'n_repro_script_exists': 0,
+                 'repro_mean_time': nan},
+ 'params': {'agent': 'direct_submission_solver',
+            'code_only': True,
+            'n_samples': 6,
+            'n_tries': 6,
+            'paper_split': 'rice',
+            'resources_provided': False,
+            'skip_reproduction': False},
+ 'run_group_id': '2026-09-03T01-29-00-GMT_run-group_direct_submission_solver',
+ 'run_health': {'n_gradings_failed': 0,
+                'n_reproductions_failed': 6,
+                'n_rollouts_failed': 0}}
+Evaluated 6 tasks with PaperBench-direct_submission_solver[0m [36mcomponent[0m=[35mnanoeval.evaluation[0m
+[2m2026-09-03T02:57:54.809329Z[0m [[32m[1minfo     [0m] [1m[36m[1mEvalboard Summary: unknown, add in pr?[0m[0m [36mcomponent[0m=[35mnanoeval.evaluation[0m
+ubmission_solver (r_id=260903012900YQR6LUFE, m=nanoeval): 100%|██████████| 6/6 [1:28:54<00:00, 889.00s/it, corr=0, errs=0, fail=6]
+[2m2026-09-03T02:57:54.809742Z[0m [[33m[1mwarning  [0m] [1mUnable to find model name, using fallback name='nanoeval'[0m [36mcomponent[0m=[35mnanoeval.eval[0m
+[2m2026-09-03T02:57:54.810350Z[0m [[33m[1mwarning  [0m] [1mNo slack integration configured, so not sending user notification[0m [36mcomponent[0m=[35mnanoeval.library_config[0m
+
+==== [4/4] 结果与有效性核验 2026-09-03 10:57:56 ====
+  rice_56a3d076-e586-4  score=0.3754  叶=178  无效叶=0  OK
+  rice_63576dff-6861-4  score=0.1452  叶=178  无效叶=0  OK
+  rice_673f5037-05a5-4  score=0.4033  叶=178  无效叶=0  OK
+  rice_7ea3c937-5e9b-4  score=0.1865  叶=178  无效叶=0  OK
+  rice_a7fe8a33-5b45-4  score=0.3446  叶=178  无效叶=0  OK
+  rice_e45d8f57-d1f3-4  score=0.2403  叶=178  无效叶=0  OK
+
+  判分结果已复制到 /home/deepevol/deepevol/deepcode_test/scripts/../rice/grades
+==== 记得回填 docs/HANDOFF_FRE.md ====

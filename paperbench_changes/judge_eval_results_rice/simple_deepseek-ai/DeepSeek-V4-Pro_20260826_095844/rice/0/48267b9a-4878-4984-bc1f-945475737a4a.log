@@ -1,0 +1,107 @@
+2026-08-26 09:58:46 [info     ] Grading leaf: For the network defence environment, the explanation method implementation relies on a mask network that outputs "0" for critical steps and "1" otherwise
+2026-08-26 09:59:50 [info     ] Model file selection raw output:
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_mask.py
+Refine_cage_challenge/Agents/PPOAgent_mask.py
+Refine_cage_challenge/rollout_mask.py
+Refine_cage_challenge/sample_mask_score.py
+Refine_cage_challenge/ppo_train.py
+Refine_cage_challenge/sample_value_score.py
+Refine_cage_challenge/replay.py
+Refine_cage_challenge/PPO/ActorCritic.py
+Refine_cage_challenge/PPO/Memory.py
+Refine_cage_challenge/readme.md
+2026-08-26 09:59:50 [info     ] Model file selection raw output:
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_mask.py
+Refine_cage_challenge/Agents/PPOAgent_mask.py
+Refine_cage_challenge/rollout_mask.py
+Refine_cage_challenge/sample_mask_score.py
+Refine_cage_challenge/ppo_train.py
+Refine_cage_challenge/sample_value_score.py
+Refine_cage_challenge/replay.py
+Refine_cage_challenge/PPO/ActorCritic.py
+Refine_cage_challenge/PPO/Memory.py
+Refine_cage_challenge/readme.md
+2026-08-26 10:00:55 [info     ] model response: # Expectations
+
+According to Section 3.3 of the paper, the proposed explanation method (“Ours”) improves upon StateMask by using a mask network that outputs a binary action:
+
+> For an input state \(s_t\), the mask net outputs a binary action \(a_t^m\) of either “zero” or “one”, and the target agent will sample the action \(a_t\) from its policy. The final action is determined by the following equation  
+> \[
+> a_t \odot a_t^m = \begin{cases} a_t, & \text{if } a_t^m = 0 \\ a_{\text{random}} & \text{if } a_t^m = 1 \end{cases}
+> \]
+
+The importance of a state is measured by the **probability of the mask network outputting 0**. Hence, “output 0” means the step is **critical** (do not blind, keep the original action) and “output 1” means the step is **non‑critical** (blind, take a random action).
+
+For the **network defence environment** (Cage Challenge 2), the submission must include a concrete implementation of this mask network, i.e., a policy with two possible outputs (`0` and `1`) that follows the above logic when selecting actions during an episode.
+
+# Reality
+
+The submission contains several files dedicated to the Cage Challenge 2 environment, under `Refine_cage_challenge/`.
+
+**Key file: `Agents/PPOAgent_mask.py`**  
+- The class `PPOAgent_mask` implements the mask agent.  
+- It defines `self.n_actions_mask = 2` (line 139) and creates the mask network as:  
+  `self.policy = ActorCritic(self.input_dims, self.n_actions_mask).to(device)` (line 148).  
+- The method `get_action` (lines 72–85) first obtains the baseline action from the pre‑trained policy (`self.baseline_policy`) and then **samples a mask action** from the mask network:  
+  ```python
+  baseline_action = self.baseline_policy.act(state, self.memory, deterministic=True)
+  mask_action = self.old_policy.act(state, self.memory, deterministic=self.deterministic)
+  if mask_action == 0:
+      action = baseline_action
+  else:
+      action = np.random.randint(0, len(self.action_space))
+  ```
+  This exactly matches the paper: **`0` → use original action (critical step), `1` → random action (non‑critical step)**.  
+- The auxiliary method `get_mask_prob` returns the probability of output `0` (i.e., the critical‑step importance), confirming the interpretation:  
+  ```python
+  mask_prob = agent_mask.get_mask_prob(state)[0][0]  # prob of not masking (output 0)
+  ```
+  (seen in `sample_mask_score.py`).
+
+Thus the explanation method for the network defence environment relies on a mask network that outputs `0` for critical steps and `1` otherwise, exactly as required.
+
+# Score
+
+**1** – the implementation correctly follows the specification from the paper.
+2026-08-26 10:00:55 [info     ] model response: # Expectations
+
+According to Section 3.3 of the paper, the proposed explanation method (“Ours”) improves upon StateMask by using a mask network that outputs a binary action:
+
+> For an input state \(s_t\), the mask net outputs a binary action \(a_t^m\) of either “zero” or “one”, and the target agent will sample the action \(a_t\) from its policy. The final action is determined by the following equation  
+> \[
+> a_t \odot a_t^m = \begin{cases} a_t, & \text{if } a_t^m = 0 \\ a_{\text{random}} & \text{if } a_t^m = 1 \end{cases}
+> \]
+
+The importance of a state is measured by the **probability of the mask network outputting 0**. Hence, “output 0” means the step is **critical** (do not blind, keep the original action) and “output 1” means the step is **non‑critical** (blind, take a random action).
+
+For the **network defence environment** (Cage Challenge 2), the submission must include a concrete implementation of this mask network, i.e., a policy with two possible outputs (`0` and `1`) that follows the above logic when selecting actions during an episode.
+
+# Reality
+
+The submission contains several files dedicated to the Cage Challenge 2 environment, under `Refine_cage_challenge/`.
+
+**Key file: `Agents/PPOAgent_mask.py`**  
+- The class `PPOAgent_mask` implements the mask agent.  
+- It defines `self.n_actions_mask = 2` (line 139) and creates the mask network as:  
+  `self.policy = ActorCritic(self.input_dims, self.n_actions_mask).to(device)` (line 148).  
+- The method `get_action` (lines 72–85) first obtains the baseline action from the pre‑trained policy (`self.baseline_policy`) and then **samples a mask action** from the mask network:  
+  ```python
+  baseline_action = self.baseline_policy.act(state, self.memory, deterministic=True)
+  mask_action = self.old_policy.act(state, self.memory, deterministic=self.deterministic)
+  if mask_action == 0:
+      action = baseline_action
+  else:
+      action = np.random.randint(0, len(self.action_space))
+  ```
+  This exactly matches the paper: **`0` → use original action (critical step), `1` → random action (non‑critical step)**.  
+- The auxiliary method `get_mask_prob` returns the probability of output `0` (i.e., the critical‑step importance), confirming the interpretation:  
+  ```python
+  mask_prob = agent_mask.get_mask_prob(state)[0][0]  # prob of not masking (output 0)
+  ```
+  (seen in `sample_mask_score.py`).
+
+Thus the explanation method for the network defence environment relies on a mask network that outputs `0` for critical steps and `1` otherwise, exactly as required.
+
+# Score
+
+**1** – the implementation correctly follows the specification from the paper.

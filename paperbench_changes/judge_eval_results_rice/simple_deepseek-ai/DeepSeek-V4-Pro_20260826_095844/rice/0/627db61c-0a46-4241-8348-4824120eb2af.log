@@ -1,0 +1,59 @@
+2026-08-26 09:58:46 [info     ] Grading leaf: For the network defence environment, the refining method has been implemented as outlined in Algorithm 2, integrating the mixed initial state distribution and RND.
+2026-08-26 09:59:26 [info     ] Model file selection raw output:
+Refine_cage_challenge/retrain.py
+Refine_cage_challenge/Agents/PPOAgent_Retrain.py
+Refine_cage_challenge/Agents/rnd_model.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_retrain.py
+Refine_cage_challenge/sample_mask_score.py
+Refine_cage_challenge/ppo_train.py
+Refine_cage_challenge/rollout_ppo.py
+Refine_cage_challenge/Agents/MainAgent.py
+Refine_cage_challenge/PPO/ActorCritic.py
+Refine_cage_challenge/readme.md
+2026-08-26 09:59:26 [info     ] Model file selection raw output:
+Refine_cage_challenge/retrain.py
+Refine_cage_challenge/Agents/PPOAgent_Retrain.py
+Refine_cage_challenge/Agents/rnd_model.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_retrain.py
+Refine_cage_challenge/sample_mask_score.py
+Refine_cage_challenge/ppo_train.py
+Refine_cage_challenge/rollout_ppo.py
+Refine_cage_challenge/Agents/MainAgent.py
+Refine_cage_challenge/PPO/ActorCritic.py
+Refine_cage_challenge/readme.md
+2026-08-26 10:00:53 [info     ] model response: # Expectations
+Algorithm 2 from the paper describes the refining procedure: for each iteration, with probability \(p\) reset the environment to a critical state identified via the explanation (mask network) on a trajectory from the pre‑trained policy, otherwise reset to the default initial distribution. Then for multiple steps, sample an action, step the environment, compute an RND bonus, add it to the reward, store the transition, and periodically optimize the policy with PPO and the RND predictor network. For the network defence (Cage Challenge 2) environment, this requires actual code that:
+- Implements a mixed initial state distribution using the pre‑trained policy and the mask network to choose the critical state.
+- Computes RND bonuses and adds them to the rewards.
+- Trains the policy with PPO and the RND predictor on the collected experiences.
+The code must be complete and executable (no missing essential functions).
+
+# Reality
+The submission provides several files for the network defence environment, primarily `Refine_cage_challenge/retrain.py`, `Refine_cage_challenge/Wrappers/ChallengeWrapper2_retrain.py`, and `Refine_cage_challenge/Agents/PPOAgent_Retrain.py`.
+
+- The wrapper `ChallengeWrapper2_retrain` attempts to implement the mixed initial state distribution in its `reset` method: it uses `gen_one_traj()` (imported from `utils`) to obtain an action sequence and mask scores from the pre‑trained policy and mask network, then fast‑forwards to the step with the highest mask score. However, the file `utils.py` (or the `gen_one_traj` function itself) is **not present among the submitted files**. Without this function, the critical integration of the explanation method into the reset cannot work—the mixed initial state distribution is incomplete.
+- The agent `PPOAgent_Retrain` includes an RND model (`RNDModel` in `rnd_model.py`) and adds an RND bonus to the reward during data collection. The training loop also updates the RND predictor network using MSE loss on collected states. This part is largely present, though the RND model contains attribute mismatches (`compute_bonus` uses undefined `self.target`/`self.predictor` instead of the defined `predict_model`/`target_model`), indicating bugs.
+- The overall training loop in `retrain.py` uses the wrapper and the agent, but the missing `gen_one_traj` means the refining method as described in Algorithm 2 cannot be fully executed.
+
+Because the code lacks the necessary function to obtain the mask scores and construct the mixed initial distribution from the explanation, the implementation of the refining method is incomplete.
+
+# Score
+0 – The submitted code does not contain a complete, runnable implementation of Algorithm 2 for the network defence environment; the essential function `gen_one_traj` (which integrates the mask network to form the mixed initial state distribution) is missing. Therefore the criterion is not met.
+2026-08-26 10:00:53 [info     ] model response: # Expectations
+Algorithm 2 from the paper describes the refining procedure: for each iteration, with probability \(p\) reset the environment to a critical state identified via the explanation (mask network) on a trajectory from the pre‑trained policy, otherwise reset to the default initial distribution. Then for multiple steps, sample an action, step the environment, compute an RND bonus, add it to the reward, store the transition, and periodically optimize the policy with PPO and the RND predictor network. For the network defence (Cage Challenge 2) environment, this requires actual code that:
+- Implements a mixed initial state distribution using the pre‑trained policy and the mask network to choose the critical state.
+- Computes RND bonuses and adds them to the rewards.
+- Trains the policy with PPO and the RND predictor on the collected experiences.
+The code must be complete and executable (no missing essential functions).
+
+# Reality
+The submission provides several files for the network defence environment, primarily `Refine_cage_challenge/retrain.py`, `Refine_cage_challenge/Wrappers/ChallengeWrapper2_retrain.py`, and `Refine_cage_challenge/Agents/PPOAgent_Retrain.py`.
+
+- The wrapper `ChallengeWrapper2_retrain` attempts to implement the mixed initial state distribution in its `reset` method: it uses `gen_one_traj()` (imported from `utils`) to obtain an action sequence and mask scores from the pre‑trained policy and mask network, then fast‑forwards to the step with the highest mask score. However, the file `utils.py` (or the `gen_one_traj` function itself) is **not present among the submitted files**. Without this function, the critical integration of the explanation method into the reset cannot work—the mixed initial state distribution is incomplete.
+- The agent `PPOAgent_Retrain` includes an RND model (`RNDModel` in `rnd_model.py`) and adds an RND bonus to the reward during data collection. The training loop also updates the RND predictor network using MSE loss on collected states. This part is largely present, though the RND model contains attribute mismatches (`compute_bonus` uses undefined `self.target`/`self.predictor` instead of the defined `predict_model`/`target_model`), indicating bugs.
+- The overall training loop in `retrain.py` uses the wrapper and the agent, but the missing `gen_one_traj` means the refining method as described in Algorithm 2 cannot be fully executed.
+
+Because the code lacks the necessary function to obtain the mask scores and construct the mixed initial distribution from the explanation, the implementation of the refining method is incomplete.
+
+# Score
+0 – The submitted code does not contain a complete, runnable implementation of Algorithm 2 for the network defence environment; the essential function `gen_one_traj` (which integrates the mask network to form the mixed initial state distribution) is missing. Therefore the criterion is not met.

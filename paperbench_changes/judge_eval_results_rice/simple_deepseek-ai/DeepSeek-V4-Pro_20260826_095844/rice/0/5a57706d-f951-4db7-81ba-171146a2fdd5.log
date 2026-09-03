@@ -1,0 +1,59 @@
+2026-08-26 09:58:46 [info     ] Grading leaf: For the selfish mining environment, the "PPO fine-tuning" refinement method has been implemented as outlined in section 4.1, i.e. lowering the learning rate and continuing training with the PPO algorithm.
+2026-08-26 09:59:48 [info     ] Model file selection raw output:
+Refine_selfish_mining/retrain.py
+Refine_selfish_mining/baseline/train_ppo.py
+Refine_selfish_mining/utils.py
+Refine_selfish_mining/baseline/net.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/training/trainer.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/training/rl_algorithm.py
+Refine_selfish_mining/rnd_policy.py
+Refine_selfish_mining/baseline/blockchain_mdps/bitcoin_simplified_fee_model.py
+Refine_selfish_mining/README.md
+Refine_selfish_mining/masknet/train.py
+2026-08-26 09:59:48 [info     ] Model file selection raw output:
+Refine_selfish_mining/retrain.py
+Refine_selfish_mining/baseline/train_ppo.py
+Refine_selfish_mining/utils.py
+Refine_selfish_mining/baseline/net.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/training/trainer.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/training/rl_algorithm.py
+Refine_selfish_mining/rnd_policy.py
+Refine_selfish_mining/baseline/blockchain_mdps/bitcoin_simplified_fee_model.py
+Refine_selfish_mining/README.md
+Refine_selfish_mining/masknet/train.py
+2026-08-26 09:59:48 [info     ] File /home/deepevol/deepevol/frontier-evals/project/paperbench/data/judge_eval/rice/0/submission/Refine_selfish_mining/README.md not found!
+2026-08-26 09:59:48 [info     ] File /home/deepevol/deepevol/frontier-evals/project/paperbench/data/judge_eval/rice/0/submission/Refine_selfish_mining/README.md not found!
+2026-08-26 10:01:01 [info     ] model response: # Expectations
+The paper describes "PPO fine-tuning" as a baseline refinement method: it lowers the learning rate and continues training the pre‑trained agent using the Proximal Policy Optimization (PPO) algorithm (Section 4.1). For the **selfish mining environment**, I expect the submission to contain code that:
+- Loads a pre‑trained PPO agent (the policy that has already been trained).
+- Sets a new, lower learning rate for the PPO optimizer.
+- Continues training for some additional steps/epochs with the PPO algorithm, collecting new rollouts and updating the agent.
+This should be a distinct, simple baseline separate from the other refinement methods (e.g., RICE, StateMask‑R).
+
+# Reality
+The provided files for the selfish mining environment are:
+- `Refine_selfish_mining/retrain.py` – uses a **DQN** policy wrapped with an RND‑based exploration policy; it is not a PPO fine‑tuning implementation.
+- `Refine_selfish_mining/baseline/train_ppo.py` – contains a script to train a PPO agent **from scratch**. It creates a new network and optimizer and does **not** load a pre‑trained policy. There is no logic to resume from a checkpoint with a reduced learning rate for a “fine‑tuning” phase. The `--resume-id` flag is for resuming interrupted training, not for a deliberate fine‑tuning with a lowered learning rate.
+- No other script or function implements the simple PPO fine‑tuning baseline (loading the pre‑trained PPO model, lowering the learning rate, and continuing PPO training).
+
+The necessary implementation of the “PPO fine‑tuning” baseline for selfish mining is completely absent.
+
+# Score
+**0** – The code does not contain a correct implementation of PPO fine‑tuning for the selfish mining environment as required by the criterion.
+2026-08-26 10:01:01 [info     ] model response: # Expectations
+The paper describes "PPO fine-tuning" as a baseline refinement method: it lowers the learning rate and continues training the pre‑trained agent using the Proximal Policy Optimization (PPO) algorithm (Section 4.1). For the **selfish mining environment**, I expect the submission to contain code that:
+- Loads a pre‑trained PPO agent (the policy that has already been trained).
+- Sets a new, lower learning rate for the PPO optimizer.
+- Continues training for some additional steps/epochs with the PPO algorithm, collecting new rollouts and updating the agent.
+This should be a distinct, simple baseline separate from the other refinement methods (e.g., RICE, StateMask‑R).
+
+# Reality
+The provided files for the selfish mining environment are:
+- `Refine_selfish_mining/retrain.py` – uses a **DQN** policy wrapped with an RND‑based exploration policy; it is not a PPO fine‑tuning implementation.
+- `Refine_selfish_mining/baseline/train_ppo.py` – contains a script to train a PPO agent **from scratch**. It creates a new network and optimizer and does **not** load a pre‑trained policy. There is no logic to resume from a checkpoint with a reduced learning rate for a “fine‑tuning” phase. The `--resume-id` flag is for resuming interrupted training, not for a deliberate fine‑tuning with a lowered learning rate.
+- No other script or function implements the simple PPO fine‑tuning baseline (loading the pre‑trained PPO model, lowering the learning rate, and continuing PPO training).
+
+The necessary implementation of the “PPO fine‑tuning” baseline for selfish mining is completely absent.
+
+# Score
+**0** – The code does not contain a correct implementation of PPO fine‑tuning for the selfish mining environment as required by the criterion.

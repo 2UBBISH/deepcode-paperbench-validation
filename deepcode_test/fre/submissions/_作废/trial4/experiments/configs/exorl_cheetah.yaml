@@ -1,0 +1,121 @@
+# =============================================================================
+# FRE Configuration: ExORL Cheetah (Unsupervised Exploration)
+# =============================================================================
+# Dataset: ExORL cheetah-run unsupervised exploration data
+# Tasks: goal-reaching (to random states from dataset), velocity (forward/backward)
+# Expected performance: goals ~58, velocity ~20 (normalized return)
+# =============================================================================
+
+domain: "exorl_cheetah"
+dataset: "exorl_cheetah"  # Loaded from data/exorl/cheetah/
+
+# ---------------------------------------------------------------------------
+# Environment
+# ---------------------------------------------------------------------------
+env_name: "cheetah_run"  # dm_control suite name
+state_dim: 17             # ExORL cheetah state dimension (proprioceptive)
+action_dim: 6             # ExORL cheetah action dimension
+max_episode_steps: 1000   # Standard for ExORL cheetah
+
+# ---------------------------------------------------------------------------
+# Latent space
+# ---------------------------------------------------------------------------
+d_z: 64                   # Latent dimension for reward encoding
+
+# ---------------------------------------------------------------------------
+# Encoder (Transformer VAE)
+# ---------------------------------------------------------------------------
+encoder:
+  d_model: 256            # Transformer hidden dimension
+  nhead: 4                # Number of attention heads
+  num_layers: 3           # Number of transformer layers
+  ff_dim: 1024            # Feedforward dimension (4 * d_model)
+  dropout: 0.1            # Dropout rate
+  num_reward_bins: 50     # Reward discretization bins
+  reward_min: -1.0        # Minimum reward for binning
+  reward_max: 1.0         # Maximum reward for binning
+  use_sum_tokens: false   # Use concatenation (not sum) for state+reward tokens
+
+# ---------------------------------------------------------------------------
+# Decoder (MLP reward predictor)
+# ---------------------------------------------------------------------------
+decoder:
+  hidden_dims: [256, 256] # MLP hidden layer sizes
+  activation: "relu"      # Activation function
+  dropout: 0.0            # Dropout rate
+
+# ---------------------------------------------------------------------------
+# IQL Agent (conditioned on z)
+# ---------------------------------------------------------------------------
+iql:
+  hidden_dims: [256, 256] # Shared hidden dims for policy, Q, V networks
+  gamma: 0.99             # Discount factor
+  tau: 0.005              # Target network update rate (Polyak averaging)
+  expectile: 0.7          # Expectile for value loss (τ in paper)
+  alpha: 3.0              # Advantage weighting temperature (AWR)
+  lr: 3.0e-4              # Learning rate for all IQL networks
+  clip_advantage: null    # No advantage clipping by default
+  log_std_min: -5.0       # Policy log std minimum
+  log_std_max: 2.0        # Policy log std maximum
+  dropout: 0.0            # Dropout in IQL networks
+
+# ---------------------------------------------------------------------------
+# Reward Prior
+# ---------------------------------------------------------------------------
+reward_prior:
+  families: ["goal", "linear", "mlp"]  # All three families mixed uniformly
+  linear_sparsity: 0.8    # 80% zero weights for linear reward functions
+  mlp_hidden_dim: 256     # Hidden dim for random MLP reward functions
+  goal_epsilon: 0.1       # Goal-reaching tolerance
+  use_xy_prior: false     # No domain-specific XY prior for cheetah
+
+# ---------------------------------------------------------------------------
+# Training (Algorithm 1: Strided Training)
+# ---------------------------------------------------------------------------
+training:
+  seed: 0                 # Random seed (override via CLI for multi-seed runs)
+  device: "cuda"          # Device: "cuda", "cpu", or "auto"
+  
+  # Phase 1: VAE training (encoder + decoder)
+  vae_steps: 100000       # Number of VAE gradient steps
+  vae_lr: 3.0e-4          # Learning rate for encoder and decoder
+  K_encoder: 32           # Number of (state, reward) pairs for encoder input
+  K_decoder: 64           # Number of decoder query states (can be larger than K_encoder)
+  beta: 1.0               # KL divergence weight
+  vae_batch_size: 256     # Batch size for VAE training (reward function samples per step)
+  vae_eval_interval: 5000 # Steps between VAE evaluation/logging
+  vae_grad_clip: 10.0     # Gradient clipping max norm for encoder/decoder
+  
+  # Phase 2: IQL training (frozen encoder)
+  iql_steps: 1000000      # Number of IQL gradient steps (1M)
+  iql_batch_size: 256     # Batch size for IQL training (transitions)
+  iql_eval_interval: 10000 # Steps between IQL evaluation/logging
+  iql_checkpoint_interval: 100000  # Steps between IQL checkpoints
+
+# ---------------------------------------------------------------------------
+# Evaluation (Zero-Shot)
+# ---------------------------------------------------------------------------
+evaluation:
+  num_episodes: 20        # Episodes per task for evaluation
+  deterministic: true     # Use deterministic policy for evaluation
+  K_encode: 32            # Number of (state, reward) pairs to encode downstream task
+  
+  # Goal-reaching tasks
+  num_goal_tasks: 50      # Number of random goal states to evaluate
+  goal_epsilon: 0.1       # Tolerance for goal-reaching success
+  
+  # Velocity tasks
+  velocity_directions:    # Directions for velocity-based tasks
+    - [1.0, 0.0]          # Forward
+    - [-1.0, 0.0]         # Backward
+  vel_start_idx: 8        # Starting index of velocity in state vector (cheetah-specific)
+  vel_dim: 2              # Number of velocity dimensions (x, z for cheetah)
+
+# ---------------------------------------------------------------------------
+# Logging & Checkpointing
+# ---------------------------------------------------------------------------
+checkpoint_dir: "./checkpoints/exorl_cheetah"
+log_dir: "./logs/exorl_cheetah"
+use_wandb: false          # Set to true for Weights & Biases logging
+wandb_project: "fre"
+wandb_entity: null

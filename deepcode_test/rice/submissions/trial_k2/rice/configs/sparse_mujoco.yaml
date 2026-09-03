@@ -1,0 +1,132 @@
+# RICE hyper-parameters for sparse MuJoCo locomotion tasks.
+# Sparse reward definitions follow Mazoure et al. (2019):
+#   - Hopper, Walker2d: reward only if x-position > 0.6
+#   - HalfCheetah: reward only if x-position > 5.0
+
+defaults:
+  seed: 0
+  device: auto
+  n_seeds: 5
+
+# ---------------------------------------------------------------------------
+# Target policy training (base PPO agent)
+# ---------------------------------------------------------------------------
+target:
+  algorithm: ppo
+  total_timesteps: 2_000_000
+  n_steps: 2048
+  n_epochs: 10
+  batch_size: 64
+  learning_rate: 3.0e-4
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_range: 0.2
+  vf_coef: 0.5
+  ent_coef: 0.0
+  max_grad_norm: 0.5
+  normalize_advantage: true
+  use_sb3: true
+  policy_kwargs:
+    net_arch:
+      pi: [64, 64]
+      vf: [64, 64]
+    activation_fn: tanh
+
+# ---------------------------------------------------------------------------
+# Mask network training
+# ---------------------------------------------------------------------------
+mask:
+  total_timesteps: 500_000
+  alpha: 1.0e-4          # blinding bonus coefficient r_mask = r_env + alpha*(1 - xi(s))
+  n_steps: 2048
+  n_epochs: 10
+  batch_size: 64
+  learning_rate: 3.0e-4
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_range: 0.2
+  vf_coef: 0.5
+  ent_coef: 0.0
+  max_grad_norm: 0.5
+  normalize_advantage: true
+  hidden_sizes: [64, 64]
+  activation: tanh
+
+# ---------------------------------------------------------------------------
+# Critical-state buffer construction
+# ---------------------------------------------------------------------------
+critical_buffer:
+  n_trajectories: 200
+  selection_mode: top_p   # "top_p" or "threshold"
+  top_p: 0.25             # keep top 25% of states by xi(s)
+  threshold: 0.5          # used when selection_mode == "threshold"
+  capacity: null          # null = keep all selected states
+
+# ---------------------------------------------------------------------------
+# Refinement (mixed reset + RND bonus)
+# ---------------------------------------------------------------------------
+refine:
+  total_timesteps: 1_000_000
+  p: 0.5                  # probability of resetting from critical buffer
+  lambda_rnd: 0.01        # RND bonus scale r_refine = r_env + lambda_rnd * b_RND(s)
+  rnd:
+    output_dim: 128
+    hidden_sizes: [64, 64]
+    activation: tanh
+    lr: 1.0e-4
+    update_proportion: 1.0
+  n_steps: 2048
+  n_epochs: 10
+  batch_size: 64
+  learning_rate: 3.0e-4
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_range: 0.2
+  vf_coef: 0.5
+  ent_coef: 0.0
+  max_grad_norm: 0.5
+  normalize_advantage: true
+
+# ---------------------------------------------------------------------------
+# Evaluation
+# ---------------------------------------------------------------------------
+eval:
+  n_episodes: 500
+  deterministic: true
+  fidelity:
+    n_episodes: 50
+    n_samples: 200
+    n_action_samples: 8
+
+# ---------------------------------------------------------------------------
+# Per-environment overrides
+# ---------------------------------------------------------------------------
+envs:
+  SparseHopper-v3:
+    target:
+      total_timesteps: 2_000_000
+    mask:
+      total_timesteps: 500_000
+    refine:
+      p: 0.5
+      lambda_rnd: 0.01
+
+  SparseWalker2d-v3:
+    normalize_obs: true
+    target:
+      total_timesteps: 2_000_000
+    mask:
+      total_timesteps: 500_000
+    refine:
+      p: 0.5
+      lambda_rnd: 0.01
+
+  SparseHalfCheetah-v3:
+    normalize_obs: true
+    target:
+      total_timesteps: 2_000_000
+    mask:
+      total_timesteps: 500_000
+    refine:
+      p: 0.5
+      lambda_rnd: 0.001

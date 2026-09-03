@@ -1,0 +1,67 @@
+2026-08-26 09:58:46 [info     ] Grading leaf: Any version of the (MuJoCo) Reacher environment has been correctly set up and can be initialized can be used to run the experiments (further information about this environment in Appendix C.2).
+2026-08-26 09:59:38 [info     ] Model file selection raw output:
+Refine_mujoco/environment.py
+Refine_mujoco/utils.py
+Refine_mujoco/retrain.py
+Refine_mujoco/retrain.sh
+Refine_mujoco/masknet/environment.py
+Refine_mujoco/masknet/train.py
+Refine_mujoco/baseline/train.py
+README.md
+requirements.txt
+Refine_mujoco/base_class.py
+2026-08-26 09:59:38 [info     ] Model file selection raw output:
+Refine_mujoco/environment.py
+Refine_mujoco/utils.py
+Refine_mujoco/retrain.py
+Refine_mujoco/retrain.sh
+Refine_mujoco/masknet/environment.py
+Refine_mujoco/masknet/train.py
+Refine_mujoco/baseline/train.py
+README.md
+requirements.txt
+Refine_mujoco/base_class.py
+2026-08-26 10:00:31 [info     ] model response: # Expectations
+The criterion requires that any version of the MuJoCo Reacher environment is correctly set up and can be initialized to run the experiments described in the paper. According to Appendix C.2 of the paper, the authors used "Reacher-v2". A correct setup in the code should:
+
+- Import the appropriate gym environment (Reacher-v2 or a compatible version).
+- Provide the ability to create and initialize the Reacher environment (e.g., via `gym.make`).
+- Handle Reacher-specific details where necessary, such as constructing the observation vector correctly when resetting to a saved state (as required by RICE’s environment reset mechanism).
+- Be integrated into the overall refinement pipeline (training mask network, baseline training, retrain) for the Reacher environment.
+
+The submission does not need to show actual Reacher run logs, but the code must include the necessary logic to support that environment.
+
+# Reality
+The submission includes a general framework for Mujoco environments in `Refine_mujoco/`. 
+
+- In `Refine_mujoco/environment.py`, the `make_retrain_env` function takes an `env_name` argument and creates the environment via `gym.make(env_name)`. This supports any gym environment name, including `"Reacher-v2"`. 
+- Importantly, the `RetrainEnv.reset()` method contains an explicit branch for `"Reacher-v2"` that correctly reconstructs the observation from the saved MuJoCo state using the specific order of positions and velocities required by Reacher‑v2 (cos/sin of arm angles, fingertip-target vector, etc.). This demonstrates that the developer explicitly coded for Reacher’s observation space.
+- The training scripts (`baseline/train.py`, `masknet/train.py`, `retrain.py`) all accept an environment name or can be easily modified to use `"Reacher-v2"` by changing the argument. While the provided example shell script `retrain.sh` uses Hopper-v3, the pipeline is parameterized and can be applied to Reacher without any code changes.
+- The requirements file lists `gym==0.21.0` and `mujoco-py==1.50.1.68`, which are compatible with Reacher-v2. No missing dependencies would prevent initialization.
+
+Therefore, the code correctly sets up the Reacher environment and can be initialized to run the experiments.
+
+# Score
+1 (The criterion is met: the code includes explicit, correct handling for the Reacher‑v2 environment, and the environment can be initialized and used within the RICE pipeline.)
+2026-08-26 10:00:31 [info     ] model response: # Expectations
+The criterion requires that any version of the MuJoCo Reacher environment is correctly set up and can be initialized to run the experiments described in the paper. According to Appendix C.2 of the paper, the authors used "Reacher-v2". A correct setup in the code should:
+
+- Import the appropriate gym environment (Reacher-v2 or a compatible version).
+- Provide the ability to create and initialize the Reacher environment (e.g., via `gym.make`).
+- Handle Reacher-specific details where necessary, such as constructing the observation vector correctly when resetting to a saved state (as required by RICE’s environment reset mechanism).
+- Be integrated into the overall refinement pipeline (training mask network, baseline training, retrain) for the Reacher environment.
+
+The submission does not need to show actual Reacher run logs, but the code must include the necessary logic to support that environment.
+
+# Reality
+The submission includes a general framework for Mujoco environments in `Refine_mujoco/`. 
+
+- In `Refine_mujoco/environment.py`, the `make_retrain_env` function takes an `env_name` argument and creates the environment via `gym.make(env_name)`. This supports any gym environment name, including `"Reacher-v2"`. 
+- Importantly, the `RetrainEnv.reset()` method contains an explicit branch for `"Reacher-v2"` that correctly reconstructs the observation from the saved MuJoCo state using the specific order of positions and velocities required by Reacher‑v2 (cos/sin of arm angles, fingertip-target vector, etc.). This demonstrates that the developer explicitly coded for Reacher’s observation space.
+- The training scripts (`baseline/train.py`, `masknet/train.py`, `retrain.py`) all accept an environment name or can be easily modified to use `"Reacher-v2"` by changing the argument. While the provided example shell script `retrain.sh` uses Hopper-v3, the pipeline is parameterized and can be applied to Reacher without any code changes.
+- The requirements file lists `gym==0.21.0` and `mujoco-py==1.50.1.68`, which are compatible with Reacher-v2. No missing dependencies would prevent initialization.
+
+Therefore, the code correctly sets up the Reacher environment and can be initialized to run the experiments.
+
+# Score
+1 (The criterion is met: the code includes explicit, correct handling for the Reacher‑v2 environment, and the environment can be initialized and used within the RICE pipeline.)

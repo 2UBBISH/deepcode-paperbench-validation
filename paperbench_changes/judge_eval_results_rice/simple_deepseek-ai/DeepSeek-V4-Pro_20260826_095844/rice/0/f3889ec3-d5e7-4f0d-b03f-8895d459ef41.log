@@ -1,0 +1,93 @@
+2026-08-26 10:00:31 [info     ] Grading leaf: For the autonomous driving environment, the objective being optimized is $J(\theta)=\max \eta(\bar{\pi})$, as outlined in section 3.3.
+2026-08-26 10:01:27 [info     ] Model file selection raw output:
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/retrain.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/readme.md
+README.md
+2026-08-26 10:01:27 [info     ] Model file selection raw output:
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/retrain.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/readme.md
+README.md
+2026-08-26 10:03:08 [info     ] model response: # Expectations
+
+According to Section 3.3 of the paper, the original StateMask objective is \(J(\theta) = \min |\eta(\pi) - \eta(\bar{\pi})|\). Under Assumption 3.1, the authors prove that \(\eta(\bar{\pi}) \le \eta(\pi)\), which allows transforming the objective into \(J(\theta) = \max \eta(\bar{\pi})\). To prevent the trivial solution where the mask network never blinds (always outputs 0), they add an intrinsic bonus when the mask outputs 1, yielding the per‑step reward \(R'(s_t, a_t) = R(s_t, a_t) + \alpha a_t^m\). The mask network is then trained with vanilla PPO to maximize the expected discounted sum of \(R'\), which effectively maximizes \(\eta(\bar{\pi})\) plus a regularizing bonus.
+
+For the autonomous driving environment, I expect the code to:
+- Build a mask network with a binary (0/1) output.
+- At each step, decide whether to take the pre‑trained agent’s action (mask = 0) or a random action (mask = 1).
+- Modify the reward by adding a bonus proportional to the mask decision (parameter α).
+- Train the mask network using PPO, whose loss naturally maximizes the expected return of this modified reward, thereby implementing the objective \(J(\theta) = \max \eta(\bar{\pi})\) (with the bonus) as described.
+
+# Reality
+
+The submission contains the following relevant files for autonomous driving:
+- `Refine_auto_drive/train_masknet.py`
+- `Refine_auto_drive/custom_masknet_env.py`
+
+In `train_masknet.py`:
+- A PPO policy is configured with `action_shape=2` (binary mask decisions).
+- The environment is wrapped by `DriveEnvWrapper` from `custom_masknet_env.py`.
+- A standard PPO training loop (collect, train, evaluate) is executed without any custom loss; the PPO implementation itself maximizes expected discounted return.
+
+In `custom_masknet_env.py`:
+- The `DriveEnvWrapper` loads a pre‑trained agent (`self.agent`) from a checkpoint.
+- In the `step` method, given the mask network’s action (0 or 1):
+  - If action == 1, a random action is taken (`mask = 1`); otherwise the agent’s action is used (`mask = 0`).
+  - The environment reward is augmented: if `self.bonus_last` is `False`, the bonus `self.lamb * mask` is added immediately; if `True` (the actual setting), the bonus `self.lamb * self.accu_mask` is added only at episode termination. Either way, the reward signal includes an extra reward for blinding.
+- The mask network (the PPO policy being trained) receives this augmented reward, so the PPO optimizer maximizes the expected sum of augmented rewards.
+
+This precisely implements the scheme from Section 3.3: the PPO objective is to maximize the expected total reward of the perturbed agent (i.e., \(\eta(\bar{\pi})\)) with an added bonus for masking, which is exactly the transformed objective \(J(\theta) = \max \eta(\bar{\pi})\) plus the bonus term. There is no residual minimization of \(|\eta(\pi) - \eta(\bar{\pi})|\).
+
+# Score
+
+1
+
+The code correctly implements the objective \(J(\theta) = \max \eta(\bar{\pi})\) as outlined in Section 3.3, using PPO to maximize the perturbed agent’s expected return with a masking bonus.
+2026-08-26 10:03:08 [info     ] model response: # Expectations
+
+According to Section 3.3 of the paper, the original StateMask objective is \(J(\theta) = \min |\eta(\pi) - \eta(\bar{\pi})|\). Under Assumption 3.1, the authors prove that \(\eta(\bar{\pi}) \le \eta(\pi)\), which allows transforming the objective into \(J(\theta) = \max \eta(\bar{\pi})\). To prevent the trivial solution where the mask network never blinds (always outputs 0), they add an intrinsic bonus when the mask outputs 1, yielding the per‑step reward \(R'(s_t, a_t) = R(s_t, a_t) + \alpha a_t^m\). The mask network is then trained with vanilla PPO to maximize the expected discounted sum of \(R'\), which effectively maximizes \(\eta(\bar{\pi})\) plus a regularizing bonus.
+
+For the autonomous driving environment, I expect the code to:
+- Build a mask network with a binary (0/1) output.
+- At each step, decide whether to take the pre‑trained agent’s action (mask = 0) or a random action (mask = 1).
+- Modify the reward by adding a bonus proportional to the mask decision (parameter α).
+- Train the mask network using PPO, whose loss naturally maximizes the expected return of this modified reward, thereby implementing the objective \(J(\theta) = \max \eta(\bar{\pi})\) (with the bonus) as described.
+
+# Reality
+
+The submission contains the following relevant files for autonomous driving:
+- `Refine_auto_drive/train_masknet.py`
+- `Refine_auto_drive/custom_masknet_env.py`
+
+In `train_masknet.py`:
+- A PPO policy is configured with `action_shape=2` (binary mask decisions).
+- The environment is wrapped by `DriveEnvWrapper` from `custom_masknet_env.py`.
+- A standard PPO training loop (collect, train, evaluate) is executed without any custom loss; the PPO implementation itself maximizes expected discounted return.
+
+In `custom_masknet_env.py`:
+- The `DriveEnvWrapper` loads a pre‑trained agent (`self.agent`) from a checkpoint.
+- In the `step` method, given the mask network’s action (0 or 1):
+  - If action == 1, a random action is taken (`mask = 1`); otherwise the agent’s action is used (`mask = 0`).
+  - The environment reward is augmented: if `self.bonus_last` is `False`, the bonus `self.lamb * mask` is added immediately; if `True` (the actual setting), the bonus `self.lamb * self.accu_mask` is added only at episode termination. Either way, the reward signal includes an extra reward for blinding.
+- The mask network (the PPO policy being trained) receives this augmented reward, so the PPO optimizer maximizes the expected sum of augmented rewards.
+
+This precisely implements the scheme from Section 3.3: the PPO objective is to maximize the expected total reward of the perturbed agent (i.e., \(\eta(\bar{\pi})\)) with an added bonus for masking, which is exactly the transformed objective \(J(\theta) = \max \eta(\bar{\pi})\) plus the bonus term. There is no residual minimization of \(|\eta(\pi) - \eta(\bar{\pi})|\).
+
+# Score
+
+1
+
+The code correctly implements the objective \(J(\theta) = \max \eta(\bar{\pi})\) as outlined in Section 3.3, using PPO to maximize the perturbed agent’s expected return with a masking bonus.

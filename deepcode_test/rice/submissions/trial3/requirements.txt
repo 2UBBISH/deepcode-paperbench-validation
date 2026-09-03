@@ -1,0 +1,52 @@
+# RICE: Refining via Critical State Explanation
+# Python 3.8+ / 3.9
+
+# Core ML Framework
+torch>=1.10.0,<2.0.0
+torchvision>=0.11.0  # often required alongside torch
+
+# Reinforcement Learning Libraries
+stable-baselines3>=1.7.0,<2.0.0
+gym>=0.21.0,<0.26.0
+# For MuJoCo environments (install mujoco separately if needed)
+# mujoco>=2.1.0  # uncomment if using mujoco directly (not mujoco-py)
+
+# Domain-Specific RL Libraries
+# tianshou>=0.5.0  # for malware DRL agent (optional, uncomment if needed)
+# metadrive  # for autonomous driving (optional, install separately)
+
+# Numerical & Scientific
+numpy>=1.21.0,<2.0.0
+scipy>=1.7.0
+pandas>=1.3.0
+
+# Configuration & Serialization
+pyyaml>=6.0
+dill>=0.3.4  # extended pickle for complex objects
+cloudpickle>=2.0.0
+
+# Visualization & Logging
+matplotlib>=3.5.0
+seaborn>=0.11.0
+tqdm>=4.62.0
+tensorboard>=2.8.0
+
+# Utilities
+pathlib2>=2.3.0  # backport for pathlib features
+typing-extensions>=4.0.0
+
+# Testing
+pytest>=7.0.0
+pytest-cov>=3.0.0
+
+# Optional: for specific environments
+# mujoco-py>=2.1.0  # legacy MuJoCo Python bindings
+# cyborg  # CAGE Challenge 2 environment
+# malconv  # malware detection model
+# lief  # binary parsing for malware
+# ember  # EMBER malware features
+# di-drive  # autonomous driving (DI-drive)
+
+# Development
+ipython>=8.0.0
+jupyter>=1.0.0

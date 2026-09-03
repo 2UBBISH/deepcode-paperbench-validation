@@ -1,0 +1,89 @@
+# Environment-specific hyperparameters for Hopper-v4 (MuJoCo)
+# Overrides default_mask.yaml and default_refine.yaml values
+# Reference: Table 3 in RICE paper
+
+# --- Mask Network Training Overrides ---
+mask_network:
+  hidden_sizes: [128, 128]  # Same as default
+  activation: "tanh"
+
+alpha: 0.0001  # Intrinsic reward coefficient for masking action
+
+ppo:
+  learning_rate: 3.0e-4
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_epsilon: 0.2
+  value_loss_coef: 0.5
+  entropy_coef: 0.01
+  max_grad_norm: 0.5
+  ppo_epochs: 10
+  batch_size: 64
+
+training:
+  total_steps: 300000
+  steps_per_iteration: 2048
+  eval_interval: 10
+  eval_episodes: 10
+  save_interval: 50
+  seed: 42
+
+# --- Refining Phase Overrides ---
+# Hopper uses p=0.25, λ=0.001 (Table 3)
+critical_state:
+  num_episodes: 100
+  top_k_per_episode: 1
+  max_critical_states: 100
+
+mixed_init:
+  p_mixed: 0.25  # 25% probability of resetting to a critical state
+
+rnd:
+  lambda_coef: 0.001  # Exploration bonus coefficient
+  hidden_sizes: [64, 64]
+  embedding_dim: 64
+  activation: "relu"
+  learning_rate: 1.0e-4
+  normalize_obs: true
+  obs_rms_decay: 0.99
+  normalize_bonus: true
+  bonus_decay: 0.99
+  update_epochs: 4
+  batch_size: 256
+
+refine_ppo:
+  learning_rate: 3.0e-4
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_epsilon: 0.2
+  value_loss_coef: 0.5
+  entropy_coef: 0.01
+  max_grad_norm: 0.5
+  ppo_epochs: 10
+  batch_size: 64
+  normalize_advantages: true
+  normalize_obs: true
+
+policy:
+  hidden_sizes: [64, 64]  # Standard MuJoCo PPO architecture
+  value_hidden_sizes: [64, 64]
+  policy_std: 0.0  # 0.0 = learn state-independent std
+  activation: "tanh"
+
+refine_training:
+  total_steps: 1000000  # 1M steps for refining
+  steps_per_iteration: 2048
+  eval_interval: 10
+  eval_episodes: 10
+  eval_max_steps: 1000
+  save_interval: 50
+  seed: 42
+
+device: "cuda"
+
+# Environment-specific metadata
+env_name: "Hopper-v4"
+env_type: "mujoco"
+state_dim: 11
+action_dim: 3
+max_episode_steps: 1000

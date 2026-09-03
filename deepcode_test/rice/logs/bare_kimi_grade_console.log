@@ -1,0 +1,40 @@
+==== [0/4] 前置检查 ====
+  ✅ Docker 在跑
+  ✅ 提交根目录只含合法 paper id
+==== [1/4] 提交清点与非空校验 ====
+  bare_kimi      文件 38   python 18    ✅
+
+==== [2/4] 预估与闸门 ====
+  论文     : rice
+  提交份数 : 1  → paperbench.n_tries=1(不设则只判 1 份!)
+  成本预估 : 实测约 ¥38/份 → 本次约 ¥38(脚本报价上限 ¥60)
+  闸门     : 本计划总预算 ¥600(2026-08-28 由 ¥500 上调)
+  ⚠️ 已判过的提交请先移出 /home/deepevol/pb_submissions/rice,否则会重判、白花钱
+
+==== [3/4] 判分(code_only · DeepSeek-V4-Pro 裁判恒定)2026-09-02 16:19:13 ====
+ 'other_stats': {'n_is_valid_git_repo': 0,
+                 'n_nontrivial_git_log': 0,
+                 'n_repro_script_exists': 0,
+                 'repro_mean_time': nan},
+ 'params': {'agent': 'direct_submission_solver',
+            'code_only': True,
+            'n_samples': 1,
+            'n_tries': 1,
+            'paper_split': 'rice',
+            'resources_provided': False,
+            'skip_reproduction': False},
+ 'run_group_id': '2026-09-02T08-19-15-GMT_run-group_direct_submission_solver',
+ 'run_health': {'n_gradings_failed': 0,
+                'n_reproductions_failed': 1,
+                'n_rollouts_failed': 0}}
+Evaluated 1 tasks with PaperBench-direct_submission_solver[0m [36mcomponent[0m=[35mnanoeval.evaluation[0m
+[2m2026-09-02T08:25:18.266005Z[0m [[32m[1minfo     [0m] [1m[36m[1mEvalboard Summary: unknown, add in pr?[0m[0m [36mcomponent[0m=[35mnanoeval.evaluation[0m
+ubmission_solver (r_id=2609020819157AM3HO6E, m=nanoeval): 100%|██████████| 1/1 [06:02<00:00, 362.33s/it, corr=0, errs=0, fail=1]
+[2m2026-09-02T08:25:18.266536Z[0m [[33m[1mwarning  [0m] [1mUnable to find model name, using fallback name='nanoeval'[0m [36mcomponent[0m=[35mnanoeval.eval[0m
+[2m2026-09-02T08:25:18.267142Z[0m [[33m[1mwarning  [0m] [1mNo slack integration configured, so not sending user notification[0m [36mcomponent[0m=[35mnanoeval.library_config[0m
+
+==== [4/4] 结果与有效性核验 2026-09-02 16:25:18 ====
+  rice_002361d8-e6a4-4  score=0.4633  叶=178  无效叶=0  OK
+
+  判分结果已复制到 /home/deepevol/deepevol/deepcode_test/scripts/../rice/grades
+==== 记得回填 docs/HANDOFF_FRE.md ====

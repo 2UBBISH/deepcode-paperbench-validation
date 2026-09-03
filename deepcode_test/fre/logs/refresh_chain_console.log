@@ -1,0 +1,7 @@
+[09-03 07:45:13] 🔗 收尾链启动:两轮已结束,开始判分刷新(裁判=Paratera DeepSeek-V4-Pro)
+[09-03 07:45:26] ✅ 探针通过
+[09-03 07:45:27] fre 批清单: anchor, bare_v4, trial1, trial5, trial_fx1, trial_fx2
+[09-03 09:28:56] fre 批完成(判分组 2026-09-02T23-45-29-GMT_run-group_direct_submission_solver),最大无效叶=0
+[09-03 09:28:56] rice 批清单: bare_kimi, bare_v4, trial2, trial3, trial_k1, trial_k2
+[09-03 10:57:56] rice 批完成(判分组 2026-09-03T01-29-00-GMT_run-group_direct_submission_solver)
+[09-03 10:57:56] 🏁 收尾链全部完成:fre 组=2026-09-02T23-45-29-GMT_run-group_direct_submission_solver rice 组=2026-09-03T01-29-00-GMT_run-group_direct_submission_solver

@@ -1,0 +1,63 @@
+2026-08-26 09:58:46 [info     ] Grading leaf: For the autonomous driving environment, code for pretraining the policy network agent has been setup
+2026-08-26 10:00:01 [info     ] Model file selection raw output:
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/retrain.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/readme.md
+2026-08-26 10:00:01 [info     ] Model file selection raw output:
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/retrain.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/readme.md
+2026-08-26 10:00:38 [info     ] model response: # Expectations
+The criterion requires that the submission includes actual code for **pretraining a policy network agent** in the autonomous driving environment (MetaDrive "Macro-v1"). Based on the paper, this involves:
+- Setting up the MetaDrive autonomous driving environment (using the `Macro-v1` environment).
+- Defining a PPO‑compatible policy network (the paper mentions using the default network structure from DI‑drive, with an encoder hidden size list of `[128, 128, 64]`).
+- Implementing a training loop that collects experience and updates the agent using the PPO algorithm, ultimately producing a pretrained model checkpoint.
+
+The expectation is that one or more source files contain a correct, runnable implementation of the above (not just descriptions or comments).
+
+# Reality
+The submission provides a file **`Refine_auto_drive/train_baseline.py`**. This script:
+- Imports `metadrive`, `gym`, and DI‑engine components (`PPOPolicy`, `BaseLearner`, etc.).
+- Defines a configuration `metadrive_macro_config` that specifies:
+  - The environment as `gym.make("Macro-v1", config=env_cfg)` (wrapped with `DriveEnvWrapper`).
+  - A policy with `action_space='discrete'`, `obs_shape=[5, 200, 200]`, `action_shape=5`, and `encoder_hidden_size_list=[128, 128, 64]` – matching the paper’s description.
+- Compiles the configuration and creates the necessary DI‑engine objects (collector environment, evaluator environment, PPO policy, learner, collector, evaluator) via `compile_config`.
+- Runs a standard training loop that repeatedly collects samples and trains the policy using `learner.train()` until an evaluation stop condition is met.
+
+This script directly implements the pretraining procedure described in the paper. There is no missing logic – it sets up the correct environment, defines the policy network with the specified architecture, and uses PPO to train the agent. The learner module (`learner.py`) supports the training step, and the environment wrapper (`core.envs.DriveEnvWrapper`) is also present. Therefore, the submission contains the required pretraining code.
+
+# Score
+**1** – The code for pretraining the policy network agent in the autonomous driving environment is present and correctly implemented in `train_baseline.py`.
+2026-08-26 10:00:38 [info     ] model response: # Expectations
+The criterion requires that the submission includes actual code for **pretraining a policy network agent** in the autonomous driving environment (MetaDrive "Macro-v1"). Based on the paper, this involves:
+- Setting up the MetaDrive autonomous driving environment (using the `Macro-v1` environment).
+- Defining a PPO‑compatible policy network (the paper mentions using the default network structure from DI‑drive, with an encoder hidden size list of `[128, 128, 64]`).
+- Implementing a training loop that collects experience and updates the agent using the PPO algorithm, ultimately producing a pretrained model checkpoint.
+
+The expectation is that one or more source files contain a correct, runnable implementation of the above (not just descriptions or comments).
+
+# Reality
+The submission provides a file **`Refine_auto_drive/train_baseline.py`**. This script:
+- Imports `metadrive`, `gym`, and DI‑engine components (`PPOPolicy`, `BaseLearner`, etc.).
+- Defines a configuration `metadrive_macro_config` that specifies:
+  - The environment as `gym.make("Macro-v1", config=env_cfg)` (wrapped with `DriveEnvWrapper`).
+  - A policy with `action_space='discrete'`, `obs_shape=[5, 200, 200]`, `action_shape=5`, and `encoder_hidden_size_list=[128, 128, 64]` – matching the paper’s description.
+- Compiles the configuration and creates the necessary DI‑engine objects (collector environment, evaluator environment, PPO policy, learner, collector, evaluator) via `compile_config`.
+- Runs a standard training loop that repeatedly collects samples and trains the policy using `learner.train()` until an evaluation stop condition is met.
+
+This script directly implements the pretraining procedure described in the paper. There is no missing logic – it sets up the correct environment, defines the policy network with the specified architecture, and uses PPO to train the agent. The learner module (`learner.py`) supports the training step, and the environment wrapper (`core.envs.DriveEnvWrapper`) is also present. Therefore, the submission contains the required pretraining code.
+
+# Score
+**1** – The code for pretraining the policy network agent in the autonomous driving environment is present and correctly implemented in `train_baseline.py`.

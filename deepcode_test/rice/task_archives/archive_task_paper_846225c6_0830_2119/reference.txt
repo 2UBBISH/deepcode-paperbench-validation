@@ -1,0 +1,164 @@
+Now I have gathered sufficient information to compile my analysis. Let me produce the final output.
+
+```json
+{
+    "selected_references": [
+        {
+            "rank": 1,
+            "title": "Stable-Baselines3: Reliable Reinforcement Learning Implementations",
+            "authors": ["Raffin, A.", "Hill, A.", "Gleave, A.", "Kanervisto, A.", "Ernestus, M.", "Dormann, N."],
+            "year": "2021",
+            "relevance_score": 0.95,
+            "citation_context": "The paper uses PPO algorithm extensively for both mask network training (Algorithm 1) and agent refining (Algorithm 2). Stable-Baselines3 is cited as providing reliable RL implementations and serves as the foundational infrastructure that RICE builds upon.",
+            "key_contributions": [
+                "Provides production-ready, well-tested implementations of PPO, SAC, and other RL algorithms in PyTorch",
+                "Unified API for training, evaluation, and hyperparameter tuning across algorithms",
+                "Excellent documentation with tutorials and migration guides",
+                "Integration with experiment tracking tools (Weights & Biases, Hugging Face)"
+            ],
+            "implementation_value": "The most valuable reference for implementing RICE. Its PPO implementation is clean, modular, and well-documented — ideal as a base for building RICE's training pipeline. The code structure demonstrates best practices for RL algorithm implementation including proper advantage estimation, value function clipping, and mini-batch updates that RICE relies on.",
+            "github_info": {
+                "repository_url": "https://github.com/DLR-RM/stable-baselines3",
+                "stars_count": "~10,000+",
+                "last_updated": "2025 (actively maintained)",
+                "repository_quality": "Excellent — professional-grade codebase with CI/CD, extensive test coverage, type hints, PEP8 compliance, and comprehensive documentation on ReadTheDocs",
+                "key_features": [
+                    "Clean PPO implementation with support for continuous and discrete action spaces",
+                    "Modular policy architecture (MlpPolicy, CnnPolicy, MultiInputPolicy)",
+                    "Built-in Tensorboard logging and evaluation callbacks",
+                    "RL Baselines3 Zoo for hyperparameter tuning and benchmarking",
+                    "SB3-Contrib for experimental features like RND exploration bonuses"
+                ],
+                "documentation_quality": "Excellent — comprehensive online documentation with tutorials, migration guides, API reference, and integration guides",
+                "community_activity": "Very active — regular updates, responsive issue tracking, active Discord community, widely adopted in research and industry"
+            },
+            "original_reference": "Raffin, A., Hill, A., Gleave, A., Kanervisto, A., Ernestus, M., and Dormann, N. Stable-baselines3: Reliable reinforcement learning implementations. Journal of Machine Learning Research, 2021."
+        },
+        {
+            "rank": 2,
+            "title": "Exploration by Random Network Distillation",
+            "authors": ["Burda, Y.", "Edwards, H.", "Storkey, A.", "Klimov, O."],
+            "year": "2018",
+            "relevance_score": 0.92,
+            "citation_context": "RICE directly adopts Random Network Distillation (RND) as its exploration mechanism: 'Motivated by this, we adopt Random Network Distillation (RND) (Burda et al., 2018) which is proved to be an effective exploration bonus.' The RND bonus calculation formula is explicitly used in Algorithm 2.",
+            "key_contributions": [
+                "Introduced Random Network Distillation — a prediction-based exploration bonus for RL",
+                "Demonstrated that RND effectively encourages exploration in large continuous state spaces where count-based methods fail",
+                "Achieved state-of-the-art results on hard exploration games like Montezuma's Revenge",
+                "Provided theoretical justification for using prediction error as intrinsic motivation"
+            ],
+            "implementation_value": "Essential for implementing RICE's exploration component. The repository contains the exact RND bonus calculation: R_t^RND = ||f(s_{t+1}) - f̂(s_{t+1})||², which RICE uses directly. The code demonstrates how to integrate intrinsic rewards with task rewards, maintain target and predictor networks, and normalize exploration bonuses — all critical for reproducing RICE.",
+            "github_info": {
+                "repository_url": "https://github.com/openai/random-network-distillation",
+                "stars_count": "~800+",
+                "last_updated": "2024 (archived — code provided as-is, no updates expected)",
+                "repository_quality": "Good — clean reference implementation from OpenAI with clear structure, though archived and no longer maintained",
+                "key_features": [
+                    "Clean implementation of RND exploration bonus with target and predictor networks",
+                    "Integration with PPO for policy optimization",
+                    "Support for MPI-based distributed training across multiple GPUs",
+                    "Atari environment support with tuned hyperparameters"
+                ],
+                "documentation_quality": "Adequate — README with installation and usage instructions, blog post with detailed explanation of the method",
+                "community_activity": "Low (archived) — but the code is stable and serves as the canonical reference implementation"
+            },
+            "original_reference": "Burda, Y., Edwards, H., Storkey, A., and Klimov, O. Exploration by random network distillation. In Proc. of ICLR, 2018."
+        },
+        {
+            "rank": 3,
+            "title": "Proximal Policy Optimization Algorithms",
+            "authors": ["Schulman, J.", "Wolski, F.", "Dhariwal, P.", "Radford, A.", "Klimov, O."],
+            "year": "2017",
+            "relevance_score": 0.90,
+            "citation_context": "PPO is the core training algorithm used throughout RICE: 'Specifically, we utilize the Proximal Policy Optimization (PPO) algorithm (Schulman et al., 2017) for refining the DRL agent, leveraging the monotonicity of PPO.' It is used for both mask network training (Algorithm 1) and agent refining (Algorithm 2). PPO fine-tuning also serves as a baseline.",
+            "key_contributions": [
+                "Introduced PPO — a scalable, sample-efficient policy gradient method with monotonic improvement guarantees",
+                "Proposed clipped surrogate objective that simplifies TRPO while maintaining its stability",
+                "Demonstrated state-of-the-art performance across continuous control and Atari benchmarks",
+                "Became the de facto standard on-policy RL algorithm used in countless applications"
+            ],
+            "implementation_value": "The foundational algorithm that RICE is built upon. Understanding and implementing PPO correctly is essential for reproducing RICE. The OpenAI Baselines implementation provides the canonical reference code, while the PyTorch version by Kostrikov offers a more accessible modern implementation. Key components needed: clipped surrogate objective, generalized advantage estimation (GAE), value function clipping, and mini-batch updates.",
+            "github_info": {
+                "repository_url": "https://github.com/openai/baselines (canonical) / https://github.com/ikostrikov/pytorch-a2c-ppo-acktr-gail (PyTorch)",
+                "stars_count": "~15,000+ (OpenAI Baselines) / ~3,500+ (PyTorch version)",
+                "last_updated": "2024 (OpenAI Baselines — maintenance mode) / 2021 (PyTorch version)",
+                "repository_quality": "Excellent — OpenAI Baselines is the gold standard reference implementation; PyTorch version is widely used and well-tested across environments",
+                "key_features": [
+                    "Canonical PPO implementation with clipped surrogate objective",
+                    "Generalized Advantage Estimation (GAE) for variance reduction",
+                    "Support for both continuous (MuJoCo) and discrete (Atari) action spaces",
+                    "Multi-environment parallel sampling for efficient training",
+                    "PyTorch version includes GAIL implementation used in RICE Experiment IV"
+                ],
+                "documentation_quality": "Good — OpenAI Baselines has README and blog posts; PyTorch version has detailed README with hyperparameter recommendations",
+                "community_activity": "Moderate — Baselines is in maintenance mode but stable; PyTorch version is widely forked and referenced"
+            },
+            "original_reference": "Schulman, J., Wolski, F., Dhariwal, P., Radford, A., and Klimov, O. Proximal policy optimization algorithms. arXiv preprint arXiv:1707.06347, 2017."
+        },
+        {
+            "rank": 4,
+            "title": "MetaDrive: Composing Diverse Driving Scenarios for Generalizable Reinforcement Learning",
+            "authors": ["Li, Q.", "Peng, Z.", "Feng, L.", "Zhang, Q.", "Xue, Z.", "Zhou, B."],
+            "year": "2022",
+            "relevance_score": 0.85,
+            "citation_context": "MetaDrive is one of the key real-world application environments used to evaluate RICE: 'autonomous driving (Li et al., 2022)' is listed among the four DRL-based real-world applications. The paper also mentions MetaDrive in the Discussion section as a simulation platform for DRL training.",
+            "key_contributions": [
+                "Introduced a compositional driving simulator that synthesizes infinite diverse driving scenarios",
+                "Enabled research on generalizable RL by providing varied road maps and traffic settings",
+                "Lightweight design achieving 1000+ FPS on standard PCs with realistic physics",
+                "Support for multiple sensor modalities (RGB, depth, semantic, point cloud, top-down maps)"
+            ],
+            "implementation_value": "Critical for reproducing RICE's autonomous driving experiments. The simulator provides the exact environment interface needed. Its procedural generation of diverse scenarios is directly relevant to RICE's goal of expanding state coverage — the simulator's design philosophy aligns with RICE's exploration-based refinement approach.",
+            "github_info": {
+                "repository_url": "https://github.com/metadriverse/metadrive",
+                "stars_count": "~1,000+",
+                "last_updated": "2025 (actively maintained)",
+                "repository_quality": "Excellent — professional-grade simulator with CI/CD, comprehensive documentation, pip-installable package, and active development",
+                "key_features": [
+                    "Procedural generation of infinite diverse driving scenarios",
+                    "Multiple sensor modalities (RGB, depth, semantic, point cloud)",
+                    "Realistic physics simulation with multi-agent traffic",
+                    "OpenAI Gym-compatible interface for easy RL integration",
+                    "Support for both research (generalizable RL) and real-world data replay"
+                ],
+                "documentation_quality": "Excellent — comprehensive documentation on ReadTheDocs with tutorials, API reference, and example notebooks (including Colab)",
+                "community_activity": "Active — regular updates, responsive to issues, growing research community adoption"
+            },
+            "original_reference": "Li, Q., Peng, Z., Feng, L., Zhang, Q., Xue, Z., and Zhou, B. Metadrive: Composing diverse driving scenarios for generalizable reinforcement learning. IEEE Transactions on Pattern Analysis and Machine Intelligence, 2022."
+        },
+        {
+            "rank": 5,
+            "title": "Tianshou: A Highly Modularized Deep Reinforcement Learning Library",
+            "authors": ["Weng, J.", "Chen, H.", "Yan, D.", "You, K.", "Duburcq, A.", "Zhang, M.", "Su, Y.", "Su, H.", "Zhu, J."],
+            "year": "2022",
+            "relevance_score": 0.82,
+            "citation_context": "Tianshou is cited in the references as a DRL library. While not directly used in RICE's experiments, its highly modularized design makes it an excellent alternative foundation for implementing custom algorithms like RICE that require combining PPO training with explanation methods and exploration bonuses.",
+            "key_contributions": [
+                "Introduced a highly modularized DRL library with clear separation between algorithms, policies, and data collection",
+                "Provides unified interfaces for on-policy, off-policy, and offline RL algorithms",
+                "Comprehensive support for both research prototyping and production deployment",
+                "Extensive built-in support for customizing and combining algorithm components"
+            ],
+            "implementation_value": "Its modular architecture is particularly valuable for implementing RICE, which requires combining multiple components (PPO training, RND exploration bonus, mask network, mixed initial distribution). Tianshou's clean separation of concerns makes it easier to integrate these components than monolithic implementations. The v2 API with separate Algorithm and Policy abstractions is ideal for RICE's multi-component design.",
+            "github_info": {
+                "repository_url": "https://github.com/thu-ml/tianshou",
+                "stars_count": "~8,000+",
+                "last_updated": "2025 (actively maintained, v2 recently released)",
+                "repository_quality": "Excellent — professional-grade with CI/CD, high test coverage, type hints, comprehensive documentation, and PyPI releases",
+                "key_features": [
+                    "Clear separation between Algorithm, Policy, and Trainer abstractions",
+                    "Support for on-policy (PPO), off-policy (SAC, DQN), and offline RL",
+                    "Built-in exploration strategies including intrinsic reward support",
+                    "Highly customizable training loop with callback system",
+                    "Extensive benchmark results and tuned hyperparameters"
+                ],
+                "documentation_quality": "Excellent — comprehensive documentation with tutorials, API reference, benchmark results, and migration guides",
+                "community_activity": "Very active — regular releases, active issue resolution, growing adoption in Chinese and international RL research communities"
+            },
+            "original_reference": "Weng, J., Chen, H., Yan, D., You, K., Duburcq, A., Zhang, M., Su, Y., Su, H., and Zhu, J. Tianshou: A highly modularized deep reinforcement learning library. Journal of Machine Learning Research, 2022."
+        }
+    ],
+    "analysis_summary": "The RICE paper proposes a refining scheme for RL that combines explanation methods (StateMask-based), mixed initial state distributions, and RND exploration bonuses, all trained with PPO. After analyzing all 57 references in the paper, I identified approximately 17 references with GitHub repositories. The selection process prioritized references that provide core algorithmic components needed to implement RICE: (1) Stable-Baselines3 for its production-ready PPO implementation and RL infrastructure — the most valuable single reference for building RICE; (2) RND for the exact exploration bonus mechanism that RICE directly adopts; (3) PPO as the foundational training algorithm used throughout both mask network training and agent refining; (4) MetaDrive as the key autonomous driving environment for reproducing experiments; and (5) Tianshou as a highly modular alternative library whose architecture is particularly well-suited for RICE's multi-component design. Environment-specific repositories (malware_rl, cage-challenge-2, pto-selfish-mining) were considered but ranked lower as they provide task-specific environments rather than algorithmic components. The JSRL baseline repository could not be located (multiple URL attempts returned 404). StateMask was excluded per constraints as it is by the same authors as RICE.",
+    "github_repositories_found": 17
+}
+```

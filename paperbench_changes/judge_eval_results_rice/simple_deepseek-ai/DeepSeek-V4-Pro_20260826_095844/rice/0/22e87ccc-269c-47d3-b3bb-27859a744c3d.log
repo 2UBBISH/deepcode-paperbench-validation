@@ -1,0 +1,69 @@
+2026-08-26 09:58:46 [info     ] Grading leaf: The (MuJoCo) Reacher environment is version "Reacher-v2" (further information about this environment in Appendix C.2).
+2026-08-26 09:59:38 [info     ] Model file selection raw output:
+Refine_mujoco/environment.py
+Refine_mujoco/retrain.py
+Refine_mujoco/masknet/environment.py
+Refine_mujoco/baseline/train.py
+Refine_mujoco/masknet/train.py
+Refine_mujoco/utils.py
+Refine_mujoco/masknet/gen_fid.py
+Refine_mujoco/masknet/fid_test.py
+Refine_mujoco/retrain.sh
+Refine_mujoco/masknet/cus_PPO.py
+2026-08-26 09:59:38 [info     ] Model file selection raw output:
+Refine_mujoco/environment.py
+Refine_mujoco/retrain.py
+Refine_mujoco/masknet/environment.py
+Refine_mujoco/baseline/train.py
+Refine_mujoco/masknet/train.py
+Refine_mujoco/utils.py
+Refine_mujoco/masknet/gen_fid.py
+Refine_mujoco/masknet/fid_test.py
+Refine_mujoco/retrain.sh
+Refine_mujoco/masknet/cus_PPO.py
+2026-08-26 10:01:02 [info     ] model response: # Expectations
+The paper's Appendix C.2 specifies that the Reacher environment used is exactly "Reacher‑v2" (from the MuJoCo suite). To meet this criterion, the submission must contain code that correctly instantiates the Gym environment with the version string `"Reacher-v2"`, and optionally handle any environment‑specific observation or state‑restoration logic, as described in the paper (e.g., the custom observation vector needed for the Reacher task). Even if a dedicated script for Reacher is not provided, the presence of a general framework that explicitly supports the `"Reacher‑v2"` name and configures the environment appropriately counts as a correct implementation.
+
+# Reality
+The file `Refine_mujoco/environment.py` defines a `RetrainEnv` wrapper and a `make_retrain_env` function. The wrapper’s `reset` method contains a conditional branch:
+```python
+if self.env_name == "Reacher-v2":
+    theta = self.env.sim.data.qpos.flat[:2]
+    obs = np.concatenate(
+    [
+        np.cos(theta),
+        np.sin(theta),
+        self.env.sim.data.qpos.flat[2:],
+        self.env.sim.data.qvel.flat[:2],
+        self.env.get_body_com("fingertip") - self.env.get_body_com("target"),
+    ])
+```
+This shows the code is specifically aware of the `"Reacher-v2"` environment and knows how to reconstruct its observation vector correctly (matching the standard Reacher‑v2 observation space). The environment is created inside `make_retrain_env` via `env = gym.make(env_name)`, and when `env_name` is `"Reacher-v2"` the wrapper will be applied, resulting in a valid Reacher‑v2 environment. No additional Reacher‑specific scripts are strictly required; the implementation already contains the necessary logic to use Reacher‑v2.
+
+# Score
+1
+
+*Explanation:* The submission includes code (in `Refine_mujoco/environment.py`) that explicitly handles the `"Reacher-v2"` environment by name, uses `gym.make` to instantiate it, and correctly prepares its observations. This satisfies the requirement that the Reacher environment is version “Reacher‑v2” in the reproduction attempt.
+2026-08-26 10:01:02 [info     ] model response: # Expectations
+The paper's Appendix C.2 specifies that the Reacher environment used is exactly "Reacher‑v2" (from the MuJoCo suite). To meet this criterion, the submission must contain code that correctly instantiates the Gym environment with the version string `"Reacher-v2"`, and optionally handle any environment‑specific observation or state‑restoration logic, as described in the paper (e.g., the custom observation vector needed for the Reacher task). Even if a dedicated script for Reacher is not provided, the presence of a general framework that explicitly supports the `"Reacher‑v2"` name and configures the environment appropriately counts as a correct implementation.
+
+# Reality
+The file `Refine_mujoco/environment.py` defines a `RetrainEnv` wrapper and a `make_retrain_env` function. The wrapper’s `reset` method contains a conditional branch:
+```python
+if self.env_name == "Reacher-v2":
+    theta = self.env.sim.data.qpos.flat[:2]
+    obs = np.concatenate(
+    [
+        np.cos(theta),
+        np.sin(theta),
+        self.env.sim.data.qpos.flat[2:],
+        self.env.sim.data.qvel.flat[:2],
+        self.env.get_body_com("fingertip") - self.env.get_body_com("target"),
+    ])
+```
+This shows the code is specifically aware of the `"Reacher-v2"` environment and knows how to reconstruct its observation vector correctly (matching the standard Reacher‑v2 observation space). The environment is created inside `make_retrain_env` via `env = gym.make(env_name)`, and when `env_name` is `"Reacher-v2"` the wrapper will be applied, resulting in a valid Reacher‑v2 environment. No additional Reacher‑specific scripts are strictly required; the implementation already contains the necessary logic to use Reacher‑v2.
+
+# Score
+1
+
+*Explanation:* The submission includes code (in `Refine_mujoco/environment.py`) that explicitly handles the `"Reacher-v2"` environment by name, uses `gym.make` to instantiate it, and correctly prepares its observations. This satisfies the requirement that the Reacher environment is version “Reacher‑v2” in the reproduction attempt.

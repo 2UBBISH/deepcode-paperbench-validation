@@ -1,0 +1,53 @@
+2026-08-26 10:00:48 [info     ] Grading leaf: For the selfish mining environment, the refining method has been implemented to support the hyperparameter $\lambda$ to govern the trade-off between task reward and exploration bonus, as outlined in section 3.3.  The $\lambda$ hyperparameter must be mutable i.e., a hyperparameter whose value can be changed (without having to edit the code directly). Alternative hyperparameter names are allowed, as long as the functionality remains the same.
+2026-08-26 10:01:19 [info     ] Model file selection raw output:
+Refine_selfish_mining/retrain.py
+Refine_selfish_mining/utils.py
+Refine_selfish_mining/rnd_model.py
+Refine_selfish_mining/rnd_policy.py
+Refine_selfish_mining/masknet/utils.py
+Refine_selfish_mining/masknet/sample_mask_score.py
+Refine_selfish_mining/masknet/train.py
+Refine_selfish_mining/baseline/train_ppo.py
+Refine_selfish_mining/baseline/blockchain_mdps/base/blockchain_simulator/mdp_blockchain_simulator_retrain.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/utility/parameter_schedule.py
+2026-08-26 10:01:19 [info     ] Model file selection raw output:
+Refine_selfish_mining/retrain.py
+Refine_selfish_mining/utils.py
+Refine_selfish_mining/rnd_model.py
+Refine_selfish_mining/rnd_policy.py
+Refine_selfish_mining/masknet/utils.py
+Refine_selfish_mining/masknet/sample_mask_score.py
+Refine_selfish_mining/masknet/train.py
+Refine_selfish_mining/baseline/train_ppo.py
+Refine_selfish_mining/baseline/blockchain_mdps/base/blockchain_simulator/mdp_blockchain_simulator_retrain.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/utility/parameter_schedule.py
+2026-08-26 10:01:19 [info     ] File /home/deepevol/deepevol/frontier-evals/project/paperbench/data/judge_eval/rice/0/submission/Refine_selfish_mining/baseline/blockchain_mdps/base/blockchain_simulator/mdp_blockchain_simulator_retrain.py not found!
+2026-08-26 10:01:19 [info     ] File /home/deepevol/deepevol/frontier-evals/project/paperbench/data/judge_eval/rice/0/submission/Refine_selfish_mining/baseline/blockchain_mdps/base/blockchain_simulator/mdp_blockchain_simulator_retrain.py not found!
+2026-08-26 10:02:16 [info     ] model response: # Expectations
+According to Section 3.3 of the paper, the refining method adds an exploration bonus from Random Network Distillation (RND) to the task reward:  
+\(R'(s_t, a_t) = R(s_t, a_t) + \lambda \|f(s_{t+1}) - \hat{f}(s_{t+1})\|^2\).  
+The hyperparameter \(\lambda\) controls the trade‑off between task reward and exploration bonus. The criterion requires that, for the selfish mining environment, the refining implementation provides this \(\lambda\) as a **mutable** hyperparameter (values can be changed without editing the code, e.g., via a command‑line argument or configuration file). An alternative name for the parameter is acceptable as long as its functionality (scaling the RND bonus) is preserved.
+
+# Reality
+The submission’s code for refining in the selfish mining environment is in `Refine_selfish_mining/retrain.py`. It uses the `argparse` module to define a command‑line argument `--rnd-bonus-scale` (type `float`, default `1e-2`). This argument is stored in `args.rnd_bonus_scale` and passed to `RNDPolicy` as `reward_scale`. Inside `Refine_selfish_mining/rnd_policy.py`, the `process_fn` method computes the RND bonus and adds it to the original reward with:
+```python
+batch.rew += to_numpy(bonus * self.reward_scale)
+```
+Thus, `--rnd-bonus-scale` directly controls the trade‑off, effectively serving as \(\lambda\). Because it is a command‑line argument, the user can change its value without modifying the source code. The underlying RND bonus computation (`Refine_selfish_mining/rnd_model.py`, `compute_bonus`) uses the squared difference between target and predictor features, matching the paper’s intrinsic reward definition.
+
+# Score
+**1** – The refining method for the selfish mining environment correctly implements a mutable hyperparameter (`--rnd‑bonus‑scale`) that governs the scaling of the RND exploration bonus, fulfilling the requirement for \(\lambda\) as outlined in Section 3.3.
+2026-08-26 10:02:16 [info     ] model response: # Expectations
+According to Section 3.3 of the paper, the refining method adds an exploration bonus from Random Network Distillation (RND) to the task reward:  
+\(R'(s_t, a_t) = R(s_t, a_t) + \lambda \|f(s_{t+1}) - \hat{f}(s_{t+1})\|^2\).  
+The hyperparameter \(\lambda\) controls the trade‑off between task reward and exploration bonus. The criterion requires that, for the selfish mining environment, the refining implementation provides this \(\lambda\) as a **mutable** hyperparameter (values can be changed without editing the code, e.g., via a command‑line argument or configuration file). An alternative name for the parameter is acceptable as long as its functionality (scaling the RND bonus) is preserved.
+
+# Reality
+The submission’s code for refining in the selfish mining environment is in `Refine_selfish_mining/retrain.py`. It uses the `argparse` module to define a command‑line argument `--rnd-bonus-scale` (type `float`, default `1e-2`). This argument is stored in `args.rnd_bonus_scale` and passed to `RNDPolicy` as `reward_scale`. Inside `Refine_selfish_mining/rnd_policy.py`, the `process_fn` method computes the RND bonus and adds it to the original reward with:
+```python
+batch.rew += to_numpy(bonus * self.reward_scale)
+```
+Thus, `--rnd-bonus-scale` directly controls the trade‑off, effectively serving as \(\lambda\). Because it is a command‑line argument, the user can change its value without modifying the source code. The underlying RND bonus computation (`Refine_selfish_mining/rnd_model.py`, `compute_bonus`) uses the squared difference between target and predictor features, matching the paper’s intrinsic reward definition.
+
+# Score
+**1** – The refining method for the selfish mining environment correctly implements a mutable hyperparameter (`--rnd‑bonus‑scale`) that governs the scaling of the RND exploration bonus, fulfilling the requirement for \(\lambda\) as outlined in Section 3.3.

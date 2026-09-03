@@ -1,0 +1,59 @@
+2026-08-26 09:58:46 [info     ] Grading leaf: For the autonomous driving environment, the mask network objective $J(\theta)$ has been implemented to match what is outlined in section 3.3, namely $J(\theta)=\min |\eta(\pi)-\eta(\bar{\pi})|$
+2026-08-26 09:59:40 [info     ] Model file selection raw output:
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/retrain.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/readme.md
+Refine_auto_drive/train_baseline.py
+README.md
+2026-08-26 09:59:40 [info     ] Model file selection raw output:
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/retrain.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/readme.md
+Refine_auto_drive/train_baseline.py
+README.md
+2026-08-26 10:02:13 [info     ] model response: # Expectations
+The criterion requires that for the autonomous driving environment, the mask network objective $J(\theta)$ is implemented to match what is outlined in section 3.3 of the paper, specifically $J(\theta) = \min |\eta(\pi) - \eta(\bar{\pi})|$.  
+According to the original description in the paper (the baseline StateMask approach), this objective aims to minimize the absolute difference between the expected total reward of the original pre‑trained policy $\pi$ and the perturbed policy $\bar{\pi}$ (which incorporates the mask network).  
+A correct implementation would therefore need to compute (or effectively optimise) this quantity – either by explicitly calculating $\eta(\pi)$ and $\eta(\bar{\pi})$ and minimizing the absolute difference, or by implementing the surrogate and primal‑dual method originally used by StateMask. Even though the paper later proposes a simplified version ($\max \eta(\bar{\pi})$ with PPO), the criterion explicitly names the original $J(\theta)=\min |\eta(\pi)-\eta(\bar{\pi})|$ formula, so I will look for code that directly realises this exact objective.
+
+# Reality
+The submission’s autonomous driving code lives in the `Refine_auto_drive/` folder. The key files are:
+
+- `train_masknet.py` – sets up a `PPOPolicy` for the mask network and trains it using a standard PPO loop.
+- `custom_masknet_env.py` – defines `DriveEnvWrapper`, which wraps the autonomous driving environment and provides the interface for training the mask network.  
+  Inside `step()`, the mask network’s binary action (0/1) is used to either take the pre‑trained agent’s action or a random action. The reward returned to the mask network is the environment reward plus a small bonus for blinding (`self.lamb * mask`).  
+  The wrapper does **not** compute $\eta(\pi)$ or $\eta(\bar{\pi})$, nor does it minimise any absolute difference between them.
+- `gen_retrain_traj.py`, `learner.py`, `rnd_reward_model.py`, `retrain_env.py`, etc. – these are related to the refinement stage, not to training the mask network.
+
+Nowhere in the provided files is there any explicit computation of $|\eta(\pi) - \eta(\bar{\pi})|$ or a surrogate objective that directly minimises this difference. The training of the mask network relies entirely on PPO’s standard policy gradient objective, which maximises the cumulative (modified) reward – this corresponds to the *simplified* objective $\max \eta(\bar{\pi})$, not to the original $J(\theta) = \min |\eta(\pi) - \eta(\bar{\pi})|$ formula.
+
+# Score
+**0** – The code does not contain an implementation of the exact objective $J(\theta) = \min |\eta(\pi) - \eta(\bar{\pi})|$. It implements a different (though mathematically related under Theorem 3.3) training objective via standard PPO with a reward bonus. Because the criterion requires that specific formula to be implemented, and it is not present, the criterion is not met.
+2026-08-26 10:02:13 [info     ] model response: # Expectations
+The criterion requires that for the autonomous driving environment, the mask network objective $J(\theta)$ is implemented to match what is outlined in section 3.3 of the paper, specifically $J(\theta) = \min |\eta(\pi) - \eta(\bar{\pi})|$.  
+According to the original description in the paper (the baseline StateMask approach), this objective aims to minimize the absolute difference between the expected total reward of the original pre‑trained policy $\pi$ and the perturbed policy $\bar{\pi}$ (which incorporates the mask network).  
+A correct implementation would therefore need to compute (or effectively optimise) this quantity – either by explicitly calculating $\eta(\pi)$ and $\eta(\bar{\pi})$ and minimizing the absolute difference, or by implementing the surrogate and primal‑dual method originally used by StateMask. Even though the paper later proposes a simplified version ($\max \eta(\bar{\pi})$ with PPO), the criterion explicitly names the original $J(\theta)=\min |\eta(\pi)-\eta(\bar{\pi})|$ formula, so I will look for code that directly realises this exact objective.
+
+# Reality
+The submission’s autonomous driving code lives in the `Refine_auto_drive/` folder. The key files are:
+
+- `train_masknet.py` – sets up a `PPOPolicy` for the mask network and trains it using a standard PPO loop.
+- `custom_masknet_env.py` – defines `DriveEnvWrapper`, which wraps the autonomous driving environment and provides the interface for training the mask network.  
+  Inside `step()`, the mask network’s binary action (0/1) is used to either take the pre‑trained agent’s action or a random action. The reward returned to the mask network is the environment reward plus a small bonus for blinding (`self.lamb * mask`).  
+  The wrapper does **not** compute $\eta(\pi)$ or $\eta(\bar{\pi})$, nor does it minimise any absolute difference between them.
+- `gen_retrain_traj.py`, `learner.py`, `rnd_reward_model.py`, `retrain_env.py`, etc. – these are related to the refinement stage, not to training the mask network.
+
+Nowhere in the provided files is there any explicit computation of $|\eta(\pi) - \eta(\bar{\pi})|$ or a surrogate objective that directly minimises this difference. The training of the mask network relies entirely on PPO’s standard policy gradient objective, which maximises the cumulative (modified) reward – this corresponds to the *simplified* objective $\max \eta(\bar{\pi})$, not to the original $J(\theta) = \min |\eta(\pi) - \eta(\bar{\pi})|$ formula.
+
+# Score
+**0** – The code does not contain an implementation of the exact objective $J(\theta) = \min |\eta(\pi) - \eta(\bar{\pi})|$. It implements a different (though mathematically related under Theorem 3.3) training objective via standard PPO with a reward bonus. Because the criterion requires that specific formula to be implemented, and it is not present, the criterion is not met.

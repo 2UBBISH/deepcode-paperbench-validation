@@ -1,0 +1,87 @@
+2026-08-26 09:58:46 [info     ] Grading leaf: For the MuJoCo environments, the mask network objective $J(\theta)$ has been implemented to match what is outlined in section 3.3, namely $J(\theta)=\min |\eta(\pi)-\eta(\bar{\pi})|$
+2026-08-26 09:59:45 [info     ] Model file selection raw output:
+Refine_mujoco/masknet/train.py
+Refine_mujoco/masknet/cus_PPO.py
+Refine_mujoco/masknet/environment.py
+Refine_mujoco/PPO.py
+Refine_mujoco/OnPolicyAlgorithm.py
+Refine_mujoco/masknet/fid_test.py
+Refine_mujoco/masknet/gen_fid.py
+Refine_mujoco/models.py
+Refine_mujoco/utils.py
+Refine_mujoco/base_class.py
+2026-08-26 09:59:45 [info     ] Model file selection raw output:
+Refine_mujoco/masknet/train.py
+Refine_mujoco/masknet/cus_PPO.py
+Refine_mujoco/masknet/environment.py
+Refine_mujoco/PPO.py
+Refine_mujoco/OnPolicyAlgorithm.py
+Refine_mujoco/masknet/fid_test.py
+Refine_mujoco/masknet/gen_fid.py
+Refine_mujoco/models.py
+Refine_mujoco/utils.py
+Refine_mujoco/base_class.py
+2026-08-26 10:02:43 [info     ] model response: # Expectations
+
+According to Section 3.3 of the paper, the mask network objective is originally given as  
+\(J(\theta)=\min |\eta(\pi)-\eta(\bar{\pi})|\).  
+The authors then prove that under Assumption 3.1, \(\eta(\bar{\pi})\le\eta(\pi)\), so they can **transform** the objective to  
+\(J(\theta)=\max \eta(\bar{\pi})\).  
+To avoid a trivial solution (never blinding), they add a bonus \(\alpha a_t^m\) to the reward, yielding a new reward  
+\(R'(s_t, a_t)=R(s_t, a_t)+\alpha a_t^m\).  
+The paper explicitly states that **this reformulation allows using vanilla PPO to train the mask network**.  
+
+Therefore, for the MuJoCo environments, the implementation of the mask network objective should train a mask network that **maximizes the expected cumulative reward** of the perturbed agent with an added bonus for blinding steps, which is mathematically equivalent to minimizing the original absolute difference.  
+
+To meet the criterion, the code must contain a training loop for the mask network that correctly implements this transformed objective (or the original if directly done), using PPO and the bonus mechanism.
+
+# Reality
+
+The submitted files contain:
+- `Refine_mujoco/masknet/train.py` – sets up a custom environment and trains a mask network using a PPO variant (`cus_PPO.PPO`).
+- `Refine_mujoco/masknet/environment.py` – defines `Multi2SingleEnv`, which wraps a MuJoCo environment. The `step` method:
+  - takes an action from the mask network (0 or 1),
+  - uses the pre‑trained base model to get the original action,
+  - if the mask action is 0, replaces the action with a random action (blinding); otherwise uses the original action,
+  - rewards the agent with the environment reward plus \(\alpha \times (1 - \text{action})\), i.e., a bonus for outputting 0 (blinding).
+- `Refine_mujoco/masknet/cus_PPO.py` – a standard PPO implementation that trains a policy (the mask network) to maximize cumulative discounted reward.
+
+The mask network is trained via the standard PPO loss (actor‑critic objective) on the rollouts collected from the wrapped environment. The reward shaping (bonus for blinding) encourages the mask network to learn which steps to blind while still maximizing the overall episode reward. This directly implements the transformed objective \(J(\theta)=\max \eta(\bar{\pi})\) with the bonus described in the paper, which under the stated assumptions is equivalent to minimizing \(|\eta(\pi)-\eta(\bar{\pi})|\).
+
+The code does **not** contain an explicit term that computes and minimizes \(|\eta(\pi)-\eta(\bar{\pi})|\); instead it uses the equivalent PPO formulation, exactly as the paper proposes for the *alternative design* of the explanation method.
+
+# Score
+
+**1** – The implementation follows the paper's description in Section 3.3 for the mask network objective: it trains a mask network to maximize the perturbed policy's performance with a blinding bonus, which is the transformed (and equivalent) version of the original objective. This matches the intended objective and satisfies the criterion.
+2026-08-26 10:02:43 [info     ] model response: # Expectations
+
+According to Section 3.3 of the paper, the mask network objective is originally given as  
+\(J(\theta)=\min |\eta(\pi)-\eta(\bar{\pi})|\).  
+The authors then prove that under Assumption 3.1, \(\eta(\bar{\pi})\le\eta(\pi)\), so they can **transform** the objective to  
+\(J(\theta)=\max \eta(\bar{\pi})\).  
+To avoid a trivial solution (never blinding), they add a bonus \(\alpha a_t^m\) to the reward, yielding a new reward  
+\(R'(s_t, a_t)=R(s_t, a_t)+\alpha a_t^m\).  
+The paper explicitly states that **this reformulation allows using vanilla PPO to train the mask network**.  
+
+Therefore, for the MuJoCo environments, the implementation of the mask network objective should train a mask network that **maximizes the expected cumulative reward** of the perturbed agent with an added bonus for blinding steps, which is mathematically equivalent to minimizing the original absolute difference.  
+
+To meet the criterion, the code must contain a training loop for the mask network that correctly implements this transformed objective (or the original if directly done), using PPO and the bonus mechanism.
+
+# Reality
+
+The submitted files contain:
+- `Refine_mujoco/masknet/train.py` – sets up a custom environment and trains a mask network using a PPO variant (`cus_PPO.PPO`).
+- `Refine_mujoco/masknet/environment.py` – defines `Multi2SingleEnv`, which wraps a MuJoCo environment. The `step` method:
+  - takes an action from the mask network (0 or 1),
+  - uses the pre‑trained base model to get the original action,
+  - if the mask action is 0, replaces the action with a random action (blinding); otherwise uses the original action,
+  - rewards the agent with the environment reward plus \(\alpha \times (1 - \text{action})\), i.e., a bonus for outputting 0 (blinding).
+- `Refine_mujoco/masknet/cus_PPO.py` – a standard PPO implementation that trains a policy (the mask network) to maximize cumulative discounted reward.
+
+The mask network is trained via the standard PPO loss (actor‑critic objective) on the rollouts collected from the wrapped environment. The reward shaping (bonus for blinding) encourages the mask network to learn which steps to blind while still maximizing the overall episode reward. This directly implements the transformed objective \(J(\theta)=\max \eta(\bar{\pi})\) with the bonus described in the paper, which under the stated assumptions is equivalent to minimizing \(|\eta(\pi)-\eta(\bar{\pi})|\).
+
+The code does **not** contain an explicit term that computes and minimizes \(|\eta(\pi)-\eta(\bar{\pi})|\); instead it uses the equivalent PPO formulation, exactly as the paper proposes for the *alternative design* of the explanation method.
+
+# Score
+
+**1** – The implementation follows the paper's description in Section 3.3 for the mask network objective: it trains a mask network to maximize the perturbed policy's performance with a blinding bonus, which is the transformed (and equivalent) version of the original objective. This matches the intended objective and satisfies the criterion.

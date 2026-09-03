@@ -1,0 +1,63 @@
+2026-08-26 09:58:46 [info     ] Grading leaf: For the network defence environment, the original StateMask Explanation method can be selected for generating rollouts (without training)
+2026-08-26 10:00:56 [info     ] Model file selection raw output:
+Refine_cage_challenge/rollout_mask.py
+Refine_cage_challenge/Agents/PPOAgent_mask.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_mask.py
+Refine_cage_challenge/sample_mask_score.py
+Refine_cage_challenge/retrain.py
+Refine_cage_challenge/replay.py
+Refine_cage_challenge/ppo_train.py
+Refine_cage_challenge/readme.md
+Refine_cage_challenge/rollout_ppo.py
+Refine_cage_challenge/sample_value_score.py
+2026-08-26 10:00:56 [info     ] Model file selection raw output:
+Refine_cage_challenge/rollout_mask.py
+Refine_cage_challenge/Agents/PPOAgent_mask.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_mask.py
+Refine_cage_challenge/sample_mask_score.py
+Refine_cage_challenge/retrain.py
+Refine_cage_challenge/replay.py
+Refine_cage_challenge/ppo_train.py
+Refine_cage_challenge/readme.md
+Refine_cage_challenge/rollout_ppo.py
+Refine_cage_challenge/sample_value_score.py
+2026-08-26 10:02:29 [info     ] model response: # Expectations
+The criterion requires that for the network defence (Cage Challenge 2) environment, the code can select the **original StateMask explanation method** (the one from Cheng et al., 2023, not the simplified “Ours” variant proposed in this paper) and use it to **generate rollouts without training**. That is, after a mask network has been trained following the original StateMask recipe (objective $J(\theta)=\min|\eta(\pi)-\eta(\bar{\pi})|$ with prime‑dual optimization), the implementation should be able to load that pre‑trained model and run it on episodes to produce step‑level importance scores or critical‑step selections (e.g., for fidelity measurement or refinement), without updating the mask network. I therefore expect to find:
+
+- A dedicated mask‑network class or training script that uses the original StateMask training algorithm (prime‑dual, not PPO).
+- A loading/rollout utility that can load a checkpoint from that training and compute mask probabilities or critical‑state rankings over trajectories, **without performing any training steps**.
+
+# Reality
+The provided submission files for the Cage Challenge 2 environment are:
+
+- `Agents/PPOAgent_mask.py` – defines a mask agent that is trained with **PPO** and uses an additional reward bonus, which is the “Ours” design (Section 3.3). No prime‑dual optimization is implemented.
+- `rollout_mask.py` – trains this “Ours” mask network using PPO.
+- `sample_mask_score.py` – loads a checkpoint of the “Ours” mask network (`bline_mask/4000.pth`) and computes mask probabilities over episodes without training. This is indeed a rollout‑without‑training, but it uses the **“Ours”** explanation method, not the original StateMask.
+- `sample_value_score.py`, `replay.py`, and other scripts also rely on the “Ours” mask agent or the baseline PPO agent.
+
+No file in the submission implements the original StateMask explanation method (prime‑dual training, objective $J(\theta)=\min|\eta(\pi)-\eta(\bar{\pi})|$) or provides a way to load a model trained by that method for generating rollouts. The only explanation method that can be selected for rollouts without training is the “Ours” variant, which does not satisfy the requirement for the **original** StateMask.
+
+# Score
+**0**
+
+The submission does not contain code that implements or can load a model trained with the original StateMask explanation method, so it cannot select that method for generating rollouts without training. The criterion is therefore not met.
+2026-08-26 10:02:29 [info     ] model response: # Expectations
+The criterion requires that for the network defence (Cage Challenge 2) environment, the code can select the **original StateMask explanation method** (the one from Cheng et al., 2023, not the simplified “Ours” variant proposed in this paper) and use it to **generate rollouts without training**. That is, after a mask network has been trained following the original StateMask recipe (objective $J(\theta)=\min|\eta(\pi)-\eta(\bar{\pi})|$ with prime‑dual optimization), the implementation should be able to load that pre‑trained model and run it on episodes to produce step‑level importance scores or critical‑step selections (e.g., for fidelity measurement or refinement), without updating the mask network. I therefore expect to find:
+
+- A dedicated mask‑network class or training script that uses the original StateMask training algorithm (prime‑dual, not PPO).
+- A loading/rollout utility that can load a checkpoint from that training and compute mask probabilities or critical‑state rankings over trajectories, **without performing any training steps**.
+
+# Reality
+The provided submission files for the Cage Challenge 2 environment are:
+
+- `Agents/PPOAgent_mask.py` – defines a mask agent that is trained with **PPO** and uses an additional reward bonus, which is the “Ours” design (Section 3.3). No prime‑dual optimization is implemented.
+- `rollout_mask.py` – trains this “Ours” mask network using PPO.
+- `sample_mask_score.py` – loads a checkpoint of the “Ours” mask network (`bline_mask/4000.pth`) and computes mask probabilities over episodes without training. This is indeed a rollout‑without‑training, but it uses the **“Ours”** explanation method, not the original StateMask.
+- `sample_value_score.py`, `replay.py`, and other scripts also rely on the “Ours” mask agent or the baseline PPO agent.
+
+No file in the submission implements the original StateMask explanation method (prime‑dual training, objective $J(\theta)=\min|\eta(\pi)-\eta(\bar{\pi})|$) or provides a way to load a model trained by that method for generating rollouts. The only explanation method that can be selected for rollouts without training is the “Ours” variant, which does not satisfy the requirement for the **original** StateMask.
+
+# Score
+**0**
+
+The submission does not contain code that implements or can load a model trained with the original StateMask explanation method, so it cannot select that method for generating rollouts without training. The criterion is therefore not met.

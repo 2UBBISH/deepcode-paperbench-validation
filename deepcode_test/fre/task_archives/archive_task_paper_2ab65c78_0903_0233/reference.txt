@@ -1,0 +1,151 @@
+{
+    "selected_references": [
+        {
+            "rank": 1,
+            "title": "Offline Reinforcement Learning with Implicit Q-Learning",
+            "authors": ["Ilya Kostrikov", "Ashvin Nair", "Sergey Levine"],
+            "year": "2021",
+            "relevance_score": 0.94,
+            "citation_context": "FRE uses implicit Q-learning (IQL) as the offline RL method to train its FRE-conditioned policy. Algorithm 1 explicitly trains pi(a|s,z), Q(s,a,z), and V(s,z) using IQL with r = eta(s). IQL is also the basis for the GC-IQL baseline.",
+            "key_contributions": [
+                "Introduces Implicit Q-Learning (IQL), an offline RL algorithm that avoids querying out-of-distribution actions by using expectile regression.",
+                "Achieves strong performance on D4RL AntMaze, Kitchen, and Adroit tasks without needing behavior-constrained policy updates.",
+                "Provides a stable Q-value and value-function learning recipe that FRE directly adopts for latent-conditioned offline RL."
+            ],
+            "implementation_value": "This is the core RL backbone used by FRE. The official JAX implementation shows the exact IQL expectile loss, value/policy training loop, and environment-specific hyperparameters for AntMaze and Kitchen, making it the most directly reusable reference for reproducing FRE's policy-learning stage.",
+            "github_info": {
+                "repository_url": "https://github.com/ikostrikov/implicit_q_learning",
+                "stars_count": "333",
+                "last_updated": "January 2022",
+                "repository_quality": "Official, clean JAX implementation with clear training commands and configuration files for locomotion, AntMaze, Kitchen, and Adroit. Stable but not actively developed.",
+                "key_features": [
+                    "JAX implementation of IQL",
+                    "Configs for MuJoCo, AntMaze, Kitchen, and Adroit",
+                    "Finetuning script for AntMaze tasks",
+                    "Citation and link to PyTorch reimplementation in RLkit"
+                ],
+                "documentation_quality": "Good: README covers installation, training commands, and environment-specific examples.",
+                "community_activity": "Moderate: 333 stars and widely used as a reference offline RL implementation, though the repository has been inactive since early 2022."
+            },
+            "original_reference": "Kostrikov, I., Nair, A., and Levine, S. Offline reinforcement learning with implicit q-learning. arXiv preprint arXiv:2110.06169, 2021."
+        },
+        {
+            "rank": 2,
+            "title": "D4RL: Datasets for Deep Data-Driven Reinforcement Learning",
+            "authors": ["Justin Fu", "Aviral Kumar", "Ofir Nachum", "George Tucker", "Sergey Levine"],
+            "year": "2020",
+            "relevance_score": 0.92,
+            "citation_context": "FRE evaluates on variants of the AntMaze and Kitchen environments from D4RL (Fu et al., 2020). Appendix C.1 specifically uses the antmaze-large-diverse-v2 dataset from D4RL.",
+            "key_contributions": [
+                "Introduces a standardized offline RL benchmark with diverse locomotion, navigation, and manipulation datasets.",
+                "Provides AntMaze and Kitchen environments and datasets used directly by FRE for unsupervised pretraining and evaluation.",
+                "Establishes common dataset APIs (get_dataset, qlearning_dataset) that offline RL implementations depend on."
+            ],
+            "implementation_value": "Essential for reproducing FRE's AntMaze and Kitchen experiments. The repository provides the environment registration and dataset-loading utilities required to build the offline dataset D used throughout FRE training and evaluation.",
+            "github_info": {
+                "repository_url": "https://github.com/Farama-Foundation/D4RL",
+                "stars_count": "1.7k",
+                "last_updated": "November 2024",
+                "repository_quality": "Official benchmark now maintained under Farama Foundation. Actively maintained, with clear migration guidance to Gymnasium, Minari, and Gymnasium-Robotics.",
+                "key_features": [
+                    "Standardized offline RL datasets and environments",
+                    "AntMaze, Kitchen, MuJoCo, Adroit, and other task suites",
+                    "Dataset API for loading observations, actions, rewards, terminals, and timeouts",
+                    "qlearning_dataset utility for Q-learning pipelines"
+                ],
+                "documentation_quality": "Good: setup, dataset API, task list, and migration notices are clearly documented.",
+                "community_activity": "High: 1.7k stars, widely adopted as the standard offline RL benchmark, and still maintained as of November 2024."
+            },
+            "original_reference": "Fu, J., Kumar, A., Nachum, O., Tucker, G., and Levine, S. D4rl: Datasets for deep data-driven reinforcement learning. arXiv preprint arXiv:2004.07219, 2020."
+        },
+        {
+            "rank": 3,
+            "title": "Does Zero-Shot Reinforcement Learning Exist?",
+            "authors": ["Ahmed Touati", "Jérémy Rapin", "Yann Ollivier"],
+            "year": "2022",
+            "relevance_score": 0.88,
+            "citation_context": "FRE addresses the zero-shot RL problem (Touati et al., 2022) and compares directly against the Forward-Backward (FB) method. In the experimental setup, FB and SF baselines are run via the code provided from (Touati et al., 2022).",
+            "key_contributions": [
+                "Formalizes the zero-shot RL problem and proposes the Forward-Backward (FB) representation.",
+                "Learns universal value functions from unsupervised offline data without task-specific reward labels.",
+                "Provides the codebase and benchmark setup against which FRE is directly compared."
+            ],
+            "implementation_value": "This is the primary zero-shot RL baseline used in the paper. Its repository includes FB agents, URL benchmark integration, and offline training scripts on ExORL, making it valuable for reproducing FRE's comparison baselines and understanding the zero-shot RL evaluation protocol.",
+            "github_info": {
+                "repository_url": "https://github.com/facebookresearch/controllable_agent",
+                "stars_count": "81",
+                "last_updated": "January 2023",
+                "repository_quality": "Official Facebook Research implementation with a modular structure, Hydra configuration, and online/offline training support. Stable but explicitly offered with limited support.",
+                "key_features": [
+                    "Forward-Backward (FB) agent implementation",
+                    "URL benchmark integration for pretraining",
+                    "Offline training scripts for ExORL datasets",
+                    "Interactive demo for custom reward evaluation"
+                ],
+                "documentation_quality": "Good: README covers installation, training commands, offline data preparation, and monitoring with hiplot.",
+                "community_activity": "Moderate: 81 stars; niche but important within zero-shot RL research; repository has been inactive since early 2023."
+            },
+            "original_reference": "Touati, A., Rapin, J., and Ollivier, Y. Does zeroshot reinforcement learning exist? arXiv preprint arXiv:2209.14935, 2022."
+        },
+        {
+            "rank": 4,
+            "title": "Don't Change the Algorithm, Change the Data: Exploratory Data for Offline Reinforcement Learning",
+            "authors": ["Denis Yarats", "David Brandfonbrener", "Hao Liu", "Michael Laskin", "Pieter Abbeel", "Alessandro Lazaric", "Lerrel Pinto"],
+            "year": "2022",
+            "relevance_score": 0.84,
+            "citation_context": "FRE uses the ExORL benchmark for learning from unsupervised data (Yarats et al., 2022), and reports ExORL Walker and Cheetah results. The FRE paper states that it learns diverse, useful policies from the unsupervised ExORL dataset consisting of non-expert trajectories.",
+            "key_contributions": [
+                "Introduces ExORL, a benchmark of exploratory offline datasets collected by unsupervised RL algorithms on DeepMind Control Suite domains.",
+                "Shows that data quality can matter more than algorithm choice for offline RL.",
+                "Provides download scripts and offline RL evaluation code for Walker and Cheetah, the two domains used in FRE."
+            ],
+            "implementation_value": "Required for reproducing FRE's ExORL experiments. The repository supplies the exact Walker and Cheetah exploratory datasets, download scripts, and offline RL training loops used in the FRE evaluation protocol.",
+            "github_info": {
+                "repository_url": "https://github.com/denisyarats/exorl",
+                "stars_count": "139",
+                "last_updated": "February 2022",
+                "repository_quality": "Official PyTorch implementation with dataset download scripts and multiple offline RL algorithms. Stable and well organized, though not actively updated.",
+                "key_features": [
+                    "Exploratory datasets for six DeepMind Control Suite domains",
+                    "Download scripts for datasets collected by nine unsupervised RL algorithms",
+                    "Offline RL implementations including CQL, TD3+BC, CRR, and BC",
+                    "Walker and Cheetah datasets used by FRE"
+                ],
+                "documentation_quality": "Good: README documents prerequisites, dataset downloads, offline training commands, and licensing.",
+                "community_activity": "Moderate: 139 stars and widely used in offline/zero-shot RL research, but inactive since February 2022."
+            },
+            "original_reference": "Yarats, D., Brandfonbrener, D., Liu, H., Laskin, M., Abbeel, P., Lazaric, A., and Pinto, L. Don't change the algorithm, change the data: Exploratory data for offline reinforcement learning. arXiv preprint arXiv:2201.13425, 2022."
+        },
+        {
+            "rank": 5,
+            "title": "HIQL: Offline Goal-Conditioned RL with Latent States as Actions",
+            "authors": ["Seohong Park", "Dibya Ghosh", "Benjamin Eysenbach", "Sergey Levine"],
+            "year": "2023",
+            "relevance_score": 0.8,
+            "citation_context": "FRE cites HIQL in the goal-conditioned RL related-work discussion and, in Appendix B, uses a hindsight experience relabeling distribution for random goal-reaching rewards in accordance with Park et al. (2023a). HIQL is also closely related to the GC-IQL baseline setup.",
+            "key_contributions": [
+                "Proposes Hierarchical Implicit Q-Learning (HIQL) for offline goal-conditioned RL using latent subgoal states as actions.",
+                "Improves long-horizon goal-reaching performance on AntMaze and other offline goal-conditioned benchmarks.",
+                "Provides a clean JAX codebase for IQL-style goal-conditioned offline RL with hindsight relabeling."
+            ],
+            "implementation_value": "Useful for implementing FRE's goal-reaching reward generation and the GC-IQL-style baseline. Its recent clean implementation and OGBench reference provide modern, reusable code for offline goal-conditioned RL on AntMaze.",
+            "github_info": {
+                "repository_url": "https://github.com/seohongpark/HIQL",
+                "stars_count": "97",
+                "last_updated": "December 2024",
+                "repository_quality": "Official JAX implementation with a very detailed README and command examples for HIQL, IQL, GCBC, and other variants. Actively maintained and recently updated with a pointer to the newer OGBench implementation.",
+                "key_features": [
+                    "Official HIQL implementation in JAX",
+                    "Reference commands for AntMaze variants",
+                    "Also includes IQL, HGCBC, POR, and GCBC variants",
+                    "Updated guidance to use OGBench for cleaner reference implementations"
+                ],
+                "documentation_quality": "Excellent: installation, environment setup, and multiple training command examples are provided.",
+                "community_activity": "Moderate: 97 stars, with active maintenance as of December 2024 and adoption through the OGBench benchmark."
+            },
+            "original_reference": "Park, S., Ghosh, D., Eysenbach, B., and Levine, S. Hiql: Offline goal-conditioned rl with latent states as actions. arXiv preprint arXiv:2307.11949, 2023a."
+        }
+    ],
+    "analysis_summary": "The paper's References section was analyzed to identify references with public GitHub repositories, excluding the target FRE repository (github.com/kvfrans/fre). Candidates were scored on repository quality, implementation relevance, technical depth, and academic influence. The highest-value references center on FRE's offline RL backbone (IQL), its benchmark data sources (D4RL and ExORL), its primary zero-shot RL baseline and evaluation protocol (FB/Touati et al. 2022), and its goal-conditioned offline RL components (HIQL). IQL ranks first because it is the exact RL algorithm used in FRE's policy-training loop; D4RL ranks second for its essential environments/datasets and high-quality active repository; FB ranks third because the paper directly uses its code for the main baseline comparison; ExORL ranks fourth as the unsupervised data benchmark; and HIQL ranks fifth for its strong, actively maintained goal-conditioned offline RL implementation and relevance to FRE's hindsight goal-reward generation. A total of 22 references were found to have identifiable GitHub repositories during this analysis, though a few older works are only available as subdirectories of larger monorepos.",
+    "github_repositories_found": "22"
+}

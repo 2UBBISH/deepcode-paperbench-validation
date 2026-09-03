@@ -1,0 +1,75 @@
+2026-08-26 09:58:46 [info     ] Grading leaf: For the network defence environment, the "Random" Explanation method can be selected as the explanation method during retraining
+2026-08-26 09:59:31 [info     ] Model file selection raw output:
+Refine_cage_challenge/retrain.py
+Refine_cage_challenge/Agents/PPOAgent_Retrain.py
+Refine_cage_challenge/readme.md
+Refine_cage_challenge/sample_mask_score.py
+Refine_cage_challenge/sample_value_score.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_retrain.py
+Refine_cage_challenge/rollout_mask.py
+Refine_cage_challenge/rollout_ppo.py
+Refine_cage_challenge/Agents/PPOAgent_mask.py
+Refine_cage_challenge/Agents/rnd_model.py
+2026-08-26 09:59:31 [info     ] Model file selection raw output:
+Refine_cage_challenge/retrain.py
+Refine_cage_challenge/Agents/PPOAgent_Retrain.py
+Refine_cage_challenge/readme.md
+Refine_cage_challenge/sample_mask_score.py
+Refine_cage_challenge/sample_value_score.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_retrain.py
+Refine_cage_challenge/rollout_mask.py
+Refine_cage_challenge/rollout_ppo.py
+Refine_cage_challenge/Agents/PPOAgent_mask.py
+Refine_cage_challenge/Agents/rnd_model.py
+2026-08-26 10:00:25 [info     ] model response: # Expectations
+
+The paper's refinement method (RICE) relies on an explanation method to identify critical states in a pre-trained policy's trajectory. One baseline explanation method is "Random", which simply picks a visited state at random as the critical state. The refinement process uses the identified critical state as part of a mixed initial distribution (with probability \(p\)). For the network defence environment (Cage Challenge 2), the submission code should implement the ability to select this "Random" explanation method when retraining the agent. This means there must be code that, during the retraining loop, can be configured to use random state selection instead of a learned mask network to form the mixed initial distribution. The implementation should follow the description in Section 4.1 and Algorithm 2.
+
+# Reality
+
+I examined the provided files for the Cage Challenge 2 environment.
+
+- **`Refine_cage_challenge/Wrappers/ChallengeWrapper2_retrain.py`** (lines 30–48) defines the `reset()` method for the retraining wrapper. It contains a `self.random_sampling` flag. When `self.random_sampling` is `True`, the method randomly chooses an index from the recorded trajectory:
+  ```python
+  if self.random_sampling:
+      start_idx = np.random.choice(eps_len)
+  ```
+  This exactly matches the "Random" explanation method: a visited state is selected at random as the critical reset state. When `self.random_sampling` is `False`, it uses `np.argmax(mask_record)`, which corresponds to the explanation method based on the mask network.
+
+- **`Refine_cage_challenge/retrain.py`** instantiates the environment using this wrapper:
+  ```python
+  env = ChallengeWrapper2_Retrain(env=CYBORG, agent_name="Blue")
+  ```
+  The wrapper's `__init__` sets `self.random_sampling = False` by default, but the logic to activate the Random explanation is fully present and functional. Changing the flag (or adding a parameter) would switch the explanation method to Random during retraining.
+
+Thus, the code contains a correct implementation of the "Random" explanation method that can be selected for refinement in the network defence environment.
+
+# Score
+
+1 – The submission provides the necessary code to use the "Random" explanation method during retraining. The `random_sampling` flag in the wrapper directly implements the required functionality, and the retraining script is set up to use this wrapper. The implementation is present and correct.
+2026-08-26 10:00:25 [info     ] model response: # Expectations
+
+The paper's refinement method (RICE) relies on an explanation method to identify critical states in a pre-trained policy's trajectory. One baseline explanation method is "Random", which simply picks a visited state at random as the critical state. The refinement process uses the identified critical state as part of a mixed initial distribution (with probability \(p\)). For the network defence environment (Cage Challenge 2), the submission code should implement the ability to select this "Random" explanation method when retraining the agent. This means there must be code that, during the retraining loop, can be configured to use random state selection instead of a learned mask network to form the mixed initial distribution. The implementation should follow the description in Section 4.1 and Algorithm 2.
+
+# Reality
+
+I examined the provided files for the Cage Challenge 2 environment.
+
+- **`Refine_cage_challenge/Wrappers/ChallengeWrapper2_retrain.py`** (lines 30–48) defines the `reset()` method for the retraining wrapper. It contains a `self.random_sampling` flag. When `self.random_sampling` is `True`, the method randomly chooses an index from the recorded trajectory:
+  ```python
+  if self.random_sampling:
+      start_idx = np.random.choice(eps_len)
+  ```
+  This exactly matches the "Random" explanation method: a visited state is selected at random as the critical reset state. When `self.random_sampling` is `False`, it uses `np.argmax(mask_record)`, which corresponds to the explanation method based on the mask network.
+
+- **`Refine_cage_challenge/retrain.py`** instantiates the environment using this wrapper:
+  ```python
+  env = ChallengeWrapper2_Retrain(env=CYBORG, agent_name="Blue")
+  ```
+  The wrapper's `__init__` sets `self.random_sampling = False` by default, but the logic to activate the Random explanation is fully present and functional. Changing the flag (or adding a parameter) would switch the explanation method to Random during retraining.
+
+Thus, the code contains a correct implementation of the "Random" explanation method that can be selected for refinement in the network defence environment.
+
+# Score
+
+1 – The submission provides the necessary code to use the "Random" explanation method during retraining. The `random_sampling` flag in the wrapper directly implements the required functionality, and the retraining script is set up to use this wrapper. The implementation is present and correct.

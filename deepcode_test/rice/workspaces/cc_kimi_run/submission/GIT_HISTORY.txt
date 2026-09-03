@@ -1,0 +1,12 @@
+# git history of this submission (exported; .git removed for publication)
+6e00487 2026-09-02 16:17:03 +0800 Document setup.py in README structure and metrics
+5dd4550 2026-09-02 16:16:37 +0800 Add setup.py for package installation
+700f03c 2026-09-02 16:16:07 +0800 Update README line count
+3930fae 2026-09-02 16:15:53 +0800 Bootstrap mask-network advantages from next_value for truncated rollouts
+2baf7dd 2026-09-02 16:14:06 +0800 Use recorded simulator state in fidelity state() fallback
+5c5fb6c 2026-09-02 16:13:44 +0800 Record simulator states during fidelity trajectory sampling
+9a1b386 2026-09-02 16:12:49 +0800 Use simulator state (qpos/qvel) for critical-state resets
+e01be23 2026-09-02 16:11:45 +0800 Add matplotlib to requirements for plotting
+5178845 2026-09-02 16:11:19 +0800 Update README metrics
+94c0f35 2026-09-02 16:10:46 +0800 Fix evaluation seeding and GAIL callback integration
+06c2fb6 2026-09-02 16:08:51 +0800 Initial implementation of RICE algorithm and experiments

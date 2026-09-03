@@ -1,0 +1,199 @@
+# RICE: Refining via Critical State Explanation
+# Default hyperparameter configuration
+# Based on Table 3 and Table 4 from the paper
+
+# ============================================================
+# General settings
+# ============================================================
+general:
+  seed: 42
+  device: "cuda"  # "cuda" or "cpu"
+  log_dir: "./logs"
+  save_dir: "./checkpoints"
+  verbose: 1
+
+# ============================================================
+# PPO Agent (Target Policy) settings
+# ============================================================
+agent:
+  # Network architecture (default for MuJoCo)
+  policy: "MlpPolicy"
+  n_steps: 2048
+  batch_size: 64
+  n_epochs: 10
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_range: 0.2
+  clip_range_vf: null
+  normalize_advantage: true
+  ent_coef: 0.0
+  vf_coef: 0.5
+  max_grad_norm: 0.5
+  learning_rate: 3.0e-4
+  use_sde: false
+  sde_sample_freq: -1
+  target_kl: null
+  tensorboard_log: null
+  policy_kwargs:
+    net_arch:
+      pi: [64, 64]
+      vf: [64, 64]
+    activation_fn: "tanh"
+    ortho_init: true
+
+  # Total training timesteps for initial agent
+  total_timesteps: 1000000  # 1e6 for MuJoCo
+
+# ============================================================
+# Mask Network settings
+# ============================================================
+mask:
+  # Network architecture (same as agent policy by default)
+  policy: "MlpPolicy"
+  n_steps: 2048
+  batch_size: 64
+  n_epochs: 10
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_range: 0.2
+  normalize_advantage: true
+  ent_coef: 0.0
+  vf_coef: 0.5
+  max_grad_norm: 0.5
+  learning_rate: 3.0e-4
+  policy_kwargs:
+    net_arch:
+      pi: [64, 64]
+      vf: [64, 64]
+    activation_fn: "tanh"
+    ortho_init: true
+
+  # Intrinsic reward coefficient for blinding (alpha in paper)
+  alpha: 0.0001  # Table 3
+
+  # Number of training samples for mask network (Table 4)
+  # MuJoCo: 3e5, Selfish Mining: 1.5e6, CAGE: 1e7, Auto Driving: 2.44e6, Malware: 32349
+  total_timesteps: 300000
+
+# ============================================================
+# Explanation / Critical State Identification
+# ============================================================
+explanation:
+  # Number of trajectories to collect for explanation
+  num_trajectories: 100
+
+  # Maximum trajectory length
+  max_trajectory_length: 1000
+
+  # Buffer size for critical states
+  buffer_size: 10000
+
+  # Whether to use the perturbed policy (pi_bar) or original policy (pi)
+  use_perturbed_policy: false
+
+# ============================================================
+# RND (Random Network Distillation) settings
+# ============================================================
+rnd:
+  # Embedding dimension
+  embedding_dim: 128
+
+  # Predictor learning rate
+  learning_rate: 1.0e-4
+
+  # Network architecture for target and predictor
+  hidden_sizes: [256, 256, 256]
+
+  # Activation function
+  activation: "relu"
+
+  # Optimizer
+  optimizer: "adam"
+
+  # Normalize observations before RND
+  normalize_obs: true
+
+  # Observation normalization parameters
+  obs_rms:
+    epsilon: 1.0e-4
+    clip_range: 5.0
+
+# ============================================================
+# Refining settings
+# ============================================================
+refining:
+  # Probability of sampling initial state from critical state buffer
+  p: 0.25  # Table 3: p in {0.25, 0.5}
+
+  # Exploration bonus coefficient (lambda in paper)
+  lambda: 0.01  # Table 3: lambda in {0.001, 0.01}
+
+  # Total timesteps for refining
+  total_timesteps: 1000000  # 1e6 for MuJoCo
+
+  # PPO update parameters during refining (same as agent)
+  n_steps: 2048
+  batch_size: 64
+  n_epochs: 10
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_range: 0.2
+  learning_rate: 3.0e-4
+
+  # Whether to use RND exploration bonus
+  use_rnd: true
+
+  # Whether to use mixed initial state distribution
+  use_mixed_init: true
+
+  # Whether to continue updating the mask during refining
+  update_mask: false
+
+# ============================================================
+# Environment-specific overrides
+# ============================================================
+# These are loaded from config/env_specific/<env_name>.yaml
+# and merged with the defaults above.
+
+# ============================================================
+# Experiment settings
+# ============================================================
+experiment:
+  # Number of evaluation episodes
+  eval_episodes: 100
+
+  # Evaluation frequency (timesteps)
+  eval_freq: 10000
+
+  # Number of seeds to run
+  num_seeds: 5
+
+  # Whether to save videos
+  save_videos: false
+
+  # Video recording frequency
+  video_freq: 100000
+
+# ============================================================
+# Baseline settings
+# ============================================================
+baselines:
+  # StateMask
+  statemask:
+    lagrangian_lr: 1.0e-3
+    lagrangian_threshold: 0.1
+
+  # Jump-Start RL
+  jsrl:
+    guide_steps: 10000
+    guide_ent_coef: 0.01
+
+  # Self-Imitation Learning
+  sil:
+    buffer_size: 100000
+    sil_alpha: 0.6
+    sil_beta: 0.1
+
+  # Random Explanation
+  random_explanation:
+    num_critical_states: 100

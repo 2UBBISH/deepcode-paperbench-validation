@@ -1,0 +1,13 @@
+ core/agent_runtime/tools/mcp.py                 | 120 +++++++++++++-
+ core/compat/agent.py                            |   6 +-
+ core/compat/request_params.py                   |   6 +-
+ core/providers/base.py                          |  15 +-
+ tools/code_indexer.py                           |   9 +-
+ utils/loop_detector.py                          |  18 +-
+ uv.lock                                         |   2 +-
+ workflows/agent_orchestration_engine.py         | 210 +++++++++++++++++++++---
+ workflows/agents/document_segmentation_agent.py |  27 +++
+ workflows/agents/memory_agent_concise.py        |  16 +-
+ workflows/code_implementation_workflow.py       |  70 +++++++-
+ workflows/codebase_index_workflow.py            |   9 +-
+ 12 files changed, 462 insertions(+), 46 deletions(-)

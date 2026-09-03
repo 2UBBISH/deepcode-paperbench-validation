@@ -1,0 +1,69 @@
+2026-08-26 09:58:46 [info     ] Grading leaf: For the network defence environment, the original StateMask Explanation method can be selected as the explanation method during retraining
+2026-08-26 09:59:46 [info     ] Model file selection raw output:
+Refine_cage_challenge/retrain.py
+Refine_cage_challenge/readme.md
+Refine_cage_challenge/replay.py
+Refine_cage_challenge/sample_mask_score.py
+Refine_cage_challenge/rollout_mask.py
+Refine_cage_challenge/ppo_train.py
+Refine_cage_challenge/rollout_ppo.py
+Refine_cage_challenge/Agents/PPOAgent_Retrain.py
+Refine_cage_challenge/Agents/PPOAgent_mask.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_retrain.py
+2026-08-26 09:59:46 [info     ] Model file selection raw output:
+Refine_cage_challenge/retrain.py
+Refine_cage_challenge/readme.md
+Refine_cage_challenge/replay.py
+Refine_cage_challenge/sample_mask_score.py
+Refine_cage_challenge/rollout_mask.py
+Refine_cage_challenge/ppo_train.py
+Refine_cage_challenge/rollout_ppo.py
+Refine_cage_challenge/Agents/PPOAgent_Retrain.py
+Refine_cage_challenge/Agents/PPOAgent_mask.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_retrain.py
+2026-08-26 10:01:19 [info     ] model response: # Expectations
+
+The criterion requires that the submission's code for the network defence environment (Cage Challenge 2) contains a correct implementation that allows selecting the **original StateMask explanation method** (as described by Cheng et al., 2023) during the retraining process. In the context of the paper, the original StateMask uses a prime‑dual optimisation to learn a mask network that minimises the absolute difference in expected returns between the original and perturbed policies. For this criterion to be satisfied, I expect to find:
+
+- an implementation of the original StateMask mask network and its training procedure (prime‑dual) for the network defence environment,
+- a mechanism (e.g., a command‑line argument, configuration flag, or method parameter) in the retraining pipeline that allows the user to switch between explanation methods (Random, StateMask, Ours),
+- code that uses the trained StateMask mask network to compute per‑step importance scores, and then feeds those scores into the retraining loop (for example, to determine the critical state from which to start an episode).
+
+Because the preceding criteria already check that the original StateMask’s objective and prime‑dual optimisation are implemented, this criterion verifies that those capabilities are integrated and selectable in the retraining workflow.
+
+# Reality
+
+I examined all the provided files from the submission’s `Refine_cage_challenge/` directory. The relevant scripts for retraining are `retrain.py` and its custom wrapper `Wrappers/ChallengeWrapper2_retrain.py`. The retraining wrapper resets the environment either to a default initial state or to a critical state identified by an explanation method, using a function `gen_one_traj()` (imported from `utils`, not supplied). Inside the wrapper, the flag `self.random_sampling` controls whether the critical state is chosen randomly or by the highest importance score (mask record).
+
+**However, there is no implementation of the original StateMask explanation method for this environment.** The only mask‑based explanation method present is the “Ours” variant (modified StateMask), implemented in `Agents/PPOAgent_mask.py`. This agent uses a standard PPO training loop with an additional reward bonus for masking, and there is no code that implements the prime‑dual optimisation required by the original StateMask. The script `sample_mask_score.py` generates importance scores exclusively using `PPOAgent_mask`, writing them to `mask_prob_log.txt`. No analogous script exists to train or run an original StateMask model.
+
+The retraining pipeline itself (`retrain.py` and `ChallengeWrapper2_retrain`) does not expose any parameter or option to select which explanation method’s scores should be used. The wrapper simply calls `gen_one_traj()` and relies on pre‑computed action and mask records; there is no logic to load a StateMask‑specific model or its outputs. Consequently, even if a StateMask implementation existed, the retraining code would not be able to select it over the other methods.
+
+In summary, the original StateMask explanation method is **not implemented** for the network defence environment, and no selection mechanism exists in the retraining pipeline.
+
+# Score
+
+**0** – The criterion is not met. The submission does not contain a correct implementation that enables the original StateMask explanation method to be chosen as the explanation method during retraining.
+2026-08-26 10:01:19 [info     ] model response: # Expectations
+
+The criterion requires that the submission's code for the network defence environment (Cage Challenge 2) contains a correct implementation that allows selecting the **original StateMask explanation method** (as described by Cheng et al., 2023) during the retraining process. In the context of the paper, the original StateMask uses a prime‑dual optimisation to learn a mask network that minimises the absolute difference in expected returns between the original and perturbed policies. For this criterion to be satisfied, I expect to find:
+
+- an implementation of the original StateMask mask network and its training procedure (prime‑dual) for the network defence environment,
+- a mechanism (e.g., a command‑line argument, configuration flag, or method parameter) in the retraining pipeline that allows the user to switch between explanation methods (Random, StateMask, Ours),
+- code that uses the trained StateMask mask network to compute per‑step importance scores, and then feeds those scores into the retraining loop (for example, to determine the critical state from which to start an episode).
+
+Because the preceding criteria already check that the original StateMask’s objective and prime‑dual optimisation are implemented, this criterion verifies that those capabilities are integrated and selectable in the retraining workflow.
+
+# Reality
+
+I examined all the provided files from the submission’s `Refine_cage_challenge/` directory. The relevant scripts for retraining are `retrain.py` and its custom wrapper `Wrappers/ChallengeWrapper2_retrain.py`. The retraining wrapper resets the environment either to a default initial state or to a critical state identified by an explanation method, using a function `gen_one_traj()` (imported from `utils`, not supplied). Inside the wrapper, the flag `self.random_sampling` controls whether the critical state is chosen randomly or by the highest importance score (mask record).
+
+**However, there is no implementation of the original StateMask explanation method for this environment.** The only mask‑based explanation method present is the “Ours” variant (modified StateMask), implemented in `Agents/PPOAgent_mask.py`. This agent uses a standard PPO training loop with an additional reward bonus for masking, and there is no code that implements the prime‑dual optimisation required by the original StateMask. The script `sample_mask_score.py` generates importance scores exclusively using `PPOAgent_mask`, writing them to `mask_prob_log.txt`. No analogous script exists to train or run an original StateMask model.
+
+The retraining pipeline itself (`retrain.py` and `ChallengeWrapper2_retrain`) does not expose any parameter or option to select which explanation method’s scores should be used. The wrapper simply calls `gen_one_traj()` and relies on pre‑computed action and mask records; there is no logic to load a StateMask‑specific model or its outputs. Consequently, even if a StateMask implementation existed, the retraining code would not be able to select it over the other methods.
+
+In summary, the original StateMask explanation method is **not implemented** for the network defence environment, and no selection mechanism exists in the retraining pipeline.
+
+# Score
+
+**0** – The criterion is not met. The submission does not contain a correct implementation that enables the original StateMask explanation method to be chosen as the explanation method during retraining.

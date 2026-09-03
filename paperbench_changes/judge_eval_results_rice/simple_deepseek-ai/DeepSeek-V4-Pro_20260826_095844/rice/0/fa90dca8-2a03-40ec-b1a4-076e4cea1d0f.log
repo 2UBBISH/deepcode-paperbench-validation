@@ -1,0 +1,67 @@
+2026-08-26 10:00:27 [info     ] Grading leaf: For the network defence environment, the objective being optimized is $J(\theta)=\max \eta(\bar{\pi})$, as outlined in section 3.3.
+2026-08-26 10:01:41 [info     ] Model file selection raw output:
+Refine_cage_challenge/Agents/PPOAgent_mask.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_mask.py
+Refine_cage_challenge/ppo_train.py
+Refine_cage_challenge/rollout_mask.py
+Refine_cage_challenge/PPO/ActorCritic.py
+Refine_cage_challenge/PPO/Memory.py
+Refine_cage_challenge/Agents/PPOAgent.py
+Refine_cage_challenge/Agents/PPOAgent_Retrain.py
+Refine_cage_challenge/Agents/MainAgent.py
+Refine_cage_challenge/sample_mask_score.py
+2026-08-26 10:01:41 [info     ] Model file selection raw output:
+Refine_cage_challenge/Agents/PPOAgent_mask.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_mask.py
+Refine_cage_challenge/ppo_train.py
+Refine_cage_challenge/rollout_mask.py
+Refine_cage_challenge/PPO/ActorCritic.py
+Refine_cage_challenge/PPO/Memory.py
+Refine_cage_challenge/Agents/PPOAgent.py
+Refine_cage_challenge/Agents/PPOAgent_Retrain.py
+Refine_cage_challenge/Agents/MainAgent.py
+Refine_cage_challenge/sample_mask_score.py
+2026-08-26 10:02:59 [info     ] model response: # Expectations
+The criterion requires that for the network defence environment, the mask network (explanation method) is trained to optimize the objective $J(\theta)=\max \eta(\bar{\pi})$, i.e., maximize the expected total reward of the perturbed agent (the one that uses the mask net to sometimes take random actions). According to Section 3.3 of the paper, the mask network is trained using PPO, with the reward modified to include a bonus when the mask net chooses to blind (adds $\alpha a_t^m$). The training loop should collect trajectories using the combined policy (target agent + mask net), store the modified rewards, and then perform PPO updates on the mask network’s actor‑critic. Therefore, I expect to find a script that explicitly runs this training loop for the network defence environment, calling the mask agent’s `train()` method periodically while following Algorithm 1.
+
+# Reality
+The submission provides files related to the network defence environment under the `Refine_cage_challenge/` directory. I examined these files:
+
+- **`Agents/PPOAgent_mask.py`**: This defines the combined mask agent. It calculates the masking action and an extra reward bonus (`lazy_reward`) when masking occurs. It includes a `train()` method that implements a PPO update using the stored transitions (which would include the bonus). However, this file alone does not constitute a training script; it only provides the agent class.
+
+- **`rollout_mask.py`**: This script loads a pre‑trained mask agent (`PPOAgent_mask` with `restore=True`, loading a checkpoint from `Models/bline_mask/20000.pth`) and runs episodes to evaluate the combined agent, printing average reward. It does **not** call `agent.train()` or perform any training of the mask network. There is no use of `update_timestep` or optimization loop.
+
+- **`sample_mask_score.py`**: Similarly loads pre‑trained mask and PPO agents, runs evaluation episodes, and logs mask probabilities, actions, and rewards. No training of the mask network occurs.
+
+- **`ppo_train.py`**: Trains a standard PPO agent (`PPOAgent`), not the mask network.
+
+- Other files (`Agents/PPOAgent_Retrain.py`, `MainAgent.py`, etc.) are also unrelated to training the mask network.
+
+There is **no file** that actually trains the mask network for the network defence environment by collecting trajectories under the combined policy and applying the PPO updates to maximize $\eta(\bar{\pi})$ with the blinding bonus. The training code for Algorithm 1 is entirely absent. Consequently, the implementation does not demonstrate that the objective $J(\theta)=\max \eta(\bar{\pi})$ is being optimized in code.
+
+# Score
+Score: 0
+
+The submission does not contain a correct implementation of the mask network training that optimizes the stated objective for the network defence environment. The required training loop is missing, so the criterion is not met.
+2026-08-26 10:02:59 [info     ] model response: # Expectations
+The criterion requires that for the network defence environment, the mask network (explanation method) is trained to optimize the objective $J(\theta)=\max \eta(\bar{\pi})$, i.e., maximize the expected total reward of the perturbed agent (the one that uses the mask net to sometimes take random actions). According to Section 3.3 of the paper, the mask network is trained using PPO, with the reward modified to include a bonus when the mask net chooses to blind (adds $\alpha a_t^m$). The training loop should collect trajectories using the combined policy (target agent + mask net), store the modified rewards, and then perform PPO updates on the mask network’s actor‑critic. Therefore, I expect to find a script that explicitly runs this training loop for the network defence environment, calling the mask agent’s `train()` method periodically while following Algorithm 1.
+
+# Reality
+The submission provides files related to the network defence environment under the `Refine_cage_challenge/` directory. I examined these files:
+
+- **`Agents/PPOAgent_mask.py`**: This defines the combined mask agent. It calculates the masking action and an extra reward bonus (`lazy_reward`) when masking occurs. It includes a `train()` method that implements a PPO update using the stored transitions (which would include the bonus). However, this file alone does not constitute a training script; it only provides the agent class.
+
+- **`rollout_mask.py`**: This script loads a pre‑trained mask agent (`PPOAgent_mask` with `restore=True`, loading a checkpoint from `Models/bline_mask/20000.pth`) and runs episodes to evaluate the combined agent, printing average reward. It does **not** call `agent.train()` or perform any training of the mask network. There is no use of `update_timestep` or optimization loop.
+
+- **`sample_mask_score.py`**: Similarly loads pre‑trained mask and PPO agents, runs evaluation episodes, and logs mask probabilities, actions, and rewards. No training of the mask network occurs.
+
+- **`ppo_train.py`**: Trains a standard PPO agent (`PPOAgent`), not the mask network.
+
+- Other files (`Agents/PPOAgent_Retrain.py`, `MainAgent.py`, etc.) are also unrelated to training the mask network.
+
+There is **no file** that actually trains the mask network for the network defence environment by collecting trajectories under the combined policy and applying the PPO updates to maximize $\eta(\bar{\pi})$ with the blinding bonus. The training code for Algorithm 1 is entirely absent. Consequently, the implementation does not demonstrate that the objective $J(\theta)=\max \eta(\bar{\pi})$ is being optimized in code.
+
+# Score
+Score: 0
+
+The submission does not contain a correct implementation of the mask network training that optimizes the stated objective for the network defence environment. The required training loop is missing, so the criterion is not met.

@@ -1,0 +1,69 @@
+2026-08-26 09:58:46 [info     ] Grading leaf: For the autonomous driving environment, the "Random" Explanation method can be selected for generating rollouts (without training)
+2026-08-26 10:00:05 [info     ] Model file selection raw output:
+Refine_auto_drive/retrain.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/readme.md
+Refine_mujoco/retrain.py
+2026-08-26 10:00:05 [info     ] Model file selection raw output:
+Refine_auto_drive/retrain.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/readme.md
+Refine_mujoco/retrain.py
+2026-08-26 10:02:17 [info     ] model response: # Expectations
+The paper introduces a "Random" explanation method as a baseline: it "identifies critical steps by randomly selecting a visited state as the critical state." For the autonomous driving environment, this method must be usable during the refining phase to generate rollouts (i.e., to reset the environment to a randomly chosen visited state) without requiring a trained mask network (the explanation is purely random, no model needed). I expect to find code that, given a pre-trained agent, runs an episode, records the visited states, then randomly picks one as the critical state. This should be a separate, selectable code path or a clearly parametrized option that does not rely on loading or using a trained state‑mask network.
+
+# Reality
+The autonomous driving code is contained in the `Refine_auto_drive/` folder. The key files are `retrain_env.py` and `gen_retrain_traj.py`.  
+- In `retrain_env.py`, the `CustomWrapper.reset()` method, with probability `p`, calls `gen_one_traj(...)` to obtain a trajectory, then decides a start index:
+  ```python
+  if self.random_sampling:
+      start_idx = np.random.choice(traj.eps_len)
+  else:
+      start_idx = np.argmax(traj.mask_probs)
+  ```
+  A random index corresponds to the Random explanation, while the argmax corresponds to the mask‑net explanation. So there is logic for random selection.  
+- However, `gen_one_traj` (in `gen_retrain_traj.py`) **always** loads a pretrained mask network and uses it to compute importance scores for every step, even when those scores are later ignored (if `random_sampling=True`). The function requires a checkpoint path (`/home/zck7060/DI-drive/masknet_True_0.0001/ckpt/iteration_10000.pth.tar`). There is no branch that avoids loading the mask net.  
+- The retraining script `retrain.py` does not expose an argument to toggle explanation methods; the `CustomWrapper` hardcodes `self.random_sampling = True`, so only the random‑sampling behaviour is active, but it still requires the mask‑net model file to exist.
+
+Thus the Random explanation for generating rollouts is:
+- **tightly coupled** to a trained mask network (loading it is mandatory);  
+- **not truly selectable** as a standalone, model‑free baseline – it cannot be used without a mask‑net checkpoint, which contradicts the paper’s definition of a “Random” explanation that needs no training.
+
+# Score
+**0**  
+The implementation does not correctly realise the Random explanation method for rollouts in the autonomous driving environment. While the code can randomly pick a visited state, it forces a dependency on a trained mask network, making the method not usable “without training” and failing to match the paper’s description of a simple random baseline.
+2026-08-26 10:02:17 [info     ] model response: # Expectations
+The paper introduces a "Random" explanation method as a baseline: it "identifies critical steps by randomly selecting a visited state as the critical state." For the autonomous driving environment, this method must be usable during the refining phase to generate rollouts (i.e., to reset the environment to a randomly chosen visited state) without requiring a trained mask network (the explanation is purely random, no model needed). I expect to find code that, given a pre-trained agent, runs an episode, records the visited states, then randomly picks one as the critical state. This should be a separate, selectable code path or a clearly parametrized option that does not rely on loading or using a trained state‑mask network.
+
+# Reality
+The autonomous driving code is contained in the `Refine_auto_drive/` folder. The key files are `retrain_env.py` and `gen_retrain_traj.py`.  
+- In `retrain_env.py`, the `CustomWrapper.reset()` method, with probability `p`, calls `gen_one_traj(...)` to obtain a trajectory, then decides a start index:
+  ```python
+  if self.random_sampling:
+      start_idx = np.random.choice(traj.eps_len)
+  else:
+      start_idx = np.argmax(traj.mask_probs)
+  ```
+  A random index corresponds to the Random explanation, while the argmax corresponds to the mask‑net explanation. So there is logic for random selection.  
+- However, `gen_one_traj` (in `gen_retrain_traj.py`) **always** loads a pretrained mask network and uses it to compute importance scores for every step, even when those scores are later ignored (if `random_sampling=True`). The function requires a checkpoint path (`/home/zck7060/DI-drive/masknet_True_0.0001/ckpt/iteration_10000.pth.tar`). There is no branch that avoids loading the mask net.  
+- The retraining script `retrain.py` does not expose an argument to toggle explanation methods; the `CustomWrapper` hardcodes `self.random_sampling = True`, so only the random‑sampling behaviour is active, but it still requires the mask‑net model file to exist.
+
+Thus the Random explanation for generating rollouts is:
+- **tightly coupled** to a trained mask network (loading it is mandatory);  
+- **not truly selectable** as a standalone, model‑free baseline – it cannot be used without a mask‑net checkpoint, which contradicts the paper’s definition of a “Random” explanation that needs no training.
+
+# Score
+**0**  
+The implementation does not correctly realise the Random explanation method for rollouts in the autonomous driving environment. While the code can randomly pick a visited state, it forces a dependency on a trained mask network, making the method not usable “without training” and failing to match the paper’s description of a simple random baseline.

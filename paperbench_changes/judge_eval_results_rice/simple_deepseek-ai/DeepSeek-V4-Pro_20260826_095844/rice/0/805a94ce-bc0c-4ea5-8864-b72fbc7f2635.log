@@ -1,0 +1,117 @@
+2026-08-26 09:58:46 [info     ] Grading leaf: For the selfish mining environment, the explanation fidelity score metric has been implemented as outlined in section 4.1 and 4.2: by forcing a given pretrained policy network agent to take random actions starting from each identified critical time step and measuring the average and maximum reward change.
+2026-08-26 09:59:21 [info     ] Model file selection raw output:
+Refine_selfish_mining/masknet/fidelity_score.py
+Refine_selfish_mining/masknet/replay.py
+Refine_selfish_mining/masknet/sample_mask_score.py
+Refine_selfish_mining/masknet/utils.py
+Refine_selfish_mining/masknet/sample_value_score.py
+Refine_selfish_mining/masknet/train.py
+Refine_selfish_mining/baseline/train_ppo.py
+Refine_selfish_mining/baseline/net.py
+Refine_selfish_mining/utils.py
+Refine_selfish_mining/baseline/blockchain_mdps/bitcoin_fee_model.py
+2026-08-26 09:59:21 [info     ] Model file selection raw output:
+Refine_selfish_mining/masknet/fidelity_score.py
+Refine_selfish_mining/masknet/replay.py
+Refine_selfish_mining/masknet/sample_mask_score.py
+Refine_selfish_mining/masknet/utils.py
+Refine_selfish_mining/masknet/sample_value_score.py
+Refine_selfish_mining/masknet/train.py
+Refine_selfish_mining/baseline/train_ppo.py
+Refine_selfish_mining/baseline/net.py
+Refine_selfish_mining/utils.py
+Refine_selfish_mining/baseline/blockchain_mdps/bitcoin_fee_model.py
+2026-08-26 10:01:28 [info     ] model response: # Expectations
+According to Section 4.1 and Section 4.2 (Experiment I) of the paper, the *explanation fidelity score metric* for a given environment is implemented as follows:
+
+1. For a pre‑trained policy, collect trajectories and record the original episode rewards as well as step‑level importance scores from the explanation method (e.g., the mask network).  
+2. For each trajectory:
+   - Use a sliding window of width \( l = L \times K \) (where \( L \) is the trajectory length and \( K \) is a fraction like 10 %, 20 %, etc.) to find the segment with the **highest average importance score**.  
+   - “Fast‑forward” the environment to the start of that segment by taking the original recorded actions.  
+   - Within the segment, force the agent to take **random actions** (masking the original actions).  
+   - After the segment, let the agent’s policy continue the episode normally.  
+   - Record the resulting reward \( R' \); the reward change for that episode is \( d = |R' - R| \) (where \( R \) is the original episode reward).  
+3. Compute the **maximum possible reward change** \( d_{\text{max}} \) from the **environment’s specifications** – i.e., the largest reward that can be accumulated in a single episode.  
+4. Calculate the fidelity score as  
+   \[
+   \text{Fidelity Score} = \log\left(\frac{d}{d_{\text{max}}}\right) - \log\left(\frac{l}{L}\right)
+   \]
+   and average over trajectories.
+
+For this criterion, I expect the submission’s code for the **selfish mining** environment to contain a concrete implementation of the above steps, especially:
+- Identifying the critical segment via a sliding window over the explanation scores.  
+- Replaying episodes with random actions in that segment.  
+- Computing **both** the average reward change \( d \) and the environment‑dependent \( d_{\text{max}} \).  
+- Using the correct formula for the fidelity score.
+
+# Reality
+The submission contains a set of files under `Refine_selfish_mining/masknet/` that deal with the selfish mining environment. The relevant implementation is in:
+
+- `replay.py` – contains a `replay` function and a `select_critical` helper.  
+- `fidelity_score.py` – computes and prints fidelity scores.  
+- `sample_mask_score.py` – generates trajectories and saves original rewards, actions, and mask probability logs.  
+- `utils.py` – loads the pretrained DQN model and the mask network.
+
+**What the code does correctly:**  
+- `select_critical(score, width)` in `replay.py` implements a sliding window of length `int(frame * width)` that picks the segment with the **highest sum** (i.e., highest average) of the mask scores. This matches the sliding‑window method described in the paper.  
+- The `replay` function loads the original actions and mask scores, fast‑forwards using the recorded actions until the critical segment, then takes random actions for the segment, and finally continues with the pretrained DQN policy to the end of the episode. It records the reward and saves the results to a file.  
+- `fidelity_score.py` loads the original reward log and the replay reward log, computes the absolute reward difference, and averages over episodes.
+
+**Where the implementation deviates from the paper’s requirements:**  
+- The fidelity score calculation in `fidelity_score.py` is:
+  ```python
+  score += np.abs(reward_log[i] - replay_reward_log[i]) / 100 - np.log(width)
+  ```
+  The division by `100` is a **hard‑coded constant** that is used in place of \( d_{\text{max}} \).  
+- The paper explicitly defines \( d_{\text{max}} \) as *“the largest reward value that the environment allows within a single episode, based on the environment’s specifications”*. The submission does **not** compute or retrieve this value from the selfish mining environment; there is no code that determines the maximum possible episode reward.  
+- Consequently, the fidelity score formula is not implemented as required; the normalization factor is arbitrary rather than being the true \( d_{\text{max}} \), so the metric does not match the description in Section 4.1 and 4.2.
+
+# Score
+**0** – The implementation fails to correctly incorporate the maximum possible reward change \( d_{\text{max}} \) as defined in the paper; instead it uses a constant 100, which is not derived from the environment’s specifications. Therefore the explanation fidelity score metric is not implemented as outlined.
+2026-08-26 10:01:28 [info     ] model response: # Expectations
+According to Section 4.1 and Section 4.2 (Experiment I) of the paper, the *explanation fidelity score metric* for a given environment is implemented as follows:
+
+1. For a pre‑trained policy, collect trajectories and record the original episode rewards as well as step‑level importance scores from the explanation method (e.g., the mask network).  
+2. For each trajectory:
+   - Use a sliding window of width \( l = L \times K \) (where \( L \) is the trajectory length and \( K \) is a fraction like 10 %, 20 %, etc.) to find the segment with the **highest average importance score**.  
+   - “Fast‑forward” the environment to the start of that segment by taking the original recorded actions.  
+   - Within the segment, force the agent to take **random actions** (masking the original actions).  
+   - After the segment, let the agent’s policy continue the episode normally.  
+   - Record the resulting reward \( R' \); the reward change for that episode is \( d = |R' - R| \) (where \( R \) is the original episode reward).  
+3. Compute the **maximum possible reward change** \( d_{\text{max}} \) from the **environment’s specifications** – i.e., the largest reward that can be accumulated in a single episode.  
+4. Calculate the fidelity score as  
+   \[
+   \text{Fidelity Score} = \log\left(\frac{d}{d_{\text{max}}}\right) - \log\left(\frac{l}{L}\right)
+   \]
+   and average over trajectories.
+
+For this criterion, I expect the submission’s code for the **selfish mining** environment to contain a concrete implementation of the above steps, especially:
+- Identifying the critical segment via a sliding window over the explanation scores.  
+- Replaying episodes with random actions in that segment.  
+- Computing **both** the average reward change \( d \) and the environment‑dependent \( d_{\text{max}} \).  
+- Using the correct formula for the fidelity score.
+
+# Reality
+The submission contains a set of files under `Refine_selfish_mining/masknet/` that deal with the selfish mining environment. The relevant implementation is in:
+
+- `replay.py` – contains a `replay` function and a `select_critical` helper.  
+- `fidelity_score.py` – computes and prints fidelity scores.  
+- `sample_mask_score.py` – generates trajectories and saves original rewards, actions, and mask probability logs.  
+- `utils.py` – loads the pretrained DQN model and the mask network.
+
+**What the code does correctly:**  
+- `select_critical(score, width)` in `replay.py` implements a sliding window of length `int(frame * width)` that picks the segment with the **highest sum** (i.e., highest average) of the mask scores. This matches the sliding‑window method described in the paper.  
+- The `replay` function loads the original actions and mask scores, fast‑forwards using the recorded actions until the critical segment, then takes random actions for the segment, and finally continues with the pretrained DQN policy to the end of the episode. It records the reward and saves the results to a file.  
+- `fidelity_score.py` loads the original reward log and the replay reward log, computes the absolute reward difference, and averages over episodes.
+
+**Where the implementation deviates from the paper’s requirements:**  
+- The fidelity score calculation in `fidelity_score.py` is:
+  ```python
+  score += np.abs(reward_log[i] - replay_reward_log[i]) / 100 - np.log(width)
+  ```
+  The division by `100` is a **hard‑coded constant** that is used in place of \( d_{\text{max}} \).  
+- The paper explicitly defines \( d_{\text{max}} \) as *“the largest reward value that the environment allows within a single episode, based on the environment’s specifications”*. The submission does **not** compute or retrieve this value from the selfish mining environment; there is no code that determines the maximum possible episode reward.  
+- Consequently, the fidelity score formula is not implemented as required; the normalization factor is arbitrary rather than being the true \( d_{\text{max}} \), so the metric does not match the description in Section 4.1 and 4.2.
+
+# Score
+**0** – The implementation fails to correctly incorporate the maximum possible reward change \( d_{\text{max}} \) as defined in the paper; instead it uses a constant 100, which is not derived from the environment’s specifications. Therefore the explanation fidelity score metric is not implemented as outlined.

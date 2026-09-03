@@ -1,0 +1,110 @@
+# =============================================================================
+# FRE Configuration: AntMaze Domain
+# =============================================================================
+# Reproduces the AntMaze experiments from:
+#   "Functional Reward Encodings (FRE) for Zero-Shot Offline RL"
+#
+# AntMaze is a 2D maze navigation domain from D4RL. The offline dataset
+# consists of undirected trajectories collected by a suboptimal policy.
+# Downstream tasks include goal-reaching, directional movement, and
+# procedurally-generated path tasks.
+# =============================================================================
+
+# ---------------------------------------------------------------------------
+# Domain & Dataset
+# ---------------------------------------------------------------------------
+domain: "antmaze"
+task: "umaze"                    # AntMaze variant: umaze, umaze-diverse, medium-play, medium-diverse, large-play, large-diverse
+version: "v0"                    # D4RL dataset version
+data_dir: null                   # Auto-resolved via d4rl
+
+# ---------------------------------------------------------------------------
+# FRE Encoder / Decoder Hyperparameters
+# ---------------------------------------------------------------------------
+latent_dim: 64                   # d_z: dimension of latent reward representation
+d_model: 256                     # Transformer hidden dimension
+num_layers: 2                    # L: number of transformer encoder layers
+num_heads: 4                     # H: number of attention heads
+d_ff: 1024                       # Feedforward hidden dimension in transformer
+d_emb: 64                        # Reward embedding dimension
+num_bins: 100                    # B: number of reward discretization bins
+reward_min: -10.0                # Minimum expected reward for binning
+reward_max: 10.0                 # Maximum expected reward for binning
+decoder_hidden_dims: [256, 256]  # MLP hidden dimensions for reward decoder
+beta: 0.1                        # KL divergence weight in VAE loss
+dropout: 0.0                     # Dropout rate
+max_num_states: 32               # Maximum number of encoding states (K)
+
+# ---------------------------------------------------------------------------
+# Reward Prior Hyperparameters
+# ---------------------------------------------------------------------------
+singleton_threshold: 0.5         # Distance threshold for singleton goal-reaching reward
+linear_sparsity: 0.5             # Probability of zeroing each weight in linear rewards
+mlp_hidden_dim: 256              # Hidden dimension for random MLP reward functions
+
+# ---------------------------------------------------------------------------
+# IQL Agent Hyperparameters
+# ---------------------------------------------------------------------------
+iql_hidden_dims: [256, 256]      # Hidden dimensions for Q, V, and policy networks
+expectile: 0.7                   # τ: expectile for V-function regression
+temperature: 3.0                 # α: temperature for advantage-weighted regression
+discount: 0.99                   # γ: discount factor
+soft_target_update_rate: 0.005   # ρ: Polyak averaging coefficient for target networks
+log_std_min: -5.0                # Minimum log std for Gaussian policy
+log_std_max: 2.0                 # Maximum log std for Gaussian policy
+
+# ---------------------------------------------------------------------------
+# Training Hyperparameters
+# ---------------------------------------------------------------------------
+K_encoder: 32                    # Number of encoding states per reward function
+K_decoder: 32                    # Number of decoding states per reward function
+fre_learning_rate: 1.0e-4        # Learning rate for FRE encoder/decoder (Adam)
+fre_weight_decay: 1.0e-5         # Weight decay for FRE optimizer
+iql_learning_rate: 3.0e-4        # Learning rate for IQL networks (Adam)
+iql_weight_decay: 1.0e-5         # Weight decay for IQL optimizer
+fre_steps: 100000                # Phase 1: number of FRE pre-training gradient steps
+rl_steps: 1000000                # Phase 2: number of RL training gradient steps
+rl_batch_size: 256               # Batch size for IQL updates
+fre_batch_size: 1                # Number of reward functions per FRE training step
+
+# ---------------------------------------------------------------------------
+# Logging & Checkpointing
+# ---------------------------------------------------------------------------
+log_interval: 1000               # Steps between metric logging
+eval_interval: 10000             # Steps between offline evaluations
+checkpoint_interval: 50000       # Steps between checkpoint saves
+checkpoint_dir: "checkpoints"    # Directory for saving model checkpoints
+
+# ---------------------------------------------------------------------------
+# Hardware & Reproducibility
+# ---------------------------------------------------------------------------
+device: "auto"                   # "auto", "cuda", "cuda:0", "cpu"
+use_amp: false                   # Automatic mixed precision (recommended for GPU)
+seed: 0                          # Random seed (overridden for multi-seed runs)
+
+# ---------------------------------------------------------------------------
+# Evaluation Tasks (for zero-shot evaluation after training)
+# ---------------------------------------------------------------------------
+evaluation:
+  num_episodes: 20               # Episodes per task for evaluation
+  max_steps: 1000                # Maximum steps per episode
+  deterministic: true            # Use deterministic policy for evaluation
+  tasks:
+    # Goal-reaching: navigate to specific (x, y) locations
+    - type: "goal_reaching"
+      goals: [[0.0, 0.0], [2.0, 2.0], [4.0, 4.0], [6.0, 6.0], [8.0, 8.0]]
+    # Directional: move in a specified (dx, dy) direction
+    - type: "directional"
+      directions: [[1.0, 0.0], [-1.0, 0.0], [0.0, 1.0], [0.0, -1.0]]
+    # Random simplex: procedural noise reward (smooth random function)
+    - type: "random_simplex"
+      num_functions: 10
+    # Path tasks: follow specific paths (edges, loop, center)
+    - type: "path"
+      paths: ["edges", "loop", "center"]
+
+# ---------------------------------------------------------------------------
+# Reference Scores for Normalization (D4RL AntMaze)
+# ---------------------------------------------------------------------------
+ref_min_score: 0.0               # Minimum reference return (random policy)
+ref_max_score: 100.0             # Maximum reference return (expert / optimal)

@@ -1,0 +1,133 @@
+# =============================================================================
+# FRE (Functional Reward Encodings) - Default Configuration
+# =============================================================================
+# This file contains the default hyperparameters for the FRE framework.
+# Domain-specific configs (antmaze, exorl, kitchen) override these defaults.
+
+# ---------------------------------------------------------------------------
+# General settings
+# ---------------------------------------------------------------------------
+general:
+  seed: 42
+  device: "cuda"  # "cuda" or "cpu"
+  log_dir: "./logs"
+  checkpoint_dir: "./checkpoints"
+  data_dir: "./data"
+  use_wandb: false
+  wandb_project: "fre"
+  wandb_entity: null
+  wandb_name: null
+  verbose: true
+
+# ---------------------------------------------------------------------------
+# Dataset settings
+# ---------------------------------------------------------------------------
+dataset:
+  # Dataset name: "antmaze-large-diverse-v2", "kitchen-complete-v0",
+  # "exorl-walker", "exorl-cheetah", or custom
+  name: "antmaze-large-diverse-v2"
+  normalize_states: true
+  clip_to_eps: true  # For D4RL datasets
+  exorl_data_path: null  # Path to ExORL data if not using exorl package
+
+# ---------------------------------------------------------------------------
+# Reward distribution settings
+# ---------------------------------------------------------------------------
+reward:
+  # Mixture weights (uniform by default)
+  singleton_weight: 0.333
+  linear_weight: 0.333
+  mlp_weight: 0.333
+
+  # Singleton (goal-reaching) settings
+  singleton_threshold: 0.5  # L2 distance threshold for goal reached
+
+  # Linear reward settings
+  linear_sparsity: 0.8  # Fraction of zero weights
+
+  # MLP reward settings
+  mlp_hidden_dim: 256
+
+# ---------------------------------------------------------------------------
+# FRE Encoder settings
+# ---------------------------------------------------------------------------
+encoder:
+  # Transformer architecture
+  embed_dim: 256
+  latent_dim: 64
+  num_layers: 3
+  num_heads: 4
+  dropout: 0.1
+
+  # Reward embedding
+  num_bins: 64
+  reward_min: null  # null = adaptive binning
+  reward_max: null
+
+# ---------------------------------------------------------------------------
+# FRE Decoder settings
+# ---------------------------------------------------------------------------
+decoder:
+  hidden_dims: [256, 256]
+  activation: "relu"
+
+# ---------------------------------------------------------------------------
+# IQL Agent settings
+# ---------------------------------------------------------------------------
+agent:
+  hidden_dims: [256, 256]
+  activation: "relu"
+  expectile: 0.7       # τ for expectile regression
+  temperature: 3.0     # β for AWR policy loss
+  discount: 0.99       # γ discount factor
+  target_tau: 0.005    # Polyak averaging coefficient
+  log_std_min: -5.0
+  log_std_max: 2.0
+
+# ---------------------------------------------------------------------------
+# Phase 1: Encoder Training
+# ---------------------------------------------------------------------------
+encoder_training:
+  num_steps: 100000       # Total training iterations
+  learning_rate: 3.0e-4
+  K_enc: 64               # Number of encoding states
+  K_dec: 64               # Number of decoding states
+  beta_kl: 0.1            # KL divergence penalty coefficient
+  grad_clip_norm: 10.0    # Gradient clipping max norm
+  log_interval: 1000      # Steps between log outputs
+  eval_interval: 5000     # Steps between evaluations
+  save_interval: 10000    # Steps between checkpoints
+
+# ---------------------------------------------------------------------------
+# Phase 2: RL Training
+# ---------------------------------------------------------------------------
+rl_training:
+  num_steps: 1000000      # Total training iterations
+  learning_rate: 3.0e-4
+  K_enc: 64               # Number of encoding states for z
+  batch_size: 256         # RL batch size
+  grad_clip_norm: 10.0
+  log_interval: 1000
+  eval_interval: 10000
+  save_interval: 50000
+
+# ---------------------------------------------------------------------------
+# Strided training (optional, alternates encoder and RL updates)
+# ---------------------------------------------------------------------------
+strided_training:
+  enabled: false
+  encoder_steps_per_stride: 1000
+  rl_steps_per_stride: 10000
+  total_strides: 100
+
+# ---------------------------------------------------------------------------
+# Evaluation settings
+# ---------------------------------------------------------------------------
+evaluation:
+  K_enc: 32               # Number of encoding states for zero-shot eval
+  num_episodes: 20        # Episodes per task
+  num_seeds: 5            # Random seeds for statistical reporting
+  deterministic_policy: true  # Use mean action (no sampling)
+  normalize_returns: true
+  min_return: 0.0         # For normalization (override per domain)
+  max_return: 100.0       # For normalization (override per domain)

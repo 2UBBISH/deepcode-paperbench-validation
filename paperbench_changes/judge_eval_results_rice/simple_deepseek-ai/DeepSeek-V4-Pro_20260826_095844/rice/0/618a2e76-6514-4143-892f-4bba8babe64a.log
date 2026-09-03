@@ -1,0 +1,77 @@
+2026-08-26 09:58:46 [info     ] Grading leaf: For the selfish mining environment, the "Random" Explanation method can be selected for generating rollouts (without training)
+2026-08-26 10:00:26 [info     ] Model file selection raw output:
+Refine_selfish_mining/masknet/replay.py
+Refine_selfish_mining/utils.py
+Refine_selfish_mining/retrain.py
+Refine_selfish_mining/masknet/replay.sh
+Refine_selfish_mining/masknet/sample_mask_score.py
+Refine_selfish_mining/masknet/fidelity_score.py
+Refine_selfish_mining/masknet/utils.py
+Refine_selfish_mining/rnd_model.py
+Refine_selfish_mining/rnd_policy.py
+Refine_selfish_mining/baseline/train_ppo.py
+2026-08-26 10:00:26 [info     ] Model file selection raw output:
+Refine_selfish_mining/masknet/replay.py
+Refine_selfish_mining/utils.py
+Refine_selfish_mining/retrain.py
+Refine_selfish_mining/masknet/replay.sh
+Refine_selfish_mining/masknet/sample_mask_score.py
+Refine_selfish_mining/masknet/fidelity_score.py
+Refine_selfish_mining/masknet/utils.py
+Refine_selfish_mining/rnd_model.py
+Refine_selfish_mining/rnd_policy.py
+Refine_selfish_mining/baseline/train_ppo.py
+2026-08-26 10:01:03 [info     ] model response: # Expectations
+The paper proposes RICE, which relies on an explanation method to identify critical states. The "Random" explanation method (baseline) simply selects critical steps by randomly picking a visited state (or segment) without any learned model. For the selfish mining environment, the criterion requires that this random method can be used to generate rollouts—meaning the system can run an evaluation (e.g., fidelity score computation) where it resets the agent to a randomly chosen segment of a trajectory, executes random actions for that segment, and then continues with the agent's policy. This must be possible without any training (i.e., just using pre‑recorded trajectories and a random selection heuristic). I expect the code to provide a mechanism that:
+- Loads a pre‑trained DQN agent and, optionally, a mask network (though not needed for random).
+- For each test run, loads a stored trajectory (action log).
+- For `method="random"`, selects a critical segment by picking a random start index and segment length proportional to the trajectory length (e.g., via a width parameter).
+- Replays the trajectory: follows the recorded actions up to the selected start, then takes random actions for the segment, then resumes with the agent’s policy.
+- Reports the resulting reward, which is used for fidelity evaluation.
+All of this should be done in an isolated "replay" script that does not involve training any network.
+
+# Reality
+The submitted files include `Refine_selfish_mining/masknet/replay.py`, which implements exactly this functionality.
+- It imports utility functions specific to the selfish mining environment (e.g., `BitcoinFeeModel`, `MDPBlockchainSimulatorDQN`).
+- It defines a `replay()` function that accepts a `method` argument.
+- Inside `replay()`, for `method == "random"`:
+  ```python
+  sub_length = int(action_set.shape[0] * width)
+  best_score_index = np.random.randint(0, action_set.shape[0] - sub_length)
+  ```
+  This selects a random start index for the critical segment of length `sub_length`.
+- The replay loop then follows the `action_set` up to `best_score_index`, takes random actions during the segment (with a fixed seed), and then uses the loaded DQN model for the remainder.
+- The script `replay.sh` explicitly launches `replay.py --method "random"`, confirming this method can be invoked.
+- No training occurs in this script; it only loads pre‑trained models (via `load_dqn_model()` and, if needed, `load_mask_model()`) and pre‑recorded `action_log.txt`. The random method does not rely on the mask network at all, so it operates purely as a roll‑out evaluation without any explanation‑method training.
+
+This implementation directly fulfills the criterion: the random explanation method can be selected for generating rollouts (the fidelity‑score replays) without any training.
+
+# Score
+1
+2026-08-26 10:01:03 [info     ] model response: # Expectations
+The paper proposes RICE, which relies on an explanation method to identify critical states. The "Random" explanation method (baseline) simply selects critical steps by randomly picking a visited state (or segment) without any learned model. For the selfish mining environment, the criterion requires that this random method can be used to generate rollouts—meaning the system can run an evaluation (e.g., fidelity score computation) where it resets the agent to a randomly chosen segment of a trajectory, executes random actions for that segment, and then continues with the agent's policy. This must be possible without any training (i.e., just using pre‑recorded trajectories and a random selection heuristic). I expect the code to provide a mechanism that:
+- Loads a pre‑trained DQN agent and, optionally, a mask network (though not needed for random).
+- For each test run, loads a stored trajectory (action log).
+- For `method="random"`, selects a critical segment by picking a random start index and segment length proportional to the trajectory length (e.g., via a width parameter).
+- Replays the trajectory: follows the recorded actions up to the selected start, then takes random actions for the segment, then resumes with the agent’s policy.
+- Reports the resulting reward, which is used for fidelity evaluation.
+All of this should be done in an isolated "replay" script that does not involve training any network.
+
+# Reality
+The submitted files include `Refine_selfish_mining/masknet/replay.py`, which implements exactly this functionality.
+- It imports utility functions specific to the selfish mining environment (e.g., `BitcoinFeeModel`, `MDPBlockchainSimulatorDQN`).
+- It defines a `replay()` function that accepts a `method` argument.
+- Inside `replay()`, for `method == "random"`:
+  ```python
+  sub_length = int(action_set.shape[0] * width)
+  best_score_index = np.random.randint(0, action_set.shape[0] - sub_length)
+  ```
+  This selects a random start index for the critical segment of length `sub_length`.
+- The replay loop then follows the `action_set` up to `best_score_index`, takes random actions during the segment (with a fixed seed), and then uses the loaded DQN model for the remainder.
+- The script `replay.sh` explicitly launches `replay.py --method "random"`, confirming this method can be invoked.
+- No training occurs in this script; it only loads pre‑trained models (via `load_dqn_model()` and, if needed, `load_mask_model()`) and pre‑recorded `action_log.txt`. The random method does not rely on the mask network at all, so it operates purely as a roll‑out evaluation without any explanation‑method training.
+
+This implementation directly fulfills the criterion: the random explanation method can be selected for generating rollouts (the fidelity‑score replays) without any training.
+
+# Score
+1

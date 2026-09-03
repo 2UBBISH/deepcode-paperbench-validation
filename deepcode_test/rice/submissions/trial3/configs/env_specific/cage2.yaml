@@ -1,0 +1,110 @@
+# ============================================================================
+# Environment-specific configuration for CAGE Challenge 2 (Cybersecurity)
+# Overrides default_mask.yaml and default_refine.yaml with values from
+# the RICE paper (Table 3): p=0.5, λ=0.01, α=0.0001
+# ============================================================================
+
+# --- Environment Identification ---
+env_name: "CAGE2-v0"
+env_type: "cage2"
+state_dim: 19          # Flattened observation from 3-host simulation (3*5 + 4 global)
+action_dim: 12         # Discrete actions (3 hosts × 4 actions each)
+max_episode_steps: 100 # Default episode length; paper uses 30, 50, 100
+
+# --- Mask Network Architecture ---
+mask_network:
+  hidden_sizes: [128, 128]
+  activation: "tanh"
+
+# --- Intrinsic Reward Coefficient for Mask Training ---
+alpha: 0.0001          # From Table 3
+
+# --- PPO Hyperparameters for Mask Network Training ---
+ppo:
+  learning_rate: 3.0e-4
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_epsilon: 0.2
+  value_loss_coef: 0.5
+  entropy_coef: 0.01
+  max_grad_norm: 0.5
+  ppo_epochs: 10
+  batch_size: 64
+
+# --- Mask Training Loop Settings ---
+training:
+  total_steps: 300000
+  steps_per_iteration: 2048
+  eval_interval: 10
+  eval_episodes: 10
+  save_interval: 50
+  seed: 42
+
+# --- Fidelity Evaluation ---
+fidelity:
+  num_episodes: 10
+  q_function: null     # Use Monte Carlo returns as proxy
+
+# --- Critical State Collection ---
+critical_state:
+  num_episodes: 100
+  top_k_per_episode: 1
+  max_critical_states: 100
+
+# --- Mixed Initial Distribution ---
+mixed_init:
+  p_mixed: 0.5         # From Table 3: p=0.5 for CAGE2
+
+# --- RND Exploration Bonus ---
+rnd:
+  lambda_coef: 0.01    # From Table 3: λ=0.01 for CAGE2
+  hidden_sizes: [64, 64]
+  embedding_dim: 64
+  activation: "relu"
+  learning_rate: 1.0e-4
+  normalize_obs: true
+  obs_rms_decay: 0.99
+  normalize_bonus: true
+  bonus_decay: 0.99
+  update_epochs: 4
+  batch_size: 256
+
+# --- PPO Hyperparameters for Refinement Phase ---
+refine_ppo:
+  learning_rate: 3.0e-4
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_epsilon: 0.2
+  value_loss_coef: 0.5
+  entropy_coef: 0.01
+  max_grad_norm: 0.5
+  ppo_epochs: 10
+  batch_size: 64
+  normalize_advantages: true
+  normalize_obs: true
+
+# --- Policy Architecture for Refinement ---
+policy:
+  hidden_sizes: [128, 128]
+  value_hidden_sizes: [128, 128]
+  policy_std: 0.0      # Will be learned as log_std parameter
+  activation: "tanh"
+
+# --- Refinement Training Loop ---
+refine_training:
+  total_steps: 1000000
+  steps_per_iteration: 2048
+  eval_interval: 10
+  eval_episodes: 10
+  eval_max_steps: 100
+  save_interval: 50
+  seed: 42
+
+# --- Device ---
+device: "cuda"
+
+# --- Logging ---
+logging:
+  verbose: true
+  log_dir: "./logs/cage2"
+  use_tensorboard: false

@@ -1,0 +1,43 @@
+2026-08-26 10:00:30 [info     ] Grading leaf: For the network defence environment, the additional reward given when the mask net outputs "1" is governed by a mutable hyperparameter, i.e., a hyperparameter whose value can be changed (without having to edit the code directly), corresponding to $\alpha$ in the paper. Alternative hyperparameter names are allowed, as long as the functionality remains the same.
+2026-08-26 10:01:51 [info     ] Model file selection raw output:
+Refine_cage_challenge/rollout_mask.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_mask.py
+Refine_cage_challenge/Agents/PPOAgent_mask.py
+Refine_cage_challenge/readme.md
+Refine_cage_challenge/ppo_train.py
+Refine_cage_challenge/Agents/MainAgent.py
+Refine_cage_challenge/PPO/ActorCritic.py
+Refine_cage_challenge/PPO/Memory.py
+Refine_cage_challenge/sample_mask_score.py
+Refine_cage_challenge/replay.py
+2026-08-26 10:01:51 [info     ] Model file selection raw output:
+Refine_cage_challenge/rollout_mask.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_mask.py
+Refine_cage_challenge/Agents/PPOAgent_mask.py
+Refine_cage_challenge/readme.md
+Refine_cage_challenge/ppo_train.py
+Refine_cage_challenge/Agents/MainAgent.py
+Refine_cage_challenge/PPO/ActorCritic.py
+Refine_cage_challenge/PPO/Memory.py
+Refine_cage_challenge/sample_mask_score.py
+Refine_cage_challenge/replay.py
+2026-08-26 10:03:06 [info     ] model response: # Expectations
+In the paper, the mask network training uses a modified reward: \( R'(s_t, a_t) = R(s_t, a_t) + \alpha a_t^m \), where \( \alpha \) is a hyperparameter that balances the task reward and the intrinsic bonus for masking. The criterion requires that for the network defence (Cage Challenge 2) environment, the implementation makes this \( \alpha \) a **mutable hyperparameter** – i.e., its value can be adjusted externally without modifying the source code (e.g., via a command-line argument, configuration file, or a function parameter that can be set at runtime). The name may differ, but the functionality (a changeable coefficient governing the extra reward when the mask outputs 1) must be present.
+
+# Reality
+The provided files for the network defence environment include `Refine_cage_challenge/Agents/PPOAgent_mask.py`, which implements the mask agent. In its `__init__` method, a bonus value is stored as `self.lazy_reward = 5`. This value is later used in `get_action` to compute an additional reward when the mask network chooses to blind the agent (i.e., outputs “1”). However, `self.lazy_reward` is **hardcoded** to 5 inside the class constructor. There is no constructor parameter, no command‑line argument parsing, no configuration file, and no external variable that allows this value to be set or changed without editing the source code. The training script `rollout_mask.py` instantiates the mask agent without any parameter for the bonus, and no other file in the submission introduces a configurable coefficient for this reward.
+
+Consequently, the additional reward for masking is **not governed by a mutable hyperparameter**; changing its value requires directly modifying the Python code of `PPOAgent_mask.py`.
+
+# Score
+0 – The implementation does not meet the criterion. The bonus coefficient is hardcoded and cannot be changed without editing the source code; there is no mutable hyperparameter corresponding to \( \alpha \) (or an equivalent) that satisfies the requirement.
+2026-08-26 10:03:06 [info     ] model response: # Expectations
+In the paper, the mask network training uses a modified reward: \( R'(s_t, a_t) = R(s_t, a_t) + \alpha a_t^m \), where \( \alpha \) is a hyperparameter that balances the task reward and the intrinsic bonus for masking. The criterion requires that for the network defence (Cage Challenge 2) environment, the implementation makes this \( \alpha \) a **mutable hyperparameter** – i.e., its value can be adjusted externally without modifying the source code (e.g., via a command-line argument, configuration file, or a function parameter that can be set at runtime). The name may differ, but the functionality (a changeable coefficient governing the extra reward when the mask outputs 1) must be present.
+
+# Reality
+The provided files for the network defence environment include `Refine_cage_challenge/Agents/PPOAgent_mask.py`, which implements the mask agent. In its `__init__` method, a bonus value is stored as `self.lazy_reward = 5`. This value is later used in `get_action` to compute an additional reward when the mask network chooses to blind the agent (i.e., outputs “1”). However, `self.lazy_reward` is **hardcoded** to 5 inside the class constructor. There is no constructor parameter, no command‑line argument parsing, no configuration file, and no external variable that allows this value to be set or changed without editing the source code. The training script `rollout_mask.py` instantiates the mask agent without any parameter for the bonus, and no other file in the submission introduces a configurable coefficient for this reward.
+
+Consequently, the additional reward for masking is **not governed by a mutable hyperparameter**; changing its value requires directly modifying the Python code of `PPOAgent_mask.py`.
+
+# Score
+0 – The implementation does not meet the criterion. The bonus coefficient is hardcoded and cannot be changed without editing the source code; there is no mutable hyperparameter corresponding to \( \alpha \) (or an equivalent) that satisfies the requirement.

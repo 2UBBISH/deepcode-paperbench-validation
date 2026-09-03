@@ -1,0 +1,129 @@
+# FRE reproduction configuration for D4RL AntMaze-large-diverse-v2.
+# This YAML mirrors the dataclasses in fre/config.py and is consumed by
+# scripts/run_experiments.py and individual training/evaluation scripts.
+
+domain: antmaze
+dataset_name: antmaze-large-diverse-v2
+env_name: antmaze-large-diverse-v2
+
+# Dimensions are fixed for D4RL AntMaze observations (qpos + qvel).
+state_dim: 29
+action_dim: 8
+
+reward_prior:
+  goal_epsilon: 1.0
+  p_mask: 0.75
+  mlp_hidden: 256
+  # Uniform mixture over singleton goals, random linear, and random MLP rewards.
+  mixture_weights: [0.3333333333, 0.3333333333, 0.3333333333]
+  clip_min: -1.0
+  clip_max: 1.0
+
+fre_vae:
+  reward_embedding:
+    state_proj_dim: 192
+    reward_bins: 64
+    embedding_dim: 64
+    token_dim: 256
+  d_model: 256
+  nhead: 4
+  num_layers: 4
+  dim_feedforward: 1024
+  dropout: 0.1
+  activation: gelu
+  latent_dim: 128
+  decoder_hidden: [256, 256]
+  decoder_activation: relu
+  beta: 1.0
+  lr: 1.0e-4
+  weight_decay: 0.0
+  encoder_states: 32
+  decoder_states: 256
+  reward_fn_batch_size: 16
+
+iql:
+  q_hidden: [256, 256]
+  v_hidden: [256, 256]
+  policy_hidden: [256, 256]
+  gamma: 0.99
+  expectile: 0.9
+  awr_temperature: 3.0
+  target_tau: 0.005
+  advantage_clip: [-5.0, 2.0]
+  log_std_min: -5.0
+  log_std_max: 2.0
+  lr: 3.0e-4
+  weight_decay: 0.0
+
+training:
+  seed: 0
+  device: auto
+  vae_steps: 100000
+  vae_batch_size: 16
+  vae_log_interval: 1000
+  vae_save_interval: 10000
+  vae_checkpoint: null
+  rl_steps: 1000000
+  rl_batch_size: 256
+  rl_log_interval: 1000
+  rl_save_interval: 50000
+  rl_checkpoint: null
+  normalize_states: true
+  state_pool_size: null
+  output_dir: checkpoints/antmaze
+  log_dir: logs/antmaze
+  use_tensorboard: false
+
+evaluation:
+  num_examples: 32
+  num_episodes: 20
+  seeds: [0, 1, 2, 3, 4]
+  stochastic: false
+  device: auto
+  output_dir: eval_results/antmaze
+
+baselines:
+  fb:
+    repr_dim: 256
+    hidden_dims: [256, 256]
+    lr: 3.0e-4
+    gamma: 0.99
+    tau: 0.005
+    batch_size: 256
+    eval_reward_samples: 5120
+    ridge_coeff: 1.0e-3
+  sf:
+    feature_dim: 256
+    hidden_dims: [256, 256]
+    icm_lr: 1.0e-4
+    lr: 3.0e-4
+    gamma: 0.99
+    tau: 0.005
+    batch_size: 256
+    eval_reward_samples: 5120
+  gc_iql:
+    hidden_dims: [256, 256]
+    gamma: 0.99
+    expectile: 0.9
+    awr_temperature: 3.0
+    target_tau: 0.005
+    lr: 3.0e-4
+    batch_size: 256
+    hindsight_prob: 0.5
+    goal_epsilon: 1.0
+  gc_bc:
+    hidden_dims: [256, 256]
+    lr: 3.0e-4
+    batch_size: 256
+    relabel_fraction: 0.5
+    goal_epsilon: 1.0
+  opal:
+    skill_dim: 16
+    encoder_hidden: 256
+    decoder_hidden: 256
+    policy_hidden: [256, 256]
+    prior_hidden: [256, 256]
+    lr: 3.0e-4
+    beta: 1.0
+    batch_size: 256
+    num_skills_eval: 10

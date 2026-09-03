@@ -1,0 +1,65 @@
+2026-08-26 09:58:46 [info     ] Grading leaf: For the autonomous driving environment, the policy network agents has been implemented
+2026-08-26 09:59:49 [info     ] Model file selection raw output:
+Refine_auto_drive/learner.py
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/retrain.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/train_masknet.py
+Refine_mujoco/models.py
+Refine_mujoco/PPO.py
+2026-08-26 09:59:49 [info     ] Model file selection raw output:
+Refine_auto_drive/learner.py
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/retrain.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/train_masknet.py
+Refine_mujoco/models.py
+Refine_mujoco/PPO.py
+2026-08-26 10:00:51 [info     ] model response: # Expectations
+The paper describes the autonomous driving environment using MetaDrive’s Macro-v1. For this environment, the RICE method requires three policy network agents: the pre‑trained policy \(\pi\) (to be refined), the mask network \(\tilde{\pi}\) (for step‑level explanation), and the refined policy \(\pi'\). All are trained with PPO and must be compatible with the environment’s observation and action spaces.
+- The **pre‑trained policy agent** must accept a bird‑eye‑view input of shape \(5 \times 200 \times 200\) (or after transposition \(200 \times 200 \times 5\)) and output a discrete action over 5 driving actions.  
+- The **mask network** must take the same state input but output a binary action (mask or not). It should integrate the target policy to produce blended actions.  
+- The **refined policy** is a further PPO agent that incorporates an exploration bonus (RND).  
+
+I expect to find concrete code that instantiates these policy networks, configures their architectures, and (where applicable) loads pre‑trained weights, demonstrating that the required agents have been implemented for the autonomous driving environment.
+
+# Reality
+The submission contains the directory `Refine_auto_drive/` with several files that implement the agents:
+
+- **Pre‑trained policy agent**: `train_baseline.py` defines a `PPOPolicy` with `obs_shape=[5, 200, 200]`, `action_shape=5`, `action_space='discrete'`, and an encoder with hidden sizes `[128, 128, 64]`. This matches the DI‑drive architecture referenced in the paper. The training loop collects data and learns. In `retrain.py`, a pre‑trained checkpoint is loaded (`ckpt_best.pth.tar`) to initialise the policy for refinement.
+
+- **Mask network agent**: `train_masknet.py` creates another `PPOPolicy` with the same observation shape but `action_shape=2` (binary mask action). The environment wrapper `custom_masknet_env.py` loads the pre‑trained driving agent internally and uses its outputs to determine the final action when the mask is 0; when the mask is 1, a random action is taken. This is precisely the “blinding” mechanism described in the paper.
+
+- **Refined policy agent**: `retrain.py` loads the pre‑trained driving policy, wraps the environment with `retrain_env.py/CustomWrapper` to mix default initial states and identified critical states, and trains the policy using `PPOPolicy` augmented with an `RndRewardModel` (exploration bonus). The RND model is defined in `rnd_reward_model.py` and follows the RND scheme from the paper.
+
+All agent creations are embedded in actual runnable scripts, not just descriptions. The configurations (observation shapes, action spaces, hidden sizes) are consistent with the paper and the addendum’s guidance about the DI‑drive default network.
+
+# Score
+1 – The submission contains the necessary code to correctly implement the three policy network agents for the autonomous driving environment, fulfilling the criterion.
+2026-08-26 10:00:51 [info     ] model response: # Expectations
+The paper describes the autonomous driving environment using MetaDrive’s Macro-v1. For this environment, the RICE method requires three policy network agents: the pre‑trained policy \(\pi\) (to be refined), the mask network \(\tilde{\pi}\) (for step‑level explanation), and the refined policy \(\pi'\). All are trained with PPO and must be compatible with the environment’s observation and action spaces.
+- The **pre‑trained policy agent** must accept a bird‑eye‑view input of shape \(5 \times 200 \times 200\) (or after transposition \(200 \times 200 \times 5\)) and output a discrete action over 5 driving actions.  
+- The **mask network** must take the same state input but output a binary action (mask or not). It should integrate the target policy to produce blended actions.  
+- The **refined policy** is a further PPO agent that incorporates an exploration bonus (RND).  
+
+I expect to find concrete code that instantiates these policy networks, configures their architectures, and (where applicable) loads pre‑trained weights, demonstrating that the required agents have been implemented for the autonomous driving environment.
+
+# Reality
+The submission contains the directory `Refine_auto_drive/` with several files that implement the agents:
+
+- **Pre‑trained policy agent**: `train_baseline.py` defines a `PPOPolicy` with `obs_shape=[5, 200, 200]`, `action_shape=5`, `action_space='discrete'`, and an encoder with hidden sizes `[128, 128, 64]`. This matches the DI‑drive architecture referenced in the paper. The training loop collects data and learns. In `retrain.py`, a pre‑trained checkpoint is loaded (`ckpt_best.pth.tar`) to initialise the policy for refinement.
+
+- **Mask network agent**: `train_masknet.py` creates another `PPOPolicy` with the same observation shape but `action_shape=2` (binary mask action). The environment wrapper `custom_masknet_env.py` loads the pre‑trained driving agent internally and uses its outputs to determine the final action when the mask is 0; when the mask is 1, a random action is taken. This is precisely the “blinding” mechanism described in the paper.
+
+- **Refined policy agent**: `retrain.py` loads the pre‑trained driving policy, wraps the environment with `retrain_env.py/CustomWrapper` to mix default initial states and identified critical states, and trains the policy using `PPOPolicy` augmented with an `RndRewardModel` (exploration bonus). The RND model is defined in `rnd_reward_model.py` and follows the RND scheme from the paper.
+
+All agent creations are embedded in actual runnable scripts, not just descriptions. The configurations (observation shapes, action spaces, hidden sizes) are consistent with the paper and the addendum’s guidance about the DI‑drive default network.
+
+# Score
+1 – The submission contains the necessary code to correctly implement the three policy network agents for the autonomous driving environment, fulfilling the criterion.

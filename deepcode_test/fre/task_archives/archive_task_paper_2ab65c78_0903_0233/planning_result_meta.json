@@ -1,0 +1,38 @@
+{
+  "status": "success",
+  "source": "generated",
+  "coverage_check": {
+    "ran": true,
+    "adopted": true,
+    "chars_before": 16470,
+    "chars_after": 19534
+  },
+  "mode": "segmented",
+  "attempts": 1,
+  "stop_reason": "completed",
+  "completeness_score": 1.0,
+  "plan_validation": {
+    "yaml_valid": true,
+    "yaml_error": null,
+    "required_sections": [
+      "file_structure",
+      "implementation_components",
+      "validation_approach",
+      "environment_setup",
+      "implementation_strategy"
+    ],
+    "missing_sections": [],
+    "sections_found": 5,
+    "valid": true
+  },
+  "tools_used": [],
+  "usage": {
+    "prompt_tokens": 7813,
+    "completion_tokens": 8132,
+    "total_tokens": 15945
+  },
+  "plan_chars": 19534,
+  "updated_at": "2026-09-02T14:18:21.150345+00:00",
+  "initial_plan_path": "/home/deepevol/deepevol/DeepCode/deepcode_lab/tasks/paper_2ab65c78/initial_plan.txt",
+  "plan_saved": true
+}

@@ -1,0 +1,81 @@
+2026-08-26 10:01:11 [info     ] Grading leaf: In Experiment II, for the network defence environment, for the "StateMask-R" refinement method, the optimized StateMask ("Ours") explanation method proposed in the paper is used as the explanation method.
+2026-08-26 10:01:54 [info     ] Model file selection raw output:
+Refine_cage_challenge/retrain.py
+Refine_cage_challenge/Agents/PPOAgent_Retrain.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_retrain.py
+Refine_cage_challenge/sample_mask_score.py
+Refine_cage_challenge/rollout_mask.py
+Refine_cage_challenge/Agents/PPOAgent_mask.py
+Refine_cage_challenge/ppo_train.py
+Refine_cage_challenge/README.md
+Refine_cage_challenge/Wrappers/ChallengeWrapper2.py
+Refine_cage_challenge/Agents/MainAgent.py
+2026-08-26 10:01:54 [info     ] Model file selection raw output:
+Refine_cage_challenge/retrain.py
+Refine_cage_challenge/Agents/PPOAgent_Retrain.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_retrain.py
+Refine_cage_challenge/sample_mask_score.py
+Refine_cage_challenge/rollout_mask.py
+Refine_cage_challenge/Agents/PPOAgent_mask.py
+Refine_cage_challenge/ppo_train.py
+Refine_cage_challenge/README.md
+Refine_cage_challenge/Wrappers/ChallengeWrapper2.py
+Refine_cage_challenge/Agents/MainAgent.py
+2026-08-26 10:01:54 [info     ] File /home/deepevol/deepevol/frontier-evals/project/paperbench/data/judge_eval/rice/0/submission/Refine_cage_challenge/README.md not found!
+2026-08-26 10:01:54 [info     ] File /home/deepevol/deepevol/frontier-evals/project/paperbench/data/judge_eval/rice/0/submission/Refine_cage_challenge/README.md not found!
+2026-08-26 10:03:28 [info     ] model response: # Expectations
+The criterion requires that the submission includes code for Experiment II in the network defence (Cage Challenge 2) environment, specifically for the **"StateMask-R" refinement method**. According to the paper, this method fine-tunes a pre-trained agent by resetting the environment to critical states identified by an explanation method, without mixing with default initial states and without exploration bonuses. For Experiment II, all refining methods use the **"Ours" (RICE) explanation method**, i.e., the optimized StateMask variant proposed in Section 3.3. Therefore, a correct implementation for this criterion must:
+
+1. Load the pre-trained mask network (the RICE explanation method) for the network defence environment.
+2. Identify critical states in trajectories using this mask network (e.g., the state with the highest "importance score" or non‑masking probability).
+3. Implement a refinement loop where **every episode starts from a critical state** (no mixing, i.e., `p=1` in the paper’s terminology) and **no exploration bonus (RND)** is added; it should be standard PPO fine‑tuning from those critical states.
+4. Be clearly separated from the "Ours" refinement method (which uses mixed initial states and RND).  
+
+I will examine the provided files to see if such an implementation exists.
+
+# Reality
+The submission files for the network defence environment are:
+
+- `Refine_cage_challenge/ppo_train.py` – pretraining script.
+- `Refine_cage_challenge/rollout_mask.py`, `sample_mask_score.py` – mask network evaluation/recording.
+- `Refine_cage_challenge/Utils` (referenced but not included) – likely contains `gen_one_traj`.
+- `Refine_cage_challenge/Agents/PPOAgent.py` (not shown directly, but implied) – pre‑trained agent.
+- `Refine_cage_challenge/Agents/PPOAgent_mask.py` – the RICE mask network agent.
+- **`Refine_cage_challenge/retrain.py`** – a refinement script that uses `ChallengeWrapper2_retrain` and `PPOAgent_Retrain`.
+- `Refine_cage_challenge/Wrappers/ChallengeWrapper2_retrain.py` – custom wrapper with critical‑state reset.
+- `Refine_cage_challenge/Agents/PPOAgent_Retrain.py` – agent that includes an RND model and exploration bonus.
+
+The `retrain.py` script implements the **"Ours" (RICE) refinement** method: it uses a mixed initial distribution (`go_prob=0.5`), selects the most critical state via `argmax(mask_record)` (RICE explanation), and adds an RND exploration bonus (`bonus_scale=0.01`). The `ChallengeWrapper2_retrain.reset()` logic chooses between default reset and critical‑state reset with probability `go_prob`. This is **not** StateMask‑R.
+
+I found **no separate script** that implements StateMask‑R for the network defence environment. There is no training file that sets `go_prob=1` (always start from critical state) and disables RND (λ=0). The provided code does not contain a configuration switch, argument, or alternative entry point that would produce a StateMask‑R refinement run. Therefore, the submission **does not include an implementation of StateMask‑R** for the network defence environment, and consequently cannot show that the RICE explanation method is used for it.
+
+# Score
+**0**. The criterion is not satisfied because the submission lacks any code that implements the StateMask‑R refinement method for the network defence environment, let alone one that uses the RICE explanation method.
+2026-08-26 10:03:28 [info     ] model response: # Expectations
+The criterion requires that the submission includes code for Experiment II in the network defence (Cage Challenge 2) environment, specifically for the **"StateMask-R" refinement method**. According to the paper, this method fine-tunes a pre-trained agent by resetting the environment to critical states identified by an explanation method, without mixing with default initial states and without exploration bonuses. For Experiment II, all refining methods use the **"Ours" (RICE) explanation method**, i.e., the optimized StateMask variant proposed in Section 3.3. Therefore, a correct implementation for this criterion must:
+
+1. Load the pre-trained mask network (the RICE explanation method) for the network defence environment.
+2. Identify critical states in trajectories using this mask network (e.g., the state with the highest "importance score" or non‑masking probability).
+3. Implement a refinement loop where **every episode starts from a critical state** (no mixing, i.e., `p=1` in the paper’s terminology) and **no exploration bonus (RND)** is added; it should be standard PPO fine‑tuning from those critical states.
+4. Be clearly separated from the "Ours" refinement method (which uses mixed initial states and RND).  
+
+I will examine the provided files to see if such an implementation exists.
+
+# Reality
+The submission files for the network defence environment are:
+
+- `Refine_cage_challenge/ppo_train.py` – pretraining script.
+- `Refine_cage_challenge/rollout_mask.py`, `sample_mask_score.py` – mask network evaluation/recording.
+- `Refine_cage_challenge/Utils` (referenced but not included) – likely contains `gen_one_traj`.
+- `Refine_cage_challenge/Agents/PPOAgent.py` (not shown directly, but implied) – pre‑trained agent.
+- `Refine_cage_challenge/Agents/PPOAgent_mask.py` – the RICE mask network agent.
+- **`Refine_cage_challenge/retrain.py`** – a refinement script that uses `ChallengeWrapper2_retrain` and `PPOAgent_Retrain`.
+- `Refine_cage_challenge/Wrappers/ChallengeWrapper2_retrain.py` – custom wrapper with critical‑state reset.
+- `Refine_cage_challenge/Agents/PPOAgent_Retrain.py` – agent that includes an RND model and exploration bonus.
+
+The `retrain.py` script implements the **"Ours" (RICE) refinement** method: it uses a mixed initial distribution (`go_prob=0.5`), selects the most critical state via `argmax(mask_record)` (RICE explanation), and adds an RND exploration bonus (`bonus_scale=0.01`). The `ChallengeWrapper2_retrain.reset()` logic chooses between default reset and critical‑state reset with probability `go_prob`. This is **not** StateMask‑R.
+
+I found **no separate script** that implements StateMask‑R for the network defence environment. There is no training file that sets `go_prob=1` (always start from critical state) and disables RND (λ=0). The provided code does not contain a configuration switch, argument, or alternative entry point that would produce a StateMask‑R refinement run. Therefore, the submission **does not include an implementation of StateMask‑R** for the network defence environment, and consequently cannot show that the RICE explanation method is used for it.
+
+# Score
+**0**. The criterion is not satisfied because the submission lacks any code that implements the StateMask‑R refinement method for the network defence environment, let alone one that uses the RICE explanation method.

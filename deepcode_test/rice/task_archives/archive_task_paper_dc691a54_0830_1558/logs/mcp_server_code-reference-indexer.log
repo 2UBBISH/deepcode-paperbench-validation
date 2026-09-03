@@ -1,0 +1,58 @@
+INFO:__main__:Starting unified Code Reference Indexer MCP server
+INFO:__main__:Available tools:
+INFO:__main__:1. search_code_references(indexes_path, target_file, keywords, max_results) - UNIFIED TOOL
+INFO:__main__:2. get_indexes_overview(indexes_path) - Get overview of available indexes
+INFO:mcp.server.lowlevel.server:Processing request of type ListToolsRequest
+INFO:mcp.server.lowlevel.server:Processing request of type ListResourcesRequest
+INFO:mcp.server.lowlevel.server:Processing request of type ListPromptsRequest
+INFO:mcp.server.lowlevel.server:Processing request of type CallToolRequest
+INFO:__main__:Loading index files from: /home/deepevol/deepevol/DeepCode/deepcode_lab/tasks/paper_dc691a54/generate_code
+INFO:__main__:Loaded 0 index files from /home/deepevol/deepevol/DeepCode/deepcode_lab/tasks/paper_dc691a54/generate_code
+INFO:mcp.server.lowlevel.server:Processing request of type CallToolRequest
+INFO:__main__:Loading index files from: /home/agent/indexes
+WARNING:__main__:Indexes directory does not exist: /home/agent/indexes
+INFO:mcp.server.lowlevel.server:Processing request of type CallToolRequest
+INFO:__main__:Loading index files from: /home/agent/indexes
+WARNING:__main__:Indexes directory does not exist: /home/agent/indexes
+INFO:mcp.server.lowlevel.server:Processing request of type CallToolRequest
+INFO:__main__:Loading index files from: /home/agent/indexes
+WARNING:__main__:Indexes directory does not exist: /home/agent/indexes
+INFO:mcp.server.lowlevel.server:Processing request of type CallToolRequest
+INFO:__main__:Loading index files from: /home/agent/indexes
+WARNING:__main__:Indexes directory does not exist: /home/agent/indexes
+INFO:mcp.server.lowlevel.server:Processing request of type CallToolRequest
+INFO:__main__:Loading index files from: /home/agent/indexes
+WARNING:__main__:Indexes directory does not exist: /home/agent/indexes
+INFO:mcp.server.lowlevel.server:Processing request of type CallToolRequest
+INFO:__main__:Loading index files from: /home/agent/indexes
+WARNING:__main__:Indexes directory does not exist: /home/agent/indexes
+INFO:mcp.server.lowlevel.server:Processing request of type CallToolRequest
+INFO:__main__:Loading index files from: /home/agent/indexes
+WARNING:__main__:Indexes directory does not exist: /home/agent/indexes
+INFO:mcp.server.lowlevel.server:Processing request of type CallToolRequest
+INFO:__main__:Loading index files from: /home/agent/indexes
+WARNING:__main__:Indexes directory does not exist: /home/agent/indexes
+INFO:mcp.server.lowlevel.server:Processing request of type CallToolRequest
+INFO:__main__:Loading index files from: /home/agent/indexes
+WARNING:__main__:Indexes directory does not exist: /home/agent/indexes
+INFO:mcp.server.lowlevel.server:Processing request of type CallToolRequest
+INFO:__main__:Loading index files from: /home/agent/indexes
+WARNING:__main__:Indexes directory does not exist: /home/agent/indexes
+INFO:mcp.server.lowlevel.server:Processing request of type CallToolRequest
+INFO:__main__:Loading index files from: /home/agent/indexes
+WARNING:__main__:Indexes directory does not exist: /home/agent/indexes
+INFO:mcp.server.lowlevel.server:Processing request of type CallToolRequest
+INFO:__main__:Loading index files from: /home/agent/indexes
+WARNING:__main__:Indexes directory does not exist: /home/agent/indexes
+INFO:mcp.server.lowlevel.server:Processing request of type CallToolRequest
+INFO:__main__:Loading index files from: /home/agent/indexes
+WARNING:__main__:Indexes directory does not exist: /home/agent/indexes
+INFO:mcp.server.lowlevel.server:Processing request of type CallToolRequest
+INFO:__main__:Loading index files from: /home/agent/indexes
+WARNING:__main__:Indexes directory does not exist: /home/agent/indexes
+INFO:mcp.server.lowlevel.server:Processing request of type CallToolRequest
+INFO:__main__:Loading index files from: /home/agent/indexes
+WARNING:__main__:Indexes directory does not exist: /home/agent/indexes
+INFO:mcp.server.lowlevel.server:Processing request of type CallToolRequest
+INFO:__main__:Loading index files from: /home/agent/indexes
+WARNING:__main__:Indexes directory does not exist: /home/agent/indexes

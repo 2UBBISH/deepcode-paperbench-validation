@@ -1,0 +1,87 @@
+2026-08-26 09:58:46 [info     ] Grading leaf: For the autonomous driving environment, the Jump-Start Reinforcement Learning ("JSRL") refinement method has been implemented as outlined in section 4.1 and Uchendu et al. (2023), i.e. through initializing the exploration policy $\pi_{e}$ to be equal to the guided policy $\pi_{g}$.
+2026-08-26 10:00:31 [info     ] Model file selection raw output:
+Refine_auto_drive/retrain.py
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/readme.md
+README.md
+2026-08-26 10:00:31 [info     ] Model file selection raw output:
+Refine_auto_drive/retrain.py
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/readme.md
+README.md
+2026-08-26 10:01:03 [info     ] model response: # Expectations
+
+According to the paper (Section 4.1), the Jump-Start Reinforcement Learning (JSRL) method is one of the baseline refining methods used for comparison. The paper states: *"JSRL introduces a guided policy $\pi_{g}$ to set up a curriculum to train an exploration policy $\pi_{e}$. Through initializing $\pi_{e}=\pi_{g}$, we can transform JSRL to be a refining method that can further improve the performance of the guided policy."* The original JSRL paper (Uchendu et al., 2023) further describes a mechanism where the exploration policy is initialized as a copy of the guided (pre-trained) policy and then improved via self-play/curriculum.
+
+For the autonomous driving environment, the submission should contain an actual code implementation of the JSRL refinement method. This implementation would typically involve:
+- Loading the pre-trained policy as the guided policy ($\pi_g$).
+- Creating an exploration policy ($\pi_e$) initialized with the same weights as $\pi_g$.
+- A curriculum-based training loop that alternates the ``roll-in`` proportion (or frontier) using the guided policy and then trains the exploration policy on the collected data.
+
+I will look for specific Python files under the autonomous driving section (e.g., `Refine_auto_drive/`) that contain code implementing JSRL. Mere references to JSRL in documentation or comments are not sufficient; the code must actually contain the JSRL algorithm.
+
+# Reality
+
+The submitted files pertaining to the autonomous driving environment are all located in the `Refine_auto_drive/` directory. I have examined each of these files:
+
+- `train_baseline.py`: This script trains a PPO agent from scratch; it is a standard PPO baseline, not JSRL.
+- `retrain.py`: This implements the paper's own "Ours" refinement method (RICE), which uses RND exploration and a mixed initial state distribution based on masked critical states. It does not implement JSRL.
+- `learner.py`: A modified learner class used by `retrain.py`; it deals with RND reward estimation and does not relate to JSRL.
+- `gen_retrain_traj.py`: Utility to generate trajectories and compute mask scores for RICE.
+- `retrain_env.py`: Environment wrapper that resets to critical states for RICE; not JSRL.
+- `custom_masknet_env.py`: Environment wrapper for training the mask network (explanation method); not JSRL.
+- `train_masknet.py`: Script to train the mask network for RICE.
+- `rnd_reward_model.py`: RND exploration model used in RICE.
+- `readme.md`: Empty file.
+
+None of these files contain any code that implements the JSRL algorithm — there is no function or class for JSRL, no curriculum roll-in logic, no initialization of an exploration policy equal to a guided policy. The names "JSRL", "Jump-Start", or any related terms do not appear in any file.
+
+Thus, the submission completely lacks an implementation of JSRL for the autonomous driving environment, even though such a baseline is required by the paper's evaluation setup.
+
+# Score
+
+The criterion is not met. There is no implementation of JSRL for the autonomous driving environment in the provided code. The score is **0**.
+2026-08-26 10:01:03 [info     ] model response: # Expectations
+
+According to the paper (Section 4.1), the Jump-Start Reinforcement Learning (JSRL) method is one of the baseline refining methods used for comparison. The paper states: *"JSRL introduces a guided policy $\pi_{g}$ to set up a curriculum to train an exploration policy $\pi_{e}$. Through initializing $\pi_{e}=\pi_{g}$, we can transform JSRL to be a refining method that can further improve the performance of the guided policy."* The original JSRL paper (Uchendu et al., 2023) further describes a mechanism where the exploration policy is initialized as a copy of the guided (pre-trained) policy and then improved via self-play/curriculum.
+
+For the autonomous driving environment, the submission should contain an actual code implementation of the JSRL refinement method. This implementation would typically involve:
+- Loading the pre-trained policy as the guided policy ($\pi_g$).
+- Creating an exploration policy ($\pi_e$) initialized with the same weights as $\pi_g$.
+- A curriculum-based training loop that alternates the ``roll-in`` proportion (or frontier) using the guided policy and then trains the exploration policy on the collected data.
+
+I will look for specific Python files under the autonomous driving section (e.g., `Refine_auto_drive/`) that contain code implementing JSRL. Mere references to JSRL in documentation or comments are not sufficient; the code must actually contain the JSRL algorithm.
+
+# Reality
+
+The submitted files pertaining to the autonomous driving environment are all located in the `Refine_auto_drive/` directory. I have examined each of these files:
+
+- `train_baseline.py`: This script trains a PPO agent from scratch; it is a standard PPO baseline, not JSRL.
+- `retrain.py`: This implements the paper's own "Ours" refinement method (RICE), which uses RND exploration and a mixed initial state distribution based on masked critical states. It does not implement JSRL.
+- `learner.py`: A modified learner class used by `retrain.py`; it deals with RND reward estimation and does not relate to JSRL.
+- `gen_retrain_traj.py`: Utility to generate trajectories and compute mask scores for RICE.
+- `retrain_env.py`: Environment wrapper that resets to critical states for RICE; not JSRL.
+- `custom_masknet_env.py`: Environment wrapper for training the mask network (explanation method); not JSRL.
+- `train_masknet.py`: Script to train the mask network for RICE.
+- `rnd_reward_model.py`: RND exploration model used in RICE.
+- `readme.md`: Empty file.
+
+None of these files contain any code that implements the JSRL algorithm — there is no function or class for JSRL, no curriculum roll-in logic, no initialization of an exploration policy equal to a guided policy. The names "JSRL", "Jump-Start", or any related terms do not appear in any file.
+
+Thus, the submission completely lacks an implementation of JSRL for the autonomous driving environment, even though such a baseline is required by the paper's evaluation setup.
+
+# Score
+
+The criterion is not met. There is no implementation of JSRL for the autonomous driving environment in the provided code. The score is **0**.

@@ -1,0 +1,61 @@
+2026-08-26 09:58:46 [info     ] Grading leaf: For the network defense environment, The StateMask ("Ours") Explanation method can be selected for generating rollouts (without training)
+2026-08-26 09:59:22 [info     ] Model file selection raw output:
+Refine_cage_challenge/rollout_mask.py
+Refine_cage_challenge/sample_mask_score.py
+Refine_cage_challenge/replay.py
+Refine_cage_challenge/Agents/PPOAgent_mask.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_mask.py
+Refine_cage_challenge/readme.md
+Refine_cage_challenge/Agents/PPOAgent.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2.py
+Refine_cage_challenge/ppo_train.py
+Refine_cage_challenge/sample_value_score.py
+2026-08-26 09:59:22 [info     ] Model file selection raw output:
+Refine_cage_challenge/rollout_mask.py
+Refine_cage_challenge/sample_mask_score.py
+Refine_cage_challenge/replay.py
+Refine_cage_challenge/Agents/PPOAgent_mask.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_mask.py
+Refine_cage_challenge/readme.md
+Refine_cage_challenge/Agents/PPOAgent.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2.py
+Refine_cage_challenge/ppo_train.py
+Refine_cage_challenge/sample_value_score.py
+2026-08-26 10:00:21 [info     ] model response: # Expectations
+The criterion requires that for the network defense environment, the "Ours" (StateMask) explanation method can be selected and used to generate rollouts without any further training of the mask network. According to the paper, this explanation method produces step‑level importance scores (mask probabilities) for trajectories. To meet the criterion, the submission must contain code that:
+
+- Loads a pre‑trained mask network (the “Ours” variant).
+- Uses that network to run episodes in the network defense environment and record the importance scores for each step (i.e., generate rollouts).
+- Provides a mechanism to select this particular explanation method (as opposed to, e.g., random explanation) for generating those rollouts.
+- Performs no training/updating of the mask network during this process.
+
+# Reality
+The submission contains several relevant files in the `Refine_cage_challenge/` directory:
+
+1. **`sample_mask_score.py`** – This script loads a pre‑trained mask agent (`PPOAgent_mask`) with a fixed checkpoint (`…/bline_mask/4000.pth`) and sets it to deterministic, non‑training mode. It then runs a number of episodes (max_episodes = 500), at each step calling `agent_mask.get_mask_prob(state)` to obtain the mask probability (the importance score) and appending it to a log. The collected mask probabilities, actions, and rewards are saved to disk. No training of the mask network occurs here; it simply uses the pre‑trained weights to generate rollouts.
+
+2. **`replay.py`** – This script provides a `rollout` function that accepts a `--method` argument. When `method != "random"`, it loads a pre‑computed mask probability log (e.g., `mask_prob_log.txt`) produced by the above sampling step. It applies a sliding‑window selection (`select_critical`) to find the most critical segment and then replays the episode, randomizing actions within that segment. This allows the “Ours” explanation method to be explicitly selected and used to guide replay‑based rollouts, again without any training of the mask network.
+
+Together, these scripts demonstrate that the “Ours” (StateMask) explanation method can be selected and used to generate rollouts (both raw importance scores and replay trajectories) without performing additional training, exactly as required.
+
+# Score
+**1** – The submission correctly implements the ability to select the “Ours” explanation method for generating rollouts in the network defense environment, loading a pre‑trained mask network and using it without further training. The code is present and matches the expected functionality.
+2026-08-26 10:00:21 [info     ] model response: # Expectations
+The criterion requires that for the network defense environment, the "Ours" (StateMask) explanation method can be selected and used to generate rollouts without any further training of the mask network. According to the paper, this explanation method produces step‑level importance scores (mask probabilities) for trajectories. To meet the criterion, the submission must contain code that:
+
+- Loads a pre‑trained mask network (the “Ours” variant).
+- Uses that network to run episodes in the network defense environment and record the importance scores for each step (i.e., generate rollouts).
+- Provides a mechanism to select this particular explanation method (as opposed to, e.g., random explanation) for generating those rollouts.
+- Performs no training/updating of the mask network during this process.
+
+# Reality
+The submission contains several relevant files in the `Refine_cage_challenge/` directory:
+
+1. **`sample_mask_score.py`** – This script loads a pre‑trained mask agent (`PPOAgent_mask`) with a fixed checkpoint (`…/bline_mask/4000.pth`) and sets it to deterministic, non‑training mode. It then runs a number of episodes (max_episodes = 500), at each step calling `agent_mask.get_mask_prob(state)` to obtain the mask probability (the importance score) and appending it to a log. The collected mask probabilities, actions, and rewards are saved to disk. No training of the mask network occurs here; it simply uses the pre‑trained weights to generate rollouts.
+
+2. **`replay.py`** – This script provides a `rollout` function that accepts a `--method` argument. When `method != "random"`, it loads a pre‑computed mask probability log (e.g., `mask_prob_log.txt`) produced by the above sampling step. It applies a sliding‑window selection (`select_critical`) to find the most critical segment and then replays the episode, randomizing actions within that segment. This allows the “Ours” explanation method to be explicitly selected and used to guide replay‑based rollouts, again without any training of the mask network.
+
+Together, these scripts demonstrate that the “Ours” (StateMask) explanation method can be selected and used to generate rollouts (both raw importance scores and replay trajectories) without performing additional training, exactly as required.
+
+# Score
+**1** – The submission correctly implements the ability to select the “Ours” explanation method for generating rollouts in the network defense environment, loading a pre‑trained mask network and using it without further training. The code is present and matches the expected functionality.

@@ -1,0 +1,374 @@
+```yaml
+complete_reproduction_plan:
+  paper_info:
+    title: "RICE: Refining with Importance-based Critical state Exploration for Deep Reinforcement Learning"
+    core_contribution: "A framework that uses an explanation method (MaskNet) to identify critical states, then refines a DRL agent by starting episodes from a mixed initial distribution (default + critical states) and adding an exploration bonus (RND). The explanation method simplifies StateMask by training a mask network with an intrinsic reward to blind non-critical steps."
+
+  # ============================================================
+  # SECTION 1: FILE STRUCTURE
+  # ============================================================
+  file_structure: |
+    project_root/
+    ├── README.md                          # (LAST) Documentation and usage instructions
+    ├── requirements.txt                   # (LAST) Python dependencies
+    ├── configs/
+    │   ├── default.yaml                   # Default hyperparameters (p, λ, α, etc.)
+    │   └── env_specific/                  # Per-environment overrides
+    │       ├── hopper.yaml
+    │       ├── walker2d.yaml
+    │       ├── reacher.yaml
+    │       ├── halfcheetah.yaml
+    │       ├── selfish_mining.yaml
+    │       ├── cage2.yaml
+    │       ├── autonomous_driving.yaml
+    │       └── malware.yaml
+    ├── core/
+    │   ├── mask_network.py                # MaskNet policy (binary mask decision) + training loop
+    │   ├── explanation.py                 # Extract critical states from MaskNet outputs
+    │   ├── rnd.py                         # Random Network Distillation (predictor + target nets)
+    │   ├── refining.py                    # Refining loop: mixed initial distribution + RND bonus
+    │   └── buffer.py                      # Replay buffer for storing states with importance scores
+    ├── envs/
+    │   ├── base_wrapper.py                # Abstract wrapper with state save/restore interface
+    │   ├── mujoco_wrapper.py              # MuJoCo state save/restore (qpos, qvel)
+    │   ├── selfish_mining_wrapper.py      # Selfish mining environment wrapper
+    │   ├── cage2_wrapper.py               # CAGE Challenge 2 wrapper
+    │   ├── metadrive_wrapper.py           # MetaDrive autonomous driving wrapper
+    │   └── malware_wrapper.py             # MalConv gym wrapper
+    ├── experiments/
+    │   ├── train_target_agent.py          # Train initial DRL agent (PPO) on a given env
+    │   ├── train_mask_network.py          # Train MaskNet for a given target agent
+    │   ├── refine_agent.py                # Run RICE refining and evaluate
+    │   ├── run_experiment_I.py            # Fidelity comparison (Experiment I)
+    │   ├── run_experiment_II.py           # Efficiency comparison (Experiment II)
+    │   ├── run_experiment_III.py          # Refining performance (Experiment III)
+    │   ├── run_experiment_IV.py           # Sensitivity analysis (Experiment IV)
+    │   └── run_experiment_V.py            # Case study: malware mutation (Experiment V)
+    └── utils/
+        ├── helpers.py                     # Logging, seeding, plotting utilities
+        └── evaluation.py                  # Compute fidelity scores, aggregate results
+
+  # ============================================================
+  # SECTION 2: IMPLEMENTATION COMPONENTS
+  # ============================================================
+  implementation_components: |
+    ============================================================================
+    1. MASK NETWORK (MaskNet) – core/mask_network.py
+    ============================================================================
+    Purpose: Learn a binary policy π̃(aᵉ|s) that decides whether to use the target
+    agent's action (aᵉ=0) or a random action (aᵉ=1). The mask network is trained
+    to maximize the perturbed policy's return while being encouraged to mask more
+    via an intrinsic reward.
+
+    Architecture:
+      - Input: state vector s (same as target agent's observation)
+      - Output: probability of masking ξ(s) = π̃(aᵉ=1|s)
+      - Network: MLP with same hidden sizes as the target agent's policy network
+        (e.g., 2 hidden layers of 64 units for MuJoCo; 4 layers of 128 for selfish mining)
+      - Action sampling: aᵉ ~ Bernoulli(ξ(s))
+
+    Training algorithm (simplified StateMask with intrinsic reward):
+      For each episode:
+        1. Reset environment to initial state s₀
+        2. For t = 0..T:
+           a. Sample mask decision aᵉₜ ~ MaskNet(sₜ)
+           b. If aᵉₜ == 0: aₜ = π_target(sₜ)   (target agent's action)
+              If aᵉₜ == 1: aₜ ~ Uniform(A)      (random action)
+           c. Execute aₜ in environment → sₜ₊₁, r_envₜ
+           d. Compute intrinsic reward: r_intₜ = aᵉₜ  (1 if masked, 0 otherwise)
+           e. Total reward for MaskNet: rₜ = r_envₜ + α * r_intₜ
+           f. Store (sₜ, aᵉₜ, rₜ, sₜ₊₁) in MaskNet buffer
+        3. Update MaskNet using PPO (or the same RL algorithm as target agent)
+           with the collected trajectories.
+
+    Hyperparameters:
+      - α (alpha): coefficient for intrinsic reward (default 0.0001, from Table 3)
+      - PPO hyperparameters: same as target agent training (learning rate, clip range, etc.)
+      - Number of training samples: environment-specific (see Table 4)
+
+    Key formula (from paper):
+      The perturbed policy is: π̄(·|s) = ξ(s)·π(·|s) + (1-ξ(s))·πʳ(·|s)
+      where π is target agent, πʳ is uniform random policy.
+      Theorem 3.3 proves η(π̄) ≤ η(π) under Assumption 3.1 (Aπ(s,a) ≤ 0 for random actions).
+
+    ============================================================================
+    2. EXPLANATION EXTRACTION – core/explanation.py
+    ============================================================================
+    Purpose: After training MaskNet, compute importance scores for states and
+    identify critical states for refining.
+
+    Importance score for state s:
+      I(s) = 1 - ξ(s) = π̃(aᵉ=0|s)
+      (probability that MaskNet chooses NOT to mask, i.e., trusts the target agent)
+
+    Critical state selection:
+      - Collect a large set of states from the target agent's replay buffer or by
+        rolling out the target agent.
+      - Compute I(s) for each state using the trained MaskNet.
+      - Select top-K states (e.g., top 10%) or states with I(s) > threshold.
+      - Store these critical states in a buffer for refining (core/buffer.py).
+
+    Fidelity metric (Experiment I):
+      For a trajectory, the fidelity of an explanation method is measured by how
+      well the identified critical steps predict the actual reward change when
+      those steps are perturbed. Implementation: compare the reward drop when
+      randomizing actions at the top-ranked critical steps vs. random steps.
+
+    ============================================================================
+    3. RANDOM NETWORK DISTILLATION (RND) – core/rnd.py
+    ============================================================================
+    Purpose: Provide an exploration bonus during refining to encourage the agent
+    to visit novel states.
+
+    Components:
+      - Target network: f_target(s) → ℝᵏ, randomly initialized and fixed.
+      - Predictor network: f_pred(s) → ℝᵏ, trained to minimize MSE to f_target(s).
+      - Exploration bonus: r_rnd(s) = ||f_pred(s) - f_target(s)||²
+
+    Architecture:
+      - Both networks: MLP with same hidden sizes as target agent's policy network.
+      - Output dimension k: 64 (typical for RND).
+
+    Training:
+      - During refining, after each step, update predictor on the collected states
+        using SGD/Adam to minimize MSE.
+      - The bonus r_rnd is added to the environment reward for the target agent.
+
+    ============================================================================
+    4. REFINING PROCESS – core/refining.py
+    ============================================================================
+    Purpose: Fine-tune the target agent using a mixed initial state distribution
+    and RND exploration bonus.
+
+    Algorithm (RICE refining):
+      Input: target agent π, MaskNet π̃, critical state buffer B, hyperparameters p, λ
+      Initialize RND predictor and target networks.
+      For each refining episode:
+        1. Sample u ~ Uniform(0,1)
+           If u < p:
+             Sample a critical state s_crit from B (uniformly or weighted by importance)
+             Reset environment to s_crit (using env.reset_to_state(s_crit))
+           Else:
+             Reset environment to default initial state.
+        2. For t = 0..T:
+           a. Select action aₜ ~ π(sₜ)  (target agent's action)
+           b. Execute aₜ → sₜ₊₁, r_envₜ
+           c. Compute RND bonus: r_rndₜ = ||f_pred(sₜ₊₁) - f_target(sₜ₊₁)||²
+           d. Total reward for agent: rₜ = r_envₜ + λ * r_rndₜ
+           e. Store transition in agent's PPO buffer.
+           f. Update RND predictor on (sₜ₊₁, f_target(sₜ₊₁)).
+        3. Update target agent π using PPO with the collected trajectories.
+
+    Hyperparameters:
+      - p: mixture probability for critical state initialisation (Table 3: 0.25 or 0.5)
+      - λ: exploration bonus coefficient (Table 3: 0.001 or 0.01)
+      - Refining steps: typically 1e6 for MuJoCo, environment-specific otherwise.
+      - PPO hyperparameters: same as initial training (possibly lower learning rate).
+
+    Theoretical guarantee (Theorem 3.6):
+      Vπ*(ρ) - Vπ'(ρ) ≤ O( ε/(1-γ)² · ||dρπ* / dρπ̂||∞ )
+      where π̂ is the equivalent policy of MaskNet-based sampling (better than π by Lemma 3.5),
+      and π' is the refined policy. The bound is tighter than using random explanation.
+
+    ============================================================================
+    5. ENVIRONMENT WRAPPERS – envs/*.py
+    ============================================================================
+    Each wrapper must implement:
+      - reset_to_state(state): restore the simulator to a previously saved state.
+        For MuJoCo: save/restore qpos, qvel (similar to Ecoffet et al. 2019).
+        For other envs: save/restore the full internal state.
+      - get_state(): return the current full state (for saving critical states).
+      - step(action): standard Gym interface.
+      - reset(): default reset.
+
+    Specific environments:
+      a) MuJoCo (Hopper-v3, Walker2d-v3, Reacher-v2, HalfCheetah-v3):
+         - Use Gym/MuJoCo. State saving via sim.get_state().
+         - Sparse reward variants: modify reward to give x-position only if x > threshold
+           (Hopper/Walker2d: x>0.6; HalfCheetah: x>5).
+      b) Selfish Mining: Use environment from https://github.com/roibarzur/pto-selfish-mining.
+         - State: chain state vector. Action space: {Adopt, Reveal, Mine}.
+         - Target agent: PPO with 4-layer MLP (hidden 128 each).
+      c) CAGE Challenge 2: Use environment from https://github.com/cage-challenge/cage-challenge-2
+         and champion agent from https://github.com/john-cardiff/-cyborg-cage-2.
+         - Action space: 11 discrete actions (Monitor, Analyze, Decoy*, Remove, Restore).
+         - Target agent: PPO-based blue agent.
+      d) Autonomous Driving (MetaDrive): Use "Macro-v1" environment from MetaDrive.
+         - State: vector of BEV + sensor info. Action: [steering, acceleration, brake] ∈ [-1,1]².
+         - Target agent: PPO following DI-drive implementation.
+      e) Malware Mutation (MalConv): Use gym environment from https://github.com/bfilar/malware_rl.
+         - State: feature vector of PE file. Action space: 16 discrete mutation actions (Table 2).
+         - Target agent: PPO via Tianshou.
+         - Reward: evasion score difference + bonus 10 for successful evasion.
+
+    ============================================================================
+    6. BASELINE METHODS (for validation)
+    ============================================================================
+    - PPO fine-tuning: Continue training target agent with lower learning rate, no initial state change.
+    - StateMask-R: Use StateMask for explanation + refining (from their code).
+    - JSRL (Jump-Start RL): Use implementation from https://github.com/steventango/jumpstart-rl.
+    - Self-Imitation Learning (SIL): Prioritize good past experiences in replay buffer (Oh et al., 2018).
+    - Random explanation: Replace MaskNet with random importance scores for critical state selection.
+
+  # ============================================================
+  # SECTION 3: VALIDATION & EVALUATION
+  # ============================================================
+  validation_approach: |
+    The implementation is validated by reproducing the five experiments from the paper.
+
+    Experiment I – Fidelity Comparison (Figure 5):
+      - For each environment, train MaskNet and StateMask.
+      - Compute fidelity scores: measure the reward drop when randomizing actions at
+        the top-k critical steps identified by each method vs. random steps.
+      - Expected: Our method achieves similar fidelity to StateMask, both higher than random.
+      - Success criterion: Fidelity score within ±5% of reported values.
+
+    Experiment II – Efficiency Comparison (Table 4):
+      - Measure wall-clock time to train MaskNet vs. StateMask on a fixed number of samples.
+      - Expected: Our method is ~16.8% faster on average.
+      - Success criterion: Speedup > 10% across environments.
+
+    Experiment III – Refining Performance (Table 1, Figures 10, 15):
+      - For each environment, train a target agent until convergence, then refine using:
+        RICE, PPO fine-tuning, StateMask-R, JSRL, random explanation + refining.
+      - Evaluate the refined agent's average return over multiple episodes.
+      - Expected: RICE outperforms all baselines. Specific numbers in Table 1:
+        * Hopper: ~3663.91 (RICE) vs ~3648.98 (random)
+        * Walker2d: ~3982.79 vs ~3969.64
+        * Reacher: ~-2.66 vs ~-3.11
+        * HalfCheetah: ~2138.89 vs ~2132.01
+        * Selfish Mining: higher revenue
+        * CAGE2: higher average reward
+        * Autonomous Driving: higher success rate
+        * Malware: higher evasion probability (~68.2% with full RICE)
+      - Sparse reward variants: RICE breaks through training bottlenecks (Figure 10).
+      - Negative control (MountainCarContinuous): RICE ≈ RND, no significant improvement (Figure 15).
+      - Success criterion: RICE mean return > baselines, within 1 std of reported values.
+
+    Experiment IV – Sensitivity Analysis (Figures 6-9, 11-13):
+      - Vary p ∈ {0, 0.25, 0.5, 0.75, 1}, λ ∈ {0, 0.1, 0.01, 0.001}, α ∈ {0.01, 0.001, 0.0001}.
+      - Expected: p=0.25 or 0.5 best; λ=0.01 best; α insensitive.
+      - Success criterion: Trends match paper (optimal regions consistent).
+
+    Experiment V – Case Study: Malware Mutation (Table 7):
+      - Ablation study: gradually add components (explanation, mixed init, exploration).
+      - Expected: Evasion probability increases from 33.8% (original) → 38.8% (continue) →
+        50.8% (critical only) → 58.4% (+mixed) → 68.2% (+exploration).
+      - Also verify discovery of design flaws: after fixing reward function, evasion reaches ~72%.
+      - Success criterion: Ablation trend matches Table 7.
+
+    Additional validation:
+      - Compare with Self-Imitation Learning (Table 5): RICE outperforms SIL.
+      - Compare with other explanation methods (Table 6): RICE + MaskNet best, but RICE works with any explanation.
+      - Qualitative analysis (Figure 14): visualize trajectory before/after refining in autonomous driving.
+
+  # ============================================================
+  # SECTION 4: ENVIRONMENT & DEPENDENCIES
+  # ============================================================
+  environment_setup: |
+    Programming Language: Python 3.8+
+    Deep Learning Framework: PyTorch 1.13+ (Paszke et al., 2019)
+
+    Core RL Libraries:
+      - Stable-Baselines3 2.0+ (Raffin et al., 2021) – for MuJoCo PPO agents
+      - Tianshou (Weng et al., 2022) – for malware mutation PPO agent
+      - DI-drive (drive Contributors, 2021) – for autonomous driving PPO agent
+
+    Environment Simulators:
+      - MuJoCo 2.3+ (Todorov et al., 2012) via Gymnasium/MuJoCo
+      - MetaDrive (Li et al., 2022) – for autonomous driving
+      - Custom: selfish mining (Bar-Zur et al., 2023), CAGE2 (CAGE, 2022), MalConv (Raff et al., 2017)
+
+    Other Dependencies:
+      - numpy, scipy, matplotlib, seaborn (plotting)
+      - pyyaml (configs)
+      - tqdm (progress bars)
+      - tensorboard or wandb (logging, optional)
+
+    Hardware Requirements:
+      - Training target agents and MaskNet: 1 GPU (NVIDIA A100 or similar) recommended for speed.
+        CPU-only feasible for MuJoCo but slower.
+      - Reproducing full paper: 8 GPUs used in paper, but single GPU sufficient for most experiments
+        with reduced parallel runs.
+      - RAM: 32GB+ for replay buffers.
+
+    Installation Notes:
+      - MuJoCo: requires license key (free for academic use) or use MuJoCo 2.3+ with open-source license.
+      - MetaDrive: pip install metadrive-simulator
+      - Selfish Mining: clone https://github.com/roibarzur/pto-selfish-mining
+      - CAGE2: clone https://github.com/cage-challenge/cage-challenge-2 and
+        https://github.com/john-cardiff/-cyborg-cage-2
+      - MalConv: clone https://github.com/bfilar/malware_rl
+
+  # ============================================================
+  # SECTION 5: IMPLEMENTATION STRATEGY
+  # ============================================================
+  implementation_strategy: |
+    The implementation proceeds in 6 phases, each building on the previous.
+
+    Phase 1: Core Infrastructure (Week 1)
+      - Set up project structure, configs, logging.
+      - Implement base environment wrapper with abstract state save/restore.
+      - Implement RND module (core/rnd.py): predictor and target networks, update logic.
+      - Implement replay buffer for critical states (core/buffer.py).
+      - Write unit tests for RND and buffer.
+
+    Phase 2: MuJoCo Integration (Week 2)
+      - Implement MuJoCo wrapper (envs/mujoco_wrapper.py) with state save/restore via sim.get_state().
+      - Implement sparse reward variants for Hopper, Walker2d, HalfCheetah.
+      - Train baseline PPO agents on all four MuJoCo tasks (dense rewards) using SB3.
+        Verify they achieve reasonable performance (comparable to paper's pre-trained agents).
+      - Save trained agents for later use.
+
+    Phase 3: Mask Network Implementation (Week 3)
+      - Implement MaskNet training (core/mask_network.py):
+        * Create a wrapper environment that takes MaskNet action and selects target/random action.
+        * Train MaskNet using PPO (from SB3) with the combined reward (r_env + α * mask_action).
+        * Use hyperparameters from Table 3 (α=0.0001, etc.).
+      - Implement explanation extraction (core/explanation.py):
+        * Roll out target agent, collect states, compute importance I(s) = 1 - ξ(s).
+        * Select top-K critical states.
+      - Validate on MuJoCo: train MaskNet for Hopper, check fidelity scores against random baseline.
+        Expected: MaskNet fidelity > random.
+
+    Phase 4: Refining Implementation (Week 4)
+      - Implement refining loop (core/refining.py):
+        * Mixed initial distribution: with prob p, reset to critical state; else default.
+        * Add RND bonus to reward: r_total = r_env + λ * r_rnd.
+        * Update agent using PPO (fine-tuning mode: continue training from pre-trained weights).
+      - Run Experiment III on MuJoCo dense rewards:
+        * Compare RICE vs PPO fine-tuning, StateMask-R, JSRL, random explanation.
+        * Expected: RICE outperforms baselines (Table 1).
+      - Run sensitivity analysis (Experiment IV) for p and λ on Hopper.
+
+    Phase 5: Additional Environments (Week 5-6)
+      - Implement wrappers for:
+        * Selfish Mining (envs/selfish_mining_wrapper.py)
+        * CAGE2 (envs/cage2_wrapper.py)
+        * Autonomous Driving (envs/metadrive_wrapper.py)
+        * Malware Mutation (envs/malware_wrapper.py)
+      - For each, train target agent using the appropriate framework (SB3, Tianshou, DI-drive).
+      - Train MaskNet and run refining.
+      - Reproduce Experiments I-V for all environments.
+      - Conduct case study (Experiment V) on malware: ablation of components, verify design flaw discovery.
+
+    Phase 6: Final Validation and Documentation (Week 7)
+      - Run all experiments with multiple seeds (at least 5) to compute means and std errors.
+      - Generate all figures and tables from the paper (Figures 5-15, Tables 1-7).
+      - Compare results against paper's reported values; document any discrepancies.
+      - Write README.md with:
+        * Installation instructions
+        * How to run each experiment
+        * Expected results and how to interpret them
+        * Description of hyperparameters
+      - Create requirements.txt with exact package versions.
+
+    Handling Missing Details:
+      - MaskNet architecture: if not specified, use same hidden sizes as target agent's policy network.
+      - Critical state selection threshold: use top 10% of states by importance score.
+      - RND output dimension: use 64.
+      - PPO hyperparameters for refining: use same as initial training but with learning rate reduced by factor 0.5.
+      - For environments where state restore is not trivial (e.g., malware), use a goal-conditioned approach
+        as mentioned in Appendix C.1: set the critical state as a goal and train a goal-conditioned policy.
+      - If exact baseline implementations are unavailable, re-implement based on paper descriptions.
+```

@@ -1,0 +1,2 @@
+# git history of this submission (exported; .git removed for publication)
+1c04acb 2026-08-28 02:33:10 +0800 Reproduce FRE: Functional Reward Encoding for zero-shot RL

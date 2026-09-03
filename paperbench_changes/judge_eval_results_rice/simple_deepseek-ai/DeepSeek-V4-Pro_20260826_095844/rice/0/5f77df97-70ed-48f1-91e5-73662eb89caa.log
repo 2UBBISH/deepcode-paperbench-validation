@@ -1,0 +1,61 @@
+2026-08-26 09:58:46 [info     ] Grading leaf: The (MuJoCo) Walker2d environment is version "Walker2d-v3" (further information about this environment in Appendix C.2).
+2026-08-26 09:59:22 [info     ] Model file selection raw output:
+Refine_mujoco/environment.py
+Refine_mujoco/retrain.py
+Refine_mujoco/utils.py
+Refine_mujoco/masknet/environment.py
+Refine_mujoco/masknet/train.py
+Refine_mujoco/baseline/train.py
+Refine_mujoco/retrain.sh
+Refine_mujoco/PPO.py
+Refine_mujoco/monitor.py
+Refine_mujoco/callback.py
+2026-08-26 09:59:22 [info     ] Model file selection raw output:
+Refine_mujoco/environment.py
+Refine_mujoco/retrain.py
+Refine_mujoco/utils.py
+Refine_mujoco/masknet/environment.py
+Refine_mujoco/masknet/train.py
+Refine_mujoco/baseline/train.py
+Refine_mujoco/retrain.sh
+Refine_mujoco/PPO.py
+Refine_mujoco/monitor.py
+Refine_mujoco/callback.py
+2026-08-26 10:02:59 [info     ] model response: # Expectations
+
+The paper states in Appendix C.2 that the Walker2d environment used is "Walker2d‑v3". I expect the submission to contain code that references or creates the environment with the exact string `"Walker2d-v3"`, ensuring the correct Gym environment version is used. Merely having a generic mechanism that could accept any name is not sufficient by itself; I need to see that the submission actually includes this specific version string in a relevant code location (e.g., a configuration list, a hard‑coded environment name, or a dedicated launch script).
+
+# Reality
+
+I examined the provided files:
+
+- `Refine_mujoco/retrain.py` contains the list  
+  `norm_games = ["HalfCheetah-v3", "Walker2d-v3"]`.  
+  This explicitly names `"Walker2d-v3"` as an environment that requires vector normalisation. The script later checks `if args.env not in norm_games:` to decide how to wrap the environment, showing that the code is designed to handle this specific version when `--env Walker2d-v3` is passed.
+
+- Although the default argument is `"Hopper-v3"` and no separate launch script for Walker2d is included, the implementation correctly references `"Walker2d-v3"` in the normalisation list. The environment setup in `Refine_mujoco/environment.py` uses a generic `gym.make` call and its observation reconstruction in the `else` branch (not the special cases for Reacher or HalfCheetah) is appropriate for Walker2d‑v3.
+
+Thus the submission includes a correct reference to `"Walker2d-v3"` in a way that confirms the intended environment version is supported.
+
+# Score
+
+1 – The code explicitly mentions `"Walker2d-v3"` in `retrain.py` and can correctly create and use that environment version.
+2026-08-26 10:02:59 [info     ] model response: # Expectations
+
+The paper states in Appendix C.2 that the Walker2d environment used is "Walker2d‑v3". I expect the submission to contain code that references or creates the environment with the exact string `"Walker2d-v3"`, ensuring the correct Gym environment version is used. Merely having a generic mechanism that could accept any name is not sufficient by itself; I need to see that the submission actually includes this specific version string in a relevant code location (e.g., a configuration list, a hard‑coded environment name, or a dedicated launch script).
+
+# Reality
+
+I examined the provided files:
+
+- `Refine_mujoco/retrain.py` contains the list  
+  `norm_games = ["HalfCheetah-v3", "Walker2d-v3"]`.  
+  This explicitly names `"Walker2d-v3"` as an environment that requires vector normalisation. The script later checks `if args.env not in norm_games:` to decide how to wrap the environment, showing that the code is designed to handle this specific version when `--env Walker2d-v3` is passed.
+
+- Although the default argument is `"Hopper-v3"` and no separate launch script for Walker2d is included, the implementation correctly references `"Walker2d-v3"` in the normalisation list. The environment setup in `Refine_mujoco/environment.py` uses a generic `gym.make` call and its observation reconstruction in the `else` branch (not the special cases for Reacher or HalfCheetah) is appropriate for Walker2d‑v3.
+
+Thus the submission includes a correct reference to `"Walker2d-v3"` in a way that confirms the intended environment version is supported.
+
+# Score
+
+1 – The code explicitly mentions `"Walker2d-v3"` in `retrain.py` and can correctly create and use that environment version.

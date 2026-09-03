@@ -1,0 +1,89 @@
+2026-08-26 09:58:46 [info     ] Grading leaf: In the (MuJoCo) Sparse HalfCheetah environment, the observations are normalized when training DRL agents (further information about this environment in Appendix C.2).
+2026-08-26 09:59:24 [info     ] Model file selection raw output:
+Refine_mujoco/environment.py
+Refine_mujoco/retrain.py
+Refine_mujoco/masknet/environment.py
+Refine_mujoco/masknet/train.py
+Refine_mujoco/baseline/train.py
+Refine_mujoco/utils.py
+Refine_mujoco/PPO.py
+Refine_mujoco/OnPolicyAlgorithm.py
+Refine_mujoco/base_class.py
+Refine_mujoco/models.py
+2026-08-26 09:59:24 [info     ] Model file selection raw output:
+Refine_mujoco/environment.py
+Refine_mujoco/retrain.py
+Refine_mujoco/masknet/environment.py
+Refine_mujoco/masknet/train.py
+Refine_mujoco/baseline/train.py
+Refine_mujoco/utils.py
+Refine_mujoco/PPO.py
+Refine_mujoco/OnPolicyAlgorithm.py
+Refine_mujoco/base_class.py
+Refine_mujoco/models.py
+2026-08-26 10:00:41 [info     ] model response: # Expectations
+
+According to the paper's Appendix C.2, the **HalfCheetah‑v3** environment (used for the sparse reward setting) requires *"normalize the observation when training the DRL agent"*.  
+A correct implementation should therefore show that when a DRL agent is trained (or refined) on the HalfCheetah‑v3 environment, the observations are passed through a normalization wrapper (e.g., `VecNormalize` from Stable‑Baselines3). This wrapper can either be trained online or loaded from a pre‑saved statistics file to standardize the observation inputs.
+
+I will look in the submitted code for explicit use of observation normalization **specifically for HalfCheetah‑v3** (the environment used in the sparse HalfCheetah experiments). I expect to see a normalization module applied to the training environment(s) when HalfCheetah‑v3 is selected, confirming that the implementation meets the paper’s description.
+
+# Reality
+
+The relevant training/refinement script is **`Refine_mujoco/retrain.py`**.
+
+- At the top of the script, a list `norm_games` is defined:  
+  `norm_games = ["HalfCheetah-v3", "Walker2d-v3"]`
+
+- Later, when the environment name (`args.env`) is one of these (e.g., `"HalfCheetah‑v3"`), the code branches to load a `VecNormalize` wrapper:
+  ```python
+  env = VecNormalize.load(args.vec_norm_path, env)
+  env.training = False
+  eval_env = DummyVecEnv([lambda:gym.make(args.env)])
+  eval_env = VecNormalize.load(args.vec_norm_path, eval_env)
+  eval_env.training = False
+  ```
+  This wraps both the training and evaluation environments with the same normalization statistics. Even though `env.training = False` (which freezes the running statistics), the observations are still normalized using the loaded mean and variance before being fed to the policy network.
+
+- The rest of the training (refinement) proceeds with these normalized environments, satisfying the requirement that *observations are normalized when training DRL agents* on HalfCheetah‑v3.
+
+No other file in the submission contradicts this—`baseline/train.py` only handles Hopper and does not affect the sparse HalfCheetah refinement pipeline. The provided implementation therefore contains the necessary normalization code for the HalfCheetah environment.
+
+# Score
+
+**Score: 1**
+
+The submission includes a concrete implementation (in `Refine_mujoco/retrain.py`) that applies `VecNormalize` to the HalfCheetah‑v3 environment during training (refinement), exactly as described in the paper. The criterion is satisfied.
+2026-08-26 10:00:41 [info     ] model response: # Expectations
+
+According to the paper's Appendix C.2, the **HalfCheetah‑v3** environment (used for the sparse reward setting) requires *"normalize the observation when training the DRL agent"*.  
+A correct implementation should therefore show that when a DRL agent is trained (or refined) on the HalfCheetah‑v3 environment, the observations are passed through a normalization wrapper (e.g., `VecNormalize` from Stable‑Baselines3). This wrapper can either be trained online or loaded from a pre‑saved statistics file to standardize the observation inputs.
+
+I will look in the submitted code for explicit use of observation normalization **specifically for HalfCheetah‑v3** (the environment used in the sparse HalfCheetah experiments). I expect to see a normalization module applied to the training environment(s) when HalfCheetah‑v3 is selected, confirming that the implementation meets the paper’s description.
+
+# Reality
+
+The relevant training/refinement script is **`Refine_mujoco/retrain.py`**.
+
+- At the top of the script, a list `norm_games` is defined:  
+  `norm_games = ["HalfCheetah-v3", "Walker2d-v3"]`
+
+- Later, when the environment name (`args.env`) is one of these (e.g., `"HalfCheetah‑v3"`), the code branches to load a `VecNormalize` wrapper:
+  ```python
+  env = VecNormalize.load(args.vec_norm_path, env)
+  env.training = False
+  eval_env = DummyVecEnv([lambda:gym.make(args.env)])
+  eval_env = VecNormalize.load(args.vec_norm_path, eval_env)
+  eval_env.training = False
+  ```
+  This wraps both the training and evaluation environments with the same normalization statistics. Even though `env.training = False` (which freezes the running statistics), the observations are still normalized using the loaded mean and variance before being fed to the policy network.
+
+- The rest of the training (refinement) proceeds with these normalized environments, satisfying the requirement that *observations are normalized when training DRL agents* on HalfCheetah‑v3.
+
+No other file in the submission contradicts this—`baseline/train.py` only handles Hopper and does not affect the sparse HalfCheetah refinement pipeline. The provided implementation therefore contains the necessary normalization code for the HalfCheetah environment.
+
+# Score
+
+**Score: 1**
+
+The submission includes a concrete implementation (in `Refine_mujoco/retrain.py`) that applies `VecNormalize` to the HalfCheetah‑v3 environment during training (refinement), exactly as described in the paper. The criterion is satisfied.

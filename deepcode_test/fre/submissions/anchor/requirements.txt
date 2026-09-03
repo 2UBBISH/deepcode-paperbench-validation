@@ -1,0 +1,8 @@
+torch>=1.12.0
+numpy>=1.21.0
+gym>=0.21.0
+d4rl>=1.1
+mujoco-py>=2.1.2.14
+dm-control>=1.0.0
+opensimplex>=0.4.0
+tqdm>=4.62.0

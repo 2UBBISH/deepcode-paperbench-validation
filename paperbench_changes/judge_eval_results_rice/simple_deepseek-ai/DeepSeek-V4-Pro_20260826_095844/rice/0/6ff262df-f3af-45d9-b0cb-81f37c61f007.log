@@ -1,0 +1,97 @@
+2026-08-26 09:58:46 [info     ] Grading leaf: For the MuJoCo environments, code for constructing a mixed initial state distribution by combining default initial states and critical states identified by the "Ours" explanation method has been implemented as described in Section 3.3.
+2026-08-26 10:00:11 [info     ] Model file selection raw output:
+Refine_mujoco/retrain.py
+Refine_mujoco/masknet/gen_fid.py
+Refine_mujoco/masknet/train.py
+Refine_mujoco/environment.py
+Refine_mujoco/masknet/environment.py
+Refine_mujoco/utils.py
+Refine_mujoco/PPO.py
+Refine_mujoco/OnPolicyAlgorithm.py
+Refine_mujoco/models.py
+Refine_mujoco/retrain.sh
+2026-08-26 10:00:11 [info     ] Model file selection raw output:
+Refine_mujoco/retrain.py
+Refine_mujoco/masknet/gen_fid.py
+Refine_mujoco/masknet/train.py
+Refine_mujoco/environment.py
+Refine_mujoco/masknet/environment.py
+Refine_mujoco/utils.py
+Refine_mujoco/PPO.py
+Refine_mujoco/OnPolicyAlgorithm.py
+Refine_mujoco/models.py
+Refine_mujoco/retrain.sh
+2026-08-26 10:03:19 [info     ] model response: # Expectations
+
+The criterion requires that for the MuJoCo environments, the code implements construction of a mixed initial state distribution as described in Section 3.3. According to the paper, this involves:
+
+- Using the pre-trained policy and the trained mask network (the "Ours" explanation method) to generate a trajectory.
+- Computing step‑level importance scores via the mask network (the probability that the mask does **not** blind the agent, i.e., that the original action is taken).
+- Identifying the **most critical state** within that trajectory (the state with the highest importance score).
+- Forming a mixture between the distribution of these identified critical states and the environment’s default initial state distribution. In Algorithm 2, this is implemented by resetting the environment to a critical state with probability \(p\) (or a corresponding hyperparameter), otherwise resetting to a default initial state.
+
+The code should therefore:
+1. Load a pre‑trained agent and a pre‑trained mask network.
+2. Generate a trajectory using the pre‑trained policy.
+3. Use the mask network to obtain per‑state importance scores.
+4. Select the state with the highest importance score.
+5. With some controllable probability, reset the environment to that critical state (restoring the full MuJoCo state) and otherwise perform a normal environment reset.
+
+# Reality
+
+The submission contains code that directly implements this scheme:
+
+- **`utils.py`** defines `gen_one_traj()`. It loads both the pre‑trained agent (`agent_path`) and the mask network (`masknet_path`), runs a full episode using the agent’s deterministic actions, and records:
+  - The sequence of MuJoCo states (`state_seq`, obtained via `env.sim.get_state()`)
+  - The mask network’s action probabilities: it computes `mask_prob` as the probability of the mask outputting action `1`. In this codebase the mask action mapping is swapped relative to the paper (action `1` means “use agent action”, i.e., **not** blinding), so `mask_prob` correctly represents the **importance** score (the likelihood of keeping the agent’s original action).
+  - The accumulated reward up to each step (`reward_seq`).
+
+- **`environment.py`** defines `RetrainEnv`, whose `reset()` method implements the mixed initial distribution:
+  - With probability `1 - p` (when `np.random.rand() > self.p`) it calls `gen_one_traj` and selects the state with the **maximum** `mask_probs` (i.e., the most critical state) via `np.argmax(traj.mask_probs)`. It then restores the environment to that state using `self.env.sim.set_state(traj.state_seq[start_idx])` and reconstructs the appropriate observation for the specific MuJoCo task (Hopper, Walker2d, Reacher, HalfCheetah).
+  - Otherwise (probability `p`) it performs a normal reset using `self.env.reset()`.
+  - The hyperparameter `p` (passed as `--go_prob` in `retrain.py`) thus controls the mixture between default initial states and critical states, exactly corresponding to the mixing mechanism described in Section 3.3 and Algorithm 2 (the exact interpretation of `p` is inverted, but the functional mixture is identical).
+
+- The files `retrain.py` and `retrain.sh` show how this wrapper is instantiated for MuJoCo environments, and `masknet/train.py` supplies the mask network training (the “Ours” explanation method) that generates the importance scores used by the distribution.
+
+The implementation therefore contains all required components: critical‑state identification using the “Ours” explanation method, and a probabilistic mixture that combines those critical resets with default resets to form the mixed initial state distribution.
+
+# Score
+
+**1** – The code correctly implements the mixed initial state distribution as described in the paper.
+2026-08-26 10:03:19 [info     ] model response: # Expectations
+
+The criterion requires that for the MuJoCo environments, the code implements construction of a mixed initial state distribution as described in Section 3.3. According to the paper, this involves:
+
+- Using the pre-trained policy and the trained mask network (the "Ours" explanation method) to generate a trajectory.
+- Computing step‑level importance scores via the mask network (the probability that the mask does **not** blind the agent, i.e., that the original action is taken).
+- Identifying the **most critical state** within that trajectory (the state with the highest importance score).
+- Forming a mixture between the distribution of these identified critical states and the environment’s default initial state distribution. In Algorithm 2, this is implemented by resetting the environment to a critical state with probability \(p\) (or a corresponding hyperparameter), otherwise resetting to a default initial state.
+
+The code should therefore:
+1. Load a pre‑trained agent and a pre‑trained mask network.
+2. Generate a trajectory using the pre‑trained policy.
+3. Use the mask network to obtain per‑state importance scores.
+4. Select the state with the highest importance score.
+5. With some controllable probability, reset the environment to that critical state (restoring the full MuJoCo state) and otherwise perform a normal environment reset.
+
+# Reality
+
+The submission contains code that directly implements this scheme:
+
+- **`utils.py`** defines `gen_one_traj()`. It loads both the pre‑trained agent (`agent_path`) and the mask network (`masknet_path`), runs a full episode using the agent’s deterministic actions, and records:
+  - The sequence of MuJoCo states (`state_seq`, obtained via `env.sim.get_state()`)
+  - The mask network’s action probabilities: it computes `mask_prob` as the probability of the mask outputting action `1`. In this codebase the mask action mapping is swapped relative to the paper (action `1` means “use agent action”, i.e., **not** blinding), so `mask_prob` correctly represents the **importance** score (the likelihood of keeping the agent’s original action).
+  - The accumulated reward up to each step (`reward_seq`).
+
+- **`environment.py`** defines `RetrainEnv`, whose `reset()` method implements the mixed initial distribution:
+  - With probability `1 - p` (when `np.random.rand() > self.p`) it calls `gen_one_traj` and selects the state with the **maximum** `mask_probs` (i.e., the most critical state) via `np.argmax(traj.mask_probs)`. It then restores the environment to that state using `self.env.sim.set_state(traj.state_seq[start_idx])` and reconstructs the appropriate observation for the specific MuJoCo task (Hopper, Walker2d, Reacher, HalfCheetah).
+  - Otherwise (probability `p`) it performs a normal reset using `self.env.reset()`.
+  - The hyperparameter `p` (passed as `--go_prob` in `retrain.py`) thus controls the mixture between default initial states and critical states, exactly corresponding to the mixing mechanism described in Section 3.3 and Algorithm 2 (the exact interpretation of `p` is inverted, but the functional mixture is identical).
+
+- The files `retrain.py` and `retrain.sh` show how this wrapper is instantiated for MuJoCo environments, and `masknet/train.py` supplies the mask network training (the “Ours” explanation method) that generates the importance scores used by the distribution.
+
+The implementation therefore contains all required components: critical‑state identification using the “Ours” explanation method, and a probabilistic mixture that combines those critical resets with default resets to form the mixed initial state distribution.
+
+# Score
+
+**1** – The code correctly implements the mixed initial state distribution as described in the paper.

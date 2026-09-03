@@ -1,0 +1,117 @@
+2026-08-26 09:58:46 [info     ] Grading leaf: For the network defence environment, the explanation fidelity score metric has been implemented as outlined in section 4.1 and 4.2: by forcing a given pretrained policy network agent to take random actions starting from each identified critical time step and measuring the average and maximum reward change.
+2026-08-26 09:59:35 [info     ] Model file selection raw output:
+Refine_cage_challenge/sample_mask_score.py
+Refine_cage_challenge/replay.py
+Refine_cage_challenge/rollout_mask.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_mask.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_retrain.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2.py
+Refine_cage_challenge/Agents/PPOAgent_mask.py
+Refine_cage_challenge/Agents/MainAgent.py
+Refine_cage_challenge/Wrappers/utils.py
+Refine_cage_challenge/sample_value_score.py
+2026-08-26 09:59:35 [info     ] Model file selection raw output:
+Refine_cage_challenge/sample_mask_score.py
+Refine_cage_challenge/replay.py
+Refine_cage_challenge/rollout_mask.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_mask.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_retrain.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2.py
+Refine_cage_challenge/Agents/PPOAgent_mask.py
+Refine_cage_challenge/Agents/MainAgent.py
+Refine_cage_challenge/Wrappers/utils.py
+Refine_cage_challenge/sample_value_score.py
+2026-08-26 10:01:11 [info     ] model response: # Expectations
+The paper (Section 4.1, 4.2, and the addendum) defines the explanation fidelity score metric as follows:
+- Use a step‑level explanation method (StateMask or the candidate’s own mask network) to assign an importance score to each time step in a trajectory.
+- Apply a sliding window of size \(l = L \times K\) (where \(L\) is the trajectory length, \(K\) is a fraction, e.g., 10 %, 20 %, …) to find the segment with the highest average importance score.
+- Fast‑forward the environment to the start of that critical segment by replaying the actions of the original trajectory.
+- Execute **random** actions for the whole segment of length \(l\).
+- After the random segment, resume the pre‑trained agent’s deterministic policy for the remainder of the episode.
+- Compute the reward change \(d = |R' - R|\) (original reward \(R\), reward after randomization \(R'\)).
+- Determine the **maximum possible reward change** \(d_{\text{max}}\) for the environment (the largest reward value that can occur in a single episode, according to the environment’s specification).
+- Calculate the fidelity score as \(\log(d / d_{\text{max}}) - \log(l / L)\).
+- Repeat over many trajectories (e.g., 500) and average the scores.
+
+For the Cage‑Challenge‑2 (network defence) environment specifically, the implementation must contain **actual code** that:
+1. Loads the importance scores (e.g., the mask‑network output) and the saved action sequences for each trajectory.
+2. Identifies the critical segment via the sliding‑window procedure.
+3. Performs the replay with random actions and records the resulting reward \(R'\).
+4. Reads or computes the original reward \(R\).
+5. Measures the reward change \(d\) and obtains \(d_{\text{max}}\).
+6. Calculates the fidelity score (or at minimum provides the necessary data and the calculation itself).
+I will look for a script (or a set of functions) that carries out **all** of these steps inside the Cage‑Challenge‑2 codebase.
+
+# Reality
+The provided files for the network defence environment are located under `Refine_cage_challenge/`. The relevant scripts are:
+
+- **`sample_mask_score.py`** – Runs 500 episodes using the pre‑trained PPO blue agent and a pre‑trained mask network, saves the episode rewards (`reward_log.txt`), the mask‑network probability of “not masking” (importance scores) (`mask_prob_log.txt`), and the performed actions (`action_log.txt`). This produces the raw materials needed for the fidelity metric, but does **not** compute any fidelity score itself.
+
+- **`replay.py`** – This is the script that comes closest to the required metric.  
+  * It loads the action log and, depending on the `--method` argument, either the mask probability log or uses a random segment.  
+  * The function `select_critical(score, width)` implements the sliding window: it finds the window of length `int(frame * width)` with the highest summed score (equivalent to highest average).  
+  * For each episode, it resets the environment, fast‑forwards to the start of the critical window by executing the recorded actions, takes random actions for `sub_length` steps, then continues with the agent’s deterministic policy.  
+  * It records the **resulting** reward \(R'\) in a file (e.g., `mask_replay_reward_log_10.txt`).  
+
+  **However**, the script does **not**:
+  - Load or use the original episode reward \(R\) (saved in `reward_log.txt`).
+  - Compute the reward change \(d = |R' - R|\).
+  - Define or compute the environment’s maximum possible reward change \(d_{\text{max}}\).
+  - Compute the fidelity score formula \(\log(d / d_{\text{max}}) - \log(l / L)\).
+  - Aggregate fidelity scores over the trajectories.
+
+  Therefore `replay.py` only carries out the “forcing random actions” part and saves the raw replay reward; it leaves the rest of the fidelity metric unimplemented.
+
+- **`rollout_mask.py`**, **`sample_value_score.py`**, and the various agent/wrapper files do **not** contain any fidelity‑score calculation for Cage‑Challenge‑2.
+
+No other file in the submission addresses the missing steps. The metric implementation is **incomplete** for this environment.
+
+# Score
+**0** – The submission does **not** contain a complete implementation of the explanation fidelity score metric as required by the criterion. While part of the pipeline (fast‑forward and random action replay) is present, the essential components of measuring the reward change, determining the maximum change, and computing the fidelity score itself are absent. Therefore the criterion is not met.
+2026-08-26 10:01:11 [info     ] model response: # Expectations
+The paper (Section 4.1, 4.2, and the addendum) defines the explanation fidelity score metric as follows:
+- Use a step‑level explanation method (StateMask or the candidate’s own mask network) to assign an importance score to each time step in a trajectory.
+- Apply a sliding window of size \(l = L \times K\) (where \(L\) is the trajectory length, \(K\) is a fraction, e.g., 10 %, 20 %, …) to find the segment with the highest average importance score.
+- Fast‑forward the environment to the start of that critical segment by replaying the actions of the original trajectory.
+- Execute **random** actions for the whole segment of length \(l\).
+- After the random segment, resume the pre‑trained agent’s deterministic policy for the remainder of the episode.
+- Compute the reward change \(d = |R' - R|\) (original reward \(R\), reward after randomization \(R'\)).
+- Determine the **maximum possible reward change** \(d_{\text{max}}\) for the environment (the largest reward value that can occur in a single episode, according to the environment’s specification).
+- Calculate the fidelity score as \(\log(d / d_{\text{max}}) - \log(l / L)\).
+- Repeat over many trajectories (e.g., 500) and average the scores.
+
+For the Cage‑Challenge‑2 (network defence) environment specifically, the implementation must contain **actual code** that:
+1. Loads the importance scores (e.g., the mask‑network output) and the saved action sequences for each trajectory.
+2. Identifies the critical segment via the sliding‑window procedure.
+3. Performs the replay with random actions and records the resulting reward \(R'\).
+4. Reads or computes the original reward \(R\).
+5. Measures the reward change \(d\) and obtains \(d_{\text{max}}\).
+6. Calculates the fidelity score (or at minimum provides the necessary data and the calculation itself).
+I will look for a script (or a set of functions) that carries out **all** of these steps inside the Cage‑Challenge‑2 codebase.
+
+# Reality
+The provided files for the network defence environment are located under `Refine_cage_challenge/`. The relevant scripts are:
+
+- **`sample_mask_score.py`** – Runs 500 episodes using the pre‑trained PPO blue agent and a pre‑trained mask network, saves the episode rewards (`reward_log.txt`), the mask‑network probability of “not masking” (importance scores) (`mask_prob_log.txt`), and the performed actions (`action_log.txt`). This produces the raw materials needed for the fidelity metric, but does **not** compute any fidelity score itself.
+
+- **`replay.py`** – This is the script that comes closest to the required metric.  
+  * It loads the action log and, depending on the `--method` argument, either the mask probability log or uses a random segment.  
+  * The function `select_critical(score, width)` implements the sliding window: it finds the window of length `int(frame * width)` with the highest summed score (equivalent to highest average).  
+  * For each episode, it resets the environment, fast‑forwards to the start of the critical window by executing the recorded actions, takes random actions for `sub_length` steps, then continues with the agent’s deterministic policy.  
+  * It records the **resulting** reward \(R'\) in a file (e.g., `mask_replay_reward_log_10.txt`).  
+
+  **However**, the script does **not**:
+  - Load or use the original episode reward \(R\) (saved in `reward_log.txt`).
+  - Compute the reward change \(d = |R' - R|\).
+  - Define or compute the environment’s maximum possible reward change \(d_{\text{max}}\).
+  - Compute the fidelity score formula \(\log(d / d_{\text{max}}) - \log(l / L)\).
+  - Aggregate fidelity scores over the trajectories.
+
+  Therefore `replay.py` only carries out the “forcing random actions” part and saves the raw replay reward; it leaves the rest of the fidelity metric unimplemented.
+
+- **`rollout_mask.py`**, **`sample_value_score.py`**, and the various agent/wrapper files do **not** contain any fidelity‑score calculation for Cage‑Challenge‑2.
+
+No other file in the submission addresses the missing steps. The metric implementation is **incomplete** for this environment.
+
+# Score
+**0** – The submission does **not** contain a complete implementation of the explanation fidelity score metric as required by the criterion. While part of the pipeline (fast‑forward and random action replay) is present, the essential components of measuring the reward change, determining the maximum change, and computing the fidelity score itself are absent. Therefore the criterion is not met.

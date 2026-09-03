@@ -1,0 +1,50 @@
+# RICE: Refining via Critical State Explanation
+# Python dependencies for reproducing all experiments
+# Python >= 3.8 required
+
+# Core Deep Learning Framework
+torch>=1.13.0,<3.0.0
+
+# Reinforcement Learning Framework
+stable-baselines3>=2.0.0,<3.0.0
+gymnasium>=0.26.0,<1.0.0
+
+# MuJoCo Physics Simulation (for Hopper, Walker2d, Reacher, HalfCheetah)
+mujoco>=2.3.0,<3.0.0
+# Note: For older gym MuJoCo environments, you may also need:
+# gym[mujoco] or mujoco-py (deprecated). Use gymnasium[mujoco] instead.
+
+# Autonomous Driving Environment
+metadrive>=0.4.0
+
+# Malware Mutation Environment (Tianshou for MalConv-based env)
+tianshou>=0.5.0
+
+# Scientific Computing & Data
+numpy>=1.21.0,<2.0.0
+scipy>=1.7.0
+pandas>=1.3.0
+
+# Configuration & Serialization
+pyyaml>=6.0
+json5>=0.9.0
+
+# Visualization & Plotting
+matplotlib>=3.5.0
+seaborn>=0.12.0
+
+# Progress Bars & Logging
+tqdm>=4.64.0
+
+# Additional Utilities
+typing-extensions>=4.0.0
+pathlib2>=2.3.0; python_version < "3.9"
+
+# Optional: For better performance
+# tensorboard>=2.12.0  # for SB3 logging
+# wandb>=0.15.0        # for experiment tracking
+
+# Development & Testing (optional)
+# pytest>=7.0.0
+# black>=23.0.0
+# flake8>=6.0.0
