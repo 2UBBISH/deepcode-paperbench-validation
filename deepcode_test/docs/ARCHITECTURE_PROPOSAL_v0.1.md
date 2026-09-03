@@ -89,7 +89,7 @@ flowchart TD
 ### 3.1 运行时与工具面
 
 - **位置**:`repro/agent/{loop.py, tools.py, refs.py, gates.py, memory.py, monitor.py}`;纯 `openai` SDK `chat.completions` + `tools`,不依赖 Claude Code、不依赖 Anthropic、不 import DeepCode `core/`(该栈带 mcp/anyio,`core/compat/agent.py` 注释记录过 CancelledError 毒化历史)。
-- **端点与模型**:`REPRO_BASE_URL / REPRO_API_KEY / REPRO_MODEL`,密钥只从 `~/.repro.env` 读入环境变量,仓库零明文。周末:主力 `DeepSeek-V4-Pro`。**注意(2026-09-03 换 key 后核实)**:原计划的 `Kimi-K2.7-Code` **在 Paratera 上不存在**(该模型此前走 SiliconFlow,已停用);Paratera 只有 `Kimi-K2.5/K2.6/K3`,与我们测过的不是同一个,不能直接顶替。若要保留「快模型主力 + 慢模型升级」的两档策略,需先用 §7.1 步骤 0e 的探针在 `Kimi-K2.6` 或 `Qwen3-Coder-Plus` 上验 tool-calling 与速度,否则周末就单模型 V4-Pro 跑,不设升级档;温度 0.2;`max_tokens 32768`;请求超时 600s;退避 `10/30/60/180/300s`;连续同错上限 30。
+- **端点与模型**:`REPRO_BASE_URL / REPRO_API_KEY / REPRO_MODEL`,密钥只从 `~/.repro.env` 读入环境变量,仓库零明文。周末:主力 `DeepSeek-V4-Pro`。**注意(2026-09-03 换 key 后核实)**:原计划的 `Kimi-K2.7-Code` **在 Paratera 上不存在**(该模型此前走 SiliconFlow,已停用);Paratera 只有 `Kimi-K2.5/K2.6/K3`,与我们测过的不是同一个,不能直接顶替。若要保留「快模型主力 + 慢模型升级」的两档策略,需先用 §7.1 步骤 0e 的探针在 `Kimi-K2.6`、`DeepSeek-V4-Flash` 或 `Qwen3.8-Max` 上验 tool-calling 与速度(`Qwen3-Coder-Plus` 不在 Paratera 2026-09-03 的模型表里,勿用),否则周末就单模型 V4-Pro 跑,不设升级档;温度 0.2;`max_tokens 32768`;请求超时 600s;退避 `10/30/60/180/300s`;连续同错上限 30。
 - **响应完整性校验(每次调用,四处静默降级的共同根因)**:`finish_reason ∈ {stop, tool_calls}`;content 为空且无 tool_calls 计一次「空响应」;tool_calls 的 JSON 参数必须闭合可解析;输出长度贴近 max_tokens 视为截断。任一不满足 = 显式错误进入重试,不允许「当正常继续」;连续 2 轮无工具调用即升级模型;连续 6 次空响应 → 压缩上下文重发。
 - **工具面(名字只含 `[a-z_]`,规避 Kimi 对含连字符工具名静默不调用——`docs/CLEAN_E2E_PLAN.md` D5)**:
 
@@ -245,11 +245,11 @@ flowchart TD
 ### 7.1 周末(按小时;硬止损周日 18:00)
 
 **周五晚(准备,¥0,~2h)**
-- 0a 密钥卫生:**用户决定不轮换 key**(2026-09-03),该项取消 —— 但请知悉 Paratera key 曾在排查中回显到终端、并被记入本机 `logs/llm.jsonl`(发布仓库已脱敏,本机日志仍在)。仍需做的是:`frontier-evals/project/paperbench/.env.bak_siliconflow_0902` 移出仓库并加 `.gitignore`;新 key 只放 `~/.repro.env`(`REPRO_API_KEY_PARATERA / REPRO_API_KEY_SILICONFLOW`)。`refresh_after_fx.sh:18` 已改为从 `credentials.json` 读,不再是明文,无需改。
+- 0a 密钥卫生:**用户决定不轮换 key**(2026-09-03),该项取消 —— 但请知悉 Paratera key 曾在排查中回显到终端、并被记入本机 `logs/llm.jsonl`(发布仓库已脱敏,本机日志仍在)。仍需做的是:`frontier-evals/project/paperbench/.env.bak_siliconflow_0902` 移出仓库并加 `.gitignore`;新 key 只放 `~/.repro.env`(`REPRO_API_KEY_PARATERA`(SiliconFlow key 只用于读取历史,不再入 repro))。`refresh_after_fx.sh:18` 已改为从 `credentials.json` 读,不再是明文,无需改。
 - 0b `cd ~/deepevol/DeepCode && git diff HEAD > ../deepcode_test/patches/pre_weekend_0905.patch`;确认 `git rev-parse --short HEAD` = `e0767d0`。
 - 0c `mkdir -p ~/deepevol/repro/{agent,gates,schemas,scripts,docker,ci} ~/repro_runs ~/repro_store/{datasets,models,repos,skills,images}`;`cd ~/deepevol/repro && uv init --python 3.12`(与 DeepCode 的 3.11 venv 分离),依赖 `openai pydantic pyyaml jsonschema`。
 - 0d Windows 侧 `/mnt/c/Users/43519/.wslconfig` 追加 `[wsl2]\nmemory=10GB\nswap=8GB` → `wsl --shutdown` → 重进后 `free -g` 复核 total ≈10;`docker info | grep -i nvidia`;`nvidia-smi -L` 应见 RTX 4060 Laptop GPU。
-- **0e 端点 tool-calling 探针(不过不开工)**:`uv run python -m repro.agent.probe --base https://llmapi.paratera.com/v1 --model DeepSeek-V4-Pro`(如需第二档再加 `--model Kimi-K2.6` 或 `Qwen3-Coder-Plus`;**不要再用 SiliconFlow 端点**):注册 3 个 snake_case 工具,要求完成 `write_file → run` 两步往返,校验 tool_calls JSON 可解析、`finish_reason`、usage;顺带 2000-token 真实请求测单价。任一模型失败 → 周六第一件事修工具层。
+- **0e 端点 tool-calling 探针(不过不开工)**:`uv run python -m repro.agent.probe --base https://llmapi.paratera.com/v1 --model DeepSeek-V4-Pro`(如需第二档再加 `--model Kimi-K2.6`、`--model DeepSeek-V4-Flash` 或 `--model Qwen3.8-Max`;**不要再用 SiliconFlow 端点**):注册 3 个 snake_case 工具,要求完成 `write_file → run` 两步往返,校验 tool_calls JSON 可解析、`finish_reason`、usage;顺带 2000-token 真实请求测单价。任一模型失败 → 周六第一件事修工具层。
 
 **周六(10h,¥≤35)**
 - 09:00–10:00 **步骤 1 DeepCode 三处补丁**:先 `grep -c '"finish_reason": "length"' deepcode_test/rice/task_archives/*/logs/llm.jsonl` 复核截断比例;改 `workflows/code_implementation_workflow.py:989` 读 `agents.implementation.maxTokens`;删 `agent_orchestration_engine.py:796-798` 与 `memory_agent_concise.py:1684-1685` 的 Graders 句;`bash repro/ci/check_no_rubric_leak.sh DeepCode/prompts DeepCode/workflows` 确认 0 命中;`git diff > deepcode_test/patches/weekend_min.patch`。(前端本身周末不跑。)
@@ -291,7 +291,7 @@ flowchart TD
 | 风险 | 缓解 |
 |---|---|
 | 周末范围仍是可建规模的上限:客户端、镜像、闸门、修复环、调度、verify 约 1500~2500 行新代码 | 周五晚探针 + 周六 18:00 检查点;未达标即把 scheduler/verify/report 降为桩;前端与数据预飞明确移出关键路径;种子用冻结产物 trial2 |
-| 供应商限流/空响应/余额(429/5xx、V4-Pro 连续 11 次空响应、402) | persistent 退避、完整性校验为显式错误、2000-token 成本探针、¥20/环熔断、写码主力 Kimi;白天限流则夜间跑 |
+| 供应商限流/空响应/余额(429/5xx、V4-Pro 连续 11 次空响应、402) | persistent 退避、完整性校验为显式错误、2000-token 成本探针、¥20/环熔断、写码主力用探针胜出的 Paratera 快模型;Paratera 实测 30 分钟零异常、无白天限流,仍保留夜间兜底 |
 | Kimi/V4-Pro 的 tool-calling 方言(连字符工具名静默不调用、并行 tool_calls、JSON 转义) | 工具名纯下划线、schema 极简、每轮校验 tool_calls;周五晚两模型探针不过不开工 |
 | 假跑通:agent 用不含禁词的自写模拟器或硬编码 metrics | 硬闸 = 运行时 `env.__module__` 核验 + harness 自有 `eval_runner.py` 回放;审计项只报告不判红;`protected_paths`;下周独立审计 |
 | Hopper-v3(论文,mujoco-py)→ Hopper-v4(gymnasium/mujoco3)漂移 | 写进 `env_ids_normalized` 与 `constraints_immutable`,`eval_scope` 标注与论文不同;老栈镜像下周提供 v3 对照 |
