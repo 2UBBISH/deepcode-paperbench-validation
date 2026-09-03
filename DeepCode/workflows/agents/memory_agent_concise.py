@@ -1681,8 +1681,7 @@ class ConciseMemoryAgent:
                 "starting point, not a limit. Before finishing, audit the paper's "
                 "core contributions: if any BASELINE/comparison method or main-body "
                 "experiment has NO planned file, CREATE a new appropriately-named "
-                "file for it with write_file. Graders assign separate credit to "
-                "each baseline; omitting them forfeits those points."
+                "file for it with write_file."
             )
 
         initial_plan_message = {

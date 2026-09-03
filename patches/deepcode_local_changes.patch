@@ -310,10 +310,10 @@ index 19bfea3..d3166b3 100644
          # Check file timeout
          if (
 diff --git a/workflows/agent_orchestration_engine.py b/workflows/agent_orchestration_engine.py
-index ed7dc7d..4be17c1 100644
+index ed7dc7d..00c66e3 100644
 --- a/workflows/agent_orchestration_engine.py
 +++ b/workflows/agent_orchestration_engine.py
-@@ -778,6 +778,63 @@ async def run_code_analyzer(
+@@ -778,6 +778,61 @@ async def run_code_analyzer(
                  print(
                      f"??Code analysis completed successfully (length: {len(result)} chars)"
                  )
@@ -332,9 +332,7 @@ index ed7dc7d..4be17c1 100644
 +                            "components, checking specifically: (1) every BASELINE / "
 +                            "comparison method the paper evaluates against, (2) every "
 +                            "experiment described in the paper's main body, (3) every "
-+                            "environment/dataset the experiments require. Graders assign "
-+                            "separate credit to each of these; a plan that omits them "
-+                            "forfeits those points.\n"
++                            "environment/dataset the experiments require.\n"
 +                            "If anything is missing, output the COMPLETE revised plan in "
 +                            "exactly the same YAML format, with the missing components "
 +                            "added to file_structure and implementation_components. "
@@ -377,7 +375,7 @@ index ed7dc7d..4be17c1 100644
                  attempt_record["status"] = "success"
                  append_planning_attempt(paper_dir, attempt_record)
                  write_planning_meta(
-@@ -785,6 +842,7 @@ async def run_code_analyzer(
+@@ -785,6 +840,7 @@ async def run_code_analyzer(
                      {
                          "status": "success",
                          "source": "generated",
@@ -385,7 +383,7 @@ index ed7dc7d..4be17c1 100644
                          "mode": planning_mode,
                          "attempts": attempt,
                          "stop_reason": run_result.stop_reason,
-@@ -929,14 +987,47 @@ async def github_repo_download(search_result: str, paper_dir: str, logger) -> st
+@@ -929,14 +985,47 @@ async def github_repo_download(search_result: str, paper_dir: str, logger) -> st
      Returns:
          str: Download result
      """
@@ -437,7 +435,7 @@ index ed7dc7d..4be17c1 100644
      async with github_download_agent:
          print("GitHub downloader: Downloading repositories...")
          downloader = await attach_workflow_llm(
-@@ -946,14 +1037,52 @@ async def github_repo_download(search_result: str, paper_dir: str, logger) -> st
+@@ -946,14 +1035,52 @@ async def github_repo_download(search_result: str, paper_dir: str, logger) -> st
  
          # Set higher token output for GitHub download
          github_params = RequestParams(
@@ -493,7 +491,7 @@ index ed7dc7d..4be17c1 100644
  
  async def paper_reference_analyzer(paper_dir: str, logger) -> str:
      """
-@@ -986,8 +1115,20 @@ Goal: Find the most valuable GitHub repositories from the paper's reference list
+@@ -986,8 +1113,20 @@ Goal: Find the most valuable GitHub repositories from the paper's reference list
  
          # Filter tools to only essential ones for reference analysis
          reference_params = RequestParams(
@@ -515,7 +513,7 @@ index ed7dc7d..4be17c1 100644
              tool_filter={
                  "filesystem": {"read_text_file", "list_directory"},
                  "fetch": {"fetch"},
-@@ -1406,21 +1547,24 @@ async def automate_repository_acquisition_agent(
+@@ -1406,21 +1545,24 @@ async def automate_repository_acquisition_agent(
                      f"Successfully downloaded {len(downloaded_repos)} repositories: {downloaded_repos}"
                  )
              else:
@@ -553,7 +551,7 @@ index ed7dc7d..4be17c1 100644
  
      except Exception as e:
          print(f"Error during GitHub repository download: {e}")
-@@ -1457,6 +1601,30 @@ async def orchestrate_codebase_intelligence_agent(
+@@ -1457,6 +1599,30 @@ async def orchestrate_codebase_intelligence_agent(
      )
      await asyncio.sleep(2)  # Brief pause before starting indexing
  
@@ -630,10 +628,10 @@ index ec7ba22..37c61a8 100644
  
              # Parse the result and return structured information
 diff --git a/workflows/agents/memory_agent_concise.py b/workflows/agents/memory_agent_concise.py
-index ba9561e..83dbae9 100644
+index ba9561e..a7866c1 100644
 --- a/workflows/agents/memory_agent_concise.py
 +++ b/workflows/agents/memory_agent_concise.py
-@@ -1671,6 +1671,20 @@ class ConciseMemoryAgent:
+@@ -1671,6 +1671,19 @@ class ConciseMemoryAgent:
              print(f"\n📋 {self.current_next_steps}")
  
          # 1. Add initial plan message (always preserved)
@@ -647,14 +645,13 @@ index ba9561e..83dbae9 100644
 +                "starting point, not a limit. Before finishing, audit the paper's "
 +                "core contributions: if any BASELINE/comparison method or main-body "
 +                "experiment has NO planned file, CREATE a new appropriately-named "
-+                "file for it with write_file. Graders assign separate credit to "
-+                "each baseline; omitting them forfeits those points."
++                "file for it with write_file."
 +            )
 +
          initial_plan_message = {
              "role": "user",
              "content": f"""**Task: Implement code based on the following reproduction plan**
-@@ -1688,7 +1702,7 @@ class ConciseMemoryAgent:
+@@ -1688,7 +1701,7 @@ class ConciseMemoryAgent:
  **Remaining Files to Implement:**
  {unimplemented_files_list}
  

@@ -214,6 +214,43 @@ PAPER=fre bash deepcode_test/scripts/run_grade.sh         # 真判,约 ¥38/份,
 
 ---
 
+## 3.7 想在这个仓库上跑自优化循环?先读这段
+
+闭环是通的:`setup.sh` → 改 `DeepCode/` → `run_trial.sh` → `run_grade.sh` → 分数。
+但**默认的目标函数(PaperBench 裁判分)是噪声**,直接优化会得到一条漂亮且错误的曲线。
+
+**为什么**:实测同组轮间 σ≈0.1,真实组间效应只有 0.010~0.023;同名裁判换 serving,
+同一份代码 15.7% 叶级分歧。用 σ=0.1 模拟一个**改动完全无效**的优化器,按 best-iterate 上报:
+
+| 迭代轮数 | 报告的"提升" | 相对基线 0.48 |
+| --- | --- | --- |
+| 5 | +0.117 | +24% |
+| 8 | +0.143 | **+30%** |
+| 20 | +0.186 | +39% |
+
+对照:AutoSOTA 在 ICML 上报的成功案例中位提升是 3.43%。**纯噪声刷出来的"提升"比真实系统报告的中位提升大一个数量级。**
+
+**改用这个目标函数**(确定性、零成本、秒级,不调模型):
+
+```bash
+python3 deepcode_test/scripts/gates/exec_level.py --json <提交目录>
+# → {"score": 4, "max": 5, "gates": {"compiles": true, "has_entrypoint": true, ...}}
+```
+
+**跑循环前先过闸**(防评分知识泄漏 —— 本项目曾因提示词里一句话作废两轮):
+
+```bash
+bash deepcode_test/scripts/ci/check_no_rubric_leak.sh    # 退出码 0 才可跑
+```
+
+成本结构:一次完整迭代 ≈ **¥58 / 5~8 小时**;要分辨 Δ=0.05 的真实效应需**每臂约 63 轮**。
+任何 n<5 的对照只能说方向。
+
+完整说明(含模拟复现代码、五项判据在 10 份已判提交上的实测、六类会误导优化器的陷阱)见
+`deepcode_test/docs/OPTIMIZER_NOTICE.md`。
+
+---
+
 ## 4. 对上游的改动
 
 ### 4.1 DeepCode(`patches/deepcode_local_changes.patch`,12 文件,+462/−46)
@@ -232,7 +269,7 @@ PAPER=fre bash deepcode_test/scripts/run_grade.sh         # 真判,约 ¥38/份,
 
 **⚠️ 未门控 / 默认漂移的改动(15 处,全部 DeepCode 轮次共享)**:参考挖掘 `maxTokens` 4096→8192、`max_iterations` 8→80,写码墙钟 7200→14400,stall 阈值 300→1800,GitHub 下载 agent 提示词重写与 `max_iterations=40`,fetch 同 URL 限流,空 `code_base` fail-fast,分段提示词加固等。这些是 fre 早期为让流水线跑通所做,**使得"官方默认配置"的表述不成立**;但裸跑 vs DeepCode 的相对比较不受影响(所有 DeepCode 轮次用同一套代码)。完整清单与逐条核验见 `deepcode_test/docs/REVIEW_local_changes_2026-09-03.md`。
 
-**⚠️ 实验开关里的一处评分知识泄漏**:`DEEPCODE_PLAN_COVERAGE_CHECK` 与 `DEEPCODE_ALLOW_PLAN_EXTENSION` 的提示词含 "Graders assign separate credit to each baseline; omitting them forfeits those points",属于 PaperBench 评分结构元知识。用这两个开关跑的 trial_fx1/fx2 已**整体作废**(产物保留在 `fre/submissions/_作废/`),patch 保留原样以忠实记录;重跑前须删除该句。
+**⚠️ 实验开关里的一处评分知识泄漏**:`DEEPCODE_PLAN_COVERAGE_CHECK` 与 `DEEPCODE_ALLOW_PLAN_EXTENSION` 的提示词含 "Graders assign separate credit to each baseline; omitting them forfeits those points",属于 PaperBench 评分结构元知识。用这两个开关跑的 trial_fx1/fx2 已**整体作废**(产物保留在 `fre/submissions/_作废/`)。**该句已于 2026-09-03 从源码删除**(`check_no_rubric_leak.sh` 现在扫描为零命中);原文与影响分析保留在 `docs/REVIEW_local_changes_2026-09-03.md`,作为忠实记录。
 
 ### 4.2 PaperBench(`patches/paperbench_local_changes.patch`,3 文件)
 
@@ -265,6 +302,7 @@ PAPER=fre bash deepcode_test/scripts/run_grade.sh         # 真判,约 ¥38/份,
 
 | 文件 | 内容 |
 | --- | --- |
+| `deepcode_test/docs/OPTIMIZER_NOTICE.md` | **要在本仓库上跑自优化循环必读**:目标函数噪声的定量分析、替代判据、rubric 隔离、成本与样本量、六类陷阱 |
 | `deepcode_test/docs/DEEPCODE_INTERNALS.md` | **DeepCode 是怎么运转的**:11 个 Phase 的职责与产出、`task_dir` 文件合同、LLM 调用点与配置流、31 个归档 2,443 次工具调用的实证、怎么只跑前半段当前端 |
 | `deepcode_test/docs/PROJECT_CHRONICLE.md` / `RESULTS_MASTER.md` / `DECISIONS.md` | 全程纪事(含对话转折)/ 全部结果总表 / 决策记录 |
 | `deepcode_test/docs/PITFALLS.md` | **踩坑总表**(60 余条,分六类,每条现象/根因/修法/证据) |
