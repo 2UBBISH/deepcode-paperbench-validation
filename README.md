@@ -8,6 +8,30 @@
 
 ---
 
+## 0. 如果你是来造自己的复现 agent 的(先读这一节)
+
+**这个仓库对你的意义**:它不是一个可以直接用的复现 agent,而是三样东西——(a) 上游 **DeepCode**(HKUDS,`e0767d0`)的修改版源码与全部改动记录,是目前唯一有成果可参照的同类开源实现;(b) 对它做的两周独立验证的**全部证据**(11 份提交 × 两个裁判 serving、维度级失分分析、JudgeEval 校准);(c) 从证据推出的**自建 agent 架构设计与踩坑总表**。用户在从 0 到 1 自建论文复现 agent(不能接 Claude Code 壳,模型只走 Paratera 的 OpenAI 兼容端点),本仓库是它的参考基线。
+
+**和上游 DeepCode 的关系**
+
+| | 是什么 | 在哪 |
+| --- | --- | --- |
+| 上游原版 | https://github.com/HKUDS/DeepCode @ `e0767d0` | `patches/UPSTREAM_BASE.txt` |
+| 我们的改动 | 12 文件 +462/−46:env 门控的抗限流与截断修复、4 个实验开关、**15 处未门控改动**(REVIEW 文档逐条核验) | `patches/deepcode_local_changes.patch`;`DeepCode/` 是打过补丁的完整源码 |
+| 哪些改动值得带走 | 工具名消毒、URL 黑名单、假计划闸、状态闸、预筛/挖掘/下载上限 env 化、persistent 重试 | `deepcode_test/scripts/run_trial.sh` + patch |
+| 哪些改动不要带走 | 两个实验开关提示词里的评分元知识("Graders assign…");写死的 `max_iterations=80` 等未门控值 | `docs/REVIEW_local_changes_2026-09-03.md` |
+| DeepCode 里值得复用的 | 前半段:参考挖掘、下载、CodeRAG 索引与检索、文档分段(产物是独立文件) | `docs/ARCHITECTURE_v0.2_OPTIMAL.md` §4 A1、§8 复用地图 |
+| DeepCode 里要整体替换的 | 后半段 Phase 9 写码循环(不执行、规划冻结、预算常量、clean-slate、2 个工具) | 同上 §4 A3 |
+
+**阅读顺序(约 40 分钟)**
+
+1. 本 README §1(结论)与 §1.3(工程发现)—— 5 分钟
+2. `deepcode_test/docs/PITFALLS.md` —— **踩坑总表,60 余条,分 PaperBench / DeepCode 配置 / DeepCode 源码 / 供应商 / 方法学 / 运维**,大多数会在新系统里原样重现 —— 15 分钟
+3. `deepcode_test/docs/ARCHITECTURE_v0.2_OPTIMAL.md` —— 自建 agent 的目标架构、建造顺序、每层验收、复用地图、给下一个对话的操作指引 —— 15 分钟
+4. 需要细节时:`docs/CONCLUSIONS.md`(失分机制)、`docs/FINDING_judge_serving_dependence.md`(为什么裁判分不能做目标)、`docs/FINDING_prefilter_silent_failure.md`(四种静默降级)、`docs/REVIEW_local_changes_2026-09-03.md`(我们自己的改动哪些没守住纪律)、`docs/ARCHITECTURE_PROPOSAL_v0.1.md`(周末降配版与 AutoSOTA 逐条)
+
+**五条不要做的事**(每条都有真金白银的教训):不用 LLM 裁判分做目标函数;不让任何评分表信息进入流水线或提示词;不在没有执行验证的循环里写码;不让 LLM→程序的任何接缝静默降级;每组 <5 轮不下结论。
+
 ## 1. 结论(先看这个)
 
 ### 1.1 双裁判对照
@@ -241,6 +265,7 @@ PAPER=fre bash deepcode_test/scripts/run_grade.sh         # 真判,约 ¥38/份,
 | 文件 | 内容 |
 | --- | --- |
 | `deepcode_test/docs/DEEPCODE_INTERNALS.md` | **DeepCode 是怎么运转的**:11 个 Phase 的职责与产出、`task_dir` 文件合同、LLM 调用点与配置流、31 个归档 2,443 次工具调用的实证、怎么只跑前半段当前端 |
+| `deepcode_test/docs/PITFALLS.md` | **踩坑总表**(60 余条,分六类,每条现象/根因/修法/证据) |
 | `deepcode_test/docs/ARCHITECTURE_v0.2_OPTIMAL.md` | **最优版架构(交接文档,自含全部事实与路径)**:度量体/复现体分离、建造顺序、每层验收、复用地图 |
 | `deepcode_test/docs/ARCHITECTURE_PROPOSAL_v0.1.md` | **下一步:自建论文复现 agent 的架构设计**(多 agent 工作流合成:AutoSOTA 研读 + 计划批评 + 3 提案 6 评审;含周末/下周计划) |
 | `deepcode_test/docs/CONCLUSIONS.md` | 总结论、可信度五项核验、逐份失分表、§⑦ 裁判依赖 |

@@ -1,5 +1,7 @@
 # deepcode_test — DeepCode 论文独立验证
 
+> **要以本仓库为基础造自己的复现 agent?** 先读仓库根 README §0,再读 `docs/PITFALLS.md`(踩坑总表)与 `docs/ARCHITECTURE_v0.2_OPTIMAL.md`(目标架构与建造顺序)。
+
 > 验证 DeepCode(arXiv:2512.07921)"自动论文复现比商业编码工具高 1.34×"的声称。
 > 评测:PaperBench Code-Dev 口径,裁判恒定 DeepSeek-V4-Pro。
 
