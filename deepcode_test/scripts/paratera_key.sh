@@ -44,8 +44,23 @@ probe() {
   code=$(printf '%s' "$out" | tail -1)
   case "$code" in
     200) echo "    ✅ HTTP 200,可用"; return 0 ;;
-    401|403) echo "    ❌ HTTP $code —— key 无效或被停用"; return 1 ;;
     402) echo "    ❌ HTTP 402 —— 余额不足"; return 1 ;;
+    403)
+      # Paratera 在余额耗尽后不返回 402,而是把 key 降级到免费档:
+      # 付费模型 403 team_model_access_denied,免费模型仍 200,/v1/models 只剩 Flash 档。
+      # 2026-09-03 实证。平台无余额查询端点(credit_grants / balance 等均 404)。
+      if printf '%s' "$out" | grep -q "team_model_access_denied"; then
+        local n_free
+        n_free=$(curl -s -m 20 "$BASE_URL/models" -H "Authorization: Bearer $key" \
+                 | python3 -c "import json,sys;print(len(json.load(sys.stdin).get('data',[])))" 2>/dev/null || echo "?")
+        echo "    ❌ HTTP 403 team_model_access_denied —— 该 key 访问不到 $MODEL"
+        echo "       可访问模型仅剩 $n_free 个。**最可能是余额耗尽**(Paratera 余额见底后不报 402,"
+        echo "       而是把 key 降级到免费 Flash 档);其次才是团队权限变更。请充值或换 key。"
+      else
+        echo "    ❌ HTTP 403 —— $(printf '%s' "$out" | head -c 160)"
+      fi
+      return 1 ;;
+    401) echo "    ❌ HTTP 401 —— key 无效"; return 1 ;;
     429) echo "    ⚠️ HTTP 429 —— 限流(key 本身可能有效,稍后重试)"; return 2 ;;
     *)   echo "    ❌ HTTP ${code:-?} —— $(printf '%s' "$out" | head -c 160)"; return 1 ;;
   esac

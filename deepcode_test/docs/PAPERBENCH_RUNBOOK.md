@@ -268,3 +268,19 @@ uv run python -m paperbench.nano.entrypoint \
 4. WSL2 下 Docker 磁盘占用会进 vhdx,镜像大约几 GB,不用了可 `docker rmi pb-env pb-reproducer`。
 5. DeepCode 是浅克隆(depth=1),要完整历史:`cd DeepCode && git fetch --unshallow`。
 6. frontier-evals 是稀疏检出(只有 paperbench + common),要其他项目:`git sparse-checkout add project/<名>`。
+
+## 坑 14:Paratera 余额耗尽不报 402,而是降级到免费档(2026-09-03 实证)
+
+余额见底时**不会**返回 `402 insufficient balance`,而是:
+
+- 付费模型(`DeepSeek-V4-Pro` 等)→ `403 {"type":"team_model_access_denied"}`
+- 免费 Flash 档(`GLM-4-Flash` 等)→ 仍然 `200` 正常返回
+- `GET /v1/models` → 仍然 `200`,但可用模型从 **93 个掉到 8 个**,全是 Flash / 免费档
+- 平台**没有余额查询端点**(`/v1/dashboard/billing/credit_grants`、`/v1/user/balance`、
+  `/v1/balance` 全 404,`/user/info` 403)
+
+后果:如果按常规把 403 归类为「key 无效/被封」,排查方向会全错 —— key 是活的,账号也在。
+唯一可靠的判据是「付费模型 403 + 免费模型 200 + models 列表缩水」这三件同时出现。
+
+**检测**:`bash deepcode_test/scripts/paratera_key.sh check` 已内置这套判据,会直接报
+「最可能是余额耗尽」并给出剩余模型数。开跑前 30 秒执行一次,比跑到一半全崩便宜得多。
