@@ -1,0 +1,49 @@
+2026-09-03 11:05:04 [info     ] Grading leaf: For the MuJoCo environments, the "Random" Explanation method can be selected as the explanation method during retraining
+2026-09-03 11:05:58 [info     ] Model file selection raw output:
+Refine_mujoco/retrain.py
+Refine_mujoco/retrain.sh
+Refine_mujoco/utils.py
+Refine_mujoco/PPO.py
+Refine_mujoco/base_class.py
+Refine_mujoco/masknet/train.py
+Refine_mujoco/masknet/gen_fid.py
+Refine_mujoco/masknet/fid_test.py
+Refine_mujoco/masknet/environment.py
+Refine_mujoco/masknet/cus_PPO.py
+2026-09-03 11:05:58 [info     ] Model file selection raw output:
+Refine_mujoco/retrain.py
+Refine_mujoco/retrain.sh
+Refine_mujoco/utils.py
+Refine_mujoco/PPO.py
+Refine_mujoco/base_class.py
+Refine_mujoco/masknet/train.py
+Refine_mujoco/masknet/gen_fid.py
+Refine_mujoco/masknet/fid_test.py
+Refine_mujoco/masknet/environment.py
+Refine_mujoco/masknet/cus_PPO.py
+2026-09-03 11:07:29 [info     ] model response: # Expectations
+
+The paper describes a "Random" baseline explanation method for identifying critical states: it randomly selects a visited state as the critical state. For the retraining/refinement phase (Algorithm 2), the code must support choosing this Random method as the explanation method. Concretely, the retraining script should have a parameter (e.g., a command-line flag) to select the Random explanation, and the environment or a helper module should implement the logic: when Random is selected, the initial state is set to a randomly chosen visited state from the trajectory (instead of using the mask network). The implementation must be present in the submitted files, not just described.
+
+# Reality
+
+The submission includes `Refine_mujoco/retrain.py`, which does contain a command-line argument `--random_sampling` (type `bool`, default `False`). This argument is passed to `make_retrain_env(..., rand_sampling=args.random_sampling)`. The script `retrain.sh` does not set `--random_sampling`, but the selection mechanism is present in the argument parser.
+
+However, the file that defines `make_retrain_env` is **not provided** in the submission. The retrain script imports `from environment import make_retrain_env`, implying there should be a `Refine_mujoco/environment.py` file. The files listed in the submission only contain `Refine_mujoco/masknet/environment.py`, which defines a different function (`make_multi2single_env`) for mask‑network training, not the retraining environment. The actual retraining environment code is missing. Without it, we cannot verify how the `rand_sampling` flag is used, whether a random visited state is actually selected, and whether the Random explanation method is correctly implemented. Therefore, the implementation required by the criterion is not present.
+
+# Score
+
+**0** – The code that would implement the Random explanation method during retraining (`Refine_mujoco/environment.py`) is missing from the submission. The criterion cannot be satisfied because the necessary implementation is not available for inspection.
+2026-09-03 11:07:29 [info     ] model response: # Expectations
+
+The paper describes a "Random" baseline explanation method for identifying critical states: it randomly selects a visited state as the critical state. For the retraining/refinement phase (Algorithm 2), the code must support choosing this Random method as the explanation method. Concretely, the retraining script should have a parameter (e.g., a command-line flag) to select the Random explanation, and the environment or a helper module should implement the logic: when Random is selected, the initial state is set to a randomly chosen visited state from the trajectory (instead of using the mask network). The implementation must be present in the submitted files, not just described.
+
+# Reality
+
+The submission includes `Refine_mujoco/retrain.py`, which does contain a command-line argument `--random_sampling` (type `bool`, default `False`). This argument is passed to `make_retrain_env(..., rand_sampling=args.random_sampling)`. The script `retrain.sh` does not set `--random_sampling`, but the selection mechanism is present in the argument parser.
+
+However, the file that defines `make_retrain_env` is **not provided** in the submission. The retrain script imports `from environment import make_retrain_env`, implying there should be a `Refine_mujoco/environment.py` file. The files listed in the submission only contain `Refine_mujoco/masknet/environment.py`, which defines a different function (`make_multi2single_env`) for mask‑network training, not the retraining environment. The actual retraining environment code is missing. Without it, we cannot verify how the `rand_sampling` flag is used, whether a random visited state is actually selected, and whether the Random explanation method is correctly implemented. Therefore, the implementation required by the criterion is not present.
+
+# Score
+
+**0** – The code that would implement the Random explanation method during retraining (`Refine_mujoco/environment.py`) is missing from the submission. The criterion cannot be satisfied because the necessary implementation is not available for inspection.

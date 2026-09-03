@@ -1,0 +1,157 @@
+2026-09-03 11:05:04 [info     ] Grading leaf: For the network defence environment, the "Random" Explanation method can be selected for generating rollouts (without training)
+2026-09-03 11:06:13 [info     ] Model file selection raw output:
+Refine_cage_challenge/rollout_mask.py
+Refine_cage_challenge/replay.py
+Refine_cage_challenge/retrain.py
+Refine_cage_challenge/rollout_ppo.py
+Refine_cage_challenge/ppo_train.py
+Refine_cage_challenge/Agents/PPOAgent_Retrain.py
+Refine_cage_challenge/Agents/PPOAgent_mask.py
+Refine_cage_challenge/Agents/PPOAgent.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_retrain.py
+Refine_cage_challenge/readme.md
+2026-09-03 11:06:13 [info     ] Model file selection raw output:
+Refine_cage_challenge/rollout_mask.py
+Refine_cage_challenge/replay.py
+Refine_cage_challenge/retrain.py
+Refine_cage_challenge/rollout_ppo.py
+Refine_cage_challenge/ppo_train.py
+Refine_cage_challenge/Agents/PPOAgent_Retrain.py
+Refine_cage_challenge/Agents/PPOAgent_mask.py
+Refine_cage_challenge/Agents/PPOAgent.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_retrain.py
+Refine_cage_challenge/readme.md
+2026-09-03 11:07:41 [info     ] model response: # Expectations
+
+The paper defines the “Random” explanation baseline as identifying critical steps by randomly selecting visited states, instead of using an explanation model. For the network defence (CAGE Challenge 2) environment, this criterion requires that the code supports selecting this Random explanation method when generating rollouts/replays **without training** any policy or mask network.
+
+A correct implementation should have an actual code path where:
+- a pretrained policy is loaded,
+- recorded trajectories/actions are available,
+- a random critical segment or state is selected,
+- the environment is rolled out from the default start up to that random critical point,
+- random actions are taken for the chosen segment,
+- the agent then continues acting from its pretrained policy,
+- no optimizer/model training is invoked.
+
+# Reality
+
+The relevant file is `Refine_cage_challenge/replay.py`.
+
+In this file, the `rollout()` function accepts a `method` argument:
+
+```python
+def rollout(..., method="random"):
+    ...
+    if method == "random":
+        sub_length = int(action_set.shape[0] * width)
+        best_score_index = np.random.randint(0, 30)
+    else:
+        mask_prob_set = np.loadtxt(path + str(method) + "_prob_log.txt")[i]
+        best_score_index, sub_length = select_critical(mask_prob_set, width)
+```
+
+This shows an actual `"random"` branch: it randomly chooses a starting index and computes a segment length from the recorded action sequence.
+
+The main block also allows the method to be selected via command line:
+
+```python
+parser.add_argument('--method', type=str, default="mask")
+...
+rollout(..., method=args.method)
+```
+
+During rollout, the pretrained agent is restored:
+
+```python
+agent = PPOAgent(..., restore=True, ckpt=ckpt, deterministic=True)
+```
+
+Then the loop follows the recorded actions before the selected segment, takes random actions inside that segment, and afterwards uses the pretrained policy:
+
+```python
+if t < best_score_index:
+    action = action_set[t]
+elif t < best_score_index + sub_length:
+    set_seed(1000 + i)
+    action = np.random.choice(action_space)
+else:
+    action = agent.get_action(state)
+```
+
+There is no call to `agent.train()` or any mask training in `replay.py`; it only generates rollouts and saves reward logs.
+
+Thus, the submission contains a concrete implementation that allows the Random explanation method to be selected for generating rollouts without training.
+
+One minor caveat is that `replay.py` imports `set_seed` from `sample_mask_score`, and `sample_mask_score.py` was not included among the provided files. This could affect runnability, but the core Random-method code path is present and clearly meets the criterion.
+
+# Score
+
+1
+2026-09-03 11:07:41 [info     ] model response: # Expectations
+
+The paper defines the “Random” explanation baseline as identifying critical steps by randomly selecting visited states, instead of using an explanation model. For the network defence (CAGE Challenge 2) environment, this criterion requires that the code supports selecting this Random explanation method when generating rollouts/replays **without training** any policy or mask network.
+
+A correct implementation should have an actual code path where:
+- a pretrained policy is loaded,
+- recorded trajectories/actions are available,
+- a random critical segment or state is selected,
+- the environment is rolled out from the default start up to that random critical point,
+- random actions are taken for the chosen segment,
+- the agent then continues acting from its pretrained policy,
+- no optimizer/model training is invoked.
+
+# Reality
+
+The relevant file is `Refine_cage_challenge/replay.py`.
+
+In this file, the `rollout()` function accepts a `method` argument:
+
+```python
+def rollout(..., method="random"):
+    ...
+    if method == "random":
+        sub_length = int(action_set.shape[0] * width)
+        best_score_index = np.random.randint(0, 30)
+    else:
+        mask_prob_set = np.loadtxt(path + str(method) + "_prob_log.txt")[i]
+        best_score_index, sub_length = select_critical(mask_prob_set, width)
+```
+
+This shows an actual `"random"` branch: it randomly chooses a starting index and computes a segment length from the recorded action sequence.
+
+The main block also allows the method to be selected via command line:
+
+```python
+parser.add_argument('--method', type=str, default="mask")
+...
+rollout(..., method=args.method)
+```
+
+During rollout, the pretrained agent is restored:
+
+```python
+agent = PPOAgent(..., restore=True, ckpt=ckpt, deterministic=True)
+```
+
+Then the loop follows the recorded actions before the selected segment, takes random actions inside that segment, and afterwards uses the pretrained policy:
+
+```python
+if t < best_score_index:
+    action = action_set[t]
+elif t < best_score_index + sub_length:
+    set_seed(1000 + i)
+    action = np.random.choice(action_space)
+else:
+    action = agent.get_action(state)
+```
+
+There is no call to `agent.train()` or any mask training in `replay.py`; it only generates rollouts and saves reward logs.
+
+Thus, the submission contains a concrete implementation that allows the Random explanation method to be selected for generating rollouts without training.
+
+One minor caveat is that `replay.py` imports `set_seed` from `sample_mask_score`, and `sample_mask_score.py` was not included among the provided files. This could affect runnability, but the core Random-method code path is present and clearly meets the criterion.
+
+# Score
+
+1

@@ -1,0 +1,39 @@
+2026-09-03 11:05:04 [info     ] Grading leaf: In the (MuJoCo) Sparse HalfCheetah environment, the observations are normalized when training DRL agents (further information about this environment in Appendix C.2).
+2026-09-03 11:05:47 [info     ] Model file selection raw output:
+Refine_mujoco/environment.py
+Refine_mujoco/baseline/train.py
+Refine_mujoco/retrain.py
+Refine_mujoco/masknet/environment.py
+Refine_mujoco/utils.py
+Refine_mujoco/masknet/train.py
+Refine_mujoco/PPO.py
+Refine_mujoco/models.py
+Refine_mujoco/OnPolicyAlgorithm.py
+Refine_mujoco/base_class.py
+2026-09-03 11:05:47 [info     ] Model file selection raw output:
+Refine_mujoco/environment.py
+Refine_mujoco/baseline/train.py
+Refine_mujoco/retrain.py
+Refine_mujoco/masknet/environment.py
+Refine_mujoco/utils.py
+Refine_mujoco/masknet/train.py
+Refine_mujoco/PPO.py
+Refine_mujoco/models.py
+Refine_mujoco/OnPolicyAlgorithm.py
+Refine_mujoco/base_class.py
+2026-09-03 11:07:38 [info     ] model response: # Expectations
+The paper states in Appendix C.2 that for the HalfCheetah environment (both dense and sparse), the observations are normalized when training the DRL agent. The criterion specifically refers to the Sparse HalfCheetah environment. Therefore, the submission must contain code that correctly implements observation normalization for the Sparse HalfCheetah environment during training (either initial training or refinement). This could be done via a `VecNormalize` wrapper or manual normalization, and the environment must be the sparse version of HalfCheetah-v3.
+
+# Reality
+The submission files include `retrain.py`, which uses `VecNormalize` for `HalfCheetah-v3` when the environment is in the `norm_games` list. However, there is no code that defines the Sparse HalfCheetah environment. The script simply calls `gym.make("HalfCheetah-v3")`, which gives the dense reward version. The sparse reward variant (as described in the paper, based on Mazoure et al., 2019) is not implemented in any of the provided files. The initial training code for the sparse HalfCheetah agent is also missing (the baseline training script only handles Hopper-v3). Consequently, there is no verifiable implementation of observation normalization for the Sparse HalfCheetah environment.
+
+# Score
+0 – The criterion is not met because the submission does not contain a correct implementation of the Sparse HalfCheetah environment, and thus observation normalization for that environment cannot be confirmed.
+2026-09-03 11:07:38 [info     ] model response: # Expectations
+The paper states in Appendix C.2 that for the HalfCheetah environment (both dense and sparse), the observations are normalized when training the DRL agent. The criterion specifically refers to the Sparse HalfCheetah environment. Therefore, the submission must contain code that correctly implements observation normalization for the Sparse HalfCheetah environment during training (either initial training or refinement). This could be done via a `VecNormalize` wrapper or manual normalization, and the environment must be the sparse version of HalfCheetah-v3.
+
+# Reality
+The submission files include `retrain.py`, which uses `VecNormalize` for `HalfCheetah-v3` when the environment is in the `norm_games` list. However, there is no code that defines the Sparse HalfCheetah environment. The script simply calls `gym.make("HalfCheetah-v3")`, which gives the dense reward version. The sparse reward variant (as described in the paper, based on Mazoure et al., 2019) is not implemented in any of the provided files. The initial training code for the sparse HalfCheetah agent is also missing (the baseline training script only handles Hopper-v3). Consequently, there is no verifiable implementation of observation normalization for the Sparse HalfCheetah environment.
+
+# Score
+0 – The criterion is not met because the submission does not contain a correct implementation of the Sparse HalfCheetah environment, and thus observation normalization for that environment cannot be confirmed.

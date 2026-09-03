@@ -1,0 +1,77 @@
+2026-09-03 11:05:04 [info     ] Grading leaf: For the MuJoCo environments, StateMask fine-tuning, aka "StateMask-R" has been implemented as outlined in section 4.1 and Cheng et al., 2023, i.e. resetting to the identified critical states and continuing training from there.
+2026-09-03 11:05:32 [info     ] Model file selection raw output:
+Refine_mujoco/retrain.py
+Refine_mujoco/utils.py
+Refine_mujoco/environment.py
+Refine_mujoco/masknet/train.py
+Refine_mujoco/retrain.sh
+Refine_mujoco/masknet/fid_test.py
+Refine_mujoco/masknet/gen_fid.py
+Refine_mujoco/baseline/train.py
+Refine_mujoco/models.py
+Refine_mujoco/PPO.py
+2026-09-03 11:05:32 [info     ] Model file selection raw output:
+Refine_mujoco/retrain.py
+Refine_mujoco/utils.py
+Refine_mujoco/environment.py
+Refine_mujoco/masknet/train.py
+Refine_mujoco/retrain.sh
+Refine_mujoco/masknet/fid_test.py
+Refine_mujoco/masknet/gen_fid.py
+Refine_mujoco/baseline/train.py
+Refine_mujoco/models.py
+Refine_mujoco/PPO.py
+2026-09-03 11:06:33 [info     ] model response: # Expectations
+The paper describes StateMask-R as a baseline refining method: given a pre-trained agent and an explanation method (mask network) that identifies critical states, the refinement consists of resetting the environment to the identified critical states and continuing training (fine‑tuning) from those states. For the MuJoCo environments, the implementation should:
+
+- Use the mask network to compute a step‑level importance score for each state in a trajectory. According to the paper, the importance is the probability that the mask network outputs “0” (i.e., does **not** blind the agent), because critical steps are those that should not be replaced by random actions.
+- Select the most critical state (the one with the highest importance score) from a trajectory sampled using the pre‑trained policy.
+- Reset the environment to that state and continue the training loop (e.g., collect rollouts, perform PPO updates) **without** mixing with default initial states and **without** an exploration bonus. This should be runnable and correctly identify the critical states.
+
+I will look for:
+- Code that actually trains a mask network (or loads a pre‑trained mask) and uses it to score states.
+- A wrapper or environment that resets to the identified critical state.
+- The selection logic that correctly picks the state with the highest probability of **not** blinding (action 0).
+- The ability to configure the refinement to use only critical states (e.g., `go_prob=1` and no RND bonus).
+
+# Reality
+The submission contains a refining setup in `Refine_mujoco/retrain.py`, `environment.py`, `utils.py`, and related files.  
+
+- **Mask network training** is present in `masknet/train.py` (though the environment wrapper `make_multi2single_env` is not shown). The mask network is a standard PPO policy that outputs a binary action (0 or 1).  
+- **Critical state identification** is implemented in `utils.py::gen_one_traj`. It loads the mask network and the base policy, runs an episode, and records `mask_probs` – the probability of the mask network taking action **1** (blinding).  
+- The `RetrainEnv` wrapper in `environment.py` resets the environment by calling `gen_one_traj` and then selecting the starting index via `start_idx = np.argmax(traj.mask_probs)`. This picks the step with the **highest probability of blinding (action 1)**.  
+  According to the paper, the importance of a state is the probability of the mask network outputting **0** (not blinding). Therefore, selecting `argmax(mask_probs)` picks the state where the mask network is most confident that it is safe to blind – i.e., the **least** critical state. This is a mistake.  
+- The refinement script `retrain.sh` sets `--go_prob 1` and `--bonus 'rnd'` with `--bonus_scale 0`, which effectively disables the exploration bonus. This would correspond to using only critical states (no mixing) and no exploration, resembling StateMask‑R, but the critical state selection is incorrect.  
+- No alternative code is provided that correctly computes the importance as the probability of action 0 (or that uses `1 - mask_prob`) for the critical state selection.  
+
+Thus, the code attempts to implement StateMask‑R but contains a critical flaw in the identification of the critical states; it does not reset to the **correct** critical states as defined in the paper.
+
+# Score
+0 – The implementation does not correctly reset to the identified critical states, because the selection logic uses the wrong probability (blinding probability instead of importance). The criterion requires a correct implementation, and this flaw makes the implementation invalid.
+2026-09-03 11:06:33 [info     ] model response: # Expectations
+The paper describes StateMask-R as a baseline refining method: given a pre-trained agent and an explanation method (mask network) that identifies critical states, the refinement consists of resetting the environment to the identified critical states and continuing training (fine‑tuning) from those states. For the MuJoCo environments, the implementation should:
+
+- Use the mask network to compute a step‑level importance score for each state in a trajectory. According to the paper, the importance is the probability that the mask network outputs “0” (i.e., does **not** blind the agent), because critical steps are those that should not be replaced by random actions.
+- Select the most critical state (the one with the highest importance score) from a trajectory sampled using the pre‑trained policy.
+- Reset the environment to that state and continue the training loop (e.g., collect rollouts, perform PPO updates) **without** mixing with default initial states and **without** an exploration bonus. This should be runnable and correctly identify the critical states.
+
+I will look for:
+- Code that actually trains a mask network (or loads a pre‑trained mask) and uses it to score states.
+- A wrapper or environment that resets to the identified critical state.
+- The selection logic that correctly picks the state with the highest probability of **not** blinding (action 0).
+- The ability to configure the refinement to use only critical states (e.g., `go_prob=1` and no RND bonus).
+
+# Reality
+The submission contains a refining setup in `Refine_mujoco/retrain.py`, `environment.py`, `utils.py`, and related files.  
+
+- **Mask network training** is present in `masknet/train.py` (though the environment wrapper `make_multi2single_env` is not shown). The mask network is a standard PPO policy that outputs a binary action (0 or 1).  
+- **Critical state identification** is implemented in `utils.py::gen_one_traj`. It loads the mask network and the base policy, runs an episode, and records `mask_probs` – the probability of the mask network taking action **1** (blinding).  
+- The `RetrainEnv` wrapper in `environment.py` resets the environment by calling `gen_one_traj` and then selecting the starting index via `start_idx = np.argmax(traj.mask_probs)`. This picks the step with the **highest probability of blinding (action 1)**.  
+  According to the paper, the importance of a state is the probability of the mask network outputting **0** (not blinding). Therefore, selecting `argmax(mask_probs)` picks the state where the mask network is most confident that it is safe to blind – i.e., the **least** critical state. This is a mistake.  
+- The refinement script `retrain.sh` sets `--go_prob 1` and `--bonus 'rnd'` with `--bonus_scale 0`, which effectively disables the exploration bonus. This would correspond to using only critical states (no mixing) and no exploration, resembling StateMask‑R, but the critical state selection is incorrect.  
+- No alternative code is provided that correctly computes the importance as the probability of action 0 (or that uses `1 - mask_prob`) for the critical state selection.  
+
+Thus, the code attempts to implement StateMask‑R but contains a critical flaw in the identification of the critical states; it does not reset to the **correct** critical states as defined in the paper.
+
+# Score
+0 – The implementation does not correctly reset to the identified critical states, because the selection logic uses the wrong probability (blinding probability instead of importance). The criterion requires a correct implementation, and this flaw makes the implementation invalid.

@@ -1,0 +1,175 @@
+2026-09-03 11:05:04 [info     ] Grading leaf: For the autonomous driving environment, the explanation fidelity score metric has been implemented as outlined in section 4.1 and 4.2: by forcing a given pretrained policy network agent to take random actions starting from each identified critical time step and measuring the average and maximum reward change.
+2026-09-03 11:05:54 [info     ] Model file selection raw output:
+Refine_selfish_mining/masknet/fidelity_score.py
+Refine_selfish_mining/masknet/replay.py
+Refine_selfish_mining/masknet/sample_mask_score.py
+Refine_selfish_mining/masknet/utils.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/readme.md
+2026-09-03 11:05:54 [info     ] Model file selection raw output:
+Refine_selfish_mining/masknet/fidelity_score.py
+Refine_selfish_mining/masknet/replay.py
+Refine_selfish_mining/masknet/sample_mask_score.py
+Refine_selfish_mining/masknet/utils.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/readme.md
+2026-09-03 11:06:46 [info     ] model response: # Expectations
+
+For the autonomous driving environment, the submission should contain actual code that implements the explanation fidelity score metric described in Sections 4.1 and 4.2 of the paper.
+
+Specifically, I expect to see an implementation that:
+
+- Loads or uses a pretrained MetaDrive/autonomous-driving policy and a trained mask network that outputs step-level importance scores.
+- Samples trajectories from the pretrained policy and records each step's importance score.
+- Uses a sliding window over the importance scores to select the most critical segment of length `l = L * K`, where `L` is trajectory length and `K` is a selected fraction.
+- Replays each trajectory by:
+  - following the original pretrained policy until the start of the identified critical segment,
+  - forcing random actions during that critical segment,
+  - then following the pretrained policy again until episode termination.
+- Measures:
+  - the original reward `R`,
+  - the perturbed reward `R'` after randomizing the critical segment,
+  - the reward change `d = |R' - R|`,
+  - the maximum possible reward change `d_max` for the environment.
+- Computes the fidelity score:
+  \[
+  \text{Fidelity Score} = \log\left(\frac{d}{d_{\max}}\right) - \log\left(\frac{l}{L}\right)
+  \]
+- Repeats this over many trajectories, as the paper reports fidelity scores across 500 trajectories.
+
+The implementation should be specifically for the autonomous driving environment, not only for other environments such as selfish mining.
+
+---
+
+# Reality
+
+The submission contains several files under `Refine_auto_drive/`, but I do not find a completed fidelity score implementation for the autonomous driving environment.
+
+Relevant files and what they actually do:
+
+- `Refine_auto_drive/gen_retrain_traj.py`
+  - Defines a `Traj` class that stores episode length, action sequence, reward sequence, and mask probabilities.
+  - `fid_play()` collects a trajectory using a pretrained agent policy and mask network, storing per-step importance scores as softmax mask logits.
+  - This is useful infrastructure, but it does not compute a fidelity score, does not randomize actions in a critical segment, and does not measure reward change or `d_max`.
+
+- `Refine_auto_drive/retrain_env.py`
+  - Implements a wrapper for refinement.
+  - It can reset to a randomly sampled state or to a state selected by highest mask probability.
+  - This is related to the refinement stage, not to the explanation fidelity metric.
+
+- `Refine_auto_drive/custom_masknet_env.py`
+  - Implements an environment wrapper used to train the mask network.
+  - It blends the pretrained agent's action with random actions according to the mask network, and adds a mask reward bonus.
+  - This is for training the mask network, not for computing explanation fidelity.
+
+- `Refine_auto_drive/train_masknet.py`
+  - Trains the mask network using PPO.
+  - Not a fidelity score implementation.
+
+- `Refine_auto_drive/learner.py`
+  - Contains a custom learner class integrating a reward model.
+  - It supports training/refining rather than explanation fidelity evaluation.
+
+- `Refine_auto_drive/readme.md`
+  - Empty.
+
+There is a fidelity score implementation in the selfish mining directory:
+
+- `Refine_selfish_mining/masknet/fidelity_score.py`
+- `Refine_selfish_mining/masknet/replay.py`
+
+However, those are for the selfish mining environment, not for autonomous driving.
+
+Thus, for the autonomous driving environment, the submission provides some components that could potentially support fidelity evaluation, such as trajectory collection with mask probabilities, but it does not implement the actual fidelity score calculation described in the paper: no sliding-window critical segment selection for auto driving, no randomized replay from the identified critical segment, and no computation of `R`, `R'`, `d`, `d_max`, or the score formula.
+
+---
+
+# Score
+
+0
+
+The criterion requires actual code implementing the explanation fidelity score metric for the autonomous driving environment. The submission lacks that implementation. It only contains related infrastructure for mask training and refinement, while the only fidelity score code present targets selfish mining rather than autonomous driving.
+2026-09-03 11:06:46 [info     ] model response: # Expectations
+
+For the autonomous driving environment, the submission should contain actual code that implements the explanation fidelity score metric described in Sections 4.1 and 4.2 of the paper.
+
+Specifically, I expect to see an implementation that:
+
+- Loads or uses a pretrained MetaDrive/autonomous-driving policy and a trained mask network that outputs step-level importance scores.
+- Samples trajectories from the pretrained policy and records each step's importance score.
+- Uses a sliding window over the importance scores to select the most critical segment of length `l = L * K`, where `L` is trajectory length and `K` is a selected fraction.
+- Replays each trajectory by:
+  - following the original pretrained policy until the start of the identified critical segment,
+  - forcing random actions during that critical segment,
+  - then following the pretrained policy again until episode termination.
+- Measures:
+  - the original reward `R`,
+  - the perturbed reward `R'` after randomizing the critical segment,
+  - the reward change `d = |R' - R|`,
+  - the maximum possible reward change `d_max` for the environment.
+- Computes the fidelity score:
+  \[
+  \text{Fidelity Score} = \log\left(\frac{d}{d_{\max}}\right) - \log\left(\frac{l}{L}\right)
+  \]
+- Repeats this over many trajectories, as the paper reports fidelity scores across 500 trajectories.
+
+The implementation should be specifically for the autonomous driving environment, not only for other environments such as selfish mining.
+
+---
+
+# Reality
+
+The submission contains several files under `Refine_auto_drive/`, but I do not find a completed fidelity score implementation for the autonomous driving environment.
+
+Relevant files and what they actually do:
+
+- `Refine_auto_drive/gen_retrain_traj.py`
+  - Defines a `Traj` class that stores episode length, action sequence, reward sequence, and mask probabilities.
+  - `fid_play()` collects a trajectory using a pretrained agent policy and mask network, storing per-step importance scores as softmax mask logits.
+  - This is useful infrastructure, but it does not compute a fidelity score, does not randomize actions in a critical segment, and does not measure reward change or `d_max`.
+
+- `Refine_auto_drive/retrain_env.py`
+  - Implements a wrapper for refinement.
+  - It can reset to a randomly sampled state or to a state selected by highest mask probability.
+  - This is related to the refinement stage, not to the explanation fidelity metric.
+
+- `Refine_auto_drive/custom_masknet_env.py`
+  - Implements an environment wrapper used to train the mask network.
+  - It blends the pretrained agent's action with random actions according to the mask network, and adds a mask reward bonus.
+  - This is for training the mask network, not for computing explanation fidelity.
+
+- `Refine_auto_drive/train_masknet.py`
+  - Trains the mask network using PPO.
+  - Not a fidelity score implementation.
+
+- `Refine_auto_drive/learner.py`
+  - Contains a custom learner class integrating a reward model.
+  - It supports training/refining rather than explanation fidelity evaluation.
+
+- `Refine_auto_drive/readme.md`
+  - Empty.
+
+There is a fidelity score implementation in the selfish mining directory:
+
+- `Refine_selfish_mining/masknet/fidelity_score.py`
+- `Refine_selfish_mining/masknet/replay.py`
+
+However, those are for the selfish mining environment, not for autonomous driving.
+
+Thus, for the autonomous driving environment, the submission provides some components that could potentially support fidelity evaluation, such as trajectory collection with mask probabilities, but it does not implement the actual fidelity score calculation described in the paper: no sliding-window critical segment selection for auto driving, no randomized replay from the identified critical segment, and no computation of `R`, `R'`, `d`, `d_max`, or the score formula.
+
+---
+
+# Score
+
+0
+
+The criterion requires actual code implementing the explanation fidelity score metric for the autonomous driving environment. The submission lacks that implementation. It only contains related infrastructure for mask training and refinement, while the only fidelity score code present targets selfish mining rather than autonomous driving.

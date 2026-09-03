@@ -1,0 +1,107 @@
+2026-09-03 11:08:03 [info     ] Grading leaf: For the autonomous driving environment, for the "Random" explanation method, code has been implemented for measuring cumulative reward throughout refinement
+2026-09-03 11:09:24 [info     ] Model file selection raw output:
+Refine_auto_drive/retrain.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/readme.md
+README.md
+2026-09-03 11:09:24 [info     ] Model file selection raw output:
+Refine_auto_drive/retrain.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/readme.md
+README.md
+2026-09-03 11:10:35 [info     ] model response: # Expectations
+The criterion requires that for the autonomous driving environment, the codebase includes an implementation of the "Random" explanation method (i.e., identifying critical states by randomly selecting a visited state from a trajectory) and that it measures the cumulative reward throughout the refinement process. Specifically, I expect to see:
+
+- Code that runs the RICE refinement algorithm for the autonomous driving environment.
+- Within that code, a mechanism to construct the mixed initial distribution using a random selection of a state from a trajectory (rather than relying on the mask network).
+- A training loop that logs or records the cumulative reward (e.g., via evaluation episodes, tensorboard logging, or printed metrics) during the refinement, so that the performance can be tracked over time.
+
+# Reality
+The submission contains a `Refine_auto_drive` directory with the relevant files. The main refinement script is `retrain.py`. It uses a custom environment wrapper `CustomWrapper` defined in `retrain_env.py`. This wrapper supports the mixed initial distribution: if a random number is below a threshold `go_prob`, it collects a trajectory using `gen_retrain_traj` and then selects a starting index. The selection is controlled by an attribute `random_sampling`:
+
+```python
+self.random_sampling = True
+...
+if self.random_sampling:
+    start_idx = np.random.choice(traj.eps_len)
+    print("random sampling start idx: ", start_idx)
+else:
+    start_idx = np.argmax(traj.mask_probs)
+```
+
+When `random_sampling` is `True`, a random index is chosen from the trajectory, which exactly implements the “Random” explanation method. The environment then fast‑forwards to that state, effectively resetting the agent to a randomly selected visited state.
+
+The measurement of cumulative reward is provided by the standard DI‑engine evaluation loop in `retrain.py`. The code creates an evaluator (`InteractionSerialEvaluator`) that periodically evaluates the current policy:
+
+```python
+evaluator = InteractionSerialEvaluator(
+    cfg.policy.eval.evaluator, evaluator_env, policy.eval_mode, tb_logger, exp_name=cfg.exp_name
+)
+...
+while True:
+    if evaluator.should_eval(learner.train_iter):
+        stop, rate = evaluator.eval(learner.save_checkpoint, learner.train_iter, 1)
+        if stop:
+            break
+```
+
+The `evaluator.eval` call runs evaluation episodes, computes the mean reward, and logs it to tensorboard. This constitutes measuring cumulative reward throughout refinement.
+
+Thus, the code implements the random explanation method and logs the cumulative reward during refinement for the autonomous driving environment.
+
+# Score
+1 – The code correctly implements the random explanation method for the autonomous driving environment and includes a mechanism to measure cumulative reward throughout refinement (via the evaluator). The criterion is satisfied.
+2026-09-03 11:10:35 [info     ] model response: # Expectations
+The criterion requires that for the autonomous driving environment, the codebase includes an implementation of the "Random" explanation method (i.e., identifying critical states by randomly selecting a visited state from a trajectory) and that it measures the cumulative reward throughout the refinement process. Specifically, I expect to see:
+
+- Code that runs the RICE refinement algorithm for the autonomous driving environment.
+- Within that code, a mechanism to construct the mixed initial distribution using a random selection of a state from a trajectory (rather than relying on the mask network).
+- A training loop that logs or records the cumulative reward (e.g., via evaluation episodes, tensorboard logging, or printed metrics) during the refinement, so that the performance can be tracked over time.
+
+# Reality
+The submission contains a `Refine_auto_drive` directory with the relevant files. The main refinement script is `retrain.py`. It uses a custom environment wrapper `CustomWrapper` defined in `retrain_env.py`. This wrapper supports the mixed initial distribution: if a random number is below a threshold `go_prob`, it collects a trajectory using `gen_retrain_traj` and then selects a starting index. The selection is controlled by an attribute `random_sampling`:
+
+```python
+self.random_sampling = True
+...
+if self.random_sampling:
+    start_idx = np.random.choice(traj.eps_len)
+    print("random sampling start idx: ", start_idx)
+else:
+    start_idx = np.argmax(traj.mask_probs)
+```
+
+When `random_sampling` is `True`, a random index is chosen from the trajectory, which exactly implements the “Random” explanation method. The environment then fast‑forwards to that state, effectively resetting the agent to a randomly selected visited state.
+
+The measurement of cumulative reward is provided by the standard DI‑engine evaluation loop in `retrain.py`. The code creates an evaluator (`InteractionSerialEvaluator`) that periodically evaluates the current policy:
+
+```python
+evaluator = InteractionSerialEvaluator(
+    cfg.policy.eval.evaluator, evaluator_env, policy.eval_mode, tb_logger, exp_name=cfg.exp_name
+)
+...
+while True:
+    if evaluator.should_eval(learner.train_iter):
+        stop, rate = evaluator.eval(learner.save_checkpoint, learner.train_iter, 1)
+        if stop:
+            break
+```
+
+The `evaluator.eval` call runs evaluation episodes, computes the mean reward, and logs it to tensorboard. This constitutes measuring cumulative reward throughout refinement.
+
+Thus, the code implements the random explanation method and logs the cumulative reward during refinement for the autonomous driving environment.
+
+# Score
+1 – The code correctly implements the random explanation method for the autonomous driving environment and includes a mechanism to measure cumulative reward throughout refinement (via the evaluator). The criterion is satisfied.

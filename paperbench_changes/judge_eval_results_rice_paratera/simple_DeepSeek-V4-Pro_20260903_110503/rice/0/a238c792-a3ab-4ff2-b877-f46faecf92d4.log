@@ -1,0 +1,49 @@
+2026-09-03 11:07:57 [info     ] Grading leaf: For the selfish mining environment, for the "Random" explanation method, code has been implemented for measuring cumulative reward throughout refinement
+2026-09-03 11:09:36 [info     ] Model file selection raw output:
+Refine_selfish_mining/retrain.py
+Refine_selfish_mining/utils.py
+Refine_selfish_mining/rnd_policy.py
+Refine_selfish_mining/rnd_model.py
+Refine_selfish_mining/masknet/sample_value_score.py
+Refine_selfish_mining/masknet/sample_mask_score.py
+Refine_selfish_mining/masknet/utils.py
+Refine_selfish_mining/masknet/fidelity_score.py
+Refine_selfish_mining/masknet/replay.py
+README.md
+2026-09-03 11:09:36 [info     ] Model file selection raw output:
+Refine_selfish_mining/retrain.py
+Refine_selfish_mining/utils.py
+Refine_selfish_mining/rnd_policy.py
+Refine_selfish_mining/rnd_model.py
+Refine_selfish_mining/masknet/sample_value_score.py
+Refine_selfish_mining/masknet/sample_mask_score.py
+Refine_selfish_mining/masknet/utils.py
+Refine_selfish_mining/masknet/fidelity_score.py
+Refine_selfish_mining/masknet/replay.py
+README.md
+2026-09-03 11:10:25 [info     ] model response: # Expectations
+
+According to the paper, Experiment III requires running the refining method based on critical steps identified by different explanation methods, including a random explanation. For the selfish mining environment, the code must implement a way to measure cumulative reward (e.g., total reward per episode or average test reward) during the refinement process. This is necessary to observe the agent’s performance improvement over training epochs. The measurement should be part of the training loop (e.g., periodic evaluation) and output or log the reward so that the refining performance can be compared. I expect to see code that explicitly collects and records reward values as the agent is fine‑tuned, using the random explanation method for identifying critical states.
+
+# Reality
+
+The submission includes `Refine_selfish_mining/retrain.py`. This script sets up a training loop using Tianshou’s `offpolicy_trainer`. It creates a `test_collector` that runs complete episodes in the evaluation environment (`create_env`) and returns the episode rewards. The trainer calls `test_fn` (which runs `test_collector.collect`) periodically, and the results are logged via `TensorboardLogger` and a `SummaryWriter`. The trainer also tracks the best test reward and saves the policy. The cumulative reward is therefore measured throughout refinement. The script is generic with respect to the explanation method; its `--go_prob` and `--wo_exp` flags control how critical states are used, but the measurement of cumulative reward is independent of which explanation method (random, StateMask, or ours) is applied. The code for measuring reward during refinement is present and functional.
+
+# Score
+
+1
+
+The criterion is met because the code in `Refine_selfish_mining/retrain.py` implements a training loop that evaluates the agent and records cumulative reward during refinement, and this can be used for the random explanation method as required.
+2026-09-03 11:10:25 [info     ] model response: # Expectations
+
+According to the paper, Experiment III requires running the refining method based on critical steps identified by different explanation methods, including a random explanation. For the selfish mining environment, the code must implement a way to measure cumulative reward (e.g., total reward per episode or average test reward) during the refinement process. This is necessary to observe the agent’s performance improvement over training epochs. The measurement should be part of the training loop (e.g., periodic evaluation) and output or log the reward so that the refining performance can be compared. I expect to see code that explicitly collects and records reward values as the agent is fine‑tuned, using the random explanation method for identifying critical states.
+
+# Reality
+
+The submission includes `Refine_selfish_mining/retrain.py`. This script sets up a training loop using Tianshou’s `offpolicy_trainer`. It creates a `test_collector` that runs complete episodes in the evaluation environment (`create_env`) and returns the episode rewards. The trainer calls `test_fn` (which runs `test_collector.collect`) periodically, and the results are logged via `TensorboardLogger` and a `SummaryWriter`. The trainer also tracks the best test reward and saves the policy. The cumulative reward is therefore measured throughout refinement. The script is generic with respect to the explanation method; its `--go_prob` and `--wo_exp` flags control how critical states are used, but the measurement of cumulative reward is independent of which explanation method (random, StateMask, or ours) is applied. The code for measuring reward during refinement is present and functional.
+
+# Score
+
+1
+
+The criterion is met because the code in `Refine_selfish_mining/retrain.py` implements a training loop that evaluates the agent and records cumulative reward during refinement, and this can be used for the random explanation method as required.

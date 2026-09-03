@@ -1,0 +1,47 @@
+2026-09-03 11:05:04 [info     ] Grading leaf: For the selfish mining environment, The StateMask ("Ours") Explanation method can be selected as the explanation method during retraining
+2026-09-03 11:05:32 [info     ] Model file selection raw output:
+Refine_selfish_mining/retrain.py
+Refine_selfish_mining/masknet/train.py
+Refine_selfish_mining/masknet/sample_mask_score.py
+Refine_selfish_mining/masknet/fidelity_score.py
+Refine_selfish_mining/utils.py
+Refine_selfish_mining/rnd_policy.py
+Refine_selfish_mining/rnd_model.py
+Refine_selfish_mining/masknet/replay.py
+Refine_selfish_mining/masknet/replay.sh
+Refine_selfish_mining/masknet/utils.py
+2026-09-03 11:05:32 [info     ] Model file selection raw output:
+Refine_selfish_mining/retrain.py
+Refine_selfish_mining/masknet/train.py
+Refine_selfish_mining/masknet/sample_mask_score.py
+Refine_selfish_mining/masknet/fidelity_score.py
+Refine_selfish_mining/utils.py
+Refine_selfish_mining/rnd_policy.py
+Refine_selfish_mining/rnd_model.py
+Refine_selfish_mining/masknet/replay.py
+Refine_selfish_mining/masknet/replay.sh
+Refine_selfish_mining/masknet/utils.py
+2026-09-03 11:06:38 [info     ] model response: # Expectations
+The paper describes a refining scheme (RICE) that uses a step-level explanation method (StateMask, optimized as "Ours") to identify critical states. The retraining process (Algorithm 2) requires the ability to use the explanation method to pinpoint the most critical state in a trajectory, and then reset the environment to that state as part of a mixed initial state distribution. For the selfish mining environment, the submission must contain code that enables the selection of the "Ours" explanation method (the mask network trained with PPO and the transformed objective) during retraining. This means the retraining script should:
+
+- Load or instantiate the trained mask network (the "Ours" explanation method).
+- Have a configuration option (e.g., a command-line argument or a parameter) to choose which explanation method to use, with the "Ours" method being one of the options.
+- Integrate the mask network into the environment resetting logic so that critical states can be identified from a trajectory, and the environment can be reset to those states.
+
+# Reality
+The provided files for the selfish mining environment include `retrain.py`, which is the retraining script, but it does **not** contain any code that loads the "Ours" mask network, nor does it provide any mechanism to select the explanation method. The script defines `create_retrain_env` and uses `MDPBlockchainSimulatorRetrain`, but the implementation of that simulator is not included in the submission. The retraining logic only handles RND exploration and a probability `go_prob` to mix initial states, with no reference to the mask network or explanation method selection. The mask network training code (`masknet/train.py`, `masknet/utils.py`) exists separately, but the retraining script does not import or use it. No option (e.g., `--explanation-method`) is provided to choose between "Random", "StateMask", or "Ours". Therefore, the code does not allow the "Ours" explanation method to be selected during retraining.
+
+# Score
+0 – The submission does not contain a correct implementation of selecting the "Ours" explanation method during retraining for the selfish mining environment. The retraining script lacks any integration of the mask network or any selection mechanism for explanation methods.
+2026-09-03 11:06:38 [info     ] model response: # Expectations
+The paper describes a refining scheme (RICE) that uses a step-level explanation method (StateMask, optimized as "Ours") to identify critical states. The retraining process (Algorithm 2) requires the ability to use the explanation method to pinpoint the most critical state in a trajectory, and then reset the environment to that state as part of a mixed initial state distribution. For the selfish mining environment, the submission must contain code that enables the selection of the "Ours" explanation method (the mask network trained with PPO and the transformed objective) during retraining. This means the retraining script should:
+
+- Load or instantiate the trained mask network (the "Ours" explanation method).
+- Have a configuration option (e.g., a command-line argument or a parameter) to choose which explanation method to use, with the "Ours" method being one of the options.
+- Integrate the mask network into the environment resetting logic so that critical states can be identified from a trajectory, and the environment can be reset to those states.
+
+# Reality
+The provided files for the selfish mining environment include `retrain.py`, which is the retraining script, but it does **not** contain any code that loads the "Ours" mask network, nor does it provide any mechanism to select the explanation method. The script defines `create_retrain_env` and uses `MDPBlockchainSimulatorRetrain`, but the implementation of that simulator is not included in the submission. The retraining logic only handles RND exploration and a probability `go_prob` to mix initial states, with no reference to the mask network or explanation method selection. The mask network training code (`masknet/train.py`, `masknet/utils.py`) exists separately, but the retraining script does not import or use it. No option (e.g., `--explanation-method`) is provided to choose between "Random", "StateMask", or "Ours". Therefore, the code does not allow the "Ours" explanation method to be selected during retraining.
+
+# Score
+0 – The submission does not contain a correct implementation of selecting the "Ours" explanation method during retraining for the selfish mining environment. The retraining script lacks any integration of the mask network or any selection mechanism for explanation methods.

@@ -1,0 +1,173 @@
+2026-09-03 11:05:04 [info     ] Grading leaf: For the autonomous driving environment, the mask network objective $J(\theta)$ has been implemented to match what is outlined in section 3.3, namely $J(\theta)=\min |\eta(\pi)-\eta(\bar{\pi})|$
+2026-09-03 11:06:32 [info     ] Model file selection raw output:
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/retrain.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/readme.md
+2026-09-03 11:06:32 [info     ] Model file selection raw output:
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/retrain.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/readme.md
+2026-09-03 11:07:11 [info     ] model response: # Expectations
+
+The paper’s Section 3.3 first introduces StateMask’s objective as
+
+\[
+J(\theta)=\min |\eta(\pi)-\eta(\bar{\pi})|,
+\]
+
+where \(\pi\) is the pretrained policy and \(\bar{\pi}\) is the policy perturbed by the mask network.
+
+The criterion asks whether, for the autonomous driving environment, the submitted code implements this objective. I would expect to see either:
+
+- an explicit computation of \(\eta(\pi)\) and \(\eta(\bar{\pi})\), and an optimization step minimizing their absolute difference, or
+- a clear implementation of a surrogate/objective equivalent to minimizing \(| \eta(\pi)-\eta(\bar{\pi}) |\), as used by the original StateMask.
+
+The paper later reformulates this to maximizing \(\eta(\bar{\pi})\), but the criterion explicitly says the objective should match  
+\(J(\theta)=\min |\eta(\pi)-\eta(\bar{\pi})|\).
+
+# Reality
+
+The relevant files for the autonomous driving mask network are:
+
+- `Refine_auto_drive/train_masknet.py`
+- `Refine_auto_drive/custom_masknet_env.py`
+- `Refine_auto_drive/learner.py`
+- `Refine_auto_drive/gen_retrain_traj.py`
+
+In `custom_masknet_env.py`, the mask network controls whether the pretrained agent’s action is replaced by a random action:
+
+```python
+if action[i] == 1:
+    real_actions.append(np.random.choice(5))
+    mask = 1
+else:
+    real_actions.append(agent_actions[i])
+    mask = 0
+```
+
+The reward is then modified by adding a bonus when the mask outputs `1`:
+
+```python
+if not self.bonus_last:
+    rew += self.lamb * mask
+...
+if done:
+    if self.bonus_last:
+        rew += self.lamb * self.accu_mask
+```
+
+This is the paper’s proposed reward bonus:
+
+\[
+R'(s_t,a_t)=R(s_t,a_t)+\alpha a_t^m
+\]
+
+not the original StateMask objective \(J(\theta)=\min|\eta(\pi)-\eta(\bar{\pi})|\).
+
+`train_masknet.py` trains the mask network with PPO:
+
+```python
+policy = PPOPolicy(cfg.policy)
+...
+learner = BaseLearner(...)
+```
+
+There is no code in these files that computes \(\eta(\pi)\), computes \(\eta(\bar{\pi})\), takes their absolute difference, or minimizes that difference. The training loop optimizes a PPO objective over the modified environment reward, which corresponds to maximizing the perturbed agent’s return with an additional mask bonus.
+
+`gen_retrain_traj.py` uses a trained mask network to generate importance scores for trajectories, but it also does not implement the required training objective.
+
+Thus, the submitted code does not implement \(J(\theta)=\min|\eta(\pi)-\eta(\bar{\pi})|\) for the autonomous driving mask network.
+
+# Score
+
+0
+
+The criteria has not been met. The code implements a reward-bonus-based PPO training objective for the mask network rather than the specified objective \(J(\theta)=\min|\eta(\pi)-\eta(\bar{\pi})|\).
+2026-09-03 11:07:11 [info     ] model response: # Expectations
+
+The paper’s Section 3.3 first introduces StateMask’s objective as
+
+\[
+J(\theta)=\min |\eta(\pi)-\eta(\bar{\pi})|,
+\]
+
+where \(\pi\) is the pretrained policy and \(\bar{\pi}\) is the policy perturbed by the mask network.
+
+The criterion asks whether, for the autonomous driving environment, the submitted code implements this objective. I would expect to see either:
+
+- an explicit computation of \(\eta(\pi)\) and \(\eta(\bar{\pi})\), and an optimization step minimizing their absolute difference, or
+- a clear implementation of a surrogate/objective equivalent to minimizing \(| \eta(\pi)-\eta(\bar{\pi}) |\), as used by the original StateMask.
+
+The paper later reformulates this to maximizing \(\eta(\bar{\pi})\), but the criterion explicitly says the objective should match  
+\(J(\theta)=\min |\eta(\pi)-\eta(\bar{\pi})|\).
+
+# Reality
+
+The relevant files for the autonomous driving mask network are:
+
+- `Refine_auto_drive/train_masknet.py`
+- `Refine_auto_drive/custom_masknet_env.py`
+- `Refine_auto_drive/learner.py`
+- `Refine_auto_drive/gen_retrain_traj.py`
+
+In `custom_masknet_env.py`, the mask network controls whether the pretrained agent’s action is replaced by a random action:
+
+```python
+if action[i] == 1:
+    real_actions.append(np.random.choice(5))
+    mask = 1
+else:
+    real_actions.append(agent_actions[i])
+    mask = 0
+```
+
+The reward is then modified by adding a bonus when the mask outputs `1`:
+
+```python
+if not self.bonus_last:
+    rew += self.lamb * mask
+...
+if done:
+    if self.bonus_last:
+        rew += self.lamb * self.accu_mask
+```
+
+This is the paper’s proposed reward bonus:
+
+\[
+R'(s_t,a_t)=R(s_t,a_t)+\alpha a_t^m
+\]
+
+not the original StateMask objective \(J(\theta)=\min|\eta(\pi)-\eta(\bar{\pi})|\).
+
+`train_masknet.py` trains the mask network with PPO:
+
+```python
+policy = PPOPolicy(cfg.policy)
+...
+learner = BaseLearner(...)
+```
+
+There is no code in these files that computes \(\eta(\pi)\), computes \(\eta(\bar{\pi})\), takes their absolute difference, or minimizes that difference. The training loop optimizes a PPO objective over the modified environment reward, which corresponds to maximizing the perturbed agent’s return with an additional mask bonus.
+
+`gen_retrain_traj.py` uses a trained mask network to generate importance scores for trajectories, but it also does not implement the required training objective.
+
+Thus, the submitted code does not implement \(J(\theta)=\min|\eta(\pi)-\eta(\bar{\pi})|\) for the autonomous driving mask network.
+
+# Score
+
+0
+
+The criteria has not been met. The code implements a reward-bonus-based PPO training objective for the mask network rather than the specified objective \(J(\theta)=\min|\eta(\pi)-\eta(\bar{\pi})|\).

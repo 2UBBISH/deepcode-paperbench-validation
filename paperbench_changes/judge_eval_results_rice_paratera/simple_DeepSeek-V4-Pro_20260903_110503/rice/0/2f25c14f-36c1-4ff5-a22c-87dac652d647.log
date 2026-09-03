@@ -1,0 +1,43 @@
+2026-09-03 11:05:04 [info     ] Grading leaf: For the network defence environment, the policy network agents has been implemented
+2026-09-03 11:05:32 [info     ] Model file selection raw output:
+Refine_cage_challenge/Agents/PPOAgent.py
+Refine_cage_challenge/PPO/ActorCritic.py
+Refine_cage_challenge/Agents/PPOAgent_mask.py
+Refine_cage_challenge/Agents/PPOAgent_Retrain.py
+Refine_cage_challenge/Agents/MainAgent.py
+Refine_cage_challenge/Agents/BlueSleepAgent.py
+Refine_cage_challenge/Agents/rnd_model.py
+Refine_cage_challenge/PPO/Memory.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_mask.py
+2026-09-03 11:05:32 [info     ] Model file selection raw output:
+Refine_cage_challenge/Agents/PPOAgent.py
+Refine_cage_challenge/PPO/ActorCritic.py
+Refine_cage_challenge/Agents/PPOAgent_mask.py
+Refine_cage_challenge/Agents/PPOAgent_Retrain.py
+Refine_cage_challenge/Agents/MainAgent.py
+Refine_cage_challenge/Agents/BlueSleepAgent.py
+Refine_cage_challenge/Agents/rnd_model.py
+Refine_cage_challenge/PPO/Memory.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_mask.py
+2026-09-03 11:06:03 [info     ] model response: # Expectations
+The paper describes the network defence environment as CAGE Challenge 2, where a blue agent (defender) is trained using PPO. The agent should be a policy network that takes observations (state vector) and outputs actions from a predefined action space. The code must include an implementation of this policy network agent, compatible with the environment, and capable of being trained/refined with PPO. The implementation should be a concrete class, not just a description. I will look for a policy network class (likely an actor-critic) that defines the neural network architecture and integrates with the environment's observation and action spaces.
+
+# Reality
+The submission contains the file `Refine_cage_challenge/Agents/PPOAgent.py`. This file implements a class `PPOAgent` which inherits from `BaseAgent` (from CybORG). It sets up an actor-critic network via `PPO/ActorCritic.py`, which defines `ActorCritic` with 3-layer MLPs for actor and critic. The agent's `set_initial_values` method configures the input dimension (52 + 10 for scanning state) and the action space (including decoy actions). The agent's `get_action` method uses the policy network to select actions. The training loop (`train`) implements the standard PPO update. This is a complete, code-level implementation of the policy network agent for the network defence environment.
+
+The file `Refine_cage_challenge/Agents/MainAgent.py` also exists but is a wrapper that selects between pre-trained agents; the core PPO agent is the one in `PPOAgent`. The presence of `PPOAgent_Retrain.py` and `PPOAgent_mask.py` are variants for refinement and explanation, but they all rely on the same underlying policy network architecture. Thus, the policy network agent is fully implemented in the code.
+
+# Score
+1 - The submission includes a concrete implementation of the policy network agent for the network defence environment (CAGE Challenge 2), meeting the criterion.
+2026-09-03 11:06:03 [info     ] model response: # Expectations
+The paper describes the network defence environment as CAGE Challenge 2, where a blue agent (defender) is trained using PPO. The agent should be a policy network that takes observations (state vector) and outputs actions from a predefined action space. The code must include an implementation of this policy network agent, compatible with the environment, and capable of being trained/refined with PPO. The implementation should be a concrete class, not just a description. I will look for a policy network class (likely an actor-critic) that defines the neural network architecture and integrates with the environment's observation and action spaces.
+
+# Reality
+The submission contains the file `Refine_cage_challenge/Agents/PPOAgent.py`. This file implements a class `PPOAgent` which inherits from `BaseAgent` (from CybORG). It sets up an actor-critic network via `PPO/ActorCritic.py`, which defines `ActorCritic` with 3-layer MLPs for actor and critic. The agent's `set_initial_values` method configures the input dimension (52 + 10 for scanning state) and the action space (including decoy actions). The agent's `get_action` method uses the policy network to select actions. The training loop (`train`) implements the standard PPO update. This is a complete, code-level implementation of the policy network agent for the network defence environment.
+
+The file `Refine_cage_challenge/Agents/MainAgent.py` also exists but is a wrapper that selects between pre-trained agents; the core PPO agent is the one in `PPOAgent`. The presence of `PPOAgent_Retrain.py` and `PPOAgent_mask.py` are variants for refinement and explanation, but they all rely on the same underlying policy network architecture. Thus, the policy network agent is fully implemented in the code.
+
+# Score
+1 - The submission includes a concrete implementation of the policy network agent for the network defence environment (CAGE Challenge 2), meeting the criterion.

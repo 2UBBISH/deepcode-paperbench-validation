@@ -1,0 +1,81 @@
+2026-09-03 11:05:04 [info     ] Grading leaf: Any version of the (MuJoCo) Walker2d environment has been correctly set up and can be initialized can be used to run the experiments (further information about this environment in Appendix C.2).
+2026-09-03 11:06:00 [info     ] Model file selection raw output:
+Refine_mujoco/environment.py
+Refine_mujoco/baseline/train.py
+Refine_mujoco/retrain.py
+Refine_mujoco/masknet/environment.py
+Refine_mujoco/masknet/train.py
+Refine_mujoco/baseline/readme.md
+Refine_mujoco/retrain.sh
+Refine_mujoco/utils.py
+Refine_mujoco/PPO.py
+Refine_mujoco/models.py
+2026-09-03 11:06:00 [info     ] Model file selection raw output:
+Refine_mujoco/environment.py
+Refine_mujoco/baseline/train.py
+Refine_mujoco/retrain.py
+Refine_mujoco/masknet/environment.py
+Refine_mujoco/masknet/train.py
+Refine_mujoco/baseline/readme.md
+Refine_mujoco/retrain.sh
+Refine_mujoco/utils.py
+Refine_mujoco/PPO.py
+Refine_mujoco/models.py
+2026-09-03 11:06:51 [info     ] model response: # Expectations
+
+The paper describes using the MuJoCo Walker2d environment for experiments (Appendix C.2). The specific version is "Walker2d-v3". The environment should be correctly set up, meaning it can be initialized (e.g., via `gym.make`) and used with the training / refining code. The paper also notes that for Walker2d, the observation is normalized during training. Therefore, the submission code must:
+
+- Include the ability to create a Walker2d-v3 environment.
+- Handle the normalization of observations when training/refining (e.g., using `VecNormalize`).
+- Be integrated into the experiment pipeline so that the environment can be used for the refinement and baselines.
+
+I will look for actual code (not just comments) that accomplishes this.
+
+# Reality
+
+The submission provides several files:
+
+- **`Refine_mujoco/retrain.py`**: The main refinement script. It uses a command-line argument `--env` (default `"Hopper-v3"`) to specify the environment name. It contains a list `norm_games = ["HalfCheetah-v3", "Walker2d-v3"]`. For environments in this list, it loads a `VecNormalize` object from a path and applies it to both the training and evaluation environments. This directly matches the paper's requirement that Walker2d uses normalized observations. The script calls `make_retrain_env` with the appropriate `env_name` and `vec_norm_path`, which will create the environment via `gym.make`.
+
+- **`Refine_mujoco/environment.py`**: Defines `make_retrain_env(env_name, ...)` which calls `gym.make(env_name)` and wraps it in a `RetrainEnv` wrapper. This wrapper handles the reset of the environment to critical states and the observation computation for different environments. For Walker2d, the `reset` method includes a branch that re‑creates the observation from the internal MuJoCo state (the `else` branch that concatenates position and velocity). So the environment is correctly initialized and can be used.
+
+- **`Refine_mujoco/baseline/train.py`**: Shows an example of training a baseline agent using `gym.make("Hopper-v3")`. While it does not explicitly mention Walker2d, it demonstrates that the codebase can use Gym environments, and the same pattern would apply to Walker2d.
+
+- **`Refine_mujoco/retrain.sh`**: An example shell script that runs `retrain.py` with `--env "Hopper-v3"`. Again, the same script can be used with `--env "Walker2d-v3"`.
+
+The code is generic and includes everything needed to initialize and use Walker2d-v3 with the required observation normalization. There is no hard‑coded restriction that would prevent using Walker2d. The normalization logic is specifically activated for `"Walker2d-v3"`, meeting the paper’s specification.
+
+# Score
+
+1
+
+**Explanation**: The submission contains actual code (`retrain.py`, `environment.py`) that correctly sets up the Walker2d-v3 environment. It uses `gym.make` to create the environment, applies `VecNormalize` for observation normalization (as required by the paper), and integrates it into the retraining pipeline. The code is functional and ready to run experiments with Walker2d. Therefore, the criterion is fully met.
+2026-09-03 11:06:51 [info     ] model response: # Expectations
+
+The paper describes using the MuJoCo Walker2d environment for experiments (Appendix C.2). The specific version is "Walker2d-v3". The environment should be correctly set up, meaning it can be initialized (e.g., via `gym.make`) and used with the training / refining code. The paper also notes that for Walker2d, the observation is normalized during training. Therefore, the submission code must:
+
+- Include the ability to create a Walker2d-v3 environment.
+- Handle the normalization of observations when training/refining (e.g., using `VecNormalize`).
+- Be integrated into the experiment pipeline so that the environment can be used for the refinement and baselines.
+
+I will look for actual code (not just comments) that accomplishes this.
+
+# Reality
+
+The submission provides several files:
+
+- **`Refine_mujoco/retrain.py`**: The main refinement script. It uses a command-line argument `--env` (default `"Hopper-v3"`) to specify the environment name. It contains a list `norm_games = ["HalfCheetah-v3", "Walker2d-v3"]`. For environments in this list, it loads a `VecNormalize` object from a path and applies it to both the training and evaluation environments. This directly matches the paper's requirement that Walker2d uses normalized observations. The script calls `make_retrain_env` with the appropriate `env_name` and `vec_norm_path`, which will create the environment via `gym.make`.
+
+- **`Refine_mujoco/environment.py`**: Defines `make_retrain_env(env_name, ...)` which calls `gym.make(env_name)` and wraps it in a `RetrainEnv` wrapper. This wrapper handles the reset of the environment to critical states and the observation computation for different environments. For Walker2d, the `reset` method includes a branch that re‑creates the observation from the internal MuJoCo state (the `else` branch that concatenates position and velocity). So the environment is correctly initialized and can be used.
+
+- **`Refine_mujoco/baseline/train.py`**: Shows an example of training a baseline agent using `gym.make("Hopper-v3")`. While it does not explicitly mention Walker2d, it demonstrates that the codebase can use Gym environments, and the same pattern would apply to Walker2d.
+
+- **`Refine_mujoco/retrain.sh`**: An example shell script that runs `retrain.py` with `--env "Hopper-v3"`. Again, the same script can be used with `--env "Walker2d-v3"`.
+
+The code is generic and includes everything needed to initialize and use Walker2d-v3 with the required observation normalization. There is no hard‑coded restriction that would prevent using Walker2d. The normalization logic is specifically activated for `"Walker2d-v3"`, meeting the paper’s specification.
+
+# Score
+
+1
+
+**Explanation**: The submission contains actual code (`retrain.py`, `environment.py`) that correctly sets up the Walker2d-v3 environment. It uses `gym.make` to create the environment, applies `VecNormalize` for observation normalization (as required by the paper), and integrates it into the retraining pipeline. The code is functional and ready to run experiments with Walker2d. Therefore, the criterion is fully met.

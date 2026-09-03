@@ -1,0 +1,55 @@
+2026-09-03 11:05:04 [info     ] Grading leaf: For the MuJoCo environments, The StateMask ("Ours") Explanation method can be selected for generating rollouts (without training)
+2026-09-03 11:05:51 [info     ] Model file selection raw output:
+Refine_mujoco/masknet/gen_fid.py
+Refine_mujoco/masknet/fid_test.py
+Refine_mujoco/masknet/environment.py
+Refine_mujoco/masknet/cus_PPO.py
+Refine_mujoco/masknet/readme.md
+Refine_mujoco/environment.py
+Refine_mujoco/utils.py
+Refine_mujoco/models.py
+Refine_mujoco/monitor.py
+Refine_mujoco/callback.py
+2026-09-03 11:05:51 [info     ] Model file selection raw output:
+Refine_mujoco/masknet/gen_fid.py
+Refine_mujoco/masknet/fid_test.py
+Refine_mujoco/masknet/environment.py
+Refine_mujoco/masknet/cus_PPO.py
+Refine_mujoco/masknet/readme.md
+Refine_mujoco/environment.py
+Refine_mujoco/utils.py
+Refine_mujoco/models.py
+Refine_mujoco/monitor.py
+Refine_mujoco/callback.py
+2026-09-03 11:07:43 [info     ] model response: # Expectations
+The paper introduces RICE, which uses the optimized StateMask explanation method (referred to as "Ours") to identify critical states. In the refinement phase (Algorithm 2), the method must be able to load a previously trained mask network and use it to generate rollouts of the pre-trained policy. This means executing the mask network on the policy's trajectory to compute importance scores (mask probabilities) and then selecting the most critical state, all without any further training of the mask network. For the MuJoCo environments, the submission should include code that loads a trained mask network (the "Ours" variant) and uses it to produce rollouts, extract critical states, and provide them to the refining process.
+
+# Reality
+The provided files contain the necessary implementation.
+
+- **`Refine_mujoco/utils.py`** defines a function `gen_one_traj(env, seed, agent_path, masknet_path, vec_norm_path)`. This function loads the mask network via `PPO.load(masknet_path)`, runs an episode combining the base policy and mask decisions, and collects the full trajectory including mask probabilities (`mask_probs`). This is a direct use of the trained "Ours" explanation method to generate a rollout and record the importance scores of each step.
+
+- **`Refine_mujoco/environment.py`** implements a `RetrainEnv` wrapper. Its `reset` method uses `gen_one_traj` when the reset probability condition is met. It then selects the state with the highest mask probability (`start_idx = np.argmax(traj.mask_probs)`) as the critical state and resets the environment to that state. The wrapper includes MuJoCo‑specific handling for observation reconstruction (e.g., for `Reacher-v2`, `HalfCheetah-v3`), confirming that the explanation method is operational for the MuJoCo environments.
+
+- The code also supports the alternative of random sampling (`rand_sampling` flag), but the default behavior (and the one used for the paper's evaluation) relies on the mask network to pick the critical state. This shows that the "Ours" explanation method can be selected for generating rollouts without any training step.
+
+Therefore, the submission correctly implements the ability to use the trained "Ours" StateMask explanation method for generating rollouts in MuJoCo environments.
+
+# Score
+1 (the criterion is met)
+2026-09-03 11:07:43 [info     ] model response: # Expectations
+The paper introduces RICE, which uses the optimized StateMask explanation method (referred to as "Ours") to identify critical states. In the refinement phase (Algorithm 2), the method must be able to load a previously trained mask network and use it to generate rollouts of the pre-trained policy. This means executing the mask network on the policy's trajectory to compute importance scores (mask probabilities) and then selecting the most critical state, all without any further training of the mask network. For the MuJoCo environments, the submission should include code that loads a trained mask network (the "Ours" variant) and uses it to produce rollouts, extract critical states, and provide them to the refining process.
+
+# Reality
+The provided files contain the necessary implementation.
+
+- **`Refine_mujoco/utils.py`** defines a function `gen_one_traj(env, seed, agent_path, masknet_path, vec_norm_path)`. This function loads the mask network via `PPO.load(masknet_path)`, runs an episode combining the base policy and mask decisions, and collects the full trajectory including mask probabilities (`mask_probs`). This is a direct use of the trained "Ours" explanation method to generate a rollout and record the importance scores of each step.
+
+- **`Refine_mujoco/environment.py`** implements a `RetrainEnv` wrapper. Its `reset` method uses `gen_one_traj` when the reset probability condition is met. It then selects the state with the highest mask probability (`start_idx = np.argmax(traj.mask_probs)`) as the critical state and resets the environment to that state. The wrapper includes MuJoCo‑specific handling for observation reconstruction (e.g., for `Reacher-v2`, `HalfCheetah-v3`), confirming that the explanation method is operational for the MuJoCo environments.
+
+- The code also supports the alternative of random sampling (`rand_sampling` flag), but the default behavior (and the one used for the paper's evaluation) relies on the mask network to pick the critical state. This shows that the "Ours" explanation method can be selected for generating rollouts without any training step.
+
+Therefore, the submission correctly implements the ability to use the trained "Ours" StateMask explanation method for generating rollouts in MuJoCo environments.
+
+# Score
+1 (the criterion is met)

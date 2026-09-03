@@ -1,0 +1,43 @@
+2026-09-03 11:05:04 [info     ] Grading leaf: The (MuJoCo) Sparse Hopper environment is version "Hopper-v3"
+2026-09-03 11:05:47 [info     ] Model file selection raw output:
+Refine_mujoco/environment.py
+Refine_mujoco/retrain.sh
+Refine_mujoco/retrain.py
+Refine_mujoco/baseline/train.py
+Refine_mujoco/masknet/environment.py
+Refine_mujoco/masknet/train.py
+Refine_mujoco/PPO.py
+Refine_mujoco/utils.py
+Refine_mujoco/masknet/readme.md
+README.md
+2026-09-03 11:05:47 [info     ] Model file selection raw output:
+Refine_mujoco/environment.py
+Refine_mujoco/retrain.sh
+Refine_mujoco/retrain.py
+Refine_mujoco/baseline/train.py
+Refine_mujoco/masknet/environment.py
+Refine_mujoco/masknet/train.py
+Refine_mujoco/PPO.py
+Refine_mujoco/utils.py
+Refine_mujoco/masknet/readme.md
+README.md
+2026-09-03 11:06:20 [info     ] model response: # Expectations
+The criterion requires that the sparse MuJoCo Hopper environment (used in the experiments described in the main body of the paper) is based on the version "Hopper-v3" of the Gym environment. The paper states that for the dense Hopper they use "Hopper-v3" and that the sparse variants are derived from the same games by altering the reward function (only rewarding if x > 0.6). Therefore, a correct implementation should instantiate a "Hopper-v3" environment and wrap it with the sparse reward logic, or at least the sparse Hopper environment should be built upon the "Hopper-v3" identifier. The submission must contain actual code that defines or instantiates the sparse Hopper using "Hopper-v3".
+
+# Reality
+The provided files are entirely focused on the dense MuJoCo experiments (Hopper, Walker2d, Reacher, HalfCheetah). The training script `retrain.py` and its supporting files (`environment.py`, `retrain.sh`) use `--env "Hopper-v3"` but this is for the dense refinement experiment, not for the sparse variant. There is no code that defines or uses a sparse Hopper environment. The sparse Hopper experiments (SparseHopper) are mentioned in the paper and would require a custom environment wrapper that modifies the reward of "Hopper-v3", yet no such wrapper is present in the submission. The submission does not contain any implementation of the sparse Hopper environment at all. Thus, the version "Hopper-v3" is not used in the context of the sparse Hopper environment.
+
+# Score
+0
+
+The submission does not contain a code implementation of the sparse Hopper environment, let alone one that uses "Hopper-v3". The criterion is therefore not met.
+2026-09-03 11:06:20 [info     ] model response: # Expectations
+The criterion requires that the sparse MuJoCo Hopper environment (used in the experiments described in the main body of the paper) is based on the version "Hopper-v3" of the Gym environment. The paper states that for the dense Hopper they use "Hopper-v3" and that the sparse variants are derived from the same games by altering the reward function (only rewarding if x > 0.6). Therefore, a correct implementation should instantiate a "Hopper-v3" environment and wrap it with the sparse reward logic, or at least the sparse Hopper environment should be built upon the "Hopper-v3" identifier. The submission must contain actual code that defines or instantiates the sparse Hopper using "Hopper-v3".
+
+# Reality
+The provided files are entirely focused on the dense MuJoCo experiments (Hopper, Walker2d, Reacher, HalfCheetah). The training script `retrain.py` and its supporting files (`environment.py`, `retrain.sh`) use `--env "Hopper-v3"` but this is for the dense refinement experiment, not for the sparse variant. There is no code that defines or uses a sparse Hopper environment. The sparse Hopper experiments (SparseHopper) are mentioned in the paper and would require a custom environment wrapper that modifies the reward of "Hopper-v3", yet no such wrapper is present in the submission. The submission does not contain any implementation of the sparse Hopper environment at all. Thus, the version "Hopper-v3" is not used in the context of the sparse Hopper environment.
+
+# Score
+0
+
+The submission does not contain a code implementation of the sparse Hopper environment, let alone one that uses "Hopper-v3". The criterion is therefore not met.

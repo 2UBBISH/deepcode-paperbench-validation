@@ -1,0 +1,83 @@
+2026-09-03 11:07:32 [info     ] Grading leaf: In Experiment II, for the network defence environment, for the "StateMask-R" refinement method, code has been implemented for measuring cumulative reward throughout refinement
+2026-09-03 11:08:00 [info     ] Model file selection raw output:
+Refine_cage_challenge/retrain.py
+Refine_cage_challenge/Agents/PPOAgent_Retrain.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_retrain.py
+Refine_cage_challenge/ppo_train.py
+Refine_cage_challenge/replay.py
+Refine_cage_challenge/rollout_ppo.py
+Refine_cage_challenge/readme.md
+Refine_cage_challenge/Wrappers/ChallengeWrapper2.py
+Refine_cage_challenge/Agents/PPOAgent.py
+Refine_cage_challenge/sample_mask_score.py
+2026-09-03 11:08:00 [info     ] Model file selection raw output:
+Refine_cage_challenge/retrain.py
+Refine_cage_challenge/Agents/PPOAgent_Retrain.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_retrain.py
+Refine_cage_challenge/ppo_train.py
+Refine_cage_challenge/replay.py
+Refine_cage_challenge/rollout_ppo.py
+Refine_cage_challenge/readme.md
+Refine_cage_challenge/Wrappers/ChallengeWrapper2.py
+Refine_cage_challenge/Agents/PPOAgent.py
+Refine_cage_challenge/sample_mask_score.py
+2026-09-03 11:09:39 [info     ] model response: # Expectations
+
+The paper describes Experiment II (Section 4.2) comparing the performance of the pre‑trained agent after refining using four methods: PPO fine‑tuning, JSRL, StateMask‑R, and the proposed RICE (Ours). For the network defence environment (Cage Challenge 2), the submission must implement the **StateMask‑R** refinement method. This means:
+
+- The code should take the pre‑trained agent and **fine‑tune it starting from critical states** identified by the explanation method (the optimized StateMask explanation, “Ours” explanation, as specified in the preceding criteria).
+- It should **not** use a mixed initial distribution (only critical states) and **not** add an exploration bonus (RND bonus).
+- Throughout the refinement training, the code must **measure and log the cumulative reward** (e.g., episode reward or running average) so that the performance after refinement can be evaluated.
+
+The criterion asks specifically whether *code has been implemented* for measuring cumulative reward throughout refinement for the StateMask‑R method. Therefore, I expect to find a script or a function that actually runs the training loop for StateMask‑R and records the agent’s reward over time.
+
+# Reality
+
+I examined all the provided files in the `Refine_cage_challenge/` directory. The candidate submission includes:
+
+- `retrain.py` – a training script that uses `PPOAgent_Retrain` and a `ChallengeWrapper2_Retrain` environment wrapper. This agent integrates an RND model for exploration bonuses and the wrapper resets the environment to a critical state with a probability (`go_prob`). This is clearly the implementation of the **RICE (Ours)** refinement method, not StateMask‑R.
+- `ppo_train.py` – trains the original pre‑trained agent, not the refinement.
+- `rollout_ppo.py` – rolls out a pre‑trained agent to collect rewards, not refinement.
+- `replay.py` – computes fidelity scores by replaying trajectories with random actions, not refinement.
+- `sample_mask_score.py` – generates mask probabilities for explanation, not refinement.
+- `Agents/PPOAgent_Retrain.py` – the agent used in `retrain.py`, which includes an RND model and exploration bonus.
+- `Agents/PPOAgent.py` – the original PPO agent, no RND, used for pre‑training and rollouts.
+- `Wrappers/ChallengeWrapper2_retrain.py` – the wrapper that implements the mixed initial distribution (critical state + default) and uses `gen_one_traj` to obtain the mask record.
+
+Nowhere in these files is there a script that implements the **StateMask‑R** refinement method (i.e., fine‑tuning only from critical states, without exploration bonus and without mixing with default initial states). There is no code that runs such a refinement loop and logs the cumulative reward for the network defence environment. The `retrain.py` script is the only candidate for refinement, but it uses RICE’s exploration bonus and mixed initial distribution, not StateMask‑R.
+
+Because the submission does not contain any implementation of the StateMask‑R refinement method, it also cannot contain code for measuring cumulative reward throughout that refinement.
+
+# Score
+
+**0** – The submission fails to provide code that implements the StateMask‑R refinement method for the network defence environment, and therefore there is no code that measures cumulative reward during that refinement. The criterion is not met.
+2026-09-03 11:09:39 [info     ] model response: # Expectations
+
+The paper describes Experiment II (Section 4.2) comparing the performance of the pre‑trained agent after refining using four methods: PPO fine‑tuning, JSRL, StateMask‑R, and the proposed RICE (Ours). For the network defence environment (Cage Challenge 2), the submission must implement the **StateMask‑R** refinement method. This means:
+
+- The code should take the pre‑trained agent and **fine‑tune it starting from critical states** identified by the explanation method (the optimized StateMask explanation, “Ours” explanation, as specified in the preceding criteria).
+- It should **not** use a mixed initial distribution (only critical states) and **not** add an exploration bonus (RND bonus).
+- Throughout the refinement training, the code must **measure and log the cumulative reward** (e.g., episode reward or running average) so that the performance after refinement can be evaluated.
+
+The criterion asks specifically whether *code has been implemented* for measuring cumulative reward throughout refinement for the StateMask‑R method. Therefore, I expect to find a script or a function that actually runs the training loop for StateMask‑R and records the agent’s reward over time.
+
+# Reality
+
+I examined all the provided files in the `Refine_cage_challenge/` directory. The candidate submission includes:
+
+- `retrain.py` – a training script that uses `PPOAgent_Retrain` and a `ChallengeWrapper2_Retrain` environment wrapper. This agent integrates an RND model for exploration bonuses and the wrapper resets the environment to a critical state with a probability (`go_prob`). This is clearly the implementation of the **RICE (Ours)** refinement method, not StateMask‑R.
+- `ppo_train.py` – trains the original pre‑trained agent, not the refinement.
+- `rollout_ppo.py` – rolls out a pre‑trained agent to collect rewards, not refinement.
+- `replay.py` – computes fidelity scores by replaying trajectories with random actions, not refinement.
+- `sample_mask_score.py` – generates mask probabilities for explanation, not refinement.
+- `Agents/PPOAgent_Retrain.py` – the agent used in `retrain.py`, which includes an RND model and exploration bonus.
+- `Agents/PPOAgent.py` – the original PPO agent, no RND, used for pre‑training and rollouts.
+- `Wrappers/ChallengeWrapper2_retrain.py` – the wrapper that implements the mixed initial distribution (critical state + default) and uses `gen_one_traj` to obtain the mask record.
+
+Nowhere in these files is there a script that implements the **StateMask‑R** refinement method (i.e., fine‑tuning only from critical states, without exploration bonus and without mixing with default initial states). There is no code that runs such a refinement loop and logs the cumulative reward for the network defence environment. The `retrain.py` script is the only candidate for refinement, but it uses RICE’s exploration bonus and mixed initial distribution, not StateMask‑R.
+
+Because the submission does not contain any implementation of the StateMask‑R refinement method, it also cannot contain code for measuring cumulative reward throughout that refinement.
+
+# Score
+
+**0** – The submission fails to provide code that implements the StateMask‑R refinement method for the network defence environment, and therefore there is no code that measures cumulative reward during that refinement. The criterion is not met.

@@ -1,0 +1,87 @@
+2026-09-03 11:06:43 [info     ] Grading leaf: For the network defence environment, the reward function implemented such that an additional reward is given when the mask net outputs "1", as outlined in section 3.3.
+2026-09-03 11:07:06 [info     ] Model file selection raw output:
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_mask.py
+Refine_cage_challenge/Agents/PPOAgent_mask.py
+Refine_cage_challenge/rollout_mask.py
+Refine_cage_challenge/sample_mask_score.py
+Refine_cage_challenge/sample_value_score.py
+Refine_cage_challenge/replay.py
+Refine_cage_challenge/ppo_train.py
+Refine_cage_challenge/retrain.py
+Refine_cage_challenge/Wrappers/utils.py
+Refine_cage_challenge/PPO/Memory.py
+2026-09-03 11:07:06 [info     ] Model file selection raw output:
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_mask.py
+Refine_cage_challenge/Agents/PPOAgent_mask.py
+Refine_cage_challenge/rollout_mask.py
+Refine_cage_challenge/sample_mask_score.py
+Refine_cage_challenge/sample_value_score.py
+Refine_cage_challenge/replay.py
+Refine_cage_challenge/ppo_train.py
+Refine_cage_challenge/retrain.py
+Refine_cage_challenge/Wrappers/utils.py
+Refine_cage_challenge/PPO/Memory.py
+2026-09-03 11:10:14 [info     ] model response: # Expectations
+
+The paper's Section 3.3 describes the optimized StateMask explanation method ("Ours"). After reformulating the objective so that the mask network is trained to maximize the expected total reward of the perturbed agent, a trivial solution (always outputting "0", i.e., never blinding) is prevented by adding an extra reward bonus when the mask net outputs "1". The new reward is defined as:
+
+\[
+R'(s_t, a_t) = R(s_t, a_t) + \alpha a_t^m,
+\]
+
+where \(a_t^m \in \{0,1\}\) is the mask network's binary output (0 = not blind, 1 = blind) and \(\alpha\) is a hyperparameter. In the network defence environment, I expect to see the mask network's training loop (or the equivalent for the environment) implement this reward formula: the base environment reward plus an additional bonus term proportional to the mask network's output (1 when the mask action is to blind, 0 otherwise). The bonus should be added to the reward before storing it for the mask network's PPO update.
+
+# Reality
+
+The submission includes files for the network defence (Cage Challenge 2) environment. The mask network is implemented in `PPOAgent_mask.py`. In the `get_action` method:
+
+- A mask action is sampled from `self.old_policy` (the mask network) and is either 0 or 1.
+- If the mask action is 1, the actual action is randomized, `self.mask_this_state` is set to `True`, and an `additional_reward` equal to `self.lazy_reward` (initialized to 5) is returned.
+- If the mask action is 0, the original baseline action is used and `additional_reward` is 0.
+
+The training loop for the mask network is in `rollout_mask.py`. In the interaction loop, after stepping the environment, the reward is updated as:
+
+```python
+reward += additional_reward
+agent.store(reward, done)
+```
+
+Thus, the stored reward used for the mask network's PPO updates is exactly the environment reward plus the additional bonus when the mask net outputs 1. This matches the required reward function \(R'(s_t, a_t) = R(s_t, a_t) + \alpha a_t^m\) (with \(\alpha\) being `self.lazy_reward`). The mask network's training (the `train` method in `PPOAgent_mask`, which is present in the code) would use these stored rewards to perform PPO updates. Therefore, the reward function is correctly implemented to give an extra bonus when the mask net outputs "1".
+
+# Score
+
+1
+
+The implementation clearly adds an additional reward when the mask net outputs "1", as required by the criterion. The code in `PPOAgent_mask.py` and `rollout_mask.py` shows the reward construction and its use in the training loop. Even though the mask network's training update is not explicitly invoked in the provided script, the reward function itself is correctly implemented according to the paper's description.
+2026-09-03 11:10:14 [info     ] model response: # Expectations
+
+The paper's Section 3.3 describes the optimized StateMask explanation method ("Ours"). After reformulating the objective so that the mask network is trained to maximize the expected total reward of the perturbed agent, a trivial solution (always outputting "0", i.e., never blinding) is prevented by adding an extra reward bonus when the mask net outputs "1". The new reward is defined as:
+
+\[
+R'(s_t, a_t) = R(s_t, a_t) + \alpha a_t^m,
+\]
+
+where \(a_t^m \in \{0,1\}\) is the mask network's binary output (0 = not blind, 1 = blind) and \(\alpha\) is a hyperparameter. In the network defence environment, I expect to see the mask network's training loop (or the equivalent for the environment) implement this reward formula: the base environment reward plus an additional bonus term proportional to the mask network's output (1 when the mask action is to blind, 0 otherwise). The bonus should be added to the reward before storing it for the mask network's PPO update.
+
+# Reality
+
+The submission includes files for the network defence (Cage Challenge 2) environment. The mask network is implemented in `PPOAgent_mask.py`. In the `get_action` method:
+
+- A mask action is sampled from `self.old_policy` (the mask network) and is either 0 or 1.
+- If the mask action is 1, the actual action is randomized, `self.mask_this_state` is set to `True`, and an `additional_reward` equal to `self.lazy_reward` (initialized to 5) is returned.
+- If the mask action is 0, the original baseline action is used and `additional_reward` is 0.
+
+The training loop for the mask network is in `rollout_mask.py`. In the interaction loop, after stepping the environment, the reward is updated as:
+
+```python
+reward += additional_reward
+agent.store(reward, done)
+```
+
+Thus, the stored reward used for the mask network's PPO updates is exactly the environment reward plus the additional bonus when the mask net outputs 1. This matches the required reward function \(R'(s_t, a_t) = R(s_t, a_t) + \alpha a_t^m\) (with \(\alpha\) being `self.lazy_reward`). The mask network's training (the `train` method in `PPOAgent_mask`, which is present in the code) would use these stored rewards to perform PPO updates. Therefore, the reward function is correctly implemented to give an extra bonus when the mask net outputs "1".
+
+# Score
+
+1
+
+The implementation clearly adds an additional reward when the mask net outputs "1", as required by the criterion. The code in `PPOAgent_mask.py` and `rollout_mask.py` shows the reward construction and its use in the training loop. Even though the mask network's training update is not explicitly invoked in the provided script, the reward function itself is correctly implemented according to the paper's description.

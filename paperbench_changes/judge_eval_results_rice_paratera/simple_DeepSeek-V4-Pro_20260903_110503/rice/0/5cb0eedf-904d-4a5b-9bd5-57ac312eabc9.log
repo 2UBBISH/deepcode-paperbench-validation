@@ -1,0 +1,71 @@
+2026-09-03 11:08:05 [info     ] Grading leaf: For the autonomous driving environment, for the "Ours" explanation method, code has been implemented for measuring cumulative reward throughout refinement
+2026-09-03 11:08:25 [info     ] Model file selection raw output:
+Refine_auto_drive/retrain.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/readme.md
+README.md
+2026-09-03 11:08:25 [info     ] Model file selection raw output:
+Refine_auto_drive/retrain.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/readme.md
+README.md
+2026-09-03 11:09:06 [info     ] model response: # Expectations
+The criterion requires that, for the autonomous driving environment and using the "Ours" explanation method, the submission contains code that measures cumulative reward during the refinement process. In the paper, Experiment III involves refining the pre-trained agent with a mixed initial state distribution (using the “Ours” explanation) and tracking performance. Measuring cumulative reward means that the code should log or record the reward obtained by the agent as refinement proceeds, e.g., via periodic evaluation, logging, or storing reward values. I expect to see a training/evaluation loop that periodically evaluates the policy and records the average or cumulative reward, likely using TensorBoard or similar logging.
+
+# Reality
+The submitted files for the autonomous driving environment include `Refine_auto_drive/retrain.py`, which is the main refinement script. It uses a `SyncSubprocessEnvManager` for data collection and evaluation. Specifically, it creates an `InteractionSerialEvaluator` (line 92) and then runs a loop:
+
+```python
+while True:
+    if evaluator.should_eval(learner.train_iter):
+        stop, rate = evaluator.eval(learner.save_checkpoint, learner.train_iter, 1)
+        if stop:
+            break
+    new_data = collector.collect(...)
+    learner.train(new_data, collector.envstep)
+```
+
+The `evaluator.eval()` method returns a `rate` (the evaluation reward) and a `stop` flag. This rate corresponds to the cumulative reward measure (likely the average episode reward). Additionally, the script sets up a `SummaryWriter` for TensorBoard logging (`tb_logger`), which logs training statistics. The evaluator itself is a standard DI-engine `InteractionSerialEvaluator` that evaluates the policy on the environment and reports the reward. Therefore, the code contains explicit logic to measure cumulative reward throughout the refinement process.
+
+Other files, such as `learner.py` and `custom_masknet_env.py`, are supportive but do not alter this evaluation mechanism. The mechanism is present in `retrain.py`.
+
+# Score
+The criterion is met. The code in `Refine_auto_drive/retrain.py` implements a refinement loop that periodically evaluates the policy and measures the cumulative reward via the `InteractionSerialEvaluator` and TensorBoard logging. This satisfies the requirement of measuring cumulative reward throughout refinement for the “Ours” explanation method in the autonomous driving environment.
+
+Score: 1
+2026-09-03 11:09:06 [info     ] model response: # Expectations
+The criterion requires that, for the autonomous driving environment and using the "Ours" explanation method, the submission contains code that measures cumulative reward during the refinement process. In the paper, Experiment III involves refining the pre-trained agent with a mixed initial state distribution (using the “Ours” explanation) and tracking performance. Measuring cumulative reward means that the code should log or record the reward obtained by the agent as refinement proceeds, e.g., via periodic evaluation, logging, or storing reward values. I expect to see a training/evaluation loop that periodically evaluates the policy and records the average or cumulative reward, likely using TensorBoard or similar logging.
+
+# Reality
+The submitted files for the autonomous driving environment include `Refine_auto_drive/retrain.py`, which is the main refinement script. It uses a `SyncSubprocessEnvManager` for data collection and evaluation. Specifically, it creates an `InteractionSerialEvaluator` (line 92) and then runs a loop:
+
+```python
+while True:
+    if evaluator.should_eval(learner.train_iter):
+        stop, rate = evaluator.eval(learner.save_checkpoint, learner.train_iter, 1)
+        if stop:
+            break
+    new_data = collector.collect(...)
+    learner.train(new_data, collector.envstep)
+```
+
+The `evaluator.eval()` method returns a `rate` (the evaluation reward) and a `stop` flag. This rate corresponds to the cumulative reward measure (likely the average episode reward). Additionally, the script sets up a `SummaryWriter` for TensorBoard logging (`tb_logger`), which logs training statistics. The evaluator itself is a standard DI-engine `InteractionSerialEvaluator` that evaluates the policy on the environment and reports the reward. Therefore, the code contains explicit logic to measure cumulative reward throughout the refinement process.
+
+Other files, such as `learner.py` and `custom_masknet_env.py`, are supportive but do not alter this evaluation mechanism. The mechanism is present in `retrain.py`.
+
+# Score
+The criterion is met. The code in `Refine_auto_drive/retrain.py` implements a refinement loop that periodically evaluates the policy and measures the cumulative reward via the `InteractionSerialEvaluator` and TensorBoard logging. This satisfies the requirement of measuring cumulative reward throughout refinement for the “Ours” explanation method in the autonomous driving environment.
+
+Score: 1

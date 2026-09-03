@@ -1,0 +1,39 @@
+2026-09-03 11:07:05 [info     ] Grading leaf: In Experiment II, for the MuJoCo environments, for the "Ours" refinement method, code has been implemented for measuring cumulative reward throughout refinement
+2026-09-03 11:07:46 [info     ] Model file selection raw output:
+Refine_mujoco/retrain.py
+Refine_mujoco/PPO.py
+Refine_mujoco/monitor.py
+Refine_mujoco/callback.py
+Refine_mujoco/utils.py
+Refine_mujoco/OnPolicyAlgorithm.py
+Refine_mujoco/base_class.py
+Refine_mujoco/environment.py
+Refine_mujoco/models.py
+Refine_mujoco/retrain.sh
+2026-09-03 11:07:46 [info     ] Model file selection raw output:
+Refine_mujoco/retrain.py
+Refine_mujoco/PPO.py
+Refine_mujoco/monitor.py
+Refine_mujoco/callback.py
+Refine_mujoco/utils.py
+Refine_mujoco/OnPolicyAlgorithm.py
+Refine_mujoco/base_class.py
+Refine_mujoco/environment.py
+Refine_mujoco/models.py
+Refine_mujoco/retrain.sh
+2026-09-03 11:09:00 [info     ] model response: # Expectations
+The paper's Experiment II evaluates the effectiveness of the refining method by comparing the agent's performance after refining. For the "Ours" refinement method, the experiment involves running the refinement process and measuring the agent's performance (cumulative reward) throughout training. The code should implement a mechanism to track and log the cumulative reward (i.e., total episodic reward) during the refinement steps. This could be done via a monitor wrapper that records episode returns, a callback that logs the mean reward, or built-in logging from the RL algorithm (e.g., `rollout/ep_rew_mean`). The presence of code that records and logs episode returns or cumulative rewards during the refinement process is sufficient, regardless of whether the final plotted results are provided.
+
+# Reality
+The submission includes several files that implement the refinement process for MuJoCo environments. The `retrain.py` script sets up the environment with a `VecMonitor` wrapper (line: `env = VecMonitor(env, log_path)`) and uses an `EvalCallback` and a `CustomCallback`. The `VecMonitor` (from `monitor.py`) explicitly tracks `episode_returns` and writes episode rewards to a log file (via `ResultsWriter`). The `OnPolicyAlgorithm.py` logs `rollout/ep_rew_mean` from the `ep_info_buffer` during training. The `CustomCallback` in `callback.py` also computes and logs the mean reward over the last 100 episodes from the monitor log. Thus, multiple components in the code are designed to measure cumulative reward (episode returns) throughout the refinement process. The code is specific to the "Ours" refinement method (using `PPO` with `bonus` and `bonus_scale` and loading the mask network) and is applied to MuJoCo environments (e.g., `Hopper-v3` as shown in `retrain.sh`). Therefore, the implementation meets the criterion.
+
+# Score
+1. The code contains explicit mechanisms to measure and log cumulative reward (episode returns) during the refinement process, satisfying the requirement.
+2026-09-03 11:09:00 [info     ] model response: # Expectations
+The paper's Experiment II evaluates the effectiveness of the refining method by comparing the agent's performance after refining. For the "Ours" refinement method, the experiment involves running the refinement process and measuring the agent's performance (cumulative reward) throughout training. The code should implement a mechanism to track and log the cumulative reward (i.e., total episodic reward) during the refinement steps. This could be done via a monitor wrapper that records episode returns, a callback that logs the mean reward, or built-in logging from the RL algorithm (e.g., `rollout/ep_rew_mean`). The presence of code that records and logs episode returns or cumulative rewards during the refinement process is sufficient, regardless of whether the final plotted results are provided.
+
+# Reality
+The submission includes several files that implement the refinement process for MuJoCo environments. The `retrain.py` script sets up the environment with a `VecMonitor` wrapper (line: `env = VecMonitor(env, log_path)`) and uses an `EvalCallback` and a `CustomCallback`. The `VecMonitor` (from `monitor.py`) explicitly tracks `episode_returns` and writes episode rewards to a log file (via `ResultsWriter`). The `OnPolicyAlgorithm.py` logs `rollout/ep_rew_mean` from the `ep_info_buffer` during training. The `CustomCallback` in `callback.py` also computes and logs the mean reward over the last 100 episodes from the monitor log. Thus, multiple components in the code are designed to measure cumulative reward (episode returns) throughout the refinement process. The code is specific to the "Ours" refinement method (using `PPO` with `bonus` and `bonus_scale` and loading the mask network) and is applied to MuJoCo environments (e.g., `Hopper-v3` as shown in `retrain.sh`). Therefore, the implementation meets the criterion.
+
+# Score
+1. The code contains explicit mechanisms to measure and log cumulative reward (episode returns) during the refinement process, satisfying the requirement.

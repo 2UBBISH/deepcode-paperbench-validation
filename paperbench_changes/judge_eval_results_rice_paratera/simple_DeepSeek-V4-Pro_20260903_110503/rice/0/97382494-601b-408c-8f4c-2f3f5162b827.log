@@ -1,0 +1,79 @@
+2026-09-03 11:07:03 [info     ] Grading leaf: For the autonomous driving environment, the refining method has been implemented to support the hyperparameter $p$, the probability threshold defining the mixed initial state distribution, as evidenced in Algorithm 2.  The $p$ hyperparameter must be mutable i.e., a hyperparameter whose value can be changed (without having to edit the code directly). Alternative hyperparameter names are allowed, as long as the functionality remains the same.
+2026-09-03 11:08:02 [info     ] Model file selection raw output:
+Refine_auto_drive/retrain.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/readme.md
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/train_baseline.py
+2026-09-03 11:08:02 [info     ] Model file selection raw output:
+Refine_auto_drive/retrain.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/readme.md
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/train_baseline.py
+2026-09-03 11:08:49 [info     ] model response: # Expectations
+I expect the implementation for the autonomous driving environment to include a **hyperparameter \(p\)** that controls the probability of resetting to a critical state (from the mixed initial state distribution) as described in Algorithm 2 of the paper.  
+Specifically, the code should:
+
+- Have a variable (named \(p\) or an equivalent) that represents the mixing probability.
+- Use that variable in the environment reset logic to decide, with probability \(p\), whether to start from a critical state (identified via the explanation method) or from the default initial state distribution.
+- Make the hyperparameter **mutable** – i.e., its value can be changed without editing the source code directly. Acceptable forms include a command‑line argument, a configuration file, or an environment variable.
+
+# Reality
+The submission contains the following files for the autonomous driving environment:
+
+- **`Refine_auto_drive/retrain.py`** – the main refining script.  
+  It uses `argparse` to define a `--go_prob` argument (line: `parser.add_argument('--go_prob', type=float, default=0.5)`). This value is passed to `CustomWrapper` as `go_prob` (line: `lambda: CustomWrapper(..., go_prob = args.go_prob)`).
+
+- **`Refine_auto_drive/retrain_env.py`** – the `CustomWrapper` class.  
+  In its `__init__` method, `self.p = go_prob` stores the probability.  
+  The `reset` method contains the crucial logic:
+  ```python
+  if np.random.rand() < self.p:
+      # ... reset to a critical state (by sampling a trajectory, selecting a start index, and fast‑forwarding)
+  else:
+      # ... reset to the default initial state
+  ```
+  This exactly implements the mixed initial state distribution with probability \(p\) (here named `go_prob`).
+
+The hyperparameter is **mutable**: it can be changed via the command‑line argument `--go_prob` without any code modification. The implementation fully satisfies the requirement.
+
+# Score
+**1** – The refining method for the autonomous driving environment correctly implements a mutable hyperparameter that functions as the probability threshold \(p\) for the mixed initial state distribution, as required by the criterion.
+2026-09-03 11:08:49 [info     ] model response: # Expectations
+I expect the implementation for the autonomous driving environment to include a **hyperparameter \(p\)** that controls the probability of resetting to a critical state (from the mixed initial state distribution) as described in Algorithm 2 of the paper.  
+Specifically, the code should:
+
+- Have a variable (named \(p\) or an equivalent) that represents the mixing probability.
+- Use that variable in the environment reset logic to decide, with probability \(p\), whether to start from a critical state (identified via the explanation method) or from the default initial state distribution.
+- Make the hyperparameter **mutable** – i.e., its value can be changed without editing the source code directly. Acceptable forms include a command‑line argument, a configuration file, or an environment variable.
+
+# Reality
+The submission contains the following files for the autonomous driving environment:
+
+- **`Refine_auto_drive/retrain.py`** – the main refining script.  
+  It uses `argparse` to define a `--go_prob` argument (line: `parser.add_argument('--go_prob', type=float, default=0.5)`). This value is passed to `CustomWrapper` as `go_prob` (line: `lambda: CustomWrapper(..., go_prob = args.go_prob)`).
+
+- **`Refine_auto_drive/retrain_env.py`** – the `CustomWrapper` class.  
+  In its `__init__` method, `self.p = go_prob` stores the probability.  
+  The `reset` method contains the crucial logic:
+  ```python
+  if np.random.rand() < self.p:
+      # ... reset to a critical state (by sampling a trajectory, selecting a start index, and fast‑forwarding)
+  else:
+      # ... reset to the default initial state
+  ```
+  This exactly implements the mixed initial state distribution with probability \(p\) (here named `go_prob`).
+
+The hyperparameter is **mutable**: it can be changed via the command‑line argument `--go_prob` without any code modification. The implementation fully satisfies the requirement.
+
+# Score
+**1** – The refining method for the autonomous driving environment correctly implements a mutable hyperparameter that functions as the probability threshold \(p\) for the mixed initial state distribution, as required by the criterion.

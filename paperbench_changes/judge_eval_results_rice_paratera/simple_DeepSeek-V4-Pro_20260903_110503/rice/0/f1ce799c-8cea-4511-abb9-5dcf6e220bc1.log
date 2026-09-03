@@ -1,0 +1,99 @@
+2026-09-03 11:08:02 [info     ] Grading leaf: For the network defence environment, for the "Ours" explanation method, code has been implemented for measuring cumulative reward throughout refinement
+2026-09-03 11:08:37 [info     ] Model file selection raw output:
+Refine_cage_challenge/retrain.py
+Refine_cage_challenge/Agents/PPOAgent_Retrain.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_retrain.py
+Refine_cage_challenge/sample_mask_score.py
+Refine_cage_challenge/rollout_mask.py
+Refine_cage_challenge/Agents/rnd_model.py
+Refine_cage_challenge/ppo_train.py
+Refine_cage_challenge/Agents/PPOAgent_mask.py
+Refine_cage_challenge/PPO/Memory.py
+Refine_cage_challenge/readme.md
+2026-09-03 11:08:37 [info     ] Model file selection raw output:
+Refine_cage_challenge/retrain.py
+Refine_cage_challenge/Agents/PPOAgent_Retrain.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_retrain.py
+Refine_cage_challenge/sample_mask_score.py
+Refine_cage_challenge/rollout_mask.py
+Refine_cage_challenge/Agents/rnd_model.py
+Refine_cage_challenge/ppo_train.py
+Refine_cage_challenge/Agents/PPOAgent_mask.py
+Refine_cage_challenge/PPO/Memory.py
+Refine_cage_challenge/readme.md
+2026-09-03 11:09:18 [info     ] model response: # Expectations
+
+The paper describes Experiment III, which varies the explanation method used for the refinement process while keeping the refinement method fixed to the proposed RICE approach. For the network defence (Cage Challenge 2) environment, this means:
+
+- The “Ours” explanation method (the mask network) is used to identify the most critical state in a trajectory.
+- The refinement process (Algorithm 2) then resets the environment to a mixture of the original initial state distribution and the identified critical states, and continues training the DRL agent with PPO and an RND exploration bonus.
+- The experiment should measure the cumulative reward during the refinement phase (e.g., logging rewards over episodes) to evaluate whether the agent’s performance improves.
+
+The current criterion is specifically about the **implementation of code that measures cumulative reward throughout refinement** when using the “Ours” explanation method. So I expect to find in the submission:
+
+- Code that runs the refinement loop (i.e., repeatedly resetting the environment, collecting trajectories, and updating the agent).
+- A mechanism to accumulate rewards over episodes and/or timesteps.
+- Logging (e.g., printing or storing) of the cumulative or average reward during the refinement process.
+
+The implementation does not need to produce the final table values; it just needs to contain the code that computes and records the reward as refinement proceeds.
+
+# Reality
+
+I examined the provided files under `Refine_cage_challenge/`. The main refinement script is `retrain.py`.
+
+- `retrain.py` defines a `train()` function that performs the refinement loop. It creates a `PPOAgent_Retrain` agent, which incorporates the RND exploration bonus and is trained with PPO.
+- The environment wrapper is `ChallengeWrapper2_retrain` (from `Wrappers/ChallengeWrapper2_retrain.py`). Its `reset()` method uses the `gen_one_traj()` function (imported from `utils`) to obtain a trajectory and the mask network’s importance scores. It then selects the start index via `np.argmax(mask_record)` when `self.random_sampling = False`. This corresponds to picking the most critical state identified by the “Ours” explanation method.
+- Inside the training loop in `retrain.py`:
+  - `running_reward` is maintained and updated with `reward + bonus_scale * bonus` at each step.
+  - Every `print_interval` episodes, the average reward over that interval is printed:  
+    `print('Episode {} \t Training Avg Reward: {}'.format(i_episode, running_reward))`
+  - Additionally, a test reward is computed over 5 episodes and printed.
+  - The `agent.end_episode()` call is made after each episode (though the reward accumulation is done per step, not per episode; the average is computed over the printed interval).
+
+This code explicitly measures cumulative reward (the sum of rewards from environment steps) during the refinement process and logs it. The use of the “Ours” explanation is embedded in the wrapper’s reset logic.
+
+Therefore, the submission contains a correct implementation of measuring cumulative reward throughout refinement for the network defence environment with the “Ours” explanation method.
+
+# Score
+
+1
+
+The criterion is met because the submission includes code (`retrain.py`) that runs the refinement training loop, accumulates rewards, and prints the average reward at regular intervals, all while using the “Ours” explanation method to select critical states for resetting.
+2026-09-03 11:09:18 [info     ] model response: # Expectations
+
+The paper describes Experiment III, which varies the explanation method used for the refinement process while keeping the refinement method fixed to the proposed RICE approach. For the network defence (Cage Challenge 2) environment, this means:
+
+- The “Ours” explanation method (the mask network) is used to identify the most critical state in a trajectory.
+- The refinement process (Algorithm 2) then resets the environment to a mixture of the original initial state distribution and the identified critical states, and continues training the DRL agent with PPO and an RND exploration bonus.
+- The experiment should measure the cumulative reward during the refinement phase (e.g., logging rewards over episodes) to evaluate whether the agent’s performance improves.
+
+The current criterion is specifically about the **implementation of code that measures cumulative reward throughout refinement** when using the “Ours” explanation method. So I expect to find in the submission:
+
+- Code that runs the refinement loop (i.e., repeatedly resetting the environment, collecting trajectories, and updating the agent).
+- A mechanism to accumulate rewards over episodes and/or timesteps.
+- Logging (e.g., printing or storing) of the cumulative or average reward during the refinement process.
+
+The implementation does not need to produce the final table values; it just needs to contain the code that computes and records the reward as refinement proceeds.
+
+# Reality
+
+I examined the provided files under `Refine_cage_challenge/`. The main refinement script is `retrain.py`.
+
+- `retrain.py` defines a `train()` function that performs the refinement loop. It creates a `PPOAgent_Retrain` agent, which incorporates the RND exploration bonus and is trained with PPO.
+- The environment wrapper is `ChallengeWrapper2_retrain` (from `Wrappers/ChallengeWrapper2_retrain.py`). Its `reset()` method uses the `gen_one_traj()` function (imported from `utils`) to obtain a trajectory and the mask network’s importance scores. It then selects the start index via `np.argmax(mask_record)` when `self.random_sampling = False`. This corresponds to picking the most critical state identified by the “Ours” explanation method.
+- Inside the training loop in `retrain.py`:
+  - `running_reward` is maintained and updated with `reward + bonus_scale * bonus` at each step.
+  - Every `print_interval` episodes, the average reward over that interval is printed:  
+    `print('Episode {} \t Training Avg Reward: {}'.format(i_episode, running_reward))`
+  - Additionally, a test reward is computed over 5 episodes and printed.
+  - The `agent.end_episode()` call is made after each episode (though the reward accumulation is done per step, not per episode; the average is computed over the printed interval).
+
+This code explicitly measures cumulative reward (the sum of rewards from environment steps) during the refinement process and logs it. The use of the “Ours” explanation is embedded in the wrapper’s reset logic.
+
+Therefore, the submission contains a correct implementation of measuring cumulative reward throughout refinement for the network defence environment with the “Ours” explanation method.
+
+# Score
+
+1
+
+The criterion is met because the submission includes code (`retrain.py`) that runs the refinement training loop, accumulates rewards, and prints the average reward at regular intervals, all while using the “Ours” explanation method to select critical states for resetting.

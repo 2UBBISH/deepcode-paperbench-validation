@@ -1,0 +1,119 @@
+2026-09-03 11:05:04 [info     ] Grading leaf: For the MuJoCo environments, the explanation fidelity score metric has been implemented as outlined in section 4.1 and 4.2: by forcing a given pretrained policy network agent to take random actions starting from each identified critical time step and measuring the average and maximum reward change.
+2026-09-03 11:05:46 [info     ] Model file selection raw output:
+Refine_mujoco/masknet/gen_fid.py
+Refine_mujoco/masknet/fid_test.py
+Refine_mujoco/masknet/environment.py
+Refine_mujoco/masknet/train.py
+Refine_mujoco/masknet/cus_PPO.py
+Refine_mujoco/masknet/readme.md
+Refine_mujoco/utils.py
+Refine_mujoco/monitor.py
+Refine_mujoco/environment.py
+Refine_mujoco/retrain.py
+2026-09-03 11:05:46 [info     ] Model file selection raw output:
+Refine_mujoco/masknet/gen_fid.py
+Refine_mujoco/masknet/fid_test.py
+Refine_mujoco/masknet/environment.py
+Refine_mujoco/masknet/train.py
+Refine_mujoco/masknet/cus_PPO.py
+Refine_mujoco/masknet/readme.md
+Refine_mujoco/utils.py
+Refine_mujoco/monitor.py
+Refine_mujoco/environment.py
+Refine_mujoco/retrain.py
+2026-09-03 11:07:12 [info     ] model response: # Expectations
+
+The paper describes the fidelity score metric for evaluating explanation methods in Section 4.1 and its use in Experiment I (Section 4.2). The metric is computed as follows:
+
+- For each trajectory, the explanation method (mask network) produces a step‑level importance score for every time step. The importance is the probability that the mask network outputs `0` (i.e., does **not** blind the agent), because a higher probability of *not* blinding indicates a more critical step.
+- For a given fraction \(K\) (e.g., 10%, 20%, 30%, 40%), a sliding window of length \(l = L \times K\) (where \(L\) is the total trajectory length) is moved across the trajectory. The window with the highest average importance score is selected as the critical segment.
+- The environment is reset to the start of that critical segment. The agent then takes **random actions** for the duration of the window (i.e., \(l\) steps). After the random actions, the agent’s own policy resumes control until the episode ends.
+- The original episode reward \(R\) (without any randomization) and the perturbed reward \(R'\) (with randomization in the critical segment) are recorded. The reward change is \(d = |R' - R|\).
+- The maximum possible reward change \(d_{\max}\) is defined as the largest reward value that the environment allows within a single episode, based on the environment’s specifications.
+- The fidelity score is calculated as  
+  \[
+  \text{Fidelity Score} = \log\left(\frac{d}{d_{\max}}\right) - \log\left(\frac{l}{L}\right).
+  \]
+- This process is repeated for 500 trajectories, and the fidelity score is reported for each \(K\).
+
+Therefore, a correct implementation must:
+1. Use the proper importance score (probability that the mask does **not** blind).
+2. Identify the critical window using the sliding window method with the highest average importance.
+3. Fast‑forward to the start of that window and execute random actions for the window length.
+4. Measure the reward change \(d\) and compare it to the original reward.
+5. Determine \(d_{\max}\) appropriately for the environment (not a hard‑coded constant).
+6. Compute the fidelity score using the exact formula above.
+
+# Reality
+
+The submission contains two relevant files: `gen_fid.py` and `fid_test.py`.
+
+- In `gen_fid.py`, the mask network’s output is processed as:
+  ```python
+  mask_prob = np.exp(mask_dist.log_prob(torch.Tensor([1]).cuda()).detach().cpu().numpy()[0])
+  ```
+  This computes the probability of the mask action **1** (blinding). The paper states that the importance is the probability of the mask outputting **0** (not blinding). Therefore, the saved `mask_probs` are the opposite of the required importance scores.
+
+- In `fid_test.py`, the function `select_critical_steps` uses `confs = mask_probs` and then selects the top‑k indices. Because `mask_probs` are the probability of blinding, the selected steps are those where the agent is most likely to be blinded – i.e., the **least** critical steps. This directly contradicts the intended definition.
+
+- The fidelity score calculation `cal_fidelity_score` uses:
+  ```python
+  p_ds.append(np.abs(results[j]-replay_results[j])/2000)
+  reward_diff = np.mean(p_ds) if np.mean(p_ds)>0 else 0.001
+  fid_score = np.log(np.mean(p_ls)) - np.log(reward_diff)
+  ```
+  This divides the reward change by a hard‑coded value `2000`, which is not the environment‑specific maximum possible reward change \(d_{\max}\). For MuJoCo environments like Hopper or HalfCheetah, the maximum reward is not 2000, so this is incorrect. Furthermore, the formula used is \(\log(\text{mean}(l/L)) - \log(\text{mean}(d/d_{\max}))\), which is not equivalent to the paper’s per‑trajectory formula \(\log(d/d_{\max}) - \log(l/L)\). The computation is both mathematically wrong and relies on an arbitrary \(d_{\max}\).
+
+These issues show that the implementation does not follow the fidelity score metric as described in the paper. The importance scores are inverted, the critical window selection is based on the wrong importance, the maximum reward change is not properly determined, and the fidelity score formula is not correctly implemented.
+
+# Score
+
+**0** – The submission fails to implement the explanation fidelity score metric as outlined in Sections 4.1 and 4.2. The code uses the wrong importance scores, incorrectly identifies critical steps, and computes the fidelity score with an invalid \(d_{\max}\) and an incorrect formula. Therefore, the criterion is not met.
+2026-09-03 11:07:12 [info     ] model response: # Expectations
+
+The paper describes the fidelity score metric for evaluating explanation methods in Section 4.1 and its use in Experiment I (Section 4.2). The metric is computed as follows:
+
+- For each trajectory, the explanation method (mask network) produces a step‑level importance score for every time step. The importance is the probability that the mask network outputs `0` (i.e., does **not** blind the agent), because a higher probability of *not* blinding indicates a more critical step.
+- For a given fraction \(K\) (e.g., 10%, 20%, 30%, 40%), a sliding window of length \(l = L \times K\) (where \(L\) is the total trajectory length) is moved across the trajectory. The window with the highest average importance score is selected as the critical segment.
+- The environment is reset to the start of that critical segment. The agent then takes **random actions** for the duration of the window (i.e., \(l\) steps). After the random actions, the agent’s own policy resumes control until the episode ends.
+- The original episode reward \(R\) (without any randomization) and the perturbed reward \(R'\) (with randomization in the critical segment) are recorded. The reward change is \(d = |R' - R|\).
+- The maximum possible reward change \(d_{\max}\) is defined as the largest reward value that the environment allows within a single episode, based on the environment’s specifications.
+- The fidelity score is calculated as  
+  \[
+  \text{Fidelity Score} = \log\left(\frac{d}{d_{\max}}\right) - \log\left(\frac{l}{L}\right).
+  \]
+- This process is repeated for 500 trajectories, and the fidelity score is reported for each \(K\).
+
+Therefore, a correct implementation must:
+1. Use the proper importance score (probability that the mask does **not** blind).
+2. Identify the critical window using the sliding window method with the highest average importance.
+3. Fast‑forward to the start of that window and execute random actions for the window length.
+4. Measure the reward change \(d\) and compare it to the original reward.
+5. Determine \(d_{\max}\) appropriately for the environment (not a hard‑coded constant).
+6. Compute the fidelity score using the exact formula above.
+
+# Reality
+
+The submission contains two relevant files: `gen_fid.py` and `fid_test.py`.
+
+- In `gen_fid.py`, the mask network’s output is processed as:
+  ```python
+  mask_prob = np.exp(mask_dist.log_prob(torch.Tensor([1]).cuda()).detach().cpu().numpy()[0])
+  ```
+  This computes the probability of the mask action **1** (blinding). The paper states that the importance is the probability of the mask outputting **0** (not blinding). Therefore, the saved `mask_probs` are the opposite of the required importance scores.
+
+- In `fid_test.py`, the function `select_critical_steps` uses `confs = mask_probs` and then selects the top‑k indices. Because `mask_probs` are the probability of blinding, the selected steps are those where the agent is most likely to be blinded – i.e., the **least** critical steps. This directly contradicts the intended definition.
+
+- The fidelity score calculation `cal_fidelity_score` uses:
+  ```python
+  p_ds.append(np.abs(results[j]-replay_results[j])/2000)
+  reward_diff = np.mean(p_ds) if np.mean(p_ds)>0 else 0.001
+  fid_score = np.log(np.mean(p_ls)) - np.log(reward_diff)
+  ```
+  This divides the reward change by a hard‑coded value `2000`, which is not the environment‑specific maximum possible reward change \(d_{\max}\). For MuJoCo environments like Hopper or HalfCheetah, the maximum reward is not 2000, so this is incorrect. Furthermore, the formula used is \(\log(\text{mean}(l/L)) - \log(\text{mean}(d/d_{\max}))\), which is not equivalent to the paper’s per‑trajectory formula \(\log(d/d_{\max}) - \log(l/L)\). The computation is both mathematically wrong and relies on an arbitrary \(d_{\max}\).
+
+These issues show that the implementation does not follow the fidelity score metric as described in the paper. The importance scores are inverted, the critical window selection is based on the wrong importance, the maximum reward change is not properly determined, and the fidelity score formula is not correctly implemented.
+
+# Score
+
+**0** – The submission fails to implement the explanation fidelity score metric as outlined in Sections 4.1 and 4.2. The code uses the wrong importance scores, incorrectly identifies critical steps, and computes the fidelity score with an invalid \(d_{\max}\) and an incorrect formula. Therefore, the criterion is not met.

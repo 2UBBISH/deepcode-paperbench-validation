@@ -1,0 +1,79 @@
+2026-09-03 11:05:04 [info     ] Grading leaf: The network defence environment is version "Cage Challenge 2" (further information about this environment in Appendix C.2).
+2026-09-03 11:05:18 [info     ] Model file selection raw output:
+Refine_cage_challenge/readme.md
+Refine_cage_challenge/Wrappers/ChallengeWrapper2.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_mask.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_retrain.py
+Refine_cage_challenge/ppo_train.py
+Refine_cage_challenge/retrain.py
+Refine_cage_challenge/Agents/PPOAgent.py
+Refine_cage_challenge/Agents/PPOAgent_mask.py
+Refine_cage_challenge/Agents/PPOAgent_Retrain.py
+Refine_cage_challenge/Agents/MainAgent.py
+2026-09-03 11:05:18 [info     ] Model file selection raw output:
+Refine_cage_challenge/readme.md
+Refine_cage_challenge/Wrappers/ChallengeWrapper2.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_mask.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_retrain.py
+Refine_cage_challenge/ppo_train.py
+Refine_cage_challenge/retrain.py
+Refine_cage_challenge/Agents/PPOAgent.py
+Refine_cage_challenge/Agents/PPOAgent_mask.py
+Refine_cage_challenge/Agents/PPOAgent_Retrain.py
+Refine_cage_challenge/Agents/MainAgent.py
+2026-09-03 11:05:52 [info     ] model response: # Expectations
+The paper specifies that the network defense environment used is "Cage Challenge 2" (TTCP CAGE Challenge 2). According to Appendix C.2, the setup involves the CybORG framework, a blue agent (PPO) defending against a red agent (B_lineAgent), and a specific action space including monitoring, analyzing, decoy services, removing, restoring, etc. The paper references the Cardiff University champion scheme as the blue agent. Therefore, a correct implementation must:
+
+- Use the CybORG environment with the CAGE Challenge 2 scenario (Scenario2.yaml).
+- Create a blue agent that interacts with the environment using the PPO algorithm.
+- Include the red agent B_lineAgent (or similar) as the opponent.
+- Define the action space to include the actions described in the paper (restore, analyse, remove, decoys, etc.).
+- Provide the necessary wrappers and training code to run experiments in this environment.
+
+I will look for actual code that imports CybORG, loads the scenario, initializes the agents, and defines the action space accordingly.
+
+# Reality
+The submission contains the following relevant files:
+
+- **ppo_train.py**: This file imports `CybORG`, `B_lineAgent`, and `ChallengeWrapper2`. It sets up the CybORG environment with the scenario path pointing to `'Shared/Scenarios/Scenario2.yaml'` (which is the CAGE Challenge 2 scenario). The red agent is `B_lineAgent`. The blue agent is a `PPOAgent` trained via PPO. The action space is defined as a list of integers that correspond to the restore, analyse, remove, and decoy actions described in the paper (e.g., `133, 134, 135, 139` for restore enterprise and opserver, `3,4,5,9` for analyse, etc.). This matches the paper's action space description for CAGE Challenge 2.
+
+- **Wrappers/ChallengeWrapper2.py**: Implements the wrapper that uses `BlueTableWrapper`, `EnumActionWrapper`, and `OpenAIGymWrapper` from CybORG, which are standard for CAGE Challenge 2. The `step` and `reset` methods are correctly implemented.
+
+- **Agents/PPOAgent.py**: Contains the PPO agent implementation with decoy handling, scan tracking, and the action space mapping that includes the decoy actions (1000–1008) as described in the Cardiff champion scheme. The code loads a pre-trained checkpoint for the blue agent.
+
+- **Wrappers/ChallengeWrapper2_retrain.py** and **Agents/PPOAgent_Retrain.py**: These extend the base environment and agent to support the RICE refinement (mixed initial states, RND exploration), but they still build on the same CAGE Challenge 2 environment.
+
+The submission therefore provides actual code that correctly implements the CAGE Challenge 2 environment as described in the paper. The scenario, agents, action space, and wrappers are all present and aligned with the paper's specifications.
+
+# Score
+1
+
+The criterion is met because the submission contains a correct, runnable implementation of the Cage Challenge 2 environment using CybORG, the B_lineAgent red agent, and the appropriate action space for the blue agent, consistent with the paper's description in Appendix C.2.
+2026-09-03 11:05:52 [info     ] model response: # Expectations
+The paper specifies that the network defense environment used is "Cage Challenge 2" (TTCP CAGE Challenge 2). According to Appendix C.2, the setup involves the CybORG framework, a blue agent (PPO) defending against a red agent (B_lineAgent), and a specific action space including monitoring, analyzing, decoy services, removing, restoring, etc. The paper references the Cardiff University champion scheme as the blue agent. Therefore, a correct implementation must:
+
+- Use the CybORG environment with the CAGE Challenge 2 scenario (Scenario2.yaml).
+- Create a blue agent that interacts with the environment using the PPO algorithm.
+- Include the red agent B_lineAgent (or similar) as the opponent.
+- Define the action space to include the actions described in the paper (restore, analyse, remove, decoys, etc.).
+- Provide the necessary wrappers and training code to run experiments in this environment.
+
+I will look for actual code that imports CybORG, loads the scenario, initializes the agents, and defines the action space accordingly.
+
+# Reality
+The submission contains the following relevant files:
+
+- **ppo_train.py**: This file imports `CybORG`, `B_lineAgent`, and `ChallengeWrapper2`. It sets up the CybORG environment with the scenario path pointing to `'Shared/Scenarios/Scenario2.yaml'` (which is the CAGE Challenge 2 scenario). The red agent is `B_lineAgent`. The blue agent is a `PPOAgent` trained via PPO. The action space is defined as a list of integers that correspond to the restore, analyse, remove, and decoy actions described in the paper (e.g., `133, 134, 135, 139` for restore enterprise and opserver, `3,4,5,9` for analyse, etc.). This matches the paper's action space description for CAGE Challenge 2.
+
+- **Wrappers/ChallengeWrapper2.py**: Implements the wrapper that uses `BlueTableWrapper`, `EnumActionWrapper`, and `OpenAIGymWrapper` from CybORG, which are standard for CAGE Challenge 2. The `step` and `reset` methods are correctly implemented.
+
+- **Agents/PPOAgent.py**: Contains the PPO agent implementation with decoy handling, scan tracking, and the action space mapping that includes the decoy actions (1000–1008) as described in the Cardiff champion scheme. The code loads a pre-trained checkpoint for the blue agent.
+
+- **Wrappers/ChallengeWrapper2_retrain.py** and **Agents/PPOAgent_Retrain.py**: These extend the base environment and agent to support the RICE refinement (mixed initial states, RND exploration), but they still build on the same CAGE Challenge 2 environment.
+
+The submission therefore provides actual code that correctly implements the CAGE Challenge 2 environment as described in the paper. The scenario, agents, action space, and wrappers are all present and aligned with the paper's specifications.
+
+# Score
+1
+
+The criterion is met because the submission contains a correct, runnable implementation of the Cage Challenge 2 environment using CybORG, the B_lineAgent red agent, and the appropriate action space for the blue agent, consistent with the paper's description in Appendix C.2.

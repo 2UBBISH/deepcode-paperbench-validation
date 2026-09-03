@@ -1,0 +1,73 @@
+2026-09-03 11:07:00 [info     ] Grading leaf: For the network defence environment, the refining method has been implemented to support the hyperparameter $\lambda$ to govern the trade-off between task reward and exploration bonus, as outlined in section 3.3.  The $\lambda$ hyperparameter must be mutable i.e., a hyperparameter whose value can be changed (without having to edit the code directly). Alternative hyperparameter names are allowed, as long as the functionality remains the same.
+2026-09-03 11:08:15 [info     ] Model file selection raw output:
+Refine_cage_challenge/retrain.py
+Refine_cage_challenge/Agents/PPOAgent_Retrain.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_retrain.py
+Refine_cage_challenge/Agents/rnd_model.py
+Refine_cage_challenge/Agents/PPOAgent.py
+Refine_cage_challenge/Wrappers/utils.py
+Refine_cage_challenge/ppo_train.py
+Refine_cage_challenge/rollout_ppo.py
+Refine_cage_challenge/readme.md
+Refine_cage_challenge/Agents/MainAgent.py
+2026-09-03 11:08:15 [info     ] Model file selection raw output:
+Refine_cage_challenge/retrain.py
+Refine_cage_challenge/Agents/PPOAgent_Retrain.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_retrain.py
+Refine_cage_challenge/Agents/rnd_model.py
+Refine_cage_challenge/Agents/PPOAgent.py
+Refine_cage_challenge/Wrappers/utils.py
+Refine_cage_challenge/ppo_train.py
+Refine_cage_challenge/rollout_ppo.py
+Refine_cage_challenge/readme.md
+Refine_cage_challenge/Agents/MainAgent.py
+2026-09-03 11:09:25 [info     ] model response: # Expectations
+The paper describes in Section 3.3 that the refining method adds an intrinsic reward (RND bonus) to the task reward:
+
+$$R'(s_t, a_t) = R(s_t, a_t) + \lambda \left| \hat{f}(s_{t+1}) - f(s_{t+1}) \right|^2$$
+
+The hyperparameter \(\lambda\) controls the trade‑off between the task reward and the exploration bonus. The criterion requires that in the implementation for the network defence environment (Cage Challenge 2) this \(\lambda\) is supported and, crucially, that it is **mutable** – i.e. its value can be changed without editing the code directly (e.g. via command‑line arguments, configuration files, or environment variables). Alternative variable names are acceptable as long as the functionality remains the same.
+
+# Reality
+The relevant files are `Refine_cage_challenge/retrain.py` and `Refine_cage_challenge/Agents/PPOAgent_Retrain.py`. 
+
+- In `retrain.py`, the `train()` function has a parameter `bonus_scale=0.01`. Inside the training loop, the intrinsic reward is added as:
+  ```python
+  bonus = agent.rnd_model.compute_bonus(state)
+  reward += bonus_scale * bonus
+  ```
+  This `bonus_scale` plays the role of \(\lambda\).
+
+- The `train()` function is called in the `__main__` block with a hardcoded value `bonus_scale=0.01`. There is no command‑line argument parsing, no configuration file, nor any other mechanism that would allow a user to change this value without editing the source code directly.
+
+- No other file in the submission provides an alternative way to set this hyperparameter.
+
+Thus, the implementation correctly incorporates the \(\lambda\) hyperparameter in the algorithmic logic, but it does **not** satisfy the mutability requirement: the value of \(\lambda\) cannot be changed without editing the code.
+
+# Score
+0 – The refining method includes the \(\lambda\) hyperparameter in the code, but it is not mutable; the user must modify the source to change its value. The criterion explicitly demands that the hyperparameter can be changed without editing the code directly, and this requirement is not met.
+2026-09-03 11:09:25 [info     ] model response: # Expectations
+The paper describes in Section 3.3 that the refining method adds an intrinsic reward (RND bonus) to the task reward:
+
+$$R'(s_t, a_t) = R(s_t, a_t) + \lambda \left| \hat{f}(s_{t+1}) - f(s_{t+1}) \right|^2$$
+
+The hyperparameter \(\lambda\) controls the trade‑off between the task reward and the exploration bonus. The criterion requires that in the implementation for the network defence environment (Cage Challenge 2) this \(\lambda\) is supported and, crucially, that it is **mutable** – i.e. its value can be changed without editing the code directly (e.g. via command‑line arguments, configuration files, or environment variables). Alternative variable names are acceptable as long as the functionality remains the same.
+
+# Reality
+The relevant files are `Refine_cage_challenge/retrain.py` and `Refine_cage_challenge/Agents/PPOAgent_Retrain.py`. 
+
+- In `retrain.py`, the `train()` function has a parameter `bonus_scale=0.01`. Inside the training loop, the intrinsic reward is added as:
+  ```python
+  bonus = agent.rnd_model.compute_bonus(state)
+  reward += bonus_scale * bonus
+  ```
+  This `bonus_scale` plays the role of \(\lambda\).
+
+- The `train()` function is called in the `__main__` block with a hardcoded value `bonus_scale=0.01`. There is no command‑line argument parsing, no configuration file, nor any other mechanism that would allow a user to change this value without editing the source code directly.
+
+- No other file in the submission provides an alternative way to set this hyperparameter.
+
+Thus, the implementation correctly incorporates the \(\lambda\) hyperparameter in the algorithmic logic, but it does **not** satisfy the mutability requirement: the value of \(\lambda\) cannot be changed without editing the code.
+
+# Score
+0 – The refining method includes the \(\lambda\) hyperparameter in the code, but it is not mutable; the user must modify the source to change its value. The criterion explicitly demands that the hyperparameter can be changed without editing the code directly, and this requirement is not met.

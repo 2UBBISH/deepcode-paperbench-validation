@@ -1,0 +1,47 @@
+2026-09-03 11:07:02 [info     ] Grading leaf: For the autonomous driving environment, the refining method has been implemented to support the hyperparameter $\lambda$ to govern the trade-off between task reward and exploration bonus, as outlined in section 3.3.  The $\lambda$ hyperparameter must be mutable i.e., a hyperparameter whose value can be changed (without having to edit the code directly). Alternative hyperparameter names are allowed, as long as the functionality remains the same.
+2026-09-03 11:08:07 [info     ] Model file selection raw output:
+Refine_auto_drive/retrain.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/readme.md
+README.md
+2026-09-03 11:08:07 [info     ] Model file selection raw output:
+Refine_auto_drive/retrain.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/readme.md
+README.md
+2026-09-03 11:08:40 [info     ] model response: # Expectations
+The paper (Section 3.3) describes the refining method with exploration via Random Network Distillation (RND). A hyperparameter \(\lambda\) controls the trade-off between the task reward and the exploration bonus:  
+\(R'(s_t, a_t) = R(s_t, a_t) + \lambda \|f(s_{t+1}) - \hat{f}(s_{t+1})\|^2\).  
+The criterion requires that for the autonomous driving environment, the implementation of the refining method supports this hyperparameter \(\lambda\) and that its value can be changed without editing the source code (e.g., via command-line argument, config file, or environment variable). Alternative names for the parameter are acceptable if the functionality is the same.
+
+# Reality
+The relevant code for the autonomous driving refinement is in `Refine_auto_drive/retrain.py`. A command-line argument `--bonus_scale` (type `float`, default `0.01`) is defined. This value is passed to `rnd_config` as `intrinsic_reward_rescale`. In `rnd_reward_model.py`, the `RndRewardModel` uses `intrinsic_reward_rescale` to compute `intrinsic_reward_weight` when it is `None`:  
+`self.cfg.intrinsic_reward_weight = self.intrinsic_reward_rescale * max(1, abs(...))`.  
+This weight is then multiplied by the RND intrinsic reward and added to the task reward in the `estimate` method. Thus, `bonus_scale` effectively acts as the \(\lambda\) hyperparameter. Because it is exposed as a command-line argument, its value can be changed without modifying the code.
+
+# Score
+**1** – The implementation provides a mutable hyperparameter (`--bonus_scale`) that controls the trade-off between the task reward and the RND exploration bonus, fulfilling the requirement.
+2026-09-03 11:08:40 [info     ] model response: # Expectations
+The paper (Section 3.3) describes the refining method with exploration via Random Network Distillation (RND). A hyperparameter \(\lambda\) controls the trade-off between the task reward and the exploration bonus:  
+\(R'(s_t, a_t) = R(s_t, a_t) + \lambda \|f(s_{t+1}) - \hat{f}(s_{t+1})\|^2\).  
+The criterion requires that for the autonomous driving environment, the implementation of the refining method supports this hyperparameter \(\lambda\) and that its value can be changed without editing the source code (e.g., via command-line argument, config file, or environment variable). Alternative names for the parameter are acceptable if the functionality is the same.
+
+# Reality
+The relevant code for the autonomous driving refinement is in `Refine_auto_drive/retrain.py`. A command-line argument `--bonus_scale` (type `float`, default `0.01`) is defined. This value is passed to `rnd_config` as `intrinsic_reward_rescale`. In `rnd_reward_model.py`, the `RndRewardModel` uses `intrinsic_reward_rescale` to compute `intrinsic_reward_weight` when it is `None`:  
+`self.cfg.intrinsic_reward_weight = self.intrinsic_reward_rescale * max(1, abs(...))`.  
+This weight is then multiplied by the RND intrinsic reward and added to the task reward in the `estimate` method. Thus, `bonus_scale` effectively acts as the \(\lambda\) hyperparameter. Because it is exposed as a command-line argument, its value can be changed without modifying the code.
+
+# Score
+**1** – The implementation provides a mutable hyperparameter (`--bonus_scale`) that controls the trade-off between the task reward and the RND exploration bonus, fulfilling the requirement.

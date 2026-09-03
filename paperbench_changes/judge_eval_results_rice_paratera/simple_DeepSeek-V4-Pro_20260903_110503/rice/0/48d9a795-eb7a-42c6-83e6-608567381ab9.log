@@ -1,0 +1,63 @@
+2026-09-03 11:05:04 [info     ] Grading leaf: For the selfish mining environment, the "Random" Explanation method has been implemented as outlined in 4.1, wherein critical steps are identified by randomly selecting previously visited states.
+2026-09-03 11:06:15 [info     ] Model file selection raw output:
+Refine_selfish_mining/masknet/sample_mask_score.py
+Refine_selfish_mining/masknet/replay.py
+Refine_selfish_mining/masknet/fidelity_score.py
+Refine_selfish_mining/masknet/utils.py
+Refine_selfish_mining/retrain.py
+Refine_selfish_mining/utils.py
+Refine_selfish_mining/masknet/sample_value_score.py
+Refine_selfish_mining/masknet/train.py
+Refine_selfish_mining/baseline/train_ppo.py
+Refine_selfish_mining/baseline/net.py
+2026-09-03 11:06:15 [info     ] Model file selection raw output:
+Refine_selfish_mining/masknet/sample_mask_score.py
+Refine_selfish_mining/masknet/replay.py
+Refine_selfish_mining/masknet/fidelity_score.py
+Refine_selfish_mining/masknet/utils.py
+Refine_selfish_mining/retrain.py
+Refine_selfish_mining/utils.py
+Refine_selfish_mining/masknet/sample_value_score.py
+Refine_selfish_mining/masknet/train.py
+Refine_selfish_mining/baseline/train_ppo.py
+Refine_selfish_mining/baseline/net.py
+2026-09-03 11:07:07 [info     ] model response: # Expectations
+The paper's Section 4.1 describes baseline explanation methods for the selfish mining environment. It states: "Additionally, we introduce 'Random' as a baseline explanation method. 'Random' identifies critical steps by randomly selecting a visited state as the critical state." In the context of the fidelity score experiment (Experiment I), the "Random" method is used to pick a window of critical steps that will be perturbed with random actions. I expect the implementation to:
+
+- For a given trajectory of visited states, randomly choose a starting index (or a set of steps) to serve as the "critical" segment.
+- The implementation should be specific to the selfish mining environment (using the appropriate MDP, state space, etc.).
+- The selected critical steps should be used to compute the fidelity score by randomizing actions in that window and measuring reward change, as done in the code base.
+
+# Reality
+The submission includes several files for the selfish mining environment. The file `Refine_selfish_mining/masknet/replay.py` contains a function `replay` that implements the fidelity score computation for various explanation methods, including "random". In that function, when `method == "random"`:
+
+```python
+if method == "random":
+    sub_length = int(action_set.shape[0] * width)
+    best_score_index = np.random.randint(0, action_set.shape[0] - sub_length)
+```
+
+This randomly selects a starting index from the trajectory's action set, and the window length is determined by the `width` parameter (a fraction of the trajectory length). This window is then used as the "critical" segment: the environment is fast‑forwarded to that index, random actions are taken for the duration of the segment, and finally the original policy resumes. The reward change is recorded and later used to compute the fidelity score (`fidelity_score.py`). The code relies on the selfish mining environment (`BitcoinFeeModel`, `MDPBlockchainSimulatorDQN`) and correctly loads the trajectory and performs the random selection. This exactly matches the requirement of a "Random" explanation method that identifies critical steps by randomly selecting previously visited states.
+
+# Score
+1
+2026-09-03 11:07:07 [info     ] model response: # Expectations
+The paper's Section 4.1 describes baseline explanation methods for the selfish mining environment. It states: "Additionally, we introduce 'Random' as a baseline explanation method. 'Random' identifies critical steps by randomly selecting a visited state as the critical state." In the context of the fidelity score experiment (Experiment I), the "Random" method is used to pick a window of critical steps that will be perturbed with random actions. I expect the implementation to:
+
+- For a given trajectory of visited states, randomly choose a starting index (or a set of steps) to serve as the "critical" segment.
+- The implementation should be specific to the selfish mining environment (using the appropriate MDP, state space, etc.).
+- The selected critical steps should be used to compute the fidelity score by randomizing actions in that window and measuring reward change, as done in the code base.
+
+# Reality
+The submission includes several files for the selfish mining environment. The file `Refine_selfish_mining/masknet/replay.py` contains a function `replay` that implements the fidelity score computation for various explanation methods, including "random". In that function, when `method == "random"`:
+
+```python
+if method == "random":
+    sub_length = int(action_set.shape[0] * width)
+    best_score_index = np.random.randint(0, action_set.shape[0] - sub_length)
+```
+
+This randomly selects a starting index from the trajectory's action set, and the window length is determined by the `width` parameter (a fraction of the trajectory length). This window is then used as the "critical" segment: the environment is fast‑forwarded to that index, random actions are taken for the duration of the segment, and finally the original policy resumes. The reward change is recorded and later used to compute the fidelity score (`fidelity_score.py`). The code relies on the selfish mining environment (`BitcoinFeeModel`, `MDPBlockchainSimulatorDQN`) and correctly loads the trajectory and performs the random selection. This exactly matches the requirement of a "Random" explanation method that identifies critical steps by randomly selecting previously visited states.
+
+# Score
+1

@@ -1,0 +1,53 @@
+2026-09-03 11:05:04 [info     ] Grading leaf: For the selfish mining environment, code for constructing a mixed initial state distribution by combining default initial states and critical states identified by the "Ours" explanation method has been implemented as described in Section 3.3.
+2026-09-03 11:05:37 [info     ] Model file selection raw output:
+Refine_selfish_mining/retrain.py
+Refine_selfish_mining/masknet/sample_mask_score.py
+Refine_selfish_mining/masknet/train.py
+Refine_selfish_mining/masknet/utils.py
+Refine_selfish_mining/utils.py
+Refine_selfish_mining/masknet/replay.py
+Refine_selfish_mining/masknet/fidelity_score.py
+Refine_selfish_mining/baseline/train_ppo.py
+Refine_selfish_mining/rnd_model.py
+Refine_selfish_mining/rnd_policy.py
+2026-09-03 11:05:37 [info     ] Model file selection raw output:
+Refine_selfish_mining/retrain.py
+Refine_selfish_mining/masknet/sample_mask_score.py
+Refine_selfish_mining/masknet/train.py
+Refine_selfish_mining/masknet/utils.py
+Refine_selfish_mining/utils.py
+Refine_selfish_mining/masknet/replay.py
+Refine_selfish_mining/masknet/fidelity_score.py
+Refine_selfish_mining/baseline/train_ppo.py
+Refine_selfish_mining/rnd_model.py
+Refine_selfish_mining/rnd_policy.py
+2026-09-03 11:07:03 [info     ] model response: # Expectations
+The criterion requires that for the selfish mining environment, the submission contains code that constructs a mixed initial state distribution as described in Section 3.3 of the paper. Specifically, the refining method should, with a probability \(p\), reset the environment to the most critical state identified by the "Ours" explanation method (the mask network), and with probability \(1-p\), reset to a default initial state from the distribution \(\rho\). The code should implement the logic of Algorithm 2: for each iteration, either sample a trajectory using the pre-trained policy, use the mask network to identify the most critical state, and set that as the initial state, or sample a default initial state. The mixing is controlled by a hyper-parameter (e.g., \(p\) or \(\beta\)). I will look for an explicit implementation of this logic in the provided files for the selfish mining environment.
+
+# Reality
+The provided files for the selfish mining environment include:
+
+- `Refine_selfish_mining/retrain.py` – the main training script for refinement.
+- `Refine_selfish_mining/masknet/` – scripts for training the mask network, sampling scores, and computing fidelity.
+- `Refine_selfish_mining/utils.py`, `rnd_model.py`, `rnd_policy.py` – auxiliary modules.
+- `Refine_selfish_mining/baseline/train_ppo.py` – a baseline PPO training script.
+
+In `retrain.py`, the environment is created via `create_retrain_env(args)`, which returns an instance of `MDPBlockchainSimulatorRetrain` imported from `baseline.reinforcement_learning.base.blockchain_simulator.mdp_blockchain_simulator_retrain`. The actual implementation of `MDPBlockchainSimulatorRetrain` is **not provided** in any of the submitted files. The `retrain.py` script itself does not contain any logic for mixing initial states, identifying critical states, or resetting to a critical state. It only sets up the training loop using a DQN‑based policy with RND bonuses, and delegates the environment reset to the external class. Without the code for `MDPBlockchainSimulatorRetrain`, it is impossible to verify whether the mixed initial distribution is constructed correctly (or at all). The mixing logic, which is central to the criterion, is absent from the submission.
+
+# Score
+**0** – The code that implements the mixed initial state distribution for the selfish mining environment is missing from the submission. The necessary environment class (`MDPBlockchainSimulatorRetrain`) is not included, so the criterion cannot be satisfied.
+2026-09-03 11:07:03 [info     ] model response: # Expectations
+The criterion requires that for the selfish mining environment, the submission contains code that constructs a mixed initial state distribution as described in Section 3.3 of the paper. Specifically, the refining method should, with a probability \(p\), reset the environment to the most critical state identified by the "Ours" explanation method (the mask network), and with probability \(1-p\), reset to a default initial state from the distribution \(\rho\). The code should implement the logic of Algorithm 2: for each iteration, either sample a trajectory using the pre-trained policy, use the mask network to identify the most critical state, and set that as the initial state, or sample a default initial state. The mixing is controlled by a hyper-parameter (e.g., \(p\) or \(\beta\)). I will look for an explicit implementation of this logic in the provided files for the selfish mining environment.
+
+# Reality
+The provided files for the selfish mining environment include:
+
+- `Refine_selfish_mining/retrain.py` – the main training script for refinement.
+- `Refine_selfish_mining/masknet/` – scripts for training the mask network, sampling scores, and computing fidelity.
+- `Refine_selfish_mining/utils.py`, `rnd_model.py`, `rnd_policy.py` – auxiliary modules.
+- `Refine_selfish_mining/baseline/train_ppo.py` – a baseline PPO training script.
+
+In `retrain.py`, the environment is created via `create_retrain_env(args)`, which returns an instance of `MDPBlockchainSimulatorRetrain` imported from `baseline.reinforcement_learning.base.blockchain_simulator.mdp_blockchain_simulator_retrain`. The actual implementation of `MDPBlockchainSimulatorRetrain` is **not provided** in any of the submitted files. The `retrain.py` script itself does not contain any logic for mixing initial states, identifying critical states, or resetting to a critical state. It only sets up the training loop using a DQN‑based policy with RND bonuses, and delegates the environment reset to the external class. Without the code for `MDPBlockchainSimulatorRetrain`, it is impossible to verify whether the mixed initial distribution is constructed correctly (or at all). The mixing logic, which is central to the criterion, is absent from the submission.
+
+# Score
+**0** – The code that implements the mixed initial state distribution for the selfish mining environment is missing from the submission. The necessary environment class (`MDPBlockchainSimulatorRetrain`) is not included, so the criterion cannot be satisfied.

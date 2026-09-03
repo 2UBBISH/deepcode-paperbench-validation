@@ -1,0 +1,69 @@
+2026-09-03 11:07:15 [info     ] Grading leaf: In Experiment II, for the MuJoCo environments, for the "PPO fine-tuning" refinement method, code has been implemented for measuring cumulative reward throughout refinement
+2026-09-03 11:08:04 [info     ] Model file selection raw output:
+Refine_mujoco/retrain.py
+Refine_mujoco/PPO.py
+Refine_mujoco/OnPolicyAlgorithm.py
+Refine_mujoco/base_class.py
+Refine_mujoco/monitor.py
+Refine_mujoco/callback.py
+Refine_mujoco/environment.py
+Refine_mujoco/utils.py
+Refine_mujoco/retrain.sh
+Refine_mujoco/baseline/train.py
+2026-09-03 11:08:04 [info     ] Model file selection raw output:
+Refine_mujoco/retrain.py
+Refine_mujoco/PPO.py
+Refine_mujoco/OnPolicyAlgorithm.py
+Refine_mujoco/base_class.py
+Refine_mujoco/monitor.py
+Refine_mujoco/callback.py
+Refine_mujoco/environment.py
+Refine_mujoco/utils.py
+Refine_mujoco/retrain.sh
+Refine_mujoco/baseline/train.py
+2026-09-03 11:09:30 [info     ] model response: # Expectations
+The criterion asks whether the submission includes code that implements the "PPO fine-tuning" refinement method for the MuJoCo environments (as used in Experiment II) and, specifically, code for measuring cumulative reward throughout the refinement process.  
+According to the paper, PPO fine-tuning means lowering the learning rate and continuing training with the standard PPO algorithm, without any additional exploration bonuses or resetting to critical states. The code should therefore:
+
+- Load a pre‑trained agent.
+- Set a lower learning rate.
+- Run the PPO algorithm while logging the cumulative (or mean episode) reward over time, so that the progress of the refinement can be monitored (e.g., via callbacks, evaluations, or TensorBoard logging).
+
+I will look for a script or function that clearly performs these steps and includes reward‑logging mechanisms.
+
+# Reality
+The submission provides `retrain.py` as the main refinement script. Although it is primarily designed for the RICE method (with `go_prob` and `bonus`), it can be configured to perform pure PPO fine‑tuning by setting `go_prob=0` and `bonus=None`. The script loads the pre‑trained agent (`PPO.load`) and uses a lower learning rate (explicitly set to `1e-5` in `custom_objects`).  
+
+Importantly, the script includes:
+- `EvalCallback` (from Stable‑Baselines3) that periodically evaluates the agent and logs the mean episode reward.
+- `CustomCallback` (from `callback.py`) that uses `load_results` to compute and log the mean reward over the last 100 episodes.
+
+These callbacks are attached to the training loop (`model.learn(total_timesteps=..., callback=eval_callback)`), so the cumulative reward is measured and logged throughout the refinement process.  
+
+The environment wrapper (`RetrainEnv`) is used, but when `go_prob=0` it resets the environment normally, making it functionally equivalent to standard PPO fine‑tuning. The code for measuring reward is therefore present and will track the reward during refinement.
+
+# Score
+1 – The submission contains code that can implement PPO fine‑tuning (by configuring `retrain.py` with `go_prob=0` and `bonus=None`) and includes explicit measurement of cumulative reward via `EvalCallback` and `CustomCallback`. The criterion is satisfied.
+2026-09-03 11:09:30 [info     ] model response: # Expectations
+The criterion asks whether the submission includes code that implements the "PPO fine-tuning" refinement method for the MuJoCo environments (as used in Experiment II) and, specifically, code for measuring cumulative reward throughout the refinement process.  
+According to the paper, PPO fine-tuning means lowering the learning rate and continuing training with the standard PPO algorithm, without any additional exploration bonuses or resetting to critical states. The code should therefore:
+
+- Load a pre‑trained agent.
+- Set a lower learning rate.
+- Run the PPO algorithm while logging the cumulative (or mean episode) reward over time, so that the progress of the refinement can be monitored (e.g., via callbacks, evaluations, or TensorBoard logging).
+
+I will look for a script or function that clearly performs these steps and includes reward‑logging mechanisms.
+
+# Reality
+The submission provides `retrain.py` as the main refinement script. Although it is primarily designed for the RICE method (with `go_prob` and `bonus`), it can be configured to perform pure PPO fine‑tuning by setting `go_prob=0` and `bonus=None`. The script loads the pre‑trained agent (`PPO.load`) and uses a lower learning rate (explicitly set to `1e-5` in `custom_objects`).  
+
+Importantly, the script includes:
+- `EvalCallback` (from Stable‑Baselines3) that periodically evaluates the agent and logs the mean episode reward.
+- `CustomCallback` (from `callback.py`) that uses `load_results` to compute and log the mean reward over the last 100 episodes.
+
+These callbacks are attached to the training loop (`model.learn(total_timesteps=..., callback=eval_callback)`), so the cumulative reward is measured and logged throughout the refinement process.  
+
+The environment wrapper (`RetrainEnv`) is used, but when `go_prob=0` it resets the environment normally, making it functionally equivalent to standard PPO fine‑tuning. The code for measuring reward is therefore present and will track the reward during refinement.
+
+# Score
+1 – The submission contains code that can implement PPO fine‑tuning (by configuring `retrain.py` with `go_prob=0` and `bonus=None`) and includes explicit measurement of cumulative reward via `EvalCallback` and `CustomCallback`. The criterion is satisfied.

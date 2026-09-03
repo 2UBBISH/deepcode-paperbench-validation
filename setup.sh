@@ -25,7 +25,7 @@ PB="$ROOT/frontier-evals/project/paperbench"
 echo "==== [1/6] 依赖检查 ===="
 need() { command -v "$1" >/dev/null 2>&1 || { echo "  ❌ 缺 $1 —— $2"; exit 1; }; echo "  ✅ $1"; }
 need git      "https://git-scm.com"
-need git-lfs  "https://git-lfs.com(判分数据用 LFS 存放)"
+need curl     "下载论文资产"
 need uv       "curl -LsSf https://astral.sh/uv/install.sh | sh"
 need python3  "3.11+"
 need docker   "判分要用 Docker 起沙箱;安装后确保 'docker info' 能通"
@@ -40,8 +40,9 @@ if [ ! -d "$ROOT/frontier-evals/.git" ]; then
   git -C "$ROOT/frontier-evals" sparse-checkout init --cone
   git -C "$ROOT/frontier-evals" sparse-checkout set project/paperbench project/common
   git -C "$ROOT/frontier-evals" fetch -q --depth 1 origin "$FE_COMMIT"
-  git -C "$ROOT/frontier-evals" checkout -q FETCH_HEAD
-  git -C "$ROOT/frontier-evals" lfs install --local >/dev/null
+  # checkout 时跳过 LFS smudge(否则会把全部 20 篇论文约 300MB 资产都拉下来),稍后只按需拉两篇
+  GIT_LFS_SKIP_SMUDGE=1 git -C "$ROOT/frontier-evals" checkout -q FETCH_HEAD
+  git -C "$ROOT/frontier-evals" lfs install --local --skip-smudge >/dev/null
   echo "  ✅ 稀疏检出完成(paperbench + common)"
 else
   echo "  ⏭ 已存在,跳过克隆"
@@ -55,9 +56,17 @@ fi
 cp "$ROOT/paperbench_changes/experiments/splits/"*.txt "$PB/experiments/splits/"
 cp "$ROOT/paperbench_changes/analyze_judge_eval_bias.py" "$PB/"
 echo "  ✅ 已复制新增文件(fre/rice split、裁判偏差分析脚本)"
-echo "  ⏳ 拉取 fre / rice 论文资产(LFS,约 56MB)…"
-git -C "$ROOT/frontier-evals" lfs pull --include="project/paperbench/data/papers/fre/**,project/paperbench/data/papers/rice/**"
-[ "$(wc -l < "$PB/data/papers/fre/paper.md")" -gt 5 ] && echo "  ✅ 论文资产已水合" || { echo "  ❌ paper.md 仍是 LFS 指针"; exit 1; }
+# 论文资产在上游是 LFS 对象。稀疏+浅克隆下 `git lfs pull --include` 实测拿不到对象(退出 0 但仍是指针),
+# 改为直接从 GitHub 的 LFS 媒体直链按固定 commit 下载,只取 fre / rice 两篇(约 56MB),不依赖 git-lfs 客户端。
+echo "  ⏳ 下载 fre / rice 论文资产(约 56MB)…"
+n=0
+while read -r f; do
+  rel="${f#$ROOT/frontier-evals/}"
+  curl -sfL --retry 3 -o "$f" "https://media.githubusercontent.com/media/openai/frontier-evals/$FE_COMMIT/$rel" \
+    || { echo "  ❌ 下载失败: $rel"; exit 1; }
+  n=$((n+1))
+done < <(grep -rl '^version https://git-lfs' "$PB/data/papers/fre" "$PB/data/papers/rice" 2>/dev/null || true)
+[ "$(wc -l < "$PB/data/papers/fre/paper.md")" -gt 5 ] && echo "  ✅ 论文资产已水合($n 个文件)" || { echo "  ❌ paper.md 仍是 LFS 指针"; exit 1; }
 
 echo "==== [3/6] Python 环境(uv sync)===="
 ( cd "$ROOT/DeepCode" && uv sync --python 3.11 >/dev/null && echo "  ✅ DeepCode .venv" )

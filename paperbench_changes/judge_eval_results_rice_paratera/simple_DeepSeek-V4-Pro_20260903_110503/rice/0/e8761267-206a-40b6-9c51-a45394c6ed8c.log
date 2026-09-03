@@ -1,0 +1,55 @@
+2026-09-03 11:07:43 [info     ] Grading leaf: In Experiment II, for the autonomous driving environment, for the "StateMask-R" refinement method, the optimized StateMask ("Ours") explanation method proposed in the paper is used as the explanation method.
+2026-09-03 11:08:07 [info     ] Model file selection raw output:
+Refine_auto_drive/retrain.py
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/readme.md
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/retrain.py
+2026-09-03 11:08:07 [info     ] Model file selection raw output:
+Refine_auto_drive/retrain.py
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/readme.md
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/retrain.py
+2026-09-03 11:09:27 [info     ] model response: # Expectations
+The criterion asks to check whether the submission contains a correct implementation of the "StateMask-R" refinement method for the autonomous driving environment, and that it uses the optimized StateMask explanation method proposed in the paper ("Ours" explanation). According to the paper, StateMask-R is a refinement method that fine‑tunes the pre‑trained DRL agent starting from the identified critical states. The explanation method must be the one described in Section 3.3 (Algorithm 1), which is the simplified and improved version of StateMask with reward bonus and PPO training. The implementation should:
+
+- Train a mask network using the proposed method (Algorithm 1) to produce step‑level importance scores.
+- Use that mask network to identify the **most critical state** in a trajectory (or a distribution of critical states, but the paper explicitly says “identify the most important state”, see Algorithm 2).
+- Reset the environment to that critical state and continue training the agent from there (fine‑tuning) without any other additions (no mixed initial distribution, no exploration bonus).
+
+Thus, the code must contain a concrete implementation that resets the environment to the critical state identified by the “Ours” explanation and then runs PPO fine‑tuning.
+
+# Reality
+The submission provides files under `Refine_auto_drive/`. The **refinement** is implemented in `retrain.py` and `retrain_env.py`. The `retrain_env.py` contains a `CustomWrapper` that, with probability `self.p` (passed as `go_prob`), resets the environment to a state from a previously generated trajectory. The critical states are obtained via `gen_retrain_traj.py`, which loads a mask network trained by `train_masknet.py` and `custom_masknet_env.py`. This mask network is indeed the “Ours” explanation method (simplified StateMask with reward bonus). So the explanation method is correct.
+
+However, the implementation of the reset logic in `retrain_env.py` does **not** correctly implement StateMask‑R. The paper’s Algorithm 2 and description specify that the **most critical state** is selected (e.g., the state with the highest importance score). In `retrain_env.py`, the `reset` method always uses `self.random_sampling = True`, which randomly picks a state index from the trajectory (`np.random.choice(traj.eps_len)`). This is **not** equivalent to selecting the most critical state. The `else` branch (`np.argmax(traj.mask_probs)`) would pick the most critical state, but that branch is never executed because `random_sampling` is hardcoded to `True`. Therefore, the refinement does **not** reset to the identified critical state as required by StateMask‑R. This means the code does not contain a correct implementation of the StateMask‑R refinement method.
+
+# Score
+**0** – The submission does not correctly implement StateMask‑R for the autonomous driving environment. While the explanation method is the optimized one, the refinement procedure resets to a random state instead of the most critical state, which violates the definition of StateMask‑R.
+2026-09-03 11:09:27 [info     ] model response: # Expectations
+The criterion asks to check whether the submission contains a correct implementation of the "StateMask-R" refinement method for the autonomous driving environment, and that it uses the optimized StateMask explanation method proposed in the paper ("Ours" explanation). According to the paper, StateMask-R is a refinement method that fine‑tunes the pre‑trained DRL agent starting from the identified critical states. The explanation method must be the one described in Section 3.3 (Algorithm 1), which is the simplified and improved version of StateMask with reward bonus and PPO training. The implementation should:
+
+- Train a mask network using the proposed method (Algorithm 1) to produce step‑level importance scores.
+- Use that mask network to identify the **most critical state** in a trajectory (or a distribution of critical states, but the paper explicitly says “identify the most important state”, see Algorithm 2).
+- Reset the environment to that critical state and continue training the agent from there (fine‑tuning) without any other additions (no mixed initial distribution, no exploration bonus).
+
+Thus, the code must contain a concrete implementation that resets the environment to the critical state identified by the “Ours” explanation and then runs PPO fine‑tuning.
+
+# Reality
+The submission provides files under `Refine_auto_drive/`. The **refinement** is implemented in `retrain.py` and `retrain_env.py`. The `retrain_env.py` contains a `CustomWrapper` that, with probability `self.p` (passed as `go_prob`), resets the environment to a state from a previously generated trajectory. The critical states are obtained via `gen_retrain_traj.py`, which loads a mask network trained by `train_masknet.py` and `custom_masknet_env.py`. This mask network is indeed the “Ours” explanation method (simplified StateMask with reward bonus). So the explanation method is correct.
+
+However, the implementation of the reset logic in `retrain_env.py` does **not** correctly implement StateMask‑R. The paper’s Algorithm 2 and description specify that the **most critical state** is selected (e.g., the state with the highest importance score). In `retrain_env.py`, the `reset` method always uses `self.random_sampling = True`, which randomly picks a state index from the trajectory (`np.random.choice(traj.eps_len)`). This is **not** equivalent to selecting the most critical state. The `else` branch (`np.argmax(traj.mask_probs)`) would pick the most critical state, but that branch is never executed because `random_sampling` is hardcoded to `True`. Therefore, the refinement does **not** reset to the identified critical state as required by StateMask‑R. This means the code does not contain a correct implementation of the StateMask‑R refinement method.
+
+# Score
+**0** – The submission does not correctly implement StateMask‑R for the autonomous driving environment. While the explanation method is the optimized one, the refinement procedure resets to a random state instead of the most critical state, which violates the definition of StateMask‑R.

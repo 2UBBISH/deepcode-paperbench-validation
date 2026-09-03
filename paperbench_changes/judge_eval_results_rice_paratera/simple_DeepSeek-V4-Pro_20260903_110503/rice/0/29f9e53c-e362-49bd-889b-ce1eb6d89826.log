@@ -1,0 +1,81 @@
+2026-09-03 11:06:21 [info     ] Grading leaf: For the MuJoCo environments, the objective being optimized is $J(\theta)=\max \eta(\bar{\pi})$, as outlined in section 3.3.
+2026-09-03 11:06:48 [info     ] Model file selection raw output:
+Refine_mujoco/masknet/train.py
+Refine_mujoco/masknet/cus_PPO.py
+Refine_mujoco/masknet/environment.py
+Refine_mujoco/PPO.py
+Refine_mujoco/OnPolicyAlgorithm.py
+Refine_mujoco/base_class.py
+Refine_mujoco/models.py
+Refine_mujoco/utils.py
+Refine_mujoco/masknet/gen_fid.py
+Refine_mujoco/masknet/fid_test.py
+2026-09-03 11:06:48 [info     ] Model file selection raw output:
+Refine_mujoco/masknet/train.py
+Refine_mujoco/masknet/cus_PPO.py
+Refine_mujoco/masknet/environment.py
+Refine_mujoco/PPO.py
+Refine_mujoco/OnPolicyAlgorithm.py
+Refine_mujoco/base_class.py
+Refine_mujoco/models.py
+Refine_mujoco/utils.py
+Refine_mujoco/masknet/gen_fid.py
+Refine_mujoco/masknet/fid_test.py
+2026-09-03 11:09:02 [info     ] model response: # Expectations
+The paper states that under Assumption 3.1, the expected total reward of the perturbed agent \(\eta(\bar{\pi})\) is upper bounded by \(\eta(\pi)\), so the objective can be reformulated to maximize \(\eta(\bar{\pi})\) instead of minimizing the absolute difference. The authors then use the vanilla PPO algorithm to train the state mask, with an additional reward bonus when the mask net chooses to blind (i.e., output 1). The new reward is \(R'(s_t, a_t) = R(s_t, a_t) + \alpha a_t^m\). Thus, the mask network is trained to maximize the cumulative reward of the perturbed agent, which is equivalent to \(J(\theta) = \max \eta(\bar{\pi})\).
+
+For the MuJoCo environments, I expect to see:
+- A mask network that outputs binary actions (0 or 1) where 1 corresponds to blinding (random action).
+- An environment wrapper that combines the pre‑trained policy with the mask network, so that the final action is either the pre‑trained action (if mask output is 0) or a random action (if mask output is 1).
+- The reward used to train the mask network is the original environment reward **plus an extra bonus** when the mask net outputs 1 (the blinding action).
+- The mask network is trained using a standard PPO implementation that maximizes the expected cumulative reward (i.e., \(\eta(\bar{\pi})\)).
+
+# Reality
+The relevant code is in `Refine_mujoco/masknet/`.
+
+- **`environment.py`**: The `Multi2SingleEnv` wrapper implements the combined policy. The `step` method receives `action` from the mask network (0 or 1). If `action == 0`, the wrapper takes a random action from the environment; otherwise, it takes the pre‑trained base action. The reward is modified in training mode:
+  ```python
+  if self.train:
+      reward += self.alpha * (1 - action)
+  ```
+  This adds a bonus when `action == 0` (i.e., when blinding occurs). The mapping is inverted relative to the paper’s notation (0 → blind, 1 → original), but the **effect is equivalent**: the mask network is rewarded for choosing to blind. The reward passed to the training algorithm is therefore the original reward plus a bonus when the mask net blinds.
+
+- **`cus_PPO.py`**: This is a custom PPO (Proximal Policy Optimization) implementation. It uses the standard PPO loss and does not modify the reward; it simply trains the policy to maximize the cumulative reward collected from the environment. The mask network’s policy is trained via this PPO class.
+
+- **`train.py`**: The training script creates the environment with `make_multi2single_env` and trains the mask network using `PPO` (the custom PPO) for 3e5 timesteps. The mask network is trained to maximize the reward, which is exactly the modified reward (original reward + bonus for blinding). This corresponds to maximizing \(\eta(\bar{\pi})\).
+
+Thus, the mask network is trained to maximize the expected total reward of the perturbed agent, i.e., \(J(\theta) = \max \eta(\bar{\pi})\), as required by the criterion.
+
+# Score
+1
+
+The code correctly implements the reformulated objective: the mask network is trained with PPO to maximize the perturbed agent’s reward, which is the original reward plus a bonus for blinding. The implementation matches the description in Section 3.3.
+2026-09-03 11:09:02 [info     ] model response: # Expectations
+The paper states that under Assumption 3.1, the expected total reward of the perturbed agent \(\eta(\bar{\pi})\) is upper bounded by \(\eta(\pi)\), so the objective can be reformulated to maximize \(\eta(\bar{\pi})\) instead of minimizing the absolute difference. The authors then use the vanilla PPO algorithm to train the state mask, with an additional reward bonus when the mask net chooses to blind (i.e., output 1). The new reward is \(R'(s_t, a_t) = R(s_t, a_t) + \alpha a_t^m\). Thus, the mask network is trained to maximize the cumulative reward of the perturbed agent, which is equivalent to \(J(\theta) = \max \eta(\bar{\pi})\).
+
+For the MuJoCo environments, I expect to see:
+- A mask network that outputs binary actions (0 or 1) where 1 corresponds to blinding (random action).
+- An environment wrapper that combines the pre‑trained policy with the mask network, so that the final action is either the pre‑trained action (if mask output is 0) or a random action (if mask output is 1).
+- The reward used to train the mask network is the original environment reward **plus an extra bonus** when the mask net outputs 1 (the blinding action).
+- The mask network is trained using a standard PPO implementation that maximizes the expected cumulative reward (i.e., \(\eta(\bar{\pi})\)).
+
+# Reality
+The relevant code is in `Refine_mujoco/masknet/`.
+
+- **`environment.py`**: The `Multi2SingleEnv` wrapper implements the combined policy. The `step` method receives `action` from the mask network (0 or 1). If `action == 0`, the wrapper takes a random action from the environment; otherwise, it takes the pre‑trained base action. The reward is modified in training mode:
+  ```python
+  if self.train:
+      reward += self.alpha * (1 - action)
+  ```
+  This adds a bonus when `action == 0` (i.e., when blinding occurs). The mapping is inverted relative to the paper’s notation (0 → blind, 1 → original), but the **effect is equivalent**: the mask network is rewarded for choosing to blind. The reward passed to the training algorithm is therefore the original reward plus a bonus when the mask net blinds.
+
+- **`cus_PPO.py`**: This is a custom PPO (Proximal Policy Optimization) implementation. It uses the standard PPO loss and does not modify the reward; it simply trains the policy to maximize the cumulative reward collected from the environment. The mask network’s policy is trained via this PPO class.
+
+- **`train.py`**: The training script creates the environment with `make_multi2single_env` and trains the mask network using `PPO` (the custom PPO) for 3e5 timesteps. The mask network is trained to maximize the reward, which is exactly the modified reward (original reward + bonus for blinding). This corresponds to maximizing \(\eta(\bar{\pi})\).
+
+Thus, the mask network is trained to maximize the expected total reward of the perturbed agent, i.e., \(J(\theta) = \max \eta(\bar{\pi})\), as required by the criterion.
+
+# Score
+1
+
+The code correctly implements the reformulated objective: the mask network is trained with PPO to maximize the perturbed agent’s reward, which is the original reward plus a bonus for blinding. The implementation matches the description in Section 3.3.

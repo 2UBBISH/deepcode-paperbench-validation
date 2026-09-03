@@ -1,0 +1,43 @@
+2026-09-03 11:05:04 [info     ] Grading leaf: For the MuJoCo environments, code for pretraining the policy network agent on each environment has been setup
+2026-09-03 11:05:26 [info     ] Model file selection raw output:
+Refine_mujoco/baseline/train.py
+Refine_mujoco/baseline/readme.md
+Refine_mujoco/PPO.py
+Refine_mujoco/OnPolicyAlgorithm.py
+Refine_mujoco/base_class.py
+Refine_mujoco/models.py
+Refine_mujoco/environment.py
+Refine_mujoco/callback.py
+Refine_mujoco/utils.py
+Refine_mujoco/retrain.py
+2026-09-03 11:05:26 [info     ] Model file selection raw output:
+Refine_mujoco/baseline/train.py
+Refine_mujoco/baseline/readme.md
+Refine_mujoco/PPO.py
+Refine_mujoco/OnPolicyAlgorithm.py
+Refine_mujoco/base_class.py
+Refine_mujoco/models.py
+Refine_mujoco/environment.py
+Refine_mujoco/callback.py
+Refine_mujoco/utils.py
+Refine_mujoco/retrain.py
+2026-09-03 11:06:45 [info     ] model response: # Expectations
+The paper describes experiments on four MuJoCo environments with dense rewards (Hopper, Walker2d, Reacher, HalfCheetah) and three sparse variants (SparseHopper, SparseWalker2d, SparseHalfCheetah). To reproduce the results, there must be code that pretrains a policy network (PPO agent) on **each** of these environments. The criterion specifically requires that the code for pretraining the policy network agent on each MuJoCo environment has been setup. I expect to see actual executable scripts or a parameterized script that can be used to train agents for all required environments (e.g., by passing the environment name as an argument). The code should implement the training loop (e.g., using PPO) and save the pretrained model for later refinement.
+
+# Reality
+The submission contains a file `Refine_mujoco/baseline/train.py`. This script uses `gym.make("Hopper-v3")` to create a single environment, wraps it in `DummyVecEnv` and `VecMonitor`, and then trains a PPO agent with `MlpPolicy` for 1 million timesteps. The model is saved to `tmp/ppo_hopper`. This provides code for pretraining on Hopper only. There is no other script or parameterization that would allow training on Walker2d, Reacher, HalfCheetah, or any sparse variant. The `readme.md` in the same directory mentions that the code applies to sparse MuJoCo games as well, but no actual code for other environments is present. The retraining script `retrain.py` is concerned with refinement, not pretraining.
+
+Thus, the submission only includes code for pretraining on Hopper, not for all MuJoCo environments required by the paper.
+
+# Score
+**0** – The criterion is not met because the submission does not provide code for pretraining the policy network agent on each MuJoCo environment. Only Hopper is covered; the other environments (Walker2d, Reacher, HalfCheetah, and sparse variants) are missing. A single hardcoded script for one environment is insufficient to satisfy the requirement.
+2026-09-03 11:06:45 [info     ] model response: # Expectations
+The paper describes experiments on four MuJoCo environments with dense rewards (Hopper, Walker2d, Reacher, HalfCheetah) and three sparse variants (SparseHopper, SparseWalker2d, SparseHalfCheetah). To reproduce the results, there must be code that pretrains a policy network (PPO agent) on **each** of these environments. The criterion specifically requires that the code for pretraining the policy network agent on each MuJoCo environment has been setup. I expect to see actual executable scripts or a parameterized script that can be used to train agents for all required environments (e.g., by passing the environment name as an argument). The code should implement the training loop (e.g., using PPO) and save the pretrained model for later refinement.
+
+# Reality
+The submission contains a file `Refine_mujoco/baseline/train.py`. This script uses `gym.make("Hopper-v3")` to create a single environment, wraps it in `DummyVecEnv` and `VecMonitor`, and then trains a PPO agent with `MlpPolicy` for 1 million timesteps. The model is saved to `tmp/ppo_hopper`. This provides code for pretraining on Hopper only. There is no other script or parameterization that would allow training on Walker2d, Reacher, HalfCheetah, or any sparse variant. The `readme.md` in the same directory mentions that the code applies to sparse MuJoCo games as well, but no actual code for other environments is present. The retraining script `retrain.py` is concerned with refinement, not pretraining.
+
+Thus, the submission only includes code for pretraining on Hopper, not for all MuJoCo environments required by the paper.
+
+# Score
+**0** – The criterion is not met because the submission does not provide code for pretraining the policy network agent on each MuJoCo environment. Only Hopper is covered; the other environments (Walker2d, Reacher, HalfCheetah, and sparse variants) are missing. A single hardcoded script for one environment is insufficient to satisfy the requirement.

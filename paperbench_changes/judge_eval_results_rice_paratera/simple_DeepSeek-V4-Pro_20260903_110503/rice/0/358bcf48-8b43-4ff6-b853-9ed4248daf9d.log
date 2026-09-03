@@ -1,0 +1,69 @@
+2026-09-03 11:05:04 [info     ] Grading leaf: For the autonomous driving environment, The StateMask ("Ours") Explanation method can be selected as the explanation method during retraining
+2026-09-03 11:05:52 [info     ] Model file selection raw output:
+Refine_auto_drive/retrain.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/readme.md
+2026-09-03 11:05:52 [info     ] Model file selection raw output:
+Refine_auto_drive/retrain.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/readme.md
+2026-09-03 11:06:44 [info     ] model response: # Expectations
+
+The criterion requires that for the autonomous driving environment, the submission includes code that allows the optimized StateMask explanation method (the "Ours" method, i.e., the mask network trained with the modified objective and vanilla PPO as described in Section 3.3 and Algorithm 1) to be selected and used as the explanation method during the retraining (refinement) process. This means the refinement code (Algorithm 2) must be able to load a trained mask network, run a trajectory with the pre‑trained policy, use the mask network to compute importance scores for each state, and then identify the most critical state to reset the environment. The code should also demonstrate that this explanation method is the one trained with the bonus reward for blinding and PPO, not the original StateMask or a random baseline.
+
+# Reality
+
+The submission contains several files for the autonomous driving environment. The refinement (retraining) entry point is `Refine_auto_drive/retrain.py`. It uses a custom environment wrapper `CustomWrapper` defined in `Refine_auto_drive/retrain_env.py`. Inside `CustomWrapper.reset`, when a random number is below the `go_prob` threshold, the method:
+
+1. Resets the environment and obtains an initial observation.
+2. Calls `gen_one_traj(obs, self.env, self.seed)` to collect a full trajectory while simultaneously obtaining importance scores from the mask network.
+3. Selects the starting state either by randomly picking a step from the trajectory or by taking the step with the maximum mask probability (importance score) – the latter corresponds to using the explanation method to pick the most critical state.
+4. Fast‑forwards the environment to that state by replaying the recorded actions.
+
+The `gen_one_traj` function is defined in `Refine_auto_drive/gen_retrain_traj.py`. It loads the trained mask network from a checkpoint file (`'/home/zck7060/DI‑drive/masknet_True_0.0001/ckpt/iteration_10000.pth.tar'`) and also loads the pre‑trained agent policy. Inside the episode loop, for each observation, it passes the observation through the mask network to compute the importance score (the softmax probability of the “0” action) and uses the agent’s policy to select the action. The importance scores and actions are recorded in a `Traj` object. This implementation directly uses the mask network to provide step‑level importance scores, i.e., the “Ours” explanation.
+
+The mask network itself is trained in `Refine_auto_drive/train_masknet.py` using the environment wrapper `DriveEnvWrapper` from `Refine_auto_drive/custom_masknet_env.py`. In that wrapper, the `step` method adds a bonus reward (`self.lamb * mask`) when the mask network outputs a “1” (blinding) and the final reward is adjusted. The training algorithm is PPO (via `PPOPolicy`), exactly as described in Algorithm 1 and Section 3.3. Therefore, the mask network is the optimized “Ours” explanation method.
+
+The retraining code thus successfully loads and uses this “Ours” explanation method to identify critical states during the refinement loop. Although the code does not include a configurable selector to switch between Random, StateMask, and Ours explanation methods, the specific criterion only asks that the “Ours” explanation method **can be selected** – i.e., that the implementation exists and is used during retraining. The submission demonstrates that the “Ours” explanation is implemented and is the method invoked when the refinement process needs to identify critical states.
+
+# Score
+
+1
+
+**Explanation:** The code in `Refine_auto_drive/gen_retrain_traj.py` and `Refine_auto_drive/retrain_env.py` loads a mask network trained with the modified objective and PPO (the “Ours” explanation) and uses it to compute importance scores and select critical states during the retraining process. This directly fulfills the requirement that the “Ours” explanation method can be selected as the explanation method for refinement. The absence of an explicit switch between all baseline methods does not detract from the fact that the required method is implemented and functional.
+2026-09-03 11:06:44 [info     ] model response: # Expectations
+
+The criterion requires that for the autonomous driving environment, the submission includes code that allows the optimized StateMask explanation method (the "Ours" method, i.e., the mask network trained with the modified objective and vanilla PPO as described in Section 3.3 and Algorithm 1) to be selected and used as the explanation method during the retraining (refinement) process. This means the refinement code (Algorithm 2) must be able to load a trained mask network, run a trajectory with the pre‑trained policy, use the mask network to compute importance scores for each state, and then identify the most critical state to reset the environment. The code should also demonstrate that this explanation method is the one trained with the bonus reward for blinding and PPO, not the original StateMask or a random baseline.
+
+# Reality
+
+The submission contains several files for the autonomous driving environment. The refinement (retraining) entry point is `Refine_auto_drive/retrain.py`. It uses a custom environment wrapper `CustomWrapper` defined in `Refine_auto_drive/retrain_env.py`. Inside `CustomWrapper.reset`, when a random number is below the `go_prob` threshold, the method:
+
+1. Resets the environment and obtains an initial observation.
+2. Calls `gen_one_traj(obs, self.env, self.seed)` to collect a full trajectory while simultaneously obtaining importance scores from the mask network.
+3. Selects the starting state either by randomly picking a step from the trajectory or by taking the step with the maximum mask probability (importance score) – the latter corresponds to using the explanation method to pick the most critical state.
+4. Fast‑forwards the environment to that state by replaying the recorded actions.
+
+The `gen_one_traj` function is defined in `Refine_auto_drive/gen_retrain_traj.py`. It loads the trained mask network from a checkpoint file (`'/home/zck7060/DI‑drive/masknet_True_0.0001/ckpt/iteration_10000.pth.tar'`) and also loads the pre‑trained agent policy. Inside the episode loop, for each observation, it passes the observation through the mask network to compute the importance score (the softmax probability of the “0” action) and uses the agent’s policy to select the action. The importance scores and actions are recorded in a `Traj` object. This implementation directly uses the mask network to provide step‑level importance scores, i.e., the “Ours” explanation.
+
+The mask network itself is trained in `Refine_auto_drive/train_masknet.py` using the environment wrapper `DriveEnvWrapper` from `Refine_auto_drive/custom_masknet_env.py`. In that wrapper, the `step` method adds a bonus reward (`self.lamb * mask`) when the mask network outputs a “1” (blinding) and the final reward is adjusted. The training algorithm is PPO (via `PPOPolicy`), exactly as described in Algorithm 1 and Section 3.3. Therefore, the mask network is the optimized “Ours” explanation method.
+
+The retraining code thus successfully loads and uses this “Ours” explanation method to identify critical states during the refinement loop. Although the code does not include a configurable selector to switch between Random, StateMask, and Ours explanation methods, the specific criterion only asks that the “Ours” explanation method **can be selected** – i.e., that the implementation exists and is used during retraining. The submission demonstrates that the “Ours” explanation is implemented and is the method invoked when the refinement process needs to identify critical states.
+
+# Score
+
+1
+
+**Explanation:** The code in `Refine_auto_drive/gen_retrain_traj.py` and `Refine_auto_drive/retrain_env.py` loads a mask network trained with the modified objective and PPO (the “Ours” explanation) and uses it to compute importance scores and select critical states during the retraining process. This directly fulfills the requirement that the “Ours” explanation method can be selected as the explanation method for refinement. The absence of an explicit switch between all baseline methods does not detract from the fact that the required method is implemented and functional.

@@ -1,0 +1,65 @@
+2026-09-03 11:07:34 [info     ] Grading leaf: In Experiment II, for the network defence environment, for the "JSRL" refinement method, code has been implemented for measuring cumulative reward throughout refinement
+2026-09-03 11:08:15 [info     ] Model file selection raw output:
+Refine_cage_challenge/retrain.py
+Refine_cage_challenge/readme.md
+Refine_cage_challenge/Agents/PPOAgent_Retrain.py
+Refine_cage_challenge/Agents/PPOAgent.py
+Refine_cage_challenge/Agents/MainAgent.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_retrain.py
+Refine_cage_challenge/PPO/ActorCritic.py
+Refine_cage_challenge/PPO/Memory.py
+Refine_cage_challenge/rollout_ppo.py
+Refine_cage_challenge/sample_mask_score.py
+2026-09-03 11:08:15 [info     ] Model file selection raw output:
+Refine_cage_challenge/retrain.py
+Refine_cage_challenge/readme.md
+Refine_cage_challenge/Agents/PPOAgent_Retrain.py
+Refine_cage_challenge/Agents/PPOAgent.py
+Refine_cage_challenge/Agents/MainAgent.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_retrain.py
+Refine_cage_challenge/PPO/ActorCritic.py
+Refine_cage_challenge/PPO/Memory.py
+Refine_cage_challenge/rollout_ppo.py
+Refine_cage_challenge/sample_mask_score.py
+2026-09-03 11:09:22 [info     ] model response: # Expectations
+The criterion requires that for the network defence environment (CAGE Challenge 2), the JSRL refining method is implemented, and that the code includes measurement of cumulative reward during the refinement process. According to the paper, JSRL is a baseline that uses a guide policy (the pretrained policy) and a curriculum of exploration frontiers to train an exploration policy. The submission should contain a concrete implementation of JSRL, and within that implementation, there should be logging or tracking of the cumulative reward over episodes to monitor the agent's performance during refinement. This could be printed to console or saved to a log, but there must be actual code that accumulates and records rewards throughout the JSRL training loop.
+
+# Reality
+The provided files for the network defence environment are located in the `Refine_cage_challenge/` folder. The following files are present:
+
+- `retrain.py`: Implements a reinforcement learning training loop that uses `PPOAgent_Retrain` and `ChallengeWrapper2_retrain`. The agent (`PPOAgent_Retrain`) incorporates Random Network Distillation (RND) exploration and a reset mechanism that selects critical states (via `gen_one_traj`). This corresponds to the "Ours" (RICE) refinement method, not JSRL.
+- `Agents/PPOAgent_Retrain.py`: The PPO agent with RND and support for resetting to critical states.
+- `Agents/PPOAgent.py`: The baseline PPO agent without RND.
+- `Agents/MainAgent.py`: A wrapper agent that loads different policies based on fingerprints.
+- `Wrappers/ChallengeWrapper2_retrain.py`: A gym wrapper that includes the reset logic (using `gen_one_traj` and a `go_prob` for mixing initial states).
+- `rollout_ppo.py`: Script for rolling out the pretrained agent to evaluate its performance.
+- `sample_mask_score.py`: Script for collecting mask probabilities and actions from a pretrained mask network.
+- `PPO/ActorCritic.py`, `PPO/Memory.py`: Standard PPO network and memory implementation.
+
+There is **no file** that implements the JSRL algorithm. No curriculum, guide policy, or exploration policy specific to JSRL is present. Consequently, there is no code that measures cumulative reward throughout refinement for JSRL in this environment.
+
+# Score
+0
+
+The submission does not contain any implementation of the JSRL refinement method for the network defence environment, nor does it include code to measure cumulative reward during JSRL refinement. The criterion is therefore not met.
+2026-09-03 11:09:22 [info     ] model response: # Expectations
+The criterion requires that for the network defence environment (CAGE Challenge 2), the JSRL refining method is implemented, and that the code includes measurement of cumulative reward during the refinement process. According to the paper, JSRL is a baseline that uses a guide policy (the pretrained policy) and a curriculum of exploration frontiers to train an exploration policy. The submission should contain a concrete implementation of JSRL, and within that implementation, there should be logging or tracking of the cumulative reward over episodes to monitor the agent's performance during refinement. This could be printed to console or saved to a log, but there must be actual code that accumulates and records rewards throughout the JSRL training loop.
+
+# Reality
+The provided files for the network defence environment are located in the `Refine_cage_challenge/` folder. The following files are present:
+
+- `retrain.py`: Implements a reinforcement learning training loop that uses `PPOAgent_Retrain` and `ChallengeWrapper2_retrain`. The agent (`PPOAgent_Retrain`) incorporates Random Network Distillation (RND) exploration and a reset mechanism that selects critical states (via `gen_one_traj`). This corresponds to the "Ours" (RICE) refinement method, not JSRL.
+- `Agents/PPOAgent_Retrain.py`: The PPO agent with RND and support for resetting to critical states.
+- `Agents/PPOAgent.py`: The baseline PPO agent without RND.
+- `Agents/MainAgent.py`: A wrapper agent that loads different policies based on fingerprints.
+- `Wrappers/ChallengeWrapper2_retrain.py`: A gym wrapper that includes the reset logic (using `gen_one_traj` and a `go_prob` for mixing initial states).
+- `rollout_ppo.py`: Script for rolling out the pretrained agent to evaluate its performance.
+- `sample_mask_score.py`: Script for collecting mask probabilities and actions from a pretrained mask network.
+- `PPO/ActorCritic.py`, `PPO/Memory.py`: Standard PPO network and memory implementation.
+
+There is **no file** that implements the JSRL algorithm. No curriculum, guide policy, or exploration policy specific to JSRL is present. Consequently, there is no code that measures cumulative reward throughout refinement for JSRL in this environment.
+
+# Score
+0
+
+The submission does not contain any implementation of the JSRL refinement method for the network defence environment, nor does it include code to measure cumulative reward during JSRL refinement. The criterion is therefore not met.

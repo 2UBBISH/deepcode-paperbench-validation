@@ -1,0 +1,69 @@
+2026-09-03 11:06:45 [info     ] Grading leaf: For the autonomous driving environment, the objective being optimized is $J(\theta)=\max \eta(\bar{\pi})$, as outlined in section 3.3.
+2026-09-03 11:07:19 [info     ] Model file selection raw output:
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/retrain.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/readme.md
+README.md
+2026-09-03 11:07:19 [info     ] Model file selection raw output:
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/retrain.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/readme.md
+README.md
+2026-09-03 11:08:01 [info     ] model response: # Expectations
+The criterion is about the objective function for training the mask network in the autonomous driving environment. According to Section 3.3, the paper transforms the original StateMask objective to \(J(\theta)=\max \eta(\bar{\pi})\) (maximizing the expected total reward of the perturbed agent), and then adds a reward bonus for choosing the blind action to avoid a trivial solution. The mask network is trained with PPO using this modified reward. I expect to see in the code:
+
+- The mask network is trained via PPO (or a similar policy gradient method) to maximize the cumulative reward of the perturbed agent.
+- The reward signal used for training consists of the environment reward plus an extra bonus when the mask network outputs “1” (blinding), as \(R'(s_t,a_t)=R(s_t,a_t)+\alpha a_t^m\).
+- The training loop should be set up to maximize the total reward (i.e., the objective is indeed \(\max \eta(\bar{\pi})\)).
+
+# Reality
+The relevant files for the autonomous driving environment are:
+
+- `Refine_auto_drive/train_masknet.py`: This script trains the mask network. It uses a `PPOPolicy` (from DI-engine) and an environment wrapper `DriveEnvWrapper`. It calls `collector.collect` and `learner.train` with the PPO algorithm, so the mask network is indeed trained with PPO to maximize the expected cumulative reward.
+
+- `Refine_auto_drive/custom_masknet_env.py`: The `DriveEnvWrapper` class implements the perturbed environment. Its `step` method:
+  - Takes the mask network’s action (`action[i]`, presumably 0 or 1).
+  - If action == 1, it replaces the agent’s action with a random action (blinding) and sets `mask = 1`.
+  - Otherwise, it uses the agent’s action (no blinding) and sets `mask = 0`.
+  - The reward is the environment reward (`rew`). Additionally, a bonus reward `self.lamb * mask` is added either per step or at the end (depending on `self.bonus_last`). `self.lamb` is initialized to `1e-4`, acting as the hyperparameter \(\alpha\).
+  - The total reward returned is the environment reward plus the bonus for masking. This matches the reward function \(R'(s_t,a_t)=R(s_t,a_t)+\alpha a_t^m\).
+
+Thus, the mask network’s policy is trained via PPO to maximize the expected total reward of the perturbed agent, which is exactly the transformed objective \(J(\theta)=\max \eta(\bar{\pi})\). The implementation satisfies the criterion.
+
+# Score
+1
+2026-09-03 11:08:01 [info     ] model response: # Expectations
+The criterion is about the objective function for training the mask network in the autonomous driving environment. According to Section 3.3, the paper transforms the original StateMask objective to \(J(\theta)=\max \eta(\bar{\pi})\) (maximizing the expected total reward of the perturbed agent), and then adds a reward bonus for choosing the blind action to avoid a trivial solution. The mask network is trained with PPO using this modified reward. I expect to see in the code:
+
+- The mask network is trained via PPO (or a similar policy gradient method) to maximize the cumulative reward of the perturbed agent.
+- The reward signal used for training consists of the environment reward plus an extra bonus when the mask network outputs “1” (blinding), as \(R'(s_t,a_t)=R(s_t,a_t)+\alpha a_t^m\).
+- The training loop should be set up to maximize the total reward (i.e., the objective is indeed \(\max \eta(\bar{\pi})\)).
+
+# Reality
+The relevant files for the autonomous driving environment are:
+
+- `Refine_auto_drive/train_masknet.py`: This script trains the mask network. It uses a `PPOPolicy` (from DI-engine) and an environment wrapper `DriveEnvWrapper`. It calls `collector.collect` and `learner.train` with the PPO algorithm, so the mask network is indeed trained with PPO to maximize the expected cumulative reward.
+
+- `Refine_auto_drive/custom_masknet_env.py`: The `DriveEnvWrapper` class implements the perturbed environment. Its `step` method:
+  - Takes the mask network’s action (`action[i]`, presumably 0 or 1).
+  - If action == 1, it replaces the agent’s action with a random action (blinding) and sets `mask = 1`.
+  - Otherwise, it uses the agent’s action (no blinding) and sets `mask = 0`.
+  - The reward is the environment reward (`rew`). Additionally, a bonus reward `self.lamb * mask` is added either per step or at the end (depending on `self.bonus_last`). `self.lamb` is initialized to `1e-4`, acting as the hyperparameter \(\alpha\).
+  - The total reward returned is the environment reward plus the bonus for masking. This matches the reward function \(R'(s_t,a_t)=R(s_t,a_t)+\alpha a_t^m\).
+
+Thus, the mask network’s policy is trained via PPO to maximize the expected total reward of the perturbed agent, which is exactly the transformed objective \(J(\theta)=\max \eta(\bar{\pi})\). The implementation satisfies the criterion.
+
+# Score
+1

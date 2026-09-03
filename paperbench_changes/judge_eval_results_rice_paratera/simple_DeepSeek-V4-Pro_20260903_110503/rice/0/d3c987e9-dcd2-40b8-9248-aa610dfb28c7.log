@@ -1,0 +1,97 @@
+2026-09-03 11:05:04 [info     ] Grading leaf: For the selfish mining environment, the original StateMask Explanation method can be selected as the explanation method during retraining
+2026-09-03 11:05:29 [info     ] Model file selection raw output:
+Refine_selfish_mining/retrain.py
+Refine_selfish_mining/masknet/train.py
+Refine_selfish_mining/masknet/sample_mask_score.py
+Refine_selfish_mining/masknet/sample_value_score.py
+Refine_selfish_mining/masknet/utils.py
+Refine_selfish_mining/utils.py
+Refine_selfish_mining/masknet/replay.py
+Refine_selfish_mining/masknet/fidelity_score.py
+Refine_selfish_mining/masknet/replay.sh
+Refine_selfish_mining/baseline/reinforcement_learning/blockchain_simulator/mdp_blockchain_simulator_retrain.py
+2026-09-03 11:05:29 [info     ] Model file selection raw output:
+Refine_selfish_mining/retrain.py
+Refine_selfish_mining/masknet/train.py
+Refine_selfish_mining/masknet/sample_mask_score.py
+Refine_selfish_mining/masknet/sample_value_score.py
+Refine_selfish_mining/masknet/utils.py
+Refine_selfish_mining/utils.py
+Refine_selfish_mining/masknet/replay.py
+Refine_selfish_mining/masknet/fidelity_score.py
+Refine_selfish_mining/masknet/replay.sh
+Refine_selfish_mining/baseline/reinforcement_learning/blockchain_simulator/mdp_blockchain_simulator_retrain.py
+2026-09-03 11:05:29 [info     ] File /home/deepevol/deepevol/frontier-evals/project/paperbench/data/judge_eval/rice/0/submission/Refine_selfish_mining/baseline/reinforcement_learning/blockchain_simulator/mdp_blockchain_simulator_retrain.py not found!
+2026-09-03 11:05:29 [info     ] File /home/deepevol/deepevol/frontier-evals/project/paperbench/data/judge_eval/rice/0/submission/Refine_selfish_mining/baseline/reinforcement_learning/blockchain_simulator/mdp_blockchain_simulator_retrain.py not found!
+2026-09-03 11:06:17 [info     ] model response: # Expectations
+
+The criterion asks whether the submission contains code allowing the **original StateMask explanation method** to be selected as the explanation method during **selfish mining retraining**.
+
+From the paper, the original StateMask approach is a distinct baseline explanation method from the authors’ proposed “Ours” method. During the refining experiments in Table 1, the paper fixes the refining method and varies the explanation method among Random, StateMask, and Ours. Therefore, a correct implementation for this criterion should include a clear, runnable mechanism in the selfish mining refining/retraining pipeline to choose “StateMask” as the explanation source, separate from Random and the proposed mask method. This selection should affect how critical states are identified and used as reset states during retraining.
+
+I would expect to see something like:
+
+- A command-line argument or configuration option such as `--explanation-method` or `--mask-type` with a supported value corresponding to StateMask.
+- Retraining code that loads/runs the original StateMask model when that option is selected.
+- The selected StateMask explanation being used to select critical states for the mixed initial-state distribution during retraining.
+
+Mere presence of a mask-network training or evaluation script is not enough unless it is actually wired into the selfish mining retraining pipeline and supports the original StateMask method.
+
+# Reality
+
+Reviewing the provided files:
+
+- `Refine_selfish_mining/retrain.py` is the main refining/retraining script for selfish mining. Its argument parser includes `--go-prob`, `--wo_exp`, `--rnd-lr`, `--rnd-bonus-scale`, etc., but does **not** include any argument for selecting an explanation method such as StateMask.  
+  The retraining setup loads a DQN policy and wraps it with `RNDPolicy`, then creates environments via `MDPBlockchainSimulatorRetrain`. There is no visible code that loads a StateMask model, computes original StateMask importance scores, or uses StateMask-selected critical states during retraining. The `go_prob` parameter may control reset probability, but it is not connected to a StateMask explanation selection mechanism in the submitted code.
+
+- `Refine_selfish_mining/masknet/train.py` trains a mask network using `PPOPolicy` and a custom `MDPBlockchainSimulatorMaskNet`. However, this appears to be the authors’ proposed simplified/“Ours” mask training approach rather than the original StateMask objective optimized via primal-dual methods. It is not shown as selectable during the main retraining script.
+
+- `Refine_selfish_mining/masknet/replay.py` has a `--method` argument with values such as `random`, `mask`, `trust`, `highlights`, and `max`. However, this script is for replay/fidelity evaluation, not for retraining, and it does not clearly implement or select the original StateMask explanation method. Furthermore, this mechanism is not integrated into `retrain.py`.
+
+- `Refine_selfish_mining/masknet/sample_mask_score.py`, `sample_value_score.py`, and `fidelity_score.py` are explanation evaluation/utilities, not retraining integration.
+
+- Some relevant implementation may be hidden in imported modules such as `MDPBlockchainSimulatorRetrain` or `MDPBlockchainSimulatorMaskNet`, but those files are not included in the submission. According to the grading instructions, missing files should be treated as failure to produce the implementation.
+
+Thus, there is no visible actual code in the submitted files that allows the original StateMask explanation method to be selected and used as the explanation method during selfish mining retraining.
+
+# Score
+
+0
+
+The criterion is not met. The provided submission does not contain code that enables the original StateMask explanation method to be selected during selfish mining retraining, nor does it show StateMask being wired into the refining pipeline as an explanation option.
+2026-09-03 11:06:17 [info     ] model response: # Expectations
+
+The criterion asks whether the submission contains code allowing the **original StateMask explanation method** to be selected as the explanation method during **selfish mining retraining**.
+
+From the paper, the original StateMask approach is a distinct baseline explanation method from the authors’ proposed “Ours” method. During the refining experiments in Table 1, the paper fixes the refining method and varies the explanation method among Random, StateMask, and Ours. Therefore, a correct implementation for this criterion should include a clear, runnable mechanism in the selfish mining refining/retraining pipeline to choose “StateMask” as the explanation source, separate from Random and the proposed mask method. This selection should affect how critical states are identified and used as reset states during retraining.
+
+I would expect to see something like:
+
+- A command-line argument or configuration option such as `--explanation-method` or `--mask-type` with a supported value corresponding to StateMask.
+- Retraining code that loads/runs the original StateMask model when that option is selected.
+- The selected StateMask explanation being used to select critical states for the mixed initial-state distribution during retraining.
+
+Mere presence of a mask-network training or evaluation script is not enough unless it is actually wired into the selfish mining retraining pipeline and supports the original StateMask method.
+
+# Reality
+
+Reviewing the provided files:
+
+- `Refine_selfish_mining/retrain.py` is the main refining/retraining script for selfish mining. Its argument parser includes `--go-prob`, `--wo_exp`, `--rnd-lr`, `--rnd-bonus-scale`, etc., but does **not** include any argument for selecting an explanation method such as StateMask.  
+  The retraining setup loads a DQN policy and wraps it with `RNDPolicy`, then creates environments via `MDPBlockchainSimulatorRetrain`. There is no visible code that loads a StateMask model, computes original StateMask importance scores, or uses StateMask-selected critical states during retraining. The `go_prob` parameter may control reset probability, but it is not connected to a StateMask explanation selection mechanism in the submitted code.
+
+- `Refine_selfish_mining/masknet/train.py` trains a mask network using `PPOPolicy` and a custom `MDPBlockchainSimulatorMaskNet`. However, this appears to be the authors’ proposed simplified/“Ours” mask training approach rather than the original StateMask objective optimized via primal-dual methods. It is not shown as selectable during the main retraining script.
+
+- `Refine_selfish_mining/masknet/replay.py` has a `--method` argument with values such as `random`, `mask`, `trust`, `highlights`, and `max`. However, this script is for replay/fidelity evaluation, not for retraining, and it does not clearly implement or select the original StateMask explanation method. Furthermore, this mechanism is not integrated into `retrain.py`.
+
+- `Refine_selfish_mining/masknet/sample_mask_score.py`, `sample_value_score.py`, and `fidelity_score.py` are explanation evaluation/utilities, not retraining integration.
+
+- Some relevant implementation may be hidden in imported modules such as `MDPBlockchainSimulatorRetrain` or `MDPBlockchainSimulatorMaskNet`, but those files are not included in the submission. According to the grading instructions, missing files should be treated as failure to produce the implementation.
+
+Thus, there is no visible actual code in the submitted files that allows the original StateMask explanation method to be selected and used as the explanation method during selfish mining retraining.
+
+# Score
+
+0
+
+The criterion is not met. The provided submission does not contain code that enables the original StateMask explanation method to be selected during selfish mining retraining, nor does it show StateMask being wired into the refining pipeline as an explanation option.

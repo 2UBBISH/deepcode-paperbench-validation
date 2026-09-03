@@ -1,0 +1,99 @@
+2026-09-03 11:05:04 [info     ] Grading leaf: For the network defence environment, code for constructing a mixed initial state distribution by combining default initial states and critical states identified by the "Ours" explanation method has been implemented as described in Section 3.3.
+2026-09-03 11:05:46 [info     ] Model file selection raw output:
+Refine_cage_challenge/retrain.py
+Refine_cage_challenge/sample_mask_score.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_retrain.py
+Refine_cage_challenge/Agents/PPOAgent_Retrain.py
+Refine_cage_challenge/rollout_mask.py
+Refine_cage_challenge/rollout_ppo.py
+Refine_cage_challenge/Agents/rnd_model.py
+Refine_cage_challenge/PPO/ActorCritic.py
+Refine_cage_challenge/PPO/Memory.py
+Refine_cage_challenge/readme.md
+2026-09-03 11:05:46 [info     ] Model file selection raw output:
+Refine_cage_challenge/retrain.py
+Refine_cage_challenge/sample_mask_score.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_retrain.py
+Refine_cage_challenge/Agents/PPOAgent_Retrain.py
+Refine_cage_challenge/rollout_mask.py
+Refine_cage_challenge/rollout_ppo.py
+Refine_cage_challenge/Agents/rnd_model.py
+Refine_cage_challenge/PPO/ActorCritic.py
+Refine_cage_challenge/PPO/Memory.py
+Refine_cage_challenge/readme.md
+2026-09-03 11:06:36 [info     ] model response: # Expectations
+The paper describes that for the refining process, the agent should be reset to a mixed initial state distribution that combines the default initial states and critical states identified by the explanation method. Specifically, Section 3.3 states: "We then set the initial distribution μ as a mixture of the selected important states distribution … and the original initial distribution of interest ρ: μ(s) = β d_ρ^{hat π}(s) + (1‑β) ρ(s), where β is a hyper‑parameter." In the refining algorithm (Algorithm 2), this is implemented by sampling a random number; if it is less than a threshold p, the agent is reset to the most critical state identified via the state mask, otherwise it is reset to a default initial state sampled from ρ.
+
+For the network defence environment (Cage Challenge 2), I expect to see actual code that:
+- Takes a probability p (or a similar controlling parameter),
+- On environment reset, with probability p, obtains a trajectory from the pre‑trained policy, uses the explanation method (state mask) to find the most critical state, and resets the environment to that state, and
+- With probability 1‑p, resets the environment to the default initial state distribution.
+
+The code must correctly implement both branches and actually perform the reset, not merely describe the intention.
+
+# Reality
+The submission contains a wrapper for the Cage Challenge 2 environment in `Refine_cage_challenge/Wrappers/ChallengeWrapper2_retrain.py`. The `reset()` method attempts to implement the mixed initial distribution:
+
+```python
+def reset(self):
+    self.step_counter = 0
+    if np.random.rand() < self.go_prob:
+        action_record, mask_record = gen_one_traj()
+        eps_len = len(action_record)
+        if self.random_sampling:
+            start_idx = np.random.choice(eps_len)
+        else:
+            start_idx = np.argmax(mask_record)
+        
+        obs = self.env.reset()
+        for i in range(start_idx):
+            obs, reward, done, info = self.env.step(action_record[i])
+    return obs
+```
+
+This code shows an attempt to select the most critical state (using `argmax` on `mask_record`) and then fast‑forward to that state. However, the `else` branch (when `np.random.rand() >= self.go_prob`) is missing. In that case, the method does not call `self.env.reset()` at all, so it returns an undefined or stale observation. A correct mixed initial distribution must reset the environment to the default initial state when the random number exceeds the threshold. The missing `else` branch means the implementation is incomplete and does not correctly construct the mixture.
+
+No other file in the submission provides this logic for the network defence environment. The `retrain.py` file uses this wrapper, but the bug remains.
+
+# Score
+0
+
+The code attempts to implement the mixed initial distribution, but the critical `else` branch that resets to the default initial state is missing. Therefore, the implementation is incorrect and does not meet the requirement of constructing a mixture of default initial states and critical states. The criterion is not satisfied.
+2026-09-03 11:06:36 [info     ] model response: # Expectations
+The paper describes that for the refining process, the agent should be reset to a mixed initial state distribution that combines the default initial states and critical states identified by the explanation method. Specifically, Section 3.3 states: "We then set the initial distribution μ as a mixture of the selected important states distribution … and the original initial distribution of interest ρ: μ(s) = β d_ρ^{hat π}(s) + (1‑β) ρ(s), where β is a hyper‑parameter." In the refining algorithm (Algorithm 2), this is implemented by sampling a random number; if it is less than a threshold p, the agent is reset to the most critical state identified via the state mask, otherwise it is reset to a default initial state sampled from ρ.
+
+For the network defence environment (Cage Challenge 2), I expect to see actual code that:
+- Takes a probability p (or a similar controlling parameter),
+- On environment reset, with probability p, obtains a trajectory from the pre‑trained policy, uses the explanation method (state mask) to find the most critical state, and resets the environment to that state, and
+- With probability 1‑p, resets the environment to the default initial state distribution.
+
+The code must correctly implement both branches and actually perform the reset, not merely describe the intention.
+
+# Reality
+The submission contains a wrapper for the Cage Challenge 2 environment in `Refine_cage_challenge/Wrappers/ChallengeWrapper2_retrain.py`. The `reset()` method attempts to implement the mixed initial distribution:
+
+```python
+def reset(self):
+    self.step_counter = 0
+    if np.random.rand() < self.go_prob:
+        action_record, mask_record = gen_one_traj()
+        eps_len = len(action_record)
+        if self.random_sampling:
+            start_idx = np.random.choice(eps_len)
+        else:
+            start_idx = np.argmax(mask_record)
+        
+        obs = self.env.reset()
+        for i in range(start_idx):
+            obs, reward, done, info = self.env.step(action_record[i])
+    return obs
+```
+
+This code shows an attempt to select the most critical state (using `argmax` on `mask_record`) and then fast‑forward to that state. However, the `else` branch (when `np.random.rand() >= self.go_prob`) is missing. In that case, the method does not call `self.env.reset()` at all, so it returns an undefined or stale observation. A correct mixed initial distribution must reset the environment to the default initial state when the random number exceeds the threshold. The missing `else` branch means the implementation is incomplete and does not correctly construct the mixture.
+
+No other file in the submission provides this logic for the network defence environment. The `retrain.py` file uses this wrapper, but the bug remains.
+
+# Score
+0
+
+The code attempts to implement the mixed initial distribution, but the critical `else` branch that resets to the default initial state is missing. Therefore, the implementation is incorrect and does not meet the requirement of constructing a mixture of default initial states and critical states. The criterion is not satisfied.

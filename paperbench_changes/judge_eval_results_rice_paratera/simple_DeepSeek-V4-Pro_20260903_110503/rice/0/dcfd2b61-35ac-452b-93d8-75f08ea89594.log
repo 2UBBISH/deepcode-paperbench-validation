@@ -1,0 +1,65 @@
+2026-09-03 11:05:04 [info     ] Grading leaf: For the network defence environment, the original StateMask Explanation method can be selected for generating rollouts (without training)
+2026-09-03 11:05:51 [info     ] Model file selection raw output:
+Refine_cage_challenge/rollout_mask.py
+Refine_cage_challenge/Agents/PPOAgent_mask.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_mask.py
+Refine_cage_challenge/sample_mask_score.py
+Refine_cage_challenge/readme.md
+Refine_cage_challenge/replay.py
+Refine_cage_challenge/Agents/PPOAgent.py
+Refine_cage_challenge/ppo_train.py
+Refine_cage_challenge/retrain.py
+Refine_cage_challenge/Agents/MainAgent.py
+2026-09-03 11:05:51 [info     ] Model file selection raw output:
+Refine_cage_challenge/rollout_mask.py
+Refine_cage_challenge/Agents/PPOAgent_mask.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_mask.py
+Refine_cage_challenge/sample_mask_score.py
+Refine_cage_challenge/readme.md
+Refine_cage_challenge/replay.py
+Refine_cage_challenge/Agents/PPOAgent.py
+Refine_cage_challenge/ppo_train.py
+Refine_cage_challenge/retrain.py
+Refine_cage_challenge/Agents/MainAgent.py
+2026-09-03 11:06:59 [info     ] model response: # Expectations
+The paper proposes RICE, which includes an explanation method based on an alternative design of StateMask. The original StateMask explanation method (Cheng et al., 2023) is used as a baseline in the evaluation. For the network defence (Cage Challenge 2) environment, the submission should implement the original StateMask explanation method so that it can be employed for generating rollouts *without training*. That means:
+
+- There must be a class or function that represents a trained original StateMask mask network, which can be loaded from a checkpoint.
+- It should be able to take a state as input and output a step‑level importance score (e.g., probability of the mask network outputting “0”, i.e., not blinding the target agent).  
+- There should be a mechanism to select this original StateMask method (as opposed to the “Ours” method or a random explanation) when generating rollouts—for example, to compute importance scores along a trajectory for the fidelity metric or for the refining process.
+
+The original StateMask uses a different training objective ($J(\theta)=\min |\eta(\pi)-\eta(\bar{\pi})|$) and a prime‑dual optimization, which is distinct from the “Ours” method described in Section 3.3. Therefore, the implementation of the original StateMask should not be confused with the simplified mask network introduced in the paper.
+
+# Reality
+The provided files for the network defence environment are:
+
+- `Refine_cage_challenge/Agents/PPOAgent_mask.py` – defines a mask agent (`PPOAgent_mask`) that uses an ActorCritic with two outputs (mask or not). Its `get_action` uses a baseline policy and the mask policy; it also adds a lazy reward when masking. The training method inside this class is standard PPO, not the prime‑dual method.  
+- `Refine_cage_challenge/rollout_mask.py` – loads a pre‑trained mask network (`PPOAgent_mask`) and runs episodes, but the mask network is the “Ours” variant (it uses the lazy reward and its training objective is not the original StateMask’s).  
+- `Refine_cage_challenge/sample_mask_score.py` – uses `PPOAgent_mask` to record mask probabilities (the probability of not masking) for trajectories. This is the “Ours” explanation method.  
+- `Refine_cage_challenge/replay.py` – computes fidelity scores by replaying trajectories with a sliding window. It accepts a `--method` argument that can be `"mask"` or `"random"`, but `"mask"` refers to the mask probabilities produced by the “Ours” method (via `sample_mask_score.py`). There is no option to use the original StateMask explanation.  
+
+Nowhere in these files is there an implementation of the original StateMask explanation method for the network defence environment. No class or function corresponds to a mask network trained with the original objective and prime‑dual optimization. There is no code that loads a separate original StateMask model and produces importance scores for rollouts. Consequently, the submission does **not** allow the original StateMask explanation method to be selected for generating rollouts.
+
+# Score
+The criterion is not met. Score: **0**
+2026-09-03 11:06:59 [info     ] model response: # Expectations
+The paper proposes RICE, which includes an explanation method based on an alternative design of StateMask. The original StateMask explanation method (Cheng et al., 2023) is used as a baseline in the evaluation. For the network defence (Cage Challenge 2) environment, the submission should implement the original StateMask explanation method so that it can be employed for generating rollouts *without training*. That means:
+
+- There must be a class or function that represents a trained original StateMask mask network, which can be loaded from a checkpoint.
+- It should be able to take a state as input and output a step‑level importance score (e.g., probability of the mask network outputting “0”, i.e., not blinding the target agent).  
+- There should be a mechanism to select this original StateMask method (as opposed to the “Ours” method or a random explanation) when generating rollouts—for example, to compute importance scores along a trajectory for the fidelity metric or for the refining process.
+
+The original StateMask uses a different training objective ($J(\theta)=\min |\eta(\pi)-\eta(\bar{\pi})|$) and a prime‑dual optimization, which is distinct from the “Ours” method described in Section 3.3. Therefore, the implementation of the original StateMask should not be confused with the simplified mask network introduced in the paper.
+
+# Reality
+The provided files for the network defence environment are:
+
+- `Refine_cage_challenge/Agents/PPOAgent_mask.py` – defines a mask agent (`PPOAgent_mask`) that uses an ActorCritic with two outputs (mask or not). Its `get_action` uses a baseline policy and the mask policy; it also adds a lazy reward when masking. The training method inside this class is standard PPO, not the prime‑dual method.  
+- `Refine_cage_challenge/rollout_mask.py` – loads a pre‑trained mask network (`PPOAgent_mask`) and runs episodes, but the mask network is the “Ours” variant (it uses the lazy reward and its training objective is not the original StateMask’s).  
+- `Refine_cage_challenge/sample_mask_score.py` – uses `PPOAgent_mask` to record mask probabilities (the probability of not masking) for trajectories. This is the “Ours” explanation method.  
+- `Refine_cage_challenge/replay.py` – computes fidelity scores by replaying trajectories with a sliding window. It accepts a `--method` argument that can be `"mask"` or `"random"`, but `"mask"` refers to the mask probabilities produced by the “Ours” method (via `sample_mask_score.py`). There is no option to use the original StateMask explanation.  
+
+Nowhere in these files is there an implementation of the original StateMask explanation method for the network defence environment. No class or function corresponds to a mask network trained with the original objective and prime‑dual optimization. There is no code that loads a separate original StateMask model and produces importance scores for rollouts. Consequently, the submission does **not** allow the original StateMask explanation method to be selected for generating rollouts.
+
+# Score
+The criterion is not met. Score: **0**

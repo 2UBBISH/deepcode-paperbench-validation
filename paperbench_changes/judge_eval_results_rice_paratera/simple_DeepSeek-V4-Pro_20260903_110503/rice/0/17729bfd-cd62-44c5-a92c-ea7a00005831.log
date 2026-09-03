@@ -1,0 +1,71 @@
+2026-09-03 11:05:04 [info     ] Grading leaf: For the MuJoCo environments, the mask network objective $J(\theta)$ has been implemented to match what is outlined in section 3.3, namely $J(\theta)=\min |\eta(\pi)-\eta(\bar{\pi})|$
+2026-09-03 11:05:50 [info     ] Model file selection raw output:
+Refine_mujoco/masknet/train.py
+Refine_mujoco/masknet/cus_PPO.py
+Refine_mujoco/masknet/environment.py
+Refine_mujoco/PPO.py
+Refine_mujoco/masknet/readme.md
+Refine_mujoco/retrain.py
+Refine_mujoco/masknet/gen_fid.py
+Refine_mujoco/masknet/fid_test.py
+Refine_mujoco/base_class.py
+Refine_mujoco/OnPolicyAlgorithm.py
+2026-09-03 11:05:50 [info     ] Model file selection raw output:
+Refine_mujoco/masknet/train.py
+Refine_mujoco/masknet/cus_PPO.py
+Refine_mujoco/masknet/environment.py
+Refine_mujoco/PPO.py
+Refine_mujoco/masknet/readme.md
+Refine_mujoco/retrain.py
+Refine_mujoco/masknet/gen_fid.py
+Refine_mujoco/masknet/fid_test.py
+Refine_mujoco/base_class.py
+Refine_mujoco/OnPolicyAlgorithm.py
+2026-09-03 11:07:35 [info     ] model response: # Expectations
+
+Looking at the criterion, it explicitly requires that for the MuJoCo environments, the mask network objective \(J(\theta)\) is implemented as \(J(\theta)=\min |\eta(\pi)-\eta(\bar{\pi})|\). This formula comes from the original StateMask paper and is repeated in Section 3.3 of the RICE paper. A correct implementation of this objective would involve:
+
+- Computing the expected total reward of the original pre-trained policy \(\pi\) (i.e., \(\eta(\pi)\)).
+- Computing the expected total reward of the perturbed policy \(\bar{\pi}\) (the policy that sometimes substitutes random actions, controlled by the mask network).
+- Taking the absolute difference between the two.
+- Minimizing that difference during training of the mask network.
+
+I therefore expect to find code that explicitly calculates \(\eta(\pi)\) and \(\eta(\bar{\pi})\) and minimizes the absolute difference, or uses a surrogate/optimization procedure that directly targets this objective.
+
+# Reality
+
+Examining the submission files:
+
+- **`Refine_mujoco/masknet/environment.py`** defines a `Multi2SingleEnv` wrapper that modifies the reward by adding a bonus \(\alpha \cdot (1 - \text{action})\) when `train=True`. The mask network is trained via PPO on this modified reward.
+- **`Refine_mujoco/masknet/cus_PPO.py`** is a custom PPO implementation that trains the mask network to maximize the cumulative reward of the environment (the perturbed agent). The loss optimizes the standard PPO surrogate objective, which essentially maximizes the expected total reward \(\eta(\bar{\pi})\).
+- **`Refine_mujoco/masknet/train.py`** loads the custom PPO and trains the mask network on the modified environment.
+
+Nowhere in the code is there any computation of \(\eta(\pi)\), the expected reward of the original policy. Nor is there any computation of the absolute difference \(|\eta(\pi)-\eta(\bar{\pi})|\) or any loss that minimizes that difference. The training objective is simply to maximize the (modified) reward of the perturbed agent, i.e., \(\max \eta(\bar{\pi})\), which the paper describes as a *transformed* objective after applying Theorem 3.3. The original objective \(J(\theta)=\min |\eta(\pi)-\eta(\bar{\pi})|\) is not implemented.
+
+# Score
+
+The criterion is not met. The code does not implement the objective \(J(\theta)=\min |\eta(\pi)-\eta(\bar{\pi})|\); it implements a different objective (\(\max \eta(\bar{\pi})\) with a bonus). Therefore, the score is **0**.
+2026-09-03 11:07:35 [info     ] model response: # Expectations
+
+Looking at the criterion, it explicitly requires that for the MuJoCo environments, the mask network objective \(J(\theta)\) is implemented as \(J(\theta)=\min |\eta(\pi)-\eta(\bar{\pi})|\). This formula comes from the original StateMask paper and is repeated in Section 3.3 of the RICE paper. A correct implementation of this objective would involve:
+
+- Computing the expected total reward of the original pre-trained policy \(\pi\) (i.e., \(\eta(\pi)\)).
+- Computing the expected total reward of the perturbed policy \(\bar{\pi}\) (the policy that sometimes substitutes random actions, controlled by the mask network).
+- Taking the absolute difference between the two.
+- Minimizing that difference during training of the mask network.
+
+I therefore expect to find code that explicitly calculates \(\eta(\pi)\) and \(\eta(\bar{\pi})\) and minimizes the absolute difference, or uses a surrogate/optimization procedure that directly targets this objective.
+
+# Reality
+
+Examining the submission files:
+
+- **`Refine_mujoco/masknet/environment.py`** defines a `Multi2SingleEnv` wrapper that modifies the reward by adding a bonus \(\alpha \cdot (1 - \text{action})\) when `train=True`. The mask network is trained via PPO on this modified reward.
+- **`Refine_mujoco/masknet/cus_PPO.py`** is a custom PPO implementation that trains the mask network to maximize the cumulative reward of the environment (the perturbed agent). The loss optimizes the standard PPO surrogate objective, which essentially maximizes the expected total reward \(\eta(\bar{\pi})\).
+- **`Refine_mujoco/masknet/train.py`** loads the custom PPO and trains the mask network on the modified environment.
+
+Nowhere in the code is there any computation of \(\eta(\pi)\), the expected reward of the original policy. Nor is there any computation of the absolute difference \(|\eta(\pi)-\eta(\bar{\pi})|\) or any loss that minimizes that difference. The training objective is simply to maximize the (modified) reward of the perturbed agent, i.e., \(\max \eta(\bar{\pi})\), which the paper describes as a *transformed* objective after applying Theorem 3.3. The original objective \(J(\theta)=\min |\eta(\pi)-\eta(\bar{\pi})|\) is not implemented.
+
+# Score
+
+The criterion is not met. The code does not implement the objective \(J(\theta)=\min |\eta(\pi)-\eta(\bar{\pi})|\); it implements a different objective (\(\max \eta(\bar{\pi})\) with a bonus). Therefore, the score is **0**.

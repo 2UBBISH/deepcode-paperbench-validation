@@ -1,0 +1,65 @@
+2026-09-03 11:07:52 [info     ] Grading leaf: For the MuJoCo environments, for the "Random" explanation method, code has been implemented for measuring cumulative reward throughout refinement
+2026-09-03 11:08:09 [info     ] Model file selection raw output:
+Refine_mujoco/retrain.py
+Refine_mujoco/monitor.py
+Refine_mujoco/callback.py
+Refine_mujoco/utils.py
+Refine_mujoco/environment.py
+Refine_mujoco/PPO.py
+Refine_mujoco/OnPolicyAlgorithm.py
+Refine_mujoco/base_class.py
+Refine_mujoco/masknet/fid_test.py
+Refine_mujoco/baseline/train.py
+2026-09-03 11:08:09 [info     ] Model file selection raw output:
+Refine_mujoco/retrain.py
+Refine_mujoco/monitor.py
+Refine_mujoco/callback.py
+Refine_mujoco/utils.py
+Refine_mujoco/environment.py
+Refine_mujoco/PPO.py
+Refine_mujoco/OnPolicyAlgorithm.py
+Refine_mujoco/base_class.py
+Refine_mujoco/masknet/fid_test.py
+Refine_mujoco/baseline/train.py
+2026-09-03 11:08:49 [info     ] model response: # Expectations
+
+The criterion requires that for the MuJoCo environments, the code implements measuring cumulative reward throughout the refinement process when using the "Random" explanation method. In the paper, Experiment III (Section 4.2) compares the refinement performance when using different explanation methods (Random, StateMask, Ours). The refinement process involves running the refining algorithm (Algorithm 2 with mixed initial distribution and exploration) while periodically evaluating the agent's cumulative reward (i.e., mean episode reward). The "Random" explanation method identifies critical states by randomly selecting a visited state. So I expect to see:
+
+- Code that can run the refinement with the random explanation variant (i.e., selecting critical states uniformly at random from the trajectory).
+- During refinement, the code should log the agent's performance (cumulative reward) via evaluation episodes or logging of mean episode reward, so that the reward over the course of refinement can be measured.
+- The measurement should be part of the same training script, not just a post-hoc analysis.
+
+# Reality
+
+The submission includes `Refine_mujoco/retrain.py` as the main refinement script. It uses `EvalCallback` and `CustomCallback` to log evaluation rewards and mean reward during training. The `RetrainEnv` wrapper in `environment.py` supports random sampling of the critical state when `--random_sampling` is set to `True`. Specifically:
+
+- In `retrain.py`, the `--random_sampling` argument is passed to `make_retrain_env`, which creates the `RetrainEnv` with `rand_sampling=True` (line 70-72).  
+- In `environment.py`, the `reset` method of `RetrainEnv` checks `if self.random_sampling:` and if true, selects a random start index via `np.random.choice(traj.eps_len)` (line 39-40). This implements the random explanation method.  
+- During refinement, `retrain.py` sets up `EvalCallback` (line 93-94) and `CustomCallback` (line 95-97) to measure cumulative reward. The `EvalCallback` evaluates the agent periodically and logs the best model, while `CustomCallback` computes and logs the mean reward over the last 100 episodes. These callbacks are independent of the explanation method and will function when using the random explanation.
+
+Thus, the code implements the measurement of cumulative reward throughout refinement for the random explanation method: the evaluation and logging infrastructure is present, and the random explanation variant is enabled via the `--random_sampling` flag. No separate logging code is required for the random explanation, as the same evaluation callbacks apply.
+
+# Score
+
+1 – The submission contains code that, when run with the random explanation method (via `--random_sampling True`), logs cumulative reward during refinement using `EvalCallback` and `CustomCallback`. The implementation is correct and meets the criterion.
+2026-09-03 11:08:49 [info     ] model response: # Expectations
+
+The criterion requires that for the MuJoCo environments, the code implements measuring cumulative reward throughout the refinement process when using the "Random" explanation method. In the paper, Experiment III (Section 4.2) compares the refinement performance when using different explanation methods (Random, StateMask, Ours). The refinement process involves running the refining algorithm (Algorithm 2 with mixed initial distribution and exploration) while periodically evaluating the agent's cumulative reward (i.e., mean episode reward). The "Random" explanation method identifies critical states by randomly selecting a visited state. So I expect to see:
+
+- Code that can run the refinement with the random explanation variant (i.e., selecting critical states uniformly at random from the trajectory).
+- During refinement, the code should log the agent's performance (cumulative reward) via evaluation episodes or logging of mean episode reward, so that the reward over the course of refinement can be measured.
+- The measurement should be part of the same training script, not just a post-hoc analysis.
+
+# Reality
+
+The submission includes `Refine_mujoco/retrain.py` as the main refinement script. It uses `EvalCallback` and `CustomCallback` to log evaluation rewards and mean reward during training. The `RetrainEnv` wrapper in `environment.py` supports random sampling of the critical state when `--random_sampling` is set to `True`. Specifically:
+
+- In `retrain.py`, the `--random_sampling` argument is passed to `make_retrain_env`, which creates the `RetrainEnv` with `rand_sampling=True` (line 70-72).  
+- In `environment.py`, the `reset` method of `RetrainEnv` checks `if self.random_sampling:` and if true, selects a random start index via `np.random.choice(traj.eps_len)` (line 39-40). This implements the random explanation method.  
+- During refinement, `retrain.py` sets up `EvalCallback` (line 93-94) and `CustomCallback` (line 95-97) to measure cumulative reward. The `EvalCallback` evaluates the agent periodically and logs the best model, while `CustomCallback` computes and logs the mean reward over the last 100 episodes. These callbacks are independent of the explanation method and will function when using the random explanation.
+
+Thus, the code implements the measurement of cumulative reward throughout refinement for the random explanation method: the evaluation and logging infrastructure is present, and the random explanation variant is enabled via the `--random_sampling` flag. No separate logging code is required for the random explanation, as the same evaluation callbacks apply.
+
+# Score
+
+1 – The submission contains code that, when run with the random explanation method (via `--random_sampling True`), logs cumulative reward during refinement using `EvalCallback` and `CustomCallback`. The implementation is correct and meets the criterion.

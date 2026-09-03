@@ -1,0 +1,91 @@
+2026-09-03 11:05:04 [info     ] Grading leaf: For the MuJoCo environments, the original StateMask Explanation method can be selected as the explanation method during retraining
+2026-09-03 11:06:03 [info     ] Model file selection raw output:
+Refine_mujoco/retrain.py
+Refine_mujoco/utils.py
+Refine_mujoco/base_class.py
+Refine_mujoco/masknet/train.py
+Refine_mujoco/masknet/readme.md
+Refine_mujoco/masknet/cus_PPO.py
+Refine_mujoco/masknet/gen_fid.py
+Refine_mujoco/masknet/fid_test.py
+Refine_mujoco/masknet/environment.py
+Refine_mujoco/retrain.sh
+2026-09-03 11:06:03 [info     ] Model file selection raw output:
+Refine_mujoco/retrain.py
+Refine_mujoco/utils.py
+Refine_mujoco/base_class.py
+Refine_mujoco/masknet/train.py
+Refine_mujoco/masknet/readme.md
+Refine_mujoco/masknet/cus_PPO.py
+Refine_mujoco/masknet/gen_fid.py
+Refine_mujoco/masknet/fid_test.py
+Refine_mujoco/masknet/environment.py
+Refine_mujoco/retrain.sh
+2026-09-03 11:06:40 [info     ] model response: # Expectations
+
+The paper describes using explanation methods to identify critical states for refining. The original StateMask explanation method (Cheng et al., 2023) is one such method, distinct from the authors' proposed "Ours" explanation. The grading criterion requires that the original StateMask explanation method can be selected as the explanation method during retraining for MuJoCo environments. That means the submission code should:
+
+- Provide an implementation of the original StateMask explanation method (training a mask network using the objective $J(\theta)=\min |\eta(\pi)-\eta(\bar{\pi})|$ and prime‑dual optimization, as described in the paper and the preceding criteria).
+- Allow the retraining pipeline (e.g., `retrain.py`) to use that original StateMask mask network – i.e., to load a mask network trained with the original StateMask approach and to use its importance scores when constructing the mixed initial distribution.
+
+I will look for:
+
+- Code that trains a mask network according to the original StateMask specification (not just the “Ours” simplified version).
+- In the retraining script, the ability to load and use such a mask network (e.g., by specifying a different mask network path, or a flag to choose between “Ours” and “StateMask” explanation methods).
+
+---
+
+# Reality
+
+I examined the provided files:
+
+- **Mask network training code** (`masknet/train.py`, `masknet/cus_PPO.py`, `masknet/environment.py`):  
+  The training script uses `cus_PPO.PPO`, which is a custom PPO variant. It sets the action space to `Discrete(2)` and adds a `lambda_1` parameter, but it does **not** implement the original StateMask’s objective ($J(\theta)=\min |\eta(\pi)-\eta(\bar{\pi})|$) nor the prime‑dual optimization described in the paper. The environment wrapper (`Multi2SingleEnv`) adds a bonus reward `alpha * (1 - action)`, which corresponds to the “Ours” simplification (reward bonus for blinding). There is no separate training script or configuration for the original StateMask method.
+
+- **Retraining code** (`retrain.py`):  
+  The script loads a mask network from a path (`--masknet_path`). It has a flag `--random_sampling` to control whether the explanation is used, but there is **no option to select the original StateMask explanation method**. The mask network path is expected to point to a model trained with the “Ours” approach, as that is the only mask network training code provided.
+
+- **Utility functions** (`utils.py`):  
+  `gen_one_traj` loads the mask network and uses its mask probabilities to identify critical steps. This function is not coupled to any specific explanation method, but the loaded mask network is always the “Ours” version because no other trained mask network is produced.
+
+Thus, the submission does **not** contain a working implementation of the original StateMask explanation method, nor does it provide any means to select it during retraining. The only explanation method available is the “Ours” variant.
+
+---
+
+# Score
+
+**0** – The criterion is not met. The code does not implement or allow the selection of the original StateMask explanation method for retraining. All provided code for mask network training and retraining relies solely on the “Ours” explanation method.
+2026-09-03 11:06:40 [info     ] model response: # Expectations
+
+The paper describes using explanation methods to identify critical states for refining. The original StateMask explanation method (Cheng et al., 2023) is one such method, distinct from the authors' proposed "Ours" explanation. The grading criterion requires that the original StateMask explanation method can be selected as the explanation method during retraining for MuJoCo environments. That means the submission code should:
+
+- Provide an implementation of the original StateMask explanation method (training a mask network using the objective $J(\theta)=\min |\eta(\pi)-\eta(\bar{\pi})|$ and prime‑dual optimization, as described in the paper and the preceding criteria).
+- Allow the retraining pipeline (e.g., `retrain.py`) to use that original StateMask mask network – i.e., to load a mask network trained with the original StateMask approach and to use its importance scores when constructing the mixed initial distribution.
+
+I will look for:
+
+- Code that trains a mask network according to the original StateMask specification (not just the “Ours” simplified version).
+- In the retraining script, the ability to load and use such a mask network (e.g., by specifying a different mask network path, or a flag to choose between “Ours” and “StateMask” explanation methods).
+
+---
+
+# Reality
+
+I examined the provided files:
+
+- **Mask network training code** (`masknet/train.py`, `masknet/cus_PPO.py`, `masknet/environment.py`):  
+  The training script uses `cus_PPO.PPO`, which is a custom PPO variant. It sets the action space to `Discrete(2)` and adds a `lambda_1` parameter, but it does **not** implement the original StateMask’s objective ($J(\theta)=\min |\eta(\pi)-\eta(\bar{\pi})|$) nor the prime‑dual optimization described in the paper. The environment wrapper (`Multi2SingleEnv`) adds a bonus reward `alpha * (1 - action)`, which corresponds to the “Ours” simplification (reward bonus for blinding). There is no separate training script or configuration for the original StateMask method.
+
+- **Retraining code** (`retrain.py`):  
+  The script loads a mask network from a path (`--masknet_path`). It has a flag `--random_sampling` to control whether the explanation is used, but there is **no option to select the original StateMask explanation method**. The mask network path is expected to point to a model trained with the “Ours” approach, as that is the only mask network training code provided.
+
+- **Utility functions** (`utils.py`):  
+  `gen_one_traj` loads the mask network and uses its mask probabilities to identify critical steps. This function is not coupled to any specific explanation method, but the loaded mask network is always the “Ours” version because no other trained mask network is produced.
+
+Thus, the submission does **not** contain a working implementation of the original StateMask explanation method, nor does it provide any means to select it during retraining. The only explanation method available is the “Ours” variant.
+
+---
+
+# Score
+
+**0** – The criterion is not met. The code does not implement or allow the selection of the original StateMask explanation method for retraining. All provided code for mask network training and retraining relies solely on the “Ours” explanation method.

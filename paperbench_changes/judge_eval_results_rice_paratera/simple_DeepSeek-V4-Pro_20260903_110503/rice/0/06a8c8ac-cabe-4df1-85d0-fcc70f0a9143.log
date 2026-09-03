@@ -1,0 +1,79 @@
+2026-09-03 11:05:04 [info     ] Grading leaf: In the (MuJoCo) HalfCheetah environment, the observations are normalized when training DRL agents (further information about this environment in Appendix C.2).
+2026-09-03 11:05:38 [info     ] Model file selection raw output:
+Refine_mujoco/environment.py
+Refine_mujoco/utils.py
+Refine_mujoco/retrain.py
+Refine_mujoco/PPO.py
+Refine_mujoco/OnPolicyAlgorithm.py
+Refine_mujoco/base_class.py
+Refine_mujoco/masknet/train.py
+Refine_mujoco/masknet/environment.py
+Refine_mujoco/baseline/train.py
+Refine_mujoco/retrain.sh
+2026-09-03 11:05:38 [info     ] Model file selection raw output:
+Refine_mujoco/environment.py
+Refine_mujoco/utils.py
+Refine_mujoco/retrain.py
+Refine_mujoco/PPO.py
+Refine_mujoco/OnPolicyAlgorithm.py
+Refine_mujoco/base_class.py
+Refine_mujoco/masknet/train.py
+Refine_mujoco/masknet/environment.py
+Refine_mujoco/baseline/train.py
+Refine_mujoco/retrain.sh
+2026-09-03 11:06:30 [info     ] model response: # Expectations
+The paper states in Appendix C.2 that for the HalfCheetah environment, "We use 'HalfCheetah-v3' in our experiments and normalize the observation when training the DRL agent." Therefore, I expect to see code that implements observation normalization for the HalfCheetah-v3 environment during any training step (initial training or refining). Specifically, I will look for the use of a normalization wrapper (e.g., Stable-Baselines3's `VecNormalize`) that transforms observations before they are fed to the policy, and that this normalization is applied when the environment is HalfCheetah-v3.
+
+# Reality
+The submission includes a file `retrain.py` (Refine_mujoco/retrain.py) that handles refining/retraining the DRL agent. In this script, there is a block that checks if the environment belongs to a list `norm_games`, which includes `"HalfCheetah-v3"`:
+
+```python
+norm_games = ["HalfCheetah-v3", "Walker2d-v3"]
+if args.env not in norm_games:
+    env = DummyVecEnv([...])
+    ...
+else:
+    env = DummyVecEnv([...])    
+    env = VecMonitor(env, log_path)
+    env = VecNormalize.load(args.vec_norm_path, env)
+    env.training = False
+    eval_env = DummyVecEnv([lambda:gym.make(args.env)])
+    eval_env = VecNormalize.load(args.vec_norm_path, eval_env)
+    eval_env.training = False
+    eval_env = VecMonitor(eval_env, log_path)
+```
+
+When `args.env` is `"HalfCheetah-v3"`, the code enters the `else` branch. It loads a `VecNormalize` from a saved path (`args.vec_norm_path`) and wraps the environment with it, setting `training = False` (so the normalization statistics are fixed). This means that during the retraining (refinement) process, the observations from the HalfCheetah environment are normalized using the precomputed statistics. This is a correct implementation of observation normalization for HalfCheetah during training.
+
+The initial baseline training script (`baseline/train.py`) is only provided for Hopper, not for HalfCheetah. However, the criterion does not specify that the normalization must be demonstrated in the baseline training script; it only requires that the code contains a correct implementation of normalization for HalfCheetah during training. The retraining code is a training step, and it does implement normalization. Therefore, the submission meets the requirement.
+
+# Score
+1
+2026-09-03 11:06:30 [info     ] model response: # Expectations
+The paper states in Appendix C.2 that for the HalfCheetah environment, "We use 'HalfCheetah-v3' in our experiments and normalize the observation when training the DRL agent." Therefore, I expect to see code that implements observation normalization for the HalfCheetah-v3 environment during any training step (initial training or refining). Specifically, I will look for the use of a normalization wrapper (e.g., Stable-Baselines3's `VecNormalize`) that transforms observations before they are fed to the policy, and that this normalization is applied when the environment is HalfCheetah-v3.
+
+# Reality
+The submission includes a file `retrain.py` (Refine_mujoco/retrain.py) that handles refining/retraining the DRL agent. In this script, there is a block that checks if the environment belongs to a list `norm_games`, which includes `"HalfCheetah-v3"`:
+
+```python
+norm_games = ["HalfCheetah-v3", "Walker2d-v3"]
+if args.env not in norm_games:
+    env = DummyVecEnv([...])
+    ...
+else:
+    env = DummyVecEnv([...])    
+    env = VecMonitor(env, log_path)
+    env = VecNormalize.load(args.vec_norm_path, env)
+    env.training = False
+    eval_env = DummyVecEnv([lambda:gym.make(args.env)])
+    eval_env = VecNormalize.load(args.vec_norm_path, eval_env)
+    eval_env.training = False
+    eval_env = VecMonitor(eval_env, log_path)
+```
+
+When `args.env` is `"HalfCheetah-v3"`, the code enters the `else` branch. It loads a `VecNormalize` from a saved path (`args.vec_norm_path`) and wraps the environment with it, setting `training = False` (so the normalization statistics are fixed). This means that during the retraining (refinement) process, the observations from the HalfCheetah environment are normalized using the precomputed statistics. This is a correct implementation of observation normalization for HalfCheetah during training.
+
+The initial baseline training script (`baseline/train.py`) is only provided for Hopper, not for HalfCheetah. However, the criterion does not specify that the normalization must be demonstrated in the baseline training script; it only requires that the code contains a correct implementation of normalization for HalfCheetah during training. The retraining code is a training step, and it does implement normalization. Therefore, the submission meets the requirement.
+
+# Score
+1

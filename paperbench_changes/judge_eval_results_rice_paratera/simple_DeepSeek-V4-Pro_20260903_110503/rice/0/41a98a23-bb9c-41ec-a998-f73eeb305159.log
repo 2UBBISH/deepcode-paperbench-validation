@@ -1,0 +1,43 @@
+2026-09-03 11:06:49 [info     ] Grading leaf: For the selfish mining environment, for the "Ours" explanation method, code for measuring training time throughout training as outlined in Appendix C.3 and Table 4 has been implemented.
+2026-09-03 11:07:16 [info     ] Model file selection raw output:
+Refine_selfish_mining/masknet/train.py
+Refine_selfish_mining/masknet/utils.py
+Refine_selfish_mining/masknet/replay.py
+Refine_selfish_mining/masknet/replay.sh
+Refine_selfish_mining/utils.py
+Refine_selfish_mining/masknet/fidelity_score.py
+Refine_selfish_mining/masknet/sample_mask_score.py
+Refine_selfish_mining/masknet/sample_value_score.py
+Refine_selfish_mining/retrain.py
+Refine_selfish_mining/rnd_model.py
+2026-09-03 11:07:16 [info     ] Model file selection raw output:
+Refine_selfish_mining/masknet/train.py
+Refine_selfish_mining/masknet/utils.py
+Refine_selfish_mining/masknet/replay.py
+Refine_selfish_mining/masknet/replay.sh
+Refine_selfish_mining/utils.py
+Refine_selfish_mining/masknet/fidelity_score.py
+Refine_selfish_mining/masknet/sample_mask_score.py
+Refine_selfish_mining/masknet/sample_value_score.py
+Refine_selfish_mining/retrain.py
+Refine_selfish_mining/rnd_model.py
+2026-09-03 11:07:59 [info     ] model response: # Expectations
+The paper's Appendix C.3 and Table 4 describe a comparison of training time for the mask network (the "Ours" explanation method) in the selfish mining environment. Specifically, the paper states: "We report the cost time and the number of samples when training our explanation method and StateMask in Table 4 of Appendix C.3." The table lists the number of samples (1.5×10⁶) and the training time in seconds for "Ours". To reproduce this result, the submission must include code that measures the elapsed time during the training of the mask network for the selfish mining environment. I expect to see explicit timing logic (e.g., using `time.time()` or `time.perf_counter()`) that records the start and end of the training process, computes the elapsed time, and either logs it to a file or prints it. The code should be part of the training script for the mask network, and the measurement should correspond to the training of the "Ours" method (Algorithm 1 in the paper, implemented via PPO). Simply having the training loop is not sufficient; the measurement code must be present.
+
+# Reality
+I examined the submitted files relevant to the selfish mining environment and the mask network training. The file `Refine_selfish_mining/masknet/train.py` contains the training script for the mask network using PPO (the "Ours" method). It defines a `test_ppo` function that calls `onpolicy_trainer` from the Tianshou library. However, this script does not contain any code to measure training time. There is no import of `time` or any timing-related module, no variables to store start and end times, and no computation of elapsed seconds. The training process is simply executed without any timing measurement.  
+
+Other files like `sample_mask_score.py`, `fidelity_score.py`, and `replay.py` are focused on fidelity scoring and replay, not on training time measurement. The `retrain.py` script is for refining the agent, not for training the mask network. Therefore, none of the provided files implement the required training time measurement for the "Ours" explanation method in the selfish mining environment.
+
+# Score
+0
+2026-09-03 11:07:59 [info     ] model response: # Expectations
+The paper's Appendix C.3 and Table 4 describe a comparison of training time for the mask network (the "Ours" explanation method) in the selfish mining environment. Specifically, the paper states: "We report the cost time and the number of samples when training our explanation method and StateMask in Table 4 of Appendix C.3." The table lists the number of samples (1.5×10⁶) and the training time in seconds for "Ours". To reproduce this result, the submission must include code that measures the elapsed time during the training of the mask network for the selfish mining environment. I expect to see explicit timing logic (e.g., using `time.time()` or `time.perf_counter()`) that records the start and end of the training process, computes the elapsed time, and either logs it to a file or prints it. The code should be part of the training script for the mask network, and the measurement should correspond to the training of the "Ours" method (Algorithm 1 in the paper, implemented via PPO). Simply having the training loop is not sufficient; the measurement code must be present.
+
+# Reality
+I examined the submitted files relevant to the selfish mining environment and the mask network training. The file `Refine_selfish_mining/masknet/train.py` contains the training script for the mask network using PPO (the "Ours" method). It defines a `test_ppo` function that calls `onpolicy_trainer` from the Tianshou library. However, this script does not contain any code to measure training time. There is no import of `time` or any timing-related module, no variables to store start and end times, and no computation of elapsed seconds. The training process is simply executed without any timing measurement.  
+
+Other files like `sample_mask_score.py`, `fidelity_score.py`, and `replay.py` are focused on fidelity scoring and replay, not on training time measurement. The `retrain.py` script is for refining the agent, not for training the mask network. Therefore, none of the provided files implement the required training time measurement for the "Ours" explanation method in the selfish mining environment.
+
+# Score
+0

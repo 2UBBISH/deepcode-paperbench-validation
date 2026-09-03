@@ -1,0 +1,81 @@
+2026-09-03 11:08:02 [info     ] Grading leaf: For the network defence environment, the "Ours" explanation method has been utilized to identify the critical step to refine from
+2026-09-03 11:08:31 [info     ] Model file selection raw output:
+Refine_cage_challenge/retrain.py
+Refine_cage_challenge/sample_mask_score.py
+Refine_cage_challenge/rollout_mask.py
+Refine_cage_challenge/Agents/PPOAgent_mask.py
+Refine_cage_challenge/Agents/PPOAgent_Retrain.py
+Refine_cage_challenge/Agents/MainAgent.py
+Refine_cage_challenge/readme.md
+Refine_cage_challenge/sample_value_score.py
+Refine_cage_challenge/rollout_ppo.py
+Refine_cage_challenge/ppo_train.py
+2026-09-03 11:08:31 [info     ] Model file selection raw output:
+Refine_cage_challenge/retrain.py
+Refine_cage_challenge/sample_mask_score.py
+Refine_cage_challenge/rollout_mask.py
+Refine_cage_challenge/Agents/PPOAgent_mask.py
+Refine_cage_challenge/Agents/PPOAgent_Retrain.py
+Refine_cage_challenge/Agents/MainAgent.py
+Refine_cage_challenge/readme.md
+Refine_cage_challenge/sample_value_score.py
+Refine_cage_challenge/rollout_ppo.py
+Refine_cage_challenge/ppo_train.py
+2026-09-03 11:09:58 [info     ] model response: # Expectations
+
+The paper's "Ours" explanation method is a specific mask network trained with a reward bonus (α) to encourage blinding, as described in Section 3.3 and Algorithm 1. The mask network outputs a probability of not masking (i.e., importance) for each state. For Experiment III (refining based on different explanations) in the network defence environment (Cage Challenge 2), the refining method (Algorithm 2) must use this mask network to:
+- Sample a trajectory using the pre-trained policy π.
+- Apply the mask network to identify the most critical state within that trajectory.
+- With probability p, set the initial state to that critical state; otherwise use the default initial state.
+- Then train with PPO + RND exploration bonus.
+
+For this criterion, I need to see that the submission contains code that correctly loads the trained mask network ("Ours" explanation method) and uses it to identify the critical step to reset the environment during refinement, as part of the refining process for the network defence environment.
+
+# Reality
+
+The provided submission files for the network defence environment are:
+
+- `Refine_cage_challenge/retrain.py` – This script is intended for refinement. It uses `PPOAgent_Retrain` (from `Agents/PPOAgent_Retrain.py`), which incorporates RND exploration. However, reading through the code, it does **not** load any mask network, does not sample trajectories to identify critical states, and does not implement the mixed initial state distribution. It simply resets to the default environment initial state and trains with PPO + RND. There is no integration of the "Ours" explanation method to pick critical states.
+
+- `Refine_cage_challenge/sample_mask_score.py` – This script loads a mask network (`PPOAgent_mask`) and a pre-trained PPO agent, runs episodes, and records mask probabilities and actions. It does not perform any refinement or use the mask scores to reset the environment. It is purely for logging explanation outputs.
+
+- `Refine_cage_challenge/rollout_mask.py` – This script loads a mask network and runs episodes, but does not train or refine. It appears to evaluate the mask network, not use it as part of the refining process.
+
+- `Refine_cage_challenge/Agents/PPOAgent_mask.py` – This file implements the mask network agent, including a method `get_mask_prob` that returns the probability of not masking. This could potentially be used to score states. However, no script in the submission actually calls this method to select a critical state and then reset the environment for refinement.
+
+- `Refine_cage_challenge/Agents/PPOAgent_Retrain.py` – The retraining agent. It does not reference any mask network or critical state identification.
+
+Nowhere in the submitted files is there code that combines the mask network output with the refinement loop to reset the environment to the identified critical state. The refining script (`retrain.py`) completely lacks the mechanism described in Algorithm 2 of the paper. Therefore, the submission does **not** contain a correct implementation of utilizing the "Ours" explanation method to identify the critical step to refine from for the network defence environment.
+
+# Score
+
+0 – The submission does not implement the required functionality. The refinement code for the network defence environment does not use the "Ours" explanation method to identify critical states, nor does it reset the environment to such states. The criterion is not met.
+2026-09-03 11:09:58 [info     ] model response: # Expectations
+
+The paper's "Ours" explanation method is a specific mask network trained with a reward bonus (α) to encourage blinding, as described in Section 3.3 and Algorithm 1. The mask network outputs a probability of not masking (i.e., importance) for each state. For Experiment III (refining based on different explanations) in the network defence environment (Cage Challenge 2), the refining method (Algorithm 2) must use this mask network to:
+- Sample a trajectory using the pre-trained policy π.
+- Apply the mask network to identify the most critical state within that trajectory.
+- With probability p, set the initial state to that critical state; otherwise use the default initial state.
+- Then train with PPO + RND exploration bonus.
+
+For this criterion, I need to see that the submission contains code that correctly loads the trained mask network ("Ours" explanation method) and uses it to identify the critical step to reset the environment during refinement, as part of the refining process for the network defence environment.
+
+# Reality
+
+The provided submission files for the network defence environment are:
+
+- `Refine_cage_challenge/retrain.py` – This script is intended for refinement. It uses `PPOAgent_Retrain` (from `Agents/PPOAgent_Retrain.py`), which incorporates RND exploration. However, reading through the code, it does **not** load any mask network, does not sample trajectories to identify critical states, and does not implement the mixed initial state distribution. It simply resets to the default environment initial state and trains with PPO + RND. There is no integration of the "Ours" explanation method to pick critical states.
+
+- `Refine_cage_challenge/sample_mask_score.py` – This script loads a mask network (`PPOAgent_mask`) and a pre-trained PPO agent, runs episodes, and records mask probabilities and actions. It does not perform any refinement or use the mask scores to reset the environment. It is purely for logging explanation outputs.
+
+- `Refine_cage_challenge/rollout_mask.py` – This script loads a mask network and runs episodes, but does not train or refine. It appears to evaluate the mask network, not use it as part of the refining process.
+
+- `Refine_cage_challenge/Agents/PPOAgent_mask.py` – This file implements the mask network agent, including a method `get_mask_prob` that returns the probability of not masking. This could potentially be used to score states. However, no script in the submission actually calls this method to select a critical state and then reset the environment for refinement.
+
+- `Refine_cage_challenge/Agents/PPOAgent_Retrain.py` – The retraining agent. It does not reference any mask network or critical state identification.
+
+Nowhere in the submitted files is there code that combines the mask network output with the refinement loop to reset the environment to the identified critical state. The refining script (`retrain.py`) completely lacks the mechanism described in Algorithm 2 of the paper. Therefore, the submission does **not** contain a correct implementation of utilizing the "Ours" explanation method to identify the critical step to refine from for the network defence environment.
+
+# Score
+
+0 – The submission does not implement the required functionality. The refinement code for the network defence environment does not use the "Ours" explanation method to identify critical states, nor does it reset the environment to such states. The criterion is not met.

@@ -1,0 +1,71 @@
+2026-09-03 11:05:04 [info     ] Grading leaf: Any version of the (MuJoCo) Hopper environment has been correctly set up and can be initialized can be used to run the experiments (further information about this environment in Appendix C.2).
+2026-09-03 11:05:22 [info     ] Model file selection raw output:
+Refine_mujoco/environment.py
+Refine_mujoco/baseline/train.py
+Refine_mujoco/retrain.py
+Refine_mujoco/retrain.sh
+Refine_mujoco/masknet/environment.py
+Refine_mujoco/masknet/train.py
+Refine_mujoco/PPO.py
+Refine_mujoco/base_class.py
+Refine_mujoco/models.py
+Refine_mujoco/utils.py
+2026-09-03 11:05:22 [info     ] Model file selection raw output:
+Refine_mujoco/environment.py
+Refine_mujoco/baseline/train.py
+Refine_mujoco/retrain.py
+Refine_mujoco/retrain.sh
+Refine_mujoco/masknet/environment.py
+Refine_mujoco/masknet/train.py
+Refine_mujoco/PPO.py
+Refine_mujoco/base_class.py
+Refine_mujoco/models.py
+Refine_mujoco/utils.py
+2026-09-03 11:06:44 [info     ] model response: # Expectations
+According to the paper, the Hopper environment is a MuJoCo game, specifically "Hopper-v3" as noted in Appendix C.2. The criterion requires that the Hopper environment is correctly set up in the code, meaning that the submission must contain code that can create an instance of the Hopper environment (e.g., via `gym.make("Hopper-v3")`) and that the environment is configured appropriately for the experiments. The code should be able to initialize the environment (i.e., call `reset()`) and be used in the training/refinement pipelines described in the paper. I will look for explicit usage of `gym.make("Hopper-v3")` or equivalent, proper wrapping if needed, and that the environment is used in the main training scripts.
+
+# Reality
+The submission contains multiple files that set up the Hopper environment:
+
+- **`Refine_mujoco/baseline/train.py`**:  
+  Creates the environment using `env = DummyVecEnv([lambda: gym.make("Hopper-v3")])`. This is a standard way to create the Hopper environment and wrap it for vectorized operations. The environment is then used for training a baseline PPO agent.
+
+- **`Refine_mujoco/retrain.py`**:  
+  Accepts `--env` as a command-line argument (default `"Hopper-v3"`). Inside, it calls `make_retrain_env(env_name=args.env, ...)`, which is defined in `environment.py` and ultimately calls `gym.make(env_name)`. The shell script `retrain.sh` explicitly passes `--env "Hopper-v3"`, confirming that the Hopper environment is intended for the refinement experiments.
+
+- **`Refine_mujoco/environment.py`**:  
+  The `make_retrain_env` function does `env = gym.make(env_name)` and returns a `RetrainEnv` wrapper. The `RetrainEnv` class extends `gym.Wrapper` and overrides `reset` to implement the custom initial state distribution (mix of default and critical states). The base environment is indeed the standard Hopper environment.
+
+- **`Refine_mujoco/masknet/environment.py`**:  
+  The `make_multi2single_env` function also uses `gym.make(env_name)` to create the Hopper environment for mask network training.
+
+All these places correctly instantiate the Hopper-v3 environment using `gym.make`. The code does not rely on any custom environment registration; it uses the standard Gym interface. The `RetrainEnv` wrapper includes additional logic (e.g., loading models, manipulating MuJoCo simulation state), but the core environment initialization is valid. The environment can be initialized (via `reset()`) and used in the experiments.
+
+# Score
+The code contains a correct implementation for setting up the Hopper environment. It uses `gym.make("Hopper-v3")` in multiple places, properly wraps it when needed, and is clearly intended to be used for the experiments described in the paper. Therefore, the criterion is met.
+
+**Score: 1**
+2026-09-03 11:06:44 [info     ] model response: # Expectations
+According to the paper, the Hopper environment is a MuJoCo game, specifically "Hopper-v3" as noted in Appendix C.2. The criterion requires that the Hopper environment is correctly set up in the code, meaning that the submission must contain code that can create an instance of the Hopper environment (e.g., via `gym.make("Hopper-v3")`) and that the environment is configured appropriately for the experiments. The code should be able to initialize the environment (i.e., call `reset()`) and be used in the training/refinement pipelines described in the paper. I will look for explicit usage of `gym.make("Hopper-v3")` or equivalent, proper wrapping if needed, and that the environment is used in the main training scripts.
+
+# Reality
+The submission contains multiple files that set up the Hopper environment:
+
+- **`Refine_mujoco/baseline/train.py`**:  
+  Creates the environment using `env = DummyVecEnv([lambda: gym.make("Hopper-v3")])`. This is a standard way to create the Hopper environment and wrap it for vectorized operations. The environment is then used for training a baseline PPO agent.
+
+- **`Refine_mujoco/retrain.py`**:  
+  Accepts `--env` as a command-line argument (default `"Hopper-v3"`). Inside, it calls `make_retrain_env(env_name=args.env, ...)`, which is defined in `environment.py` and ultimately calls `gym.make(env_name)`. The shell script `retrain.sh` explicitly passes `--env "Hopper-v3"`, confirming that the Hopper environment is intended for the refinement experiments.
+
+- **`Refine_mujoco/environment.py`**:  
+  The `make_retrain_env` function does `env = gym.make(env_name)` and returns a `RetrainEnv` wrapper. The `RetrainEnv` class extends `gym.Wrapper` and overrides `reset` to implement the custom initial state distribution (mix of default and critical states). The base environment is indeed the standard Hopper environment.
+
+- **`Refine_mujoco/masknet/environment.py`**:  
+  The `make_multi2single_env` function also uses `gym.make(env_name)` to create the Hopper environment for mask network training.
+
+All these places correctly instantiate the Hopper-v3 environment using `gym.make`. The code does not rely on any custom environment registration; it uses the standard Gym interface. The `RetrainEnv` wrapper includes additional logic (e.g., loading models, manipulating MuJoCo simulation state), but the core environment initialization is valid. The environment can be initialized (via `reset()`) and used in the experiments.
+
+# Score
+The code contains a correct implementation for setting up the Hopper environment. It uses `gym.make("Hopper-v3")` in multiple places, properly wraps it when needed, and is clearly intended to be used for the experiments described in the paper. Therefore, the criterion is met.
+
+**Score: 1**

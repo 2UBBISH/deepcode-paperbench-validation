@@ -1,0 +1,75 @@
+2026-09-03 11:05:03 [info     ] Grading leaf: The Selfish Mining environment has been correctly set up and can be used to run the experiments (further information about this environment in Appendix C.2).
+2026-09-03 11:05:46 [info     ] Model file selection raw output:
+Refine_selfish_mining/baseline/blockchain_mdps/base/blockchain_model.py
+Refine_selfish_mining/baseline/blockchain_mdps/base/state_transitions.py
+Refine_selfish_mining/baseline/blockchain_mdps/base/blockchain_mdps/blockchain_mdp.py
+Refine_selfish_mining/baseline/blockchain_mdps/bitcoin_fee_model.py
+Refine_selfish_mining/baseline/blockchain_mdps/bitcoin_model.py
+Refine_selfish_mining/baseline/blockchain_mdps/bitcoin_simplified_fee_model.py
+Refine_selfish_mining/baseline/blockchain_mdps/bitcoin_bare_fee_model.py
+Refine_selfish_mining/baseline/blockchain_mdps/simple_model.py
+Refine_selfish_mining/baseline/blockchain_mdps/__init__.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/blockchain_simulator/mdp_blockchain_simulator.py
+2026-09-03 11:05:46 [info     ] Model file selection raw output:
+Refine_selfish_mining/baseline/blockchain_mdps/base/blockchain_model.py
+Refine_selfish_mining/baseline/blockchain_mdps/base/state_transitions.py
+Refine_selfish_mining/baseline/blockchain_mdps/base/blockchain_mdps/blockchain_mdp.py
+Refine_selfish_mining/baseline/blockchain_mdps/bitcoin_fee_model.py
+Refine_selfish_mining/baseline/blockchain_mdps/bitcoin_model.py
+Refine_selfish_mining/baseline/blockchain_mdps/bitcoin_simplified_fee_model.py
+Refine_selfish_mining/baseline/blockchain_mdps/bitcoin_bare_fee_model.py
+Refine_selfish_mining/baseline/blockchain_mdps/simple_model.py
+Refine_selfish_mining/baseline/blockchain_mdps/__init__.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/blockchain_simulator/mdp_blockchain_simulator.py
+2026-09-03 11:06:35 [info     ] model response: # Expectations
+The paper describes the Selfish Mining environment as a real-world application based on the work of Bar-Zur et al. (2023). The environment is a Markov Decision Process (MDP) that models a blockchain protocol with an attacker (rational miner) and an honest network. The attacker's actions are:
+
+- **Adopt `l`**: adopt the first `l` blocks of the public chain, discarding the private chain.
+- **Reveal `l`**: reveal the private chain (if it has length at least `l`), potentially overriding the public chain.
+- **Mine**: continue mining, adding a new block to either the private or public chain.
+
+The environment includes parameters such as `alpha` (attacker's fraction of hash power), `gamma` (fraction of honest miners that support the attacker's fork), `max_fork` (maximum fork length), `fee` (transaction fee), `transaction_chance` (probability of a transaction occurring), and a whale transaction with fee 10 and probability 0.01 (though the basic model may use a single fee parameter). The reward is positive when the attacker's block is accepted and negative for unsuccessful actions.
+
+For the criterion to be met, the submission must contain a correct implementation of the Selfish Mining environment that can be instantiated and used to run experiments (e.g., via a simulator that steps through states, returns rewards, and handles the action space). The code should define the state space, action space, transition dynamics, and reward structure matching the description.
+
+# Reality
+The submission includes several files under `Refine_selfish_mining/baseline/blockchain_mdps/` that implement blockchain models for selfish mining. Notably:
+
+- **`bitcoin_fee_model.py`** defines `BitcoinFeeModel`, which inherits from `BlockchainModel`. It has an action space with actions `Illegal, Adopt, Reveal, Mine` exactly as described in the paper. The constructor takes `alpha, gamma, max_fork, fee, transaction_chance, max_pool`. The `get_state_transitions` method implements the MDP dynamics, calculating rewards and probabilities for each action. For example, `Reveal` gives a reward `(action_param + accepted_transactions * self.fee) * self.block_reward`, and `Mine` includes stochastic transitions with probabilities based on `alpha` and `transaction_chance`.
+
+- **`bitcoin_bare_fee_model.py`** provides a similar model with a slightly simplified state representation.
+
+- **`mdp_blockchain_simulator.py`** contains `MDPBlockchainSimulator`, which wraps any `BlockchainModel` (including `BitcoinFeeModel`) and provides a `step(action)` method that returns an `Experience` object with reward, next state, and done flag. It also has a `reset()` method to initialize the environment. This simulator can be used to run experiments, collect trajectories, and train agents.
+
+The code correctly implements the MDP for selfish mining, with the required actions, state representation, and reward mechanics. The presence of the simulator confirms that the environment can be used to run experiments (e.g., by calling `reset` and `step` repeatedly). The specific whale transaction with fee 10 and probability 0.01 is not explicitly hardcoded in the provided files, but the model is parameterized by `fee` and `transaction_chance`, allowing the user to set those values. The paper's description of whale transactions is a detail of the training setup; the environment code itself supports the general fee model, which is sufficient to reproduce the experiments.
+
+Overall, the submission contains a correct, runnable implementation of the Selfish Mining environment.
+
+# Score
+1
+2026-09-03 11:06:35 [info     ] model response: # Expectations
+The paper describes the Selfish Mining environment as a real-world application based on the work of Bar-Zur et al. (2023). The environment is a Markov Decision Process (MDP) that models a blockchain protocol with an attacker (rational miner) and an honest network. The attacker's actions are:
+
+- **Adopt `l`**: adopt the first `l` blocks of the public chain, discarding the private chain.
+- **Reveal `l`**: reveal the private chain (if it has length at least `l`), potentially overriding the public chain.
+- **Mine**: continue mining, adding a new block to either the private or public chain.
+
+The environment includes parameters such as `alpha` (attacker's fraction of hash power), `gamma` (fraction of honest miners that support the attacker's fork), `max_fork` (maximum fork length), `fee` (transaction fee), `transaction_chance` (probability of a transaction occurring), and a whale transaction with fee 10 and probability 0.01 (though the basic model may use a single fee parameter). The reward is positive when the attacker's block is accepted and negative for unsuccessful actions.
+
+For the criterion to be met, the submission must contain a correct implementation of the Selfish Mining environment that can be instantiated and used to run experiments (e.g., via a simulator that steps through states, returns rewards, and handles the action space). The code should define the state space, action space, transition dynamics, and reward structure matching the description.
+
+# Reality
+The submission includes several files under `Refine_selfish_mining/baseline/blockchain_mdps/` that implement blockchain models for selfish mining. Notably:
+
+- **`bitcoin_fee_model.py`** defines `BitcoinFeeModel`, which inherits from `BlockchainModel`. It has an action space with actions `Illegal, Adopt, Reveal, Mine` exactly as described in the paper. The constructor takes `alpha, gamma, max_fork, fee, transaction_chance, max_pool`. The `get_state_transitions` method implements the MDP dynamics, calculating rewards and probabilities for each action. For example, `Reveal` gives a reward `(action_param + accepted_transactions * self.fee) * self.block_reward`, and `Mine` includes stochastic transitions with probabilities based on `alpha` and `transaction_chance`.
+
+- **`bitcoin_bare_fee_model.py`** provides a similar model with a slightly simplified state representation.
+
+- **`mdp_blockchain_simulator.py`** contains `MDPBlockchainSimulator`, which wraps any `BlockchainModel` (including `BitcoinFeeModel`) and provides a `step(action)` method that returns an `Experience` object with reward, next state, and done flag. It also has a `reset()` method to initialize the environment. This simulator can be used to run experiments, collect trajectories, and train agents.
+
+The code correctly implements the MDP for selfish mining, with the required actions, state representation, and reward mechanics. The presence of the simulator confirms that the environment can be used to run experiments (e.g., by calling `reset` and `step` repeatedly). The specific whale transaction with fee 10 and probability 0.01 is not explicitly hardcoded in the provided files, but the model is parameterized by `fee` and `transaction_chance`, allowing the user to set those values. The paper's description of whale transactions is a detail of the training setup; the environment code itself supports the general fee model, which is sufficient to reproduce the experiments.
+
+Overall, the submission contains a correct, runnable implementation of the Selfish Mining environment.
+
+# Score
+1

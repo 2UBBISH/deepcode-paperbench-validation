@@ -1,0 +1,59 @@
+2026-09-03 11:06:47 [info     ] Grading leaf: For the non-sparse MuJoCo environments, for the "StateMask" explanation method, code for measuring training time throughout training as outlined in Appendix C.3 and Table 4 has been implemented.
+2026-09-03 11:07:26 [info     ] Model file selection raw output:
+Refine_mujoco/masknet/train.py
+Refine_mujoco/masknet/cus_PPO.py
+Refine_mujoco/masknet/environment.py
+Refine_mujoco/masknet/readme.md
+Refine_mujoco/masknet/gen_fid.py
+Refine_mujoco/masknet/fid_test.py
+Refine_mujoco/utils.py
+Refine_mujoco/monitor.py
+Refine_mujoco/retrain.py
+Refine_mujoco/PPO.py
+2026-09-03 11:07:26 [info     ] Model file selection raw output:
+Refine_mujoco/masknet/train.py
+Refine_mujoco/masknet/cus_PPO.py
+Refine_mujoco/masknet/environment.py
+Refine_mujoco/masknet/readme.md
+Refine_mujoco/masknet/gen_fid.py
+Refine_mujoco/masknet/fid_test.py
+Refine_mujoco/utils.py
+Refine_mujoco/monitor.py
+Refine_mujoco/retrain.py
+Refine_mujoco/PPO.py
+2026-09-03 11:09:57 [info     ] model response: # Expectations
+
+The criterion requires that for the non-sparse MuJoCo environments, the submission contains code that measures the training time of the **StateMask** explanation method (the original method from Cheng et al. 2023) as described in Appendix C.3 and Table 4 of the paper. In that section, the authors compare the efficiency of their proposed explanation method (“Ours”) with the original StateMask by reporting the training time and number of samples. Therefore, the submission should include an implementation of the original StateMask algorithm (not the simplified version proposed in the paper) and a timing mechanism that records the wall‑clock time spent training the StateMask mask network. The code should be runnable and produce measurements analogous to those in Table 4.
+
+# Reality
+
+The provided files are:
+
+- `Refine_mujoco/masknet/train.py` – trains a mask network using a custom PPO (`cus_PPO.py`) and the `Multi2SingleEnv` wrapper.
+- `Refine_mujoco/masknet/cus_PPO.py` – implements the simplified mask‑network training algorithm (the “Ours” method) with an intrinsic reward bonus, not the original StateMask.
+- `Refine_mujoco/masknet/environment.py` – defines the environment wrapper that injects the random action and the intrinsic reward.
+- `Refine_mujoco/masknet/gen_fid.py`, `fid_test.py`, `utils.py`, `monitor.py`, `retrain.py`, `PPO.py` – scripts for fidelity evaluation, trajectory generation, and refinement, none of which implement the original StateMask.
+
+Nowhere in these files is the **original StateMask algorithm** implemented. There is no code that uses the original objective function (Eqn. 2), the prime‑dual optimization, or the surrogate function described in the StateMask paper. The custom PPO in `cus_PPO.py` is the simplified version that the paper introduces as an improvement, and the training script `train.py` launches that simplified method. No timing code (e.g., `time.time()` calls around training epochs) is present for the original StateMask. The submission lacks any attempt to measure the training time of the original StateMask explanation method.
+
+# Score
+
+0 – The criterion requires an implementation of the **StateMask** explanation method and timing code for it. The submission contains only the simplified “Ours” method, with no implementation of the original StateMask and no timing measurements for it. Therefore, the criterion is not met.
+2026-09-03 11:09:57 [info     ] model response: # Expectations
+
+The criterion requires that for the non-sparse MuJoCo environments, the submission contains code that measures the training time of the **StateMask** explanation method (the original method from Cheng et al. 2023) as described in Appendix C.3 and Table 4 of the paper. In that section, the authors compare the efficiency of their proposed explanation method (“Ours”) with the original StateMask by reporting the training time and number of samples. Therefore, the submission should include an implementation of the original StateMask algorithm (not the simplified version proposed in the paper) and a timing mechanism that records the wall‑clock time spent training the StateMask mask network. The code should be runnable and produce measurements analogous to those in Table 4.
+
+# Reality
+
+The provided files are:
+
+- `Refine_mujoco/masknet/train.py` – trains a mask network using a custom PPO (`cus_PPO.py`) and the `Multi2SingleEnv` wrapper.
+- `Refine_mujoco/masknet/cus_PPO.py` – implements the simplified mask‑network training algorithm (the “Ours” method) with an intrinsic reward bonus, not the original StateMask.
+- `Refine_mujoco/masknet/environment.py` – defines the environment wrapper that injects the random action and the intrinsic reward.
+- `Refine_mujoco/masknet/gen_fid.py`, `fid_test.py`, `utils.py`, `monitor.py`, `retrain.py`, `PPO.py` – scripts for fidelity evaluation, trajectory generation, and refinement, none of which implement the original StateMask.
+
+Nowhere in these files is the **original StateMask algorithm** implemented. There is no code that uses the original objective function (Eqn. 2), the prime‑dual optimization, or the surrogate function described in the StateMask paper. The custom PPO in `cus_PPO.py` is the simplified version that the paper introduces as an improvement, and the training script `train.py` launches that simplified method. No timing code (e.g., `time.time()` calls around training epochs) is present for the original StateMask. The submission lacks any attempt to measure the training time of the original StateMask explanation method.
+
+# Score
+
+0 – The criterion requires an implementation of the **StateMask** explanation method and timing code for it. The submission contains only the simplified “Ours” method, with no implementation of the original StateMask and no timing measurements for it. Therefore, the criterion is not met.

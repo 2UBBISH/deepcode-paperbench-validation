@@ -1,0 +1,129 @@
+2026-09-03 11:05:04 [info     ] Grading leaf: For the selfish mining environment, the explanation fidelity score metric has been implemented as outlined in section 4.1 and 4.2: by forcing a given pretrained policy network agent to take random actions starting from each identified critical time step and measuring the average and maximum reward change.
+2026-09-03 11:06:30 [info     ] Model file selection raw output:
+Refine_selfish_mining/masknet/fidelity_score.py
+Refine_selfish_mining/masknet/replay.py
+Refine_selfish_mining/masknet/sample_mask_score.py
+Refine_selfish_mining/masknet/utils.py
+Refine_selfish_mining/masknet/train.py
+Refine_selfish_mining/baseline/train_ppo.py
+Refine_selfish_mining/baseline/net.py
+Refine_selfish_mining/baseline/blockchain_mdps/bitcoin_fee_model.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/blockchain_simulator/mdp_blockchain_simulator_masknet.py
+Refine_selfish_mining/masknet/sample_value_score.py
+2026-09-03 11:06:30 [info     ] Model file selection raw output:
+Refine_selfish_mining/masknet/fidelity_score.py
+Refine_selfish_mining/masknet/replay.py
+Refine_selfish_mining/masknet/sample_mask_score.py
+Refine_selfish_mining/masknet/utils.py
+Refine_selfish_mining/masknet/train.py
+Refine_selfish_mining/baseline/train_ppo.py
+Refine_selfish_mining/baseline/net.py
+Refine_selfish_mining/baseline/blockchain_mdps/bitcoin_fee_model.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/blockchain_simulator/mdp_blockchain_simulator_masknet.py
+Refine_selfish_mining/masknet/sample_value_score.py
+2026-09-03 11:08:11 [info     ] model response: # Expectations
+
+The criterion asks specifically for the implementation of the explanation fidelity score metric for the **selfish mining environment** as described in Sections 4.1 and 4.2 of the paper. The metric must:
+
+1. Use a given pretrained policy network agent.
+2. Identify critical steps via an explanation method (e.g., the mask network).
+3. Use a sliding window of size \(l = L \times K\) (where \(K\) is a fraction of the trajectory length) to select the segment with the highest average importance score.
+4. Fast‑forward the agent to the start of that segment.
+5. Force the agent to take **random actions** for the duration of the segment (\(l\) steps).
+6. After the random actions, let the agent continue with its own policy until the episode ends.
+7. Measure the original reward \(R\) and the reward after randomizing \(R'\) to compute the change \(d = |R' - R|\).
+8. Determine the **maximum possible reward change** \(d_{\max}\) for the environment (the largest reward value that the environment can produce in a single episode, as per the paper’s specification).
+9. Compute the fidelity score as  
+   \[
+   \text{Fidelity Score} = \log\left(\frac{d}{d_{\max}}\right) - \log\left(\frac{l}{L}\right).
+   \]
+10. The computation should be correct and use the proper logarithmic transformation.
+
+I will therefore look for code that actually performs all these steps for the selfish mining environment, with a correct implementation of the fidelity formula.
+
+# Reality
+
+The relevant files in the submission are:
+
+- `Refine_selfish_mining/masknet/replay.py` – performs the replay with random actions on the critical segment.
+- `Refine_selfish_mining/masknet/fidelity_score.py` – computes the final fidelity score.
+
+**Replay implementation** (`replay.py`):  
+The `replay` function loads the original action log and the importance scores (mask probabilities). It uses `select_critical` to find the window with the highest average importance score and then runs the episode: before the critical segment it replays the original actions; during the critical segment it takes random legal actions; after that it continues with the pretrained DQN agent. It records the average reward over `test_num` runs. This part correctly implements steps 2–6.
+
+**Fidelity score computation** (`fidelity_score.py`):  
+The `calculate_fidelity_score` function loads the original reward log and the replay reward log. It computes the average reward change \(d = |R - R'|\) and then calculates:
+
+```python
+score += np.abs(reward_log[i] - replay_reward_log[i]) / 100 - np.log(width)
+```
+
+This is **not** the formula given in the paper. The paper’s formula is  
+
+\[
+\log\left(\frac{d}{d_{\max}}\right) - \log\left(\frac{l}{L}\right).
+\]
+
+The code:
+- Replaces \(\log(d/d_{\max})\) with a linear term \(d/100\) (no logarithm).
+- Uses a hard‑coded constant \(100\) as if it were \(d_{\max}\), but there is no justification that \(100\) is the maximum possible reward change for the selfish mining environment. The paper requires \(d_{\max}\) to be the largest reward value the environment allows in a single episode, which is not necessarily 100.
+- Even if 100 were correct, the omission of the logarithm makes the metric fundamentally different from the one described in the paper.
+
+Thus the fidelity score metric is **not correctly implemented** for the selfish mining environment.
+
+# Score
+
+**0** – The candidate’s code does not implement the required fidelity score metric as described in the paper. The formula is wrong (linear instead of logarithmic) and the constant 100 is not a valid substitute for the environment‑specific \(d_{\max}\). The requirement is therefore not met.
+2026-09-03 11:08:11 [info     ] model response: # Expectations
+
+The criterion asks specifically for the implementation of the explanation fidelity score metric for the **selfish mining environment** as described in Sections 4.1 and 4.2 of the paper. The metric must:
+
+1. Use a given pretrained policy network agent.
+2. Identify critical steps via an explanation method (e.g., the mask network).
+3. Use a sliding window of size \(l = L \times K\) (where \(K\) is a fraction of the trajectory length) to select the segment with the highest average importance score.
+4. Fast‑forward the agent to the start of that segment.
+5. Force the agent to take **random actions** for the duration of the segment (\(l\) steps).
+6. After the random actions, let the agent continue with its own policy until the episode ends.
+7. Measure the original reward \(R\) and the reward after randomizing \(R'\) to compute the change \(d = |R' - R|\).
+8. Determine the **maximum possible reward change** \(d_{\max}\) for the environment (the largest reward value that the environment can produce in a single episode, as per the paper’s specification).
+9. Compute the fidelity score as  
+   \[
+   \text{Fidelity Score} = \log\left(\frac{d}{d_{\max}}\right) - \log\left(\frac{l}{L}\right).
+   \]
+10. The computation should be correct and use the proper logarithmic transformation.
+
+I will therefore look for code that actually performs all these steps for the selfish mining environment, with a correct implementation of the fidelity formula.
+
+# Reality
+
+The relevant files in the submission are:
+
+- `Refine_selfish_mining/masknet/replay.py` – performs the replay with random actions on the critical segment.
+- `Refine_selfish_mining/masknet/fidelity_score.py` – computes the final fidelity score.
+
+**Replay implementation** (`replay.py`):  
+The `replay` function loads the original action log and the importance scores (mask probabilities). It uses `select_critical` to find the window with the highest average importance score and then runs the episode: before the critical segment it replays the original actions; during the critical segment it takes random legal actions; after that it continues with the pretrained DQN agent. It records the average reward over `test_num` runs. This part correctly implements steps 2–6.
+
+**Fidelity score computation** (`fidelity_score.py`):  
+The `calculate_fidelity_score` function loads the original reward log and the replay reward log. It computes the average reward change \(d = |R - R'|\) and then calculates:
+
+```python
+score += np.abs(reward_log[i] - replay_reward_log[i]) / 100 - np.log(width)
+```
+
+This is **not** the formula given in the paper. The paper’s formula is  
+
+\[
+\log\left(\frac{d}{d_{\max}}\right) - \log\left(\frac{l}{L}\right).
+\]
+
+The code:
+- Replaces \(\log(d/d_{\max})\) with a linear term \(d/100\) (no logarithm).
+- Uses a hard‑coded constant \(100\) as if it were \(d_{\max}\), but there is no justification that \(100\) is the maximum possible reward change for the selfish mining environment. The paper requires \(d_{\max}\) to be the largest reward value the environment allows in a single episode, which is not necessarily 100.
+- Even if 100 were correct, the omission of the logarithm makes the metric fundamentally different from the one described in the paper.
+
+Thus the fidelity score metric is **not correctly implemented** for the selfish mining environment.
+
+# Score
+
+**0** – The candidate’s code does not implement the required fidelity score metric as described in the paper. The formula is wrong (linear instead of logarithmic) and the constant 100 is not a valid substitute for the environment‑specific \(d_{\max}\). The requirement is therefore not met.

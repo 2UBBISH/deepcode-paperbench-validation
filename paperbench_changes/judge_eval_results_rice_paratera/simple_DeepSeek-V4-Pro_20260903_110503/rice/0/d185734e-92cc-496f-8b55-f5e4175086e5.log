@@ -1,0 +1,69 @@
+2026-09-03 11:07:27 [info     ] Grading leaf: In Experiment II, for the selfish mining environment, for the "PPO fine-tuning" refinement method, code has been implemented for measuring cumulative reward throughout refinement
+2026-09-03 11:08:03 [info     ] Model file selection raw output:
+Refine_selfish_mining/baseline/train_ppo.py
+Refine_selfish_mining/baseline/net.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/training/callbacks/logging/tensorboard_logging_callback.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/training/callbacks/logging/text_logging_callback.py
+Refine_selfish_mining/utils.py
+Refine_selfish_mining/retrain.py
+Refine_selfish_mining/baseline/blockchain_mdps/base/blockchain_simulator/mdp_blockchain_simulator.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/training/trainer.py
+Refine_selfish_mining/baseline/blockchain_mdps/bitcoin_fee_model.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/blockchain_simulator/mdp_blockchain_simulator_dqn.py
+2026-09-03 11:08:03 [info     ] Model file selection raw output:
+Refine_selfish_mining/baseline/train_ppo.py
+Refine_selfish_mining/baseline/net.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/training/callbacks/logging/tensorboard_logging_callback.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/training/callbacks/logging/text_logging_callback.py
+Refine_selfish_mining/utils.py
+Refine_selfish_mining/retrain.py
+Refine_selfish_mining/baseline/blockchain_mdps/base/blockchain_simulator/mdp_blockchain_simulator.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/training/trainer.py
+Refine_selfish_mining/baseline/blockchain_mdps/bitcoin_fee_model.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/blockchain_simulator/mdp_blockchain_simulator_dqn.py
+2026-09-03 11:08:03 [info     ] File /home/deepevol/deepevol/frontier-evals/project/paperbench/data/judge_eval/rice/0/submission/Refine_selfish_mining/baseline/blockchain_mdps/base/blockchain_simulator/mdp_blockchain_simulator.py not found!
+2026-09-03 11:08:03 [info     ] File /home/deepevol/deepevol/frontier-evals/project/paperbench/data/judge_eval/rice/0/submission/Refine_selfish_mining/baseline/blockchain_mdps/base/blockchain_simulator/mdp_blockchain_simulator.py not found!
+2026-09-03 11:09:26 [info     ] model response: # Expectations
+The criterion requires that for Experiment II, in the selfish mining environment, for the "PPO fine-tuning" refinement method, the submission includes code that measures cumulative reward throughout the refinement process.  
+PPO fine‑tuning is defined in the paper as continuing to train the pre‑trained agent with a lower learning rate using the PPO algorithm. Therefore, I expect to see a script or module that:
+- Loads a pre‑trained PPO policy for the selfish mining environment.
+- Continues training with a reduced learning rate (i.e., fine‑tuning).
+- Computes and logs the cumulative reward (or episode/total reward) during this fine‑tuning phase, e.g., via TensorBoard, console output, or a stored metric.
+
+The code must be specific to the selfish mining environment and explicitly implement the measurement of cumulative reward.
+
+# Reality
+I examined the provided files:
+
+- `Refine_selfish_mining/baseline/train_ppo.py` trains a PPO agent from scratch for the selfish mining environment. It logs rewards via TensorBoard, but it does not load a pre‑trained model; it trains from the initial state. There is no mechanism to continue training from a saved checkpoint, so it is not a fine‑tuning script.
+- `Refine_selfish_mining/retrain.py` is the refinement script for the "Ours" (RICE) method. It uses RND and a custom retrain environment, not plain PPO fine‑tuning.
+- No other file in the submission implements PPO fine‑tuning for the selfish mining environment. The `utils.py` provides helper functions for loading models, but no fine‑tuning loop that uses them to continue training with a lower learning rate.
+
+Thus, there is no code that performs PPO fine‑tuning for the selfish mining environment, let alone code that measures cumulative reward during such a refinement.
+
+# Score
+0
+
+The submission does not contain an implementation of PPO fine‑tuning for the selfish mining environment, so the criterion is not met.
+2026-09-03 11:09:26 [info     ] model response: # Expectations
+The criterion requires that for Experiment II, in the selfish mining environment, for the "PPO fine-tuning" refinement method, the submission includes code that measures cumulative reward throughout the refinement process.  
+PPO fine‑tuning is defined in the paper as continuing to train the pre‑trained agent with a lower learning rate using the PPO algorithm. Therefore, I expect to see a script or module that:
+- Loads a pre‑trained PPO policy for the selfish mining environment.
+- Continues training with a reduced learning rate (i.e., fine‑tuning).
+- Computes and logs the cumulative reward (or episode/total reward) during this fine‑tuning phase, e.g., via TensorBoard, console output, or a stored metric.
+
+The code must be specific to the selfish mining environment and explicitly implement the measurement of cumulative reward.
+
+# Reality
+I examined the provided files:
+
+- `Refine_selfish_mining/baseline/train_ppo.py` trains a PPO agent from scratch for the selfish mining environment. It logs rewards via TensorBoard, but it does not load a pre‑trained model; it trains from the initial state. There is no mechanism to continue training from a saved checkpoint, so it is not a fine‑tuning script.
+- `Refine_selfish_mining/retrain.py` is the refinement script for the "Ours" (RICE) method. It uses RND and a custom retrain environment, not plain PPO fine‑tuning.
+- No other file in the submission implements PPO fine‑tuning for the selfish mining environment. The `utils.py` provides helper functions for loading models, but no fine‑tuning loop that uses them to continue training with a lower learning rate.
+
+Thus, there is no code that performs PPO fine‑tuning for the selfish mining environment, let alone code that measures cumulative reward during such a refinement.
+
+# Score
+0
+
+The submission does not contain an implementation of PPO fine‑tuning for the selfish mining environment, so the criterion is not met.

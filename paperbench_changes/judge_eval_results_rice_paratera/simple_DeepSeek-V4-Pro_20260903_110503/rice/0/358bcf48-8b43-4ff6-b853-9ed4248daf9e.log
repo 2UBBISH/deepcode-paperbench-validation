@@ -1,0 +1,75 @@
+2026-09-03 11:05:04 [info     ] Grading leaf: For the MuJoCo environments, The StateMask ("Ours") Explanation method can be selected as the explanation method during retraining
+2026-09-03 11:05:31 [info     ] Model file selection raw output:
+Refine_mujoco/retrain.py
+Refine_mujoco/masknet/train.py
+Refine_mujoco/masknet/environment.py
+Refine_mujoco/environment.py
+Refine_mujoco/utils.py
+Refine_mujoco/PPO.py
+Refine_mujoco/masknet/cus_PPO.py
+Refine_mujoco/retrain.sh
+Refine_mujoco/masknet/gen_fid.py
+Refine_mujoco/OnPolicyAlgorithm.py
+2026-09-03 11:05:31 [info     ] Model file selection raw output:
+Refine_mujoco/retrain.py
+Refine_mujoco/masknet/train.py
+Refine_mujoco/masknet/environment.py
+Refine_mujoco/environment.py
+Refine_mujoco/utils.py
+Refine_mujoco/PPO.py
+Refine_mujoco/masknet/cus_PPO.py
+Refine_mujoco/retrain.sh
+Refine_mujoco/masknet/gen_fid.py
+Refine_mujoco/OnPolicyAlgorithm.py
+2026-09-03 11:06:54 [info     ] model response: # Expectations
+
+The paper introduces RICE, which uses an explanation method (an optimized version of StateMask, referred to as "Ours") to identify critical states during retraining. For the MuJoCo environments, the retraining process should be able to select this explanation method—i.e., load the trained mask network, evaluate the importance of each state in a sampled trajectory, and pick the most critical state to reset the environment. The implementation must allow the user to choose the "Ours" explanation method as opposed to, for example, a random explanation. According to Section 3.3 and Algorithm 2, the retraining environment should mix the default initial states with the identified critical states, and the critical state is the one with the highest importance score from the mask network. The importance score is the probability of the mask network outputting "0" (i.e., not blinding the agent) in the paper's original notation; in the submitted code, the mapping may be inverted but the logic should still correctly identify the most critical state using the mask network's output probabilities.
+
+Thus, I expect to see:
+
+- A retraining environment that can be configured to use the mask network (the "Ours" explanation).
+- The mask network is loaded and used to compute step‑level importance scores.
+- The most critical state is selected based on those scores.
+- A flag or parameter that allows toggling between the "Ours" explanation and other methods (e.g., random explanation).
+
+# Reality
+
+The submitted code for the MuJoCo retraining is in `Refine_mujoco/`. The main retraining script is `retrain.py`, which uses `make_retrain_env` from `environment.py`. The `RetrainEnv` class in `environment.py` implements a `reset` method that:
+
+- With probability `1 - p` (where `p = go_prob`), generates a trajectory using `gen_one_traj` (from `utils.py`), which loads the mask network from the provided `masknet_path` and records the probability of each step being “important” (the probability of the mask action that corresponds to using the agent’s action).  
+- If `self.random_sampling` is `False` (the default), it selects the starting state as the one with the highest probability (`np.argmax(traj.mask_probs)`). This corresponds to using the "Ours" explanation to pick the most critical state.  
+- If `self.random_sampling` is `True`, it picks a random step, which corresponds to a random explanation.
+
+The `retrain.py` script accepts command‑line arguments `--masknet_path`, `--go_prob`, and `--random_sampling` (defaulting to `False`). Therefore, by default, the retraining process selects the "Ours" explanation method. The mask network used is the optimized StateMask method described in Section 3.3, trained via the code in `masknet/`. The whole pipeline correctly implements the ability to select the "Ours" explanation method during retraining for MuJoCo environments.
+
+# Score
+
+1
+
+*Explanation:* The code provides a concrete mechanism to select the “Ours” explanation method (the mask network) during retraining. The `RetrainEnv` uses the mask network probabilities to identify the most critical state, and the `retrain.py` script allows this to be chosen via its parameters. The implementation meets the requirement.
+2026-09-03 11:06:54 [info     ] model response: # Expectations
+
+The paper introduces RICE, which uses an explanation method (an optimized version of StateMask, referred to as "Ours") to identify critical states during retraining. For the MuJoCo environments, the retraining process should be able to select this explanation method—i.e., load the trained mask network, evaluate the importance of each state in a sampled trajectory, and pick the most critical state to reset the environment. The implementation must allow the user to choose the "Ours" explanation method as opposed to, for example, a random explanation. According to Section 3.3 and Algorithm 2, the retraining environment should mix the default initial states with the identified critical states, and the critical state is the one with the highest importance score from the mask network. The importance score is the probability of the mask network outputting "0" (i.e., not blinding the agent) in the paper's original notation; in the submitted code, the mapping may be inverted but the logic should still correctly identify the most critical state using the mask network's output probabilities.
+
+Thus, I expect to see:
+
+- A retraining environment that can be configured to use the mask network (the "Ours" explanation).
+- The mask network is loaded and used to compute step‑level importance scores.
+- The most critical state is selected based on those scores.
+- A flag or parameter that allows toggling between the "Ours" explanation and other methods (e.g., random explanation).
+
+# Reality
+
+The submitted code for the MuJoCo retraining is in `Refine_mujoco/`. The main retraining script is `retrain.py`, which uses `make_retrain_env` from `environment.py`. The `RetrainEnv` class in `environment.py` implements a `reset` method that:
+
+- With probability `1 - p` (where `p = go_prob`), generates a trajectory using `gen_one_traj` (from `utils.py`), which loads the mask network from the provided `masknet_path` and records the probability of each step being “important” (the probability of the mask action that corresponds to using the agent’s action).  
+- If `self.random_sampling` is `False` (the default), it selects the starting state as the one with the highest probability (`np.argmax(traj.mask_probs)`). This corresponds to using the "Ours" explanation to pick the most critical state.  
+- If `self.random_sampling` is `True`, it picks a random step, which corresponds to a random explanation.
+
+The `retrain.py` script accepts command‑line arguments `--masknet_path`, `--go_prob`, and `--random_sampling` (defaulting to `False`). Therefore, by default, the retraining process selects the "Ours" explanation method. The mask network used is the optimized StateMask method described in Section 3.3, trained via the code in `masknet/`. The whole pipeline correctly implements the ability to select the "Ours" explanation method during retraining for MuJoCo environments.
+
+# Score
+
+1
+
+*Explanation:* The code provides a concrete mechanism to select the “Ours” explanation method (the mask network) during retraining. The `RetrainEnv` uses the mask network probabilities to identify the most critical state, and the `retrain.py` script allows this to be chosen via its parameters. The implementation meets the requirement.

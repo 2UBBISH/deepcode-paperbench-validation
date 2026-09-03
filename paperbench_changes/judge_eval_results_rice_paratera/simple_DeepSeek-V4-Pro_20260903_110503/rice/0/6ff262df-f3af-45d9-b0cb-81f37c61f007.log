@@ -1,0 +1,115 @@
+2026-09-03 11:05:04 [info     ] Grading leaf: For the MuJoCo environments, code for constructing a mixed initial state distribution by combining default initial states and critical states identified by the "Ours" explanation method has been implemented as described in Section 3.3.
+2026-09-03 11:05:38 [info     ] Model file selection raw output:
+Refine_mujoco/retrain.py
+Refine_mujoco/masknet/train.py
+Refine_mujoco/masknet/cus_PPO.py
+Refine_mujoco/environment.py
+Refine_mujoco/utils.py
+Refine_mujoco/PPO.py
+Refine_mujoco/OnPolicyAlgorithm.py
+Refine_mujoco/base_class.py
+Refine_mujoco/models.py
+Refine_mujoco/callback.py
+2026-09-03 11:05:38 [info     ] Model file selection raw output:
+Refine_mujoco/retrain.py
+Refine_mujoco/masknet/train.py
+Refine_mujoco/masknet/cus_PPO.py
+Refine_mujoco/environment.py
+Refine_mujoco/utils.py
+Refine_mujoco/PPO.py
+Refine_mujoco/OnPolicyAlgorithm.py
+Refine_mujoco/base_class.py
+Refine_mujoco/models.py
+Refine_mujoco/callback.py
+2026-09-03 11:06:22 [info     ] model response: # Expectations
+
+The criterion requires that for the MuJoCo environments, the submission contains code that implements a **mixed initial state distribution** as described in Section 3.3 of the RICE paper. Specifically, the implementation should:
+
+- Use the “Ours” explanation method (the mask network described in Section 3.3 and Algorithm 1) to obtain importance scores for states in a trajectory.
+- Identify the most critical state within that trajectory (e.g., the state with the highest mask probability).
+- Combine the default initial state distribution of the environment with the distribution of identified critical states, forming a mixture where with some probability the agent starts from a critical state and otherwise from a default initial state.
+- The mixing probability should be controllable via a hyperparameter (the paper calls it \(p\) or \(\beta\)).
+
+I will look for actual code that performs these steps, not just textual descriptions or comments.
+
+# Reality
+
+The submitted files include:
+
+- `Refine_mujoco/environment.py` – defines a custom `RetrainEnv` wrapper that overrides the `reset` method.
+- `Refine_mujoco/utils.py` – contains `gen_one_traj` which loads the mask network and the pre-trained policy to generate a trajectory and compute mask probabilities.
+- `Refine_mujoco/retrain.py` – the training script that uses `RetrainEnv` with a `go_prob` argument.
+
+In `environment.py`, the `RetrainEnv.reset()` method implements the mixture:
+
+```python
+if np.random.rand() > self.p:
+    traj = gen_one_traj(self.env, self.seed, self.agent_path, self.masknet_path, self.vec_norm_path)
+    if self.random_sampling:
+        start_idx = np.random.choice(traj.eps_len)
+    else:
+        start_idx = np.argmax(traj.mask_probs)
+    ...
+    self.env.sim.set_state(traj.state_seq[start_idx])
+else:
+    self.env.seed(self.seed)
+    obs = self.env.reset()
+```
+
+This code randomly selects whether to reset to a critical state (using the mask network’s importance scores) or to the default environment initial state. The probability of choosing the critical state is determined by the `go_prob` parameter (stored as `self.p`). Although the condition `np.random.rand() > self.p` inverts the usual interpretation of the paper’s \(p\) (the paper’s algorithm uses “if RAND_NUM < p then use critical state”), the **existence of a mechanism that mixes the two distributions** is clearly present.
+
+In `utils.py`, `gen_one_traj` loads the mask network (`masknet_path`) and the pre-trained agent, runs an episode, and computes `mask_probs` for each state. The critical state is selected as the one with the highest `mask_prob` (using `np.argmax(traj.mask_probs)`). This directly corresponds to using the “Ours” explanation method to identify the most critical state.
+
+Therefore, the submission contains code that constructs a mixed initial state distribution by combining default initial states and critical states identified by the “Ours” explanation method, as described in the paper.
+
+# Score
+
+**1**
+
+The implementation meets the criterion: it contains actual code that generates a mixed initial state distribution for MuJoCo environments using the critical states identified by the mask network, and the mixture is controlled by a hyperparameter. The criterion is satisfied.
+2026-09-03 11:06:22 [info     ] model response: # Expectations
+
+The criterion requires that for the MuJoCo environments, the submission contains code that implements a **mixed initial state distribution** as described in Section 3.3 of the RICE paper. Specifically, the implementation should:
+
+- Use the “Ours” explanation method (the mask network described in Section 3.3 and Algorithm 1) to obtain importance scores for states in a trajectory.
+- Identify the most critical state within that trajectory (e.g., the state with the highest mask probability).
+- Combine the default initial state distribution of the environment with the distribution of identified critical states, forming a mixture where with some probability the agent starts from a critical state and otherwise from a default initial state.
+- The mixing probability should be controllable via a hyperparameter (the paper calls it \(p\) or \(\beta\)).
+
+I will look for actual code that performs these steps, not just textual descriptions or comments.
+
+# Reality
+
+The submitted files include:
+
+- `Refine_mujoco/environment.py` – defines a custom `RetrainEnv` wrapper that overrides the `reset` method.
+- `Refine_mujoco/utils.py` – contains `gen_one_traj` which loads the mask network and the pre-trained policy to generate a trajectory and compute mask probabilities.
+- `Refine_mujoco/retrain.py` – the training script that uses `RetrainEnv` with a `go_prob` argument.
+
+In `environment.py`, the `RetrainEnv.reset()` method implements the mixture:
+
+```python
+if np.random.rand() > self.p:
+    traj = gen_one_traj(self.env, self.seed, self.agent_path, self.masknet_path, self.vec_norm_path)
+    if self.random_sampling:
+        start_idx = np.random.choice(traj.eps_len)
+    else:
+        start_idx = np.argmax(traj.mask_probs)
+    ...
+    self.env.sim.set_state(traj.state_seq[start_idx])
+else:
+    self.env.seed(self.seed)
+    obs = self.env.reset()
+```
+
+This code randomly selects whether to reset to a critical state (using the mask network’s importance scores) or to the default environment initial state. The probability of choosing the critical state is determined by the `go_prob` parameter (stored as `self.p`). Although the condition `np.random.rand() > self.p` inverts the usual interpretation of the paper’s \(p\) (the paper’s algorithm uses “if RAND_NUM < p then use critical state”), the **existence of a mechanism that mixes the two distributions** is clearly present.
+
+In `utils.py`, `gen_one_traj` loads the mask network (`masknet_path`) and the pre-trained agent, runs an episode, and computes `mask_probs` for each state. The critical state is selected as the one with the highest `mask_prob` (using `np.argmax(traj.mask_probs)`). This directly corresponds to using the “Ours” explanation method to identify the most critical state.
+
+Therefore, the submission contains code that constructs a mixed initial state distribution by combining default initial states and critical states identified by the “Ours” explanation method, as described in the paper.
+
+# Score
+
+**1**
+
+The implementation meets the criterion: it contains actual code that generates a mixed initial state distribution for MuJoCo environments using the critical states identified by the mask network, and the mixture is controlled by a hyperparameter. The criterion is satisfied.

@@ -1,0 +1,79 @@
+2026-09-03 11:08:04 [info     ] Grading leaf: For the autonomous driving environment, the "Ours" explanation method has been utilized to identify the critical step to refine from
+2026-09-03 11:09:11 [info     ] Model file selection raw output:
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/retrain.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/readme.md
+README.md
+2026-09-03 11:09:11 [info     ] Model file selection raw output:
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/retrain.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/readme.md
+README.md
+2026-09-03 11:10:17 [info     ] model response: # Expectations
+
+The paper describes the "Ours" explanation method as a simplified variant of StateMask. Specifically, it reformulates the objective to maximize the expected total reward of the perturbed agent, with a reward bonus for masking (blinding the target agent). The mask network outputs a binary action (0 to follow the original agent’s action, 1 to randomize). The training uses a PPO algorithm with an added bonus term `α a_t^m` in the reward. The resulting mask network is used to assign an importance score (probability of outputting 0) to each state.
+
+For the autonomous driving environment, Experiment III (Refining based on Different Explanations) requires that the "Ours" explanation method is utilized to identify the critical step to refine from. The refining process should:
+
+- Run the pretrained policy to obtain a trajectory.
+- Use the trained mask network (the "Ours" explanation) to compute importance scores for each step.
+- Identify the most critical state (e.g., the step with the highest importance score).
+- Use that state as the starting point for refinement, constructing a mixed initial state distribution with probability `p`.
+
+The code must contain a correct implementation of the "Ours" explanation method (mask network training) and the logic to use it for critical step identification during refinement.
+
+# Reality
+
+The submission provides the following files for the autonomous driving environment:
+
+- `Refine_auto_drive/train_masknet.py` – trains the mask network using a custom environment (`DriveEnvWrapper`) and PPO. This implements the "Ours" explanation method.
+- `Refine_auto_drive/custom_masknet_env.py` – defines the environment wrapper for training the mask network. It loads the pretrained agent policy, samples a binary mask action, and adds a reward bonus (`self.lamb * mask`) for blinding. The mask network’s objective is to maximize the perturbed reward, consistent with the paper’s simplified design.
+- `Refine_auto_drive/gen_retrain_traj.py` – generates a trajectory using the mask network and the agent policy. It records `mask_probs` (importance scores) via softmax of the mask logit. This is used to identify critical steps.
+- `Refine_auto_drive/retrain_env.py` – the refining environment wrapper. In `reset()`, with probability `self.p` it calls `gen_one_traj` to obtain a trajectory and importance scores. If `self.random_sampling` is `False`, it selects the critical step via `np.argmax(traj.mask_probs)`, then fast-forwards the environment to that state. This implements the "Ours" explanation‑based critical step selection.
+- `Refine_auto_drive/retrain.py` – the main refining script that uses the above environment, loads the pretrained policy, and applies RND exploration.
+
+The code correctly implements the "Ours" explanation method for training the mask network and uses it to identify the most critical step during refinement. The critical step selection via `argmax` is present, and the mask network is trained with the reward bonus. Therefore, the implementation meets the requirement.
+
+# Score
+
+1
+2026-09-03 11:10:17 [info     ] model response: # Expectations
+
+The paper describes the "Ours" explanation method as a simplified variant of StateMask. Specifically, it reformulates the objective to maximize the expected total reward of the perturbed agent, with a reward bonus for masking (blinding the target agent). The mask network outputs a binary action (0 to follow the original agent’s action, 1 to randomize). The training uses a PPO algorithm with an added bonus term `α a_t^m` in the reward. The resulting mask network is used to assign an importance score (probability of outputting 0) to each state.
+
+For the autonomous driving environment, Experiment III (Refining based on Different Explanations) requires that the "Ours" explanation method is utilized to identify the critical step to refine from. The refining process should:
+
+- Run the pretrained policy to obtain a trajectory.
+- Use the trained mask network (the "Ours" explanation) to compute importance scores for each step.
+- Identify the most critical state (e.g., the step with the highest importance score).
+- Use that state as the starting point for refinement, constructing a mixed initial state distribution with probability `p`.
+
+The code must contain a correct implementation of the "Ours" explanation method (mask network training) and the logic to use it for critical step identification during refinement.
+
+# Reality
+
+The submission provides the following files for the autonomous driving environment:
+
+- `Refine_auto_drive/train_masknet.py` – trains the mask network using a custom environment (`DriveEnvWrapper`) and PPO. This implements the "Ours" explanation method.
+- `Refine_auto_drive/custom_masknet_env.py` – defines the environment wrapper for training the mask network. It loads the pretrained agent policy, samples a binary mask action, and adds a reward bonus (`self.lamb * mask`) for blinding. The mask network’s objective is to maximize the perturbed reward, consistent with the paper’s simplified design.
+- `Refine_auto_drive/gen_retrain_traj.py` – generates a trajectory using the mask network and the agent policy. It records `mask_probs` (importance scores) via softmax of the mask logit. This is used to identify critical steps.
+- `Refine_auto_drive/retrain_env.py` – the refining environment wrapper. In `reset()`, with probability `self.p` it calls `gen_one_traj` to obtain a trajectory and importance scores. If `self.random_sampling` is `False`, it selects the critical step via `np.argmax(traj.mask_probs)`, then fast-forwards the environment to that state. This implements the "Ours" explanation‑based critical step selection.
+- `Refine_auto_drive/retrain.py` – the main refining script that uses the above environment, loads the pretrained policy, and applies RND exploration.
+
+The code correctly implements the "Ours" explanation method for training the mask network and uses it to identify the most critical step during refinement. The critical step selection via `argmax` is present, and the mask network is trained with the reward bonus. Therefore, the implementation meets the requirement.
+
+# Score
+
+1

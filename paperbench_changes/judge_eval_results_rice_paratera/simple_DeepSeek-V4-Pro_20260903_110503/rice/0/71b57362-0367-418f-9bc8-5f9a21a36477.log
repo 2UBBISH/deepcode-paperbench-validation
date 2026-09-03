@@ -1,0 +1,107 @@
+2026-09-03 11:07:22 [info     ] Grading leaf: In Experiment II, for the selfish mining environment, for the "JSRL" refinement method, code has been implemented for measuring cumulative reward throughout refinement
+2026-09-03 11:07:51 [info     ] Model file selection raw output:
+Refine_selfish_mining/retrain.py
+Refine_selfish_mining/utils.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/blockchain_simulator/mdp_blockchain_simulator_retrain.py
+Refine_selfish_mining/baseline/train_ppo.py
+Refine_selfish_mining/masknet/replay.py
+Refine_selfish_mining/masknet/train.py
+Refine_selfish_mining/rnd_policy.py
+Refine_selfish_mining/rnd_model.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/training/callbacks/logging/policy_revenue_tensorboard_logging_callback.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/training/callbacks/logging/policy_revenue_text_logging_callback.py
+2026-09-03 11:07:51 [info     ] Model file selection raw output:
+Refine_selfish_mining/retrain.py
+Refine_selfish_mining/utils.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/blockchain_simulator/mdp_blockchain_simulator_retrain.py
+Refine_selfish_mining/baseline/train_ppo.py
+Refine_selfish_mining/masknet/replay.py
+Refine_selfish_mining/masknet/train.py
+Refine_selfish_mining/rnd_policy.py
+Refine_selfish_mining/rnd_model.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/training/callbacks/logging/policy_revenue_tensorboard_logging_callback.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/training/callbacks/logging/policy_revenue_text_logging_callback.py
+2026-09-03 11:08:45 [info     ] model response: # Expectations
+
+The criterion asks whether, for Experiment II in the selfish mining environment, the submission contains code for the **JSRL refinement method** that also measures **cumulative reward throughout refinement**.
+
+From the paper, JSRL is one of the baseline refining methods compared in Experiment II. A JSRL refinement implementation should:
+- use a guide policy to roll in to some state;
+- train/continue improving an exploration policy;
+- include a curriculum over roll-in length or exploration frontiers;
+- record cumulative reward/revenue during refinement so the JSRL curve can be evaluated.
+
+I therefore expect to find JSRL-specific code such as a training script, policy wrapper, or curriculum logic, and within that code some logging or collection of cumulative reward over training/test steps for the selfish mining environment.
+
+# Reality
+
+I reviewed the provided files under `Refine_selfish_mining/`. The relevant files include:
+
+- `Refine_selfish_mining/retrain.py`
+- `Refine_selfish_mining/utils.py`
+- `Refine_selfish_mining/rnd_policy.py`
+- `Refine_selfish_mining/rnd_model.py`
+- `Refine_selfish_mining/masknet/train.py`
+- `Refine_selfish_mining/masknet/replay.py`
+- `Refine_selfish_mining/baseline/train_ppo.py`
+- `Refine_selfish_mining/baseline/reinforcement_learning/base/blockchain_simulator/mdp_blockchain_simulator_retrain.py`
+- a few logging callback files under `baseline/reinforcement_learning/base/training/callbacks/logging/`
+
+None of these files implement the JSRL refinement algorithm. There is no file or code block named `jsrl`, no curriculum-based roll-in logic corresponding to JSRL, and no JSRL training loop. The code that exists is mostly:
+
+- a DQN retraining script with RND exploration (`retrain.py`);
+- PPO training for the base selfish-mining agent (`baseline/train_ppo.py`);
+- mask network training and replay/fidelity evaluation (`masknet/train.py`, `masknet/replay.py`);
+- a custom simulator resetting to selected states (`mdp_blockchain_simulator_retrain.py`).
+
+The callback files log policy revenue for some base training runs, but they are not connected to any JSRL refinement implementation and do not satisfy the specific requirement of measuring cumulative reward throughout JSRL refinement.
+
+Thus, despite there being reward/logging code elsewhere in the submission, I find no actual JSRL implementation in the provided files.
+
+# Score
+
+0
+
+The criterion requires implemented code for the JSRL refinement method in the selfish mining environment, including cumulative reward measurement throughout refinement. The submission does not contain any JSRL-specific implementation, so the criterion is not met.
+2026-09-03 11:08:45 [info     ] model response: # Expectations
+
+The criterion asks whether, for Experiment II in the selfish mining environment, the submission contains code for the **JSRL refinement method** that also measures **cumulative reward throughout refinement**.
+
+From the paper, JSRL is one of the baseline refining methods compared in Experiment II. A JSRL refinement implementation should:
+- use a guide policy to roll in to some state;
+- train/continue improving an exploration policy;
+- include a curriculum over roll-in length or exploration frontiers;
+- record cumulative reward/revenue during refinement so the JSRL curve can be evaluated.
+
+I therefore expect to find JSRL-specific code such as a training script, policy wrapper, or curriculum logic, and within that code some logging or collection of cumulative reward over training/test steps for the selfish mining environment.
+
+# Reality
+
+I reviewed the provided files under `Refine_selfish_mining/`. The relevant files include:
+
+- `Refine_selfish_mining/retrain.py`
+- `Refine_selfish_mining/utils.py`
+- `Refine_selfish_mining/rnd_policy.py`
+- `Refine_selfish_mining/rnd_model.py`
+- `Refine_selfish_mining/masknet/train.py`
+- `Refine_selfish_mining/masknet/replay.py`
+- `Refine_selfish_mining/baseline/train_ppo.py`
+- `Refine_selfish_mining/baseline/reinforcement_learning/base/blockchain_simulator/mdp_blockchain_simulator_retrain.py`
+- a few logging callback files under `baseline/reinforcement_learning/base/training/callbacks/logging/`
+
+None of these files implement the JSRL refinement algorithm. There is no file or code block named `jsrl`, no curriculum-based roll-in logic corresponding to JSRL, and no JSRL training loop. The code that exists is mostly:
+
+- a DQN retraining script with RND exploration (`retrain.py`);
+- PPO training for the base selfish-mining agent (`baseline/train_ppo.py`);
+- mask network training and replay/fidelity evaluation (`masknet/train.py`, `masknet/replay.py`);
+- a custom simulator resetting to selected states (`mdp_blockchain_simulator_retrain.py`).
+
+The callback files log policy revenue for some base training runs, but they are not connected to any JSRL refinement implementation and do not satisfy the specific requirement of measuring cumulative reward throughout JSRL refinement.
+
+Thus, despite there being reward/logging code elsewhere in the submission, I find no actual JSRL implementation in the provided files.
+
+# Score
+
+0
+
+The criterion requires implemented code for the JSRL refinement method in the selfish mining environment, including cumulative reward measurement throughout refinement. The submission does not contain any JSRL-specific implementation, so the criterion is not met.

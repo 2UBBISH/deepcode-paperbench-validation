@@ -1,0 +1,99 @@
+2026-09-03 11:05:04 [info     ] Grading leaf: For the autonomous driving environment, The StateMask ("Ours") Explanation method can be selected for generating rollouts (without training)
+2026-09-03 11:05:57 [info     ] Model file selection raw output:
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/retrain.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/readme.md
+2026-09-03 11:05:57 [info     ] Model file selection raw output:
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/retrain.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/readme.md
+2026-09-03 11:07:33 [info     ] model response: # Expectations
+
+The criterion requires that for the autonomous driving environment, the "Ours" explanation method (the optimized StateMask) can be selected for generating rollouts **without training**. This means the submission must contain code that loads a previously trained mask network (trained according to the "Ours" method) and uses it to compute importance scores for each step in a trajectory produced by the pre‑trained policy. The rollouts are used later to identify the most critical state for the refining process (Algorithm 2). I will look for:
+
+- Code that loads the trained mask network from a checkpoint.
+- Code that runs the pre‑trained agent policy in the autonomous driving environment while simultaneously feeding observations to the mask network to obtain importance scores (e.g., the probability of the mask outputting “0”).
+- Code that records the importance scores for each step, returning a trajectory with mask probabilities.
+- The implementation must be distinct from the training phase; it should be a separate module that can be invoked during the refinement stage.
+
+# Reality
+
+The submission contains the file `Refine_auto_drive/gen_retrain_traj.py`, which implements exactly the required functionality.
+
+- **Loading the mask network:**  
+  In `gen_one_traj`, the mask network policy is loaded from a checkpoint:
+  ```python
+  state_dict = torch.load('/home/zck7060/DI-drive/masknet_True_0.0001/ckpt/iteration_10000.pth.tar', map_location='cpu')
+  policy.eval_mode.load_state_dict(state_dict)
+  ```
+  This is the policy trained via the "Ours" method (confirmed by the training script `train_masknet.py` and the custom environment wrapper `custom_masknet_env.py` that implements the reward bonus and PPO optimization).
+
+- **Generating a rollout with importance scores:**  
+  The function `fid_play` (called from `gen_one_traj`) runs the environment step by step. For each observation, it passes the data through the mask network’s `forward` method to obtain the logits of the mask action, then computes the importance score:
+  ```python
+  mask_logit = masknet_output['logit']
+  importance_score = torch.nn.functional.softmax(mask_logit[0])[0].cpu().numpy()
+  ```
+  This yields the probability of the mask network outputting “0” (i.e., not blinding), which is the criticality score used in the paper. The scores are recorded in `traj.mask_probs`.
+
+- **Returning the trajectory:**  
+  The `Traj` object stores the episode length, actions, rewards, and mask probabilities. This trajectory is later used in `retrain_env.py` (`CustomWrapper.reset`) to select the most critical state via `np.argmax(traj.mask_probs)` or random sampling.
+
+Thus, the code demonstrably allows the "Ours" explanation method to generate rollouts (without any further training) for the autonomous driving environment.
+
+# Score
+
+1
+
+The submission contains a concrete implementation that loads the trained "Ours" mask network and uses it to produce rollouts with importance scores, exactly as required by the criterion.
+2026-09-03 11:07:33 [info     ] model response: # Expectations
+
+The criterion requires that for the autonomous driving environment, the "Ours" explanation method (the optimized StateMask) can be selected for generating rollouts **without training**. This means the submission must contain code that loads a previously trained mask network (trained according to the "Ours" method) and uses it to compute importance scores for each step in a trajectory produced by the pre‑trained policy. The rollouts are used later to identify the most critical state for the refining process (Algorithm 2). I will look for:
+
+- Code that loads the trained mask network from a checkpoint.
+- Code that runs the pre‑trained agent policy in the autonomous driving environment while simultaneously feeding observations to the mask network to obtain importance scores (e.g., the probability of the mask outputting “0”).
+- Code that records the importance scores for each step, returning a trajectory with mask probabilities.
+- The implementation must be distinct from the training phase; it should be a separate module that can be invoked during the refinement stage.
+
+# Reality
+
+The submission contains the file `Refine_auto_drive/gen_retrain_traj.py`, which implements exactly the required functionality.
+
+- **Loading the mask network:**  
+  In `gen_one_traj`, the mask network policy is loaded from a checkpoint:
+  ```python
+  state_dict = torch.load('/home/zck7060/DI-drive/masknet_True_0.0001/ckpt/iteration_10000.pth.tar', map_location='cpu')
+  policy.eval_mode.load_state_dict(state_dict)
+  ```
+  This is the policy trained via the "Ours" method (confirmed by the training script `train_masknet.py` and the custom environment wrapper `custom_masknet_env.py` that implements the reward bonus and PPO optimization).
+
+- **Generating a rollout with importance scores:**  
+  The function `fid_play` (called from `gen_one_traj`) runs the environment step by step. For each observation, it passes the data through the mask network’s `forward` method to obtain the logits of the mask action, then computes the importance score:
+  ```python
+  mask_logit = masknet_output['logit']
+  importance_score = torch.nn.functional.softmax(mask_logit[0])[0].cpu().numpy()
+  ```
+  This yields the probability of the mask network outputting “0” (i.e., not blinding), which is the criticality score used in the paper. The scores are recorded in `traj.mask_probs`.
+
+- **Returning the trajectory:**  
+  The `Traj` object stores the episode length, actions, rewards, and mask probabilities. This trajectory is later used in `retrain_env.py` (`CustomWrapper.reset`) to select the most critical state via `np.argmax(traj.mask_probs)` or random sampling.
+
+Thus, the code demonstrably allows the "Ours" explanation method to generate rollouts (without any further training) for the autonomous driving environment.
+
+# Score
+
+1
+
+The submission contains a concrete implementation that loads the trained "Ours" mask network and uses it to produce rollouts with importance scores, exactly as required by the criterion.

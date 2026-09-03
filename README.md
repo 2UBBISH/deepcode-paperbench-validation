@@ -4,7 +4,7 @@
 > 口径:PaperBench Code-Dev(只看代码不执行),同一底座模型双切(裸跑 vs DeepCode),裁判固定。
 > 本仓库包含:修改版 DeepCode 源码、PaperBench 补丁、全部脚本、全部提交产物与判分 JSON、分析文档。**clone 后跑 `setup.sh` 即可复现整个流程。**
 
-**English summary.** An independent replication of the DeepCode paper's claim that its paper-to-code scaffold beats bare coding agents on PaperBench Code-Dev. Same base model (DeepSeek-V4-Pro, plus a Kimi-K2.7 line) on both arms, fixed judge. Headline: on `fre` the scaffold shows no gain under either of two judge servings (0.98× / 0.81×); on `rice` the verdict **flips with the judge serving** (1.05× under SiliconFlow-served DeepSeek-V4-Pro vs 2.58× under Paratera-served DeepSeek-V4-Pro), because the two servings disagree on whether "generic, configurable" implementations count. We cannot yet say which judge is closer to human grading (PaperBench JudgeEval would arbitrate; not run). We also document four silent-degradation defects in the DeepCode pipeline and a full audit of our own modifications.
+**English summary.** An independent replication of the DeepCode paper's claim that its paper-to-code scaffold beats bare coding agents on PaperBench Code-Dev. Same base model (DeepSeek-V4-Pro, plus a Kimi-K2.7 line) on both arms, fixed judge. Headline: on `fre` the scaffold shows no gain under either of two judge servings (0.98× / 0.81×); on `rice` the verdict **flips with the judge serving** (1.05× under SiliconFlow-served DeepSeek-V4-Pro vs 2.58× under Paratera-served DeepSeek-V4-Pro), because the two servings disagree on whether "generic, configurable" implementations count. PaperBench JudgeEval (human-graded ground truth, rice/0) rates both servings as equally accurate (macro F1 0.685 vs 0.719, identical pass rate and bias) while they disagree on 16% of leaves — so the ground truth cannot arbitrate the flip, and that disagreement is the judge-noise floor of Code-Dev scoring with these models. We also document four silent-degradation defects in the DeepCode pipeline and a full audit of our own modifications.
 
 ---
 
@@ -40,7 +40,7 @@
 ### 1.2 三句话
 
 1. **fre 上没有增益**,两个裁判一致。丢分集中在 DeepCode 规划器漏掉全部对比基线(GC-IQL / GC-BC / OPAL 三项全 0)。
-2. **rice 上的结论取决于裁判 serving**:同名模型、两家服务商,对"通用可配置实现是否算已实现"判断相反;rice 裸跑代码大量用抽象回调写法,在严格裁判下成片判零。目前**无法判定哪个裁判对**。
+2. **rice 上的结论取决于裁判 serving**:同名模型、两家服务商,对"通用可配置实现是否算已实现"判断相反;rice 裸跑代码大量用抽象回调写法,在严格裁判下成片判零。JudgeEval(人工标注)给两裁判的 F1 分别为 0.685 / 0.719、偏向完全相同,同一提交 16% 叶级分歧 —— **人工 ground truth 无法裁定谁对,两裁判同等水平却互不一致**。
 3. **样本量不足以分辨小效应**:同组两轮之间摆动 0.13~0.16。倍数只能看方向,不能看小数点。
 
 ### 1.3 工程发现(独立于分数,可单独引用)
@@ -87,7 +87,7 @@ DeepCode 流水线里同一模式的四处静默降级 —— LLM 输出超限�
 
 ### 3.1 前置
 
-- Linux / WSL2,Python 3.11+,`uv`,`git`,`git-lfs`,Docker(判分时起沙箱)
+- Linux / WSL2,Python 3.11+,`uv`,`git`,`curl`,Docker(判分时起沙箱);不需要 git-lfs,论文资产由 `setup.sh` 从 GitHub 直链按固定 commit 下载
 - 两个 OpenAI 兼容 API key:一个给 DeepCode 底座,一个给裁判(可同一个)。我们用 SiliconFlow 与 Paratera 的 DeepSeek-V4-Pro
 - 裸跑对照需要 Claude Code(或任何交互式编码 agent)+ 同一底座模型
 
@@ -161,7 +161,7 @@ PAPER=fre bash deepcode_test/scripts/run_grade.sh         # 真判,约 ¥38/份,
 | `paperbench/judge/simple.py` | 裁判的结构化解析模型可由 `PB_STRUCTURED_PARSER_MODEL` 指定(默认不变;本实验设为 DeepSeek-V4-Pro) |
 | `paperbench/nano/eval.py` | `paper_split` 允许 `fre` / `rice` 单篇 split |
 
-新增:`experiments/splits/{fre,rice}.txt`、`analyze_judge_eval_bias.py` 与 `judge_eval_results_rice/`(SiliconFlow 裁判在 JudgeEval 上 F1 = 0.685)。未改动裁判提示词、评分树、文件选择逻辑。
+新增:`experiments/splits/{fre,rice}.txt`、`analyze_judge_eval_bias.py`、`judge_eval_results_rice/`(SiliconFlow 裁判,F1 = 0.685)与 `judge_eval_results_rice_paratera/`(Paratera 裁判,F1 = 0.719)。未改动裁判提示词、评分树、文件选择逻辑。
 
 ---
 
@@ -198,11 +198,11 @@ PAPER=fre bash deepcode_test/scripts/run_grade.sh         # 真判,约 ¥38/份,
 ## 7. 诚实声明
 
 - **样本量**:每组 2 轮,组内摆动 0.13~0.16;只能看方向。
-- **裁判**:两家 serving 的同名模型判分行为不同;哪个更接近人工未验证。绝对分数与倍数**必须连同裁判 serving 一起报告**。
+- **裁判**:两家 serving 的同名模型判分行为不同(同一提交 16% 叶级分歧),JudgeEval 上二者同等水平、无法裁定。绝对分数与倍数**必须连同裁判 serving 一起报告**。
 - **配置**:DeepCode 侧有 15 处未门控改动(§4.1);"官方默认"不成立,相对比较成立。
 - **修复线**:①②③④ 是否能恢复增益**未得到有效检验**(fx 轮作废)。
 - **底座**:论文用 Sonnet 4.5;我们用 DeepSeek-V4-Pro / Kimi-K2.7,同底座双切保证公平但不能直接对照论文数字。
-- **费用**:全部实验约 ¥1,400(约 30 轮复现 + 25 份判分,含作废)。
+- **费用**:全部实验约 ¥1,450(约 30 轮复现 + 25 份判分 + 2 次 JudgeEval,含作废)。
 
 ## 8. 许可证
 

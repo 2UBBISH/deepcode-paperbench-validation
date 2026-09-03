@@ -1,0 +1,47 @@
+2026-09-03 11:05:04 [info     ] Grading leaf: The (MuJoCo) Walker2d environment is version "Walker2d-v3" (further information about this environment in Appendix C.2).
+2026-09-03 11:05:28 [info     ] Model file selection raw output:
+Refine_mujoco/environment.py
+Refine_mujoco/retrain.py
+Refine_mujoco/masknet/environment.py
+Refine_mujoco/masknet/train.py
+Refine_mujoco/masknet/fid_test.py
+Refine_mujoco/masknet/gen_fid.py
+Refine_mujoco/retrain.sh
+Refine_mujoco/PPO.py
+Refine_mujoco/OnPolicyAlgorithm.py
+Refine_mujoco/base_class.py
+2026-09-03 11:05:28 [info     ] Model file selection raw output:
+Refine_mujoco/environment.py
+Refine_mujoco/retrain.py
+Refine_mujoco/masknet/environment.py
+Refine_mujoco/masknet/train.py
+Refine_mujoco/masknet/fid_test.py
+Refine_mujoco/masknet/gen_fid.py
+Refine_mujoco/retrain.sh
+Refine_mujoco/PPO.py
+Refine_mujoco/OnPolicyAlgorithm.py
+Refine_mujoco/base_class.py
+2026-09-03 11:06:52 [info     ] model response: # Expectations
+The paper says in Appendix C.2 that for the Walker2d environment, "We use 'Walker2d-v3' in our experiments and normalize the observation when training the DRL agent." So in the reproduction code, the environment name must be exactly "Walker2d-v3" (not another version like Walker2d-v2 or Walker2d-v4). The code should be able to instantiate the environment with that identifier, and if normalization is applied, it should be done for this version just as the paper describes.
+
+# Reality
+In the submission, the file `Refine_mujoco/retrain.py` contains the line:
+```python
+norm_games = ["HalfCheetah-v3", "Walker2d-v3"]
+```
+This explicitly lists `"Walker2d-v3"` as one of the environments that require observation normalization. The rest of the script uses `args.env` to specify the environment, and the code branches on whether `env` is in `norm_games` to apply `VecNormalize`. While the default is `"Hopper-v3"`, the infrastructure is present and correctly references the Walker2d version as `"Walker2d-v3"`. The environment wrapper in `environment.py` also handles generic MuJoCo environments (like Walker2d) by extracting position and velocity, which is appropriate for Walker2d-v3. No other version string appears in the provided files.
+
+# Score
+1 – The submission correctly identifies the Walker2d environment as version "Walker2d-v3" in the code, meeting the criterion.
+2026-09-03 11:06:52 [info     ] model response: # Expectations
+The paper says in Appendix C.2 that for the Walker2d environment, "We use 'Walker2d-v3' in our experiments and normalize the observation when training the DRL agent." So in the reproduction code, the environment name must be exactly "Walker2d-v3" (not another version like Walker2d-v2 or Walker2d-v4). The code should be able to instantiate the environment with that identifier, and if normalization is applied, it should be done for this version just as the paper describes.
+
+# Reality
+In the submission, the file `Refine_mujoco/retrain.py` contains the line:
+```python
+norm_games = ["HalfCheetah-v3", "Walker2d-v3"]
+```
+This explicitly lists `"Walker2d-v3"` as one of the environments that require observation normalization. The rest of the script uses `args.env` to specify the environment, and the code branches on whether `env` is in `norm_games` to apply `VecNormalize`. While the default is `"Hopper-v3"`, the infrastructure is present and correctly references the Walker2d version as `"Walker2d-v3"`. The environment wrapper in `environment.py` also handles generic MuJoCo environments (like Walker2d) by extracting position and velocity, which is appropriate for Walker2d-v3. No other version string appears in the provided files.
+
+# Score
+1 – The submission correctly identifies the Walker2d environment as version "Walker2d-v3" in the code, meeting the criterion.

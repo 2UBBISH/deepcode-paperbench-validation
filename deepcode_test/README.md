@@ -83,7 +83,7 @@ DeepCode 三轮串行,trial1 因 4h 墙钟截断作废,trial2/trial3 完整跑�
 | rice DeepCode/裸跑(Kimi) | 0.82× | **1.65×** |
 
 两个裁判看到相同输入(每叶 token 几乎相同),但对"通用可配置实现是否算已实现"判断相反。
-**尚无依据判定哪个裁判更接近人工评分**(需跑 JudgeEval,约 ¥150,未跑)。下文"状态"一节的结论均应理解为**"在 SiliconFlow 裁判下"**。
+JudgeEval(人工标注,rice/0)仲裁结果:SiliconFlow F1 0.685、Paratera F1 0.719,通过率与偏向完全相同,同一提交上 16% 叶级分歧 —— **两裁判同等水平,差异在噪声内,JudgeEval 无法裁定 rice 的翻转**。下文"状态"一节的结论均应理解为**"在 SiliconFlow 裁判下"**。
 完整分析:`docs/FINDING_judge_serving_dependence.md`。
 
 另:修复验证轮 trial_fx1/fx2 因提示词含评分结构元知识而**整体作废**(`docs/REVIEW_local_changes_2026-09-03.md`);

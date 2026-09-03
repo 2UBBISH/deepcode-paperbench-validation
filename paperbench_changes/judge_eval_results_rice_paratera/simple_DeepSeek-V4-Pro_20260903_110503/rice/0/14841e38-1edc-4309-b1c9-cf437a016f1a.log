@@ -1,0 +1,69 @@
+2026-09-03 11:06:58 [info     ] Grading leaf: For the MuJoCo environments, the refining method has been implemented to support the hyperparameter $p$, the probability threshold defining the mixed initial state distribution, as evidenced in Algorithm 2.  The $p$ hyperparameter must be mutable i.e., a hyperparameter whose value can be changed (without having to edit the code directly). Alternative hyperparameter names are allowed, as long as the functionality remains the same.
+2026-09-03 11:07:44 [info     ] Model file selection raw output:
+Refine_mujoco/retrain.py
+Refine_mujoco/retrain.sh
+Refine_mujoco/environment.py
+Refine_mujoco/utils.py
+Refine_mujoco/PPO.py
+Refine_mujoco/OnPolicyAlgorithm.py
+Refine_mujoco/base_class.py
+Refine_mujoco/models.py
+Refine_mujoco/callback.py
+Refine_mujoco/monitor.py
+2026-09-03 11:07:44 [info     ] Model file selection raw output:
+Refine_mujoco/retrain.py
+Refine_mujoco/retrain.sh
+Refine_mujoco/environment.py
+Refine_mujoco/utils.py
+Refine_mujoco/PPO.py
+Refine_mujoco/OnPolicyAlgorithm.py
+Refine_mujoco/base_class.py
+Refine_mujoco/models.py
+Refine_mujoco/callback.py
+Refine_mujoco/monitor.py
+2026-09-03 11:08:15 [info     ] model response: # Expectations
+The paper describes the RICE refining method, which constructs a mixed initial state distribution by combining default initial states and critical states identified through explanation methods. In Algorithm 2, the hyperparameter $p$ is used as the “reset probability threshold” – if a random number is less than $p$, the agent is reset to a critical state; otherwise it starts from the default initial distribution. The criterion requires that for the MuJoCo environments, the refining method supports this hyperparameter $p$ as a mutable value, i.e., it can be changed without editing the code directly (e.g., via a command‑line argument, configuration file, or environment variable). An alternative parameter name is acceptable as long as the functionality remains the same.
+
+# Reality
+The submission contains a directory `Refine_mujoco` that implements the refining method for MuJoCo environments. In `retrain.py` (line 23) a command‑line argument is defined:
+```python
+parser.add_argument("--go_prob", type=float, default=0.5)
+```
+This argument is passed to the environment constructor `make_retrain_env` as `go_prob`.  
+
+In `environment.py`, the `RetrainEnv` class stores this value as `self.p` (line 16). The `reset()` method (line 27) uses `self.p` to decide whether to start from a critical state:
+```python
+if np.random.rand() > self.p:
+    # use trajectory and set start state to critical state
+else:
+    # default environment reset
+```
+This logic matches the behavior of Algorithm 2: with probability `self.p` a critical state is selected (since `rand() > p` is equivalent to `rand() ≤ p` when the condition is reversed). The hyperparameter is therefore functionally equivalent to the $p$ described in the paper.
+
+The command‑line argument `--go_prob` makes the hyperparameter mutable – one can change its value at runtime without modifying the source code. The shell script `retrain.sh` provides an example invocation with `--go_prob 1`, confirming that the parameter is indeed configurable.
+
+# Score
+1. The implementation correctly supports the hyperparameter $p$ (named `--go_prob`) as a mutable, configurable setting for the MuJoCo refining method, exactly as required by the criterion.
+2026-09-03 11:08:15 [info     ] model response: # Expectations
+The paper describes the RICE refining method, which constructs a mixed initial state distribution by combining default initial states and critical states identified through explanation methods. In Algorithm 2, the hyperparameter $p$ is used as the “reset probability threshold” – if a random number is less than $p$, the agent is reset to a critical state; otherwise it starts from the default initial distribution. The criterion requires that for the MuJoCo environments, the refining method supports this hyperparameter $p$ as a mutable value, i.e., it can be changed without editing the code directly (e.g., via a command‑line argument, configuration file, or environment variable). An alternative parameter name is acceptable as long as the functionality remains the same.
+
+# Reality
+The submission contains a directory `Refine_mujoco` that implements the refining method for MuJoCo environments. In `retrain.py` (line 23) a command‑line argument is defined:
+```python
+parser.add_argument("--go_prob", type=float, default=0.5)
+```
+This argument is passed to the environment constructor `make_retrain_env` as `go_prob`.  
+
+In `environment.py`, the `RetrainEnv` class stores this value as `self.p` (line 16). The `reset()` method (line 27) uses `self.p` to decide whether to start from a critical state:
+```python
+if np.random.rand() > self.p:
+    # use trajectory and set start state to critical state
+else:
+    # default environment reset
+```
+This logic matches the behavior of Algorithm 2: with probability `self.p` a critical state is selected (since `rand() > p` is equivalent to `rand() ≤ p` when the condition is reversed). The hyperparameter is therefore functionally equivalent to the $p$ described in the paper.
+
+The command‑line argument `--go_prob` makes the hyperparameter mutable – one can change its value at runtime without modifying the source code. The shell script `retrain.sh` provides an example invocation with `--go_prob 1`, confirming that the parameter is indeed configurable.
+
+# Score
+1. The implementation correctly supports the hyperparameter $p$ (named `--go_prob`) as a mutable, configurable setting for the MuJoCo refining method, exactly as required by the criterion.

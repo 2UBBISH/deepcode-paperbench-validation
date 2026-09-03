@@ -1,0 +1,39 @@
+2026-09-03 11:05:04 [info     ] Grading leaf: Any version of the (MuJoCo) HalfCheetah environment has been correctly set up and can be initialized can be used to run the experiments (further information about this environment in Appendix C.2).
+2026-09-03 11:05:29 [info     ] Model file selection raw output:
+Refine_mujoco/environment.py
+Refine_mujoco/retrain.py
+Refine_mujoco/masknet/environment.py
+Refine_mujoco/masknet/train.py
+Refine_mujoco/baseline/train.py
+Refine_mujoco/retrain.sh
+Refine_mujoco/masknet/cus_PPO.py
+Refine_mujoco/PPO.py
+Refine_mujoco/base_class.py
+Refine_mujoco/OnPolicyAlgorithm.py
+2026-09-03 11:05:29 [info     ] Model file selection raw output:
+Refine_mujoco/environment.py
+Refine_mujoco/retrain.py
+Refine_mujoco/masknet/environment.py
+Refine_mujoco/masknet/train.py
+Refine_mujoco/baseline/train.py
+Refine_mujoco/retrain.sh
+Refine_mujoco/masknet/cus_PPO.py
+Refine_mujoco/PPO.py
+Refine_mujoco/base_class.py
+Refine_mujoco/OnPolicyAlgorithm.py
+2026-09-03 11:06:08 [info     ] model response: # Expectations
+The paper uses the HalfCheetah-v3 environment from MuJoCo for its experiments. The appendix C.2 describes the environment: it is a 2D robot game with a 9-link cheetah, 8 joints, action space of 6 dimensions, observations include position and velocity of body parts, reward combines forward reward and control cost, episodes end after 1000 timesteps. The paper uses the “HalfCheetah-v3” identifier from Gym. The criterion requires that the submission code correctly sets up this environment so that it can be initialized and used to run the experiments. I expect to see at least a reference to the environment name (e.g., “HalfCheetah-v3”) in the code, and any necessary environment-specific handling (like observation normalization, as mentioned for HalfCheetah in the paper) to be implemented. The submission does not need to actually run HalfCheetah experiments, but the code must be capable of doing so.
+
+# Reality
+The provided code is primarily configured for the Hopper environment. In `Refine_mujoco/retrain.py`, the default environment is “Hopper-v3” (line `parser.add_argument("--env", type=str, default="Hopper-v3")`). However, the code contains a list `norm_games = ["HalfCheetah-v3", "Walker2d-v3"]` (line 62 of `retrain.py`), which shows that HalfCheetah-v3 is explicitly recognized as requiring observation normalization. The code then loads the normalizer from a provided path when the environment is in that list (lines 63-73). This demonstrates that HalfCheetah-v3 is supported and can be initialized. The `RetrainEnv` wrapper and the baseline training script (`baseline/train.py`) are generic and can work with any Gym environment by changing the `--env` argument. The mask network training script (`masknet/train.py`) currently hardcodes “Hopper-v3”, but it is not required for HalfCheetah to be set up there; the refinement code can work with a different masknet path. Overall, the code includes the necessary elements to set up and use HalfCheetah-v3: it references the environment name, handles normalization, and uses Gym’s `make()` to create the environment. Therefore, the HalfCheetah environment is correctly set up and can be initialized for experiments.
+
+# Score
+1 – The code explicitly references “HalfCheetah-v3” and includes normalization handling for it, confirming that the environment is correctly set up and can be used to run the experiments.
+2026-09-03 11:06:08 [info     ] model response: # Expectations
+The paper uses the HalfCheetah-v3 environment from MuJoCo for its experiments. The appendix C.2 describes the environment: it is a 2D robot game with a 9-link cheetah, 8 joints, action space of 6 dimensions, observations include position and velocity of body parts, reward combines forward reward and control cost, episodes end after 1000 timesteps. The paper uses the “HalfCheetah-v3” identifier from Gym. The criterion requires that the submission code correctly sets up this environment so that it can be initialized and used to run the experiments. I expect to see at least a reference to the environment name (e.g., “HalfCheetah-v3”) in the code, and any necessary environment-specific handling (like observation normalization, as mentioned for HalfCheetah in the paper) to be implemented. The submission does not need to actually run HalfCheetah experiments, but the code must be capable of doing so.
+
+# Reality
+The provided code is primarily configured for the Hopper environment. In `Refine_mujoco/retrain.py`, the default environment is “Hopper-v3” (line `parser.add_argument("--env", type=str, default="Hopper-v3")`). However, the code contains a list `norm_games = ["HalfCheetah-v3", "Walker2d-v3"]` (line 62 of `retrain.py`), which shows that HalfCheetah-v3 is explicitly recognized as requiring observation normalization. The code then loads the normalizer from a provided path when the environment is in that list (lines 63-73). This demonstrates that HalfCheetah-v3 is supported and can be initialized. The `RetrainEnv` wrapper and the baseline training script (`baseline/train.py`) are generic and can work with any Gym environment by changing the `--env` argument. The mask network training script (`masknet/train.py`) currently hardcodes “Hopper-v3”, but it is not required for HalfCheetah to be set up there; the refinement code can work with a different masknet path. Overall, the code includes the necessary elements to set up and use HalfCheetah-v3: it references the environment name, handles normalization, and uses Gym’s `make()` to create the environment. Therefore, the HalfCheetah environment is correctly set up and can be initialized for experiments.
+
+# Score
+1 – The code explicitly references “HalfCheetah-v3” and includes normalization handling for it, confirming that the environment is correctly set up and can be used to run the experiments.

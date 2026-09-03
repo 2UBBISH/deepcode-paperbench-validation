@@ -1,0 +1,109 @@
+2026-09-03 11:05:04 [info     ] Grading leaf: For the MuJoCo environments, Random Network Distillation (RND) for exploration has been implemented as outlined in Section 3.3.
+2026-09-03 11:05:48 [info     ] Model file selection raw output:
+Refine_mujoco/retrain.py
+Refine_mujoco/models.py
+Refine_mujoco/PPO.py
+Refine_mujoco/environment.py
+Refine_mujoco/base_class.py
+Refine_mujoco/OnPolicyAlgorithm.py
+Refine_mujoco/utils.py
+Refine_mujoco/callback.py
+Refine_mujoco/monitor.py
+Refine_mujoco/retrain.sh
+2026-09-03 11:05:48 [info     ] Model file selection raw output:
+Refine_mujoco/retrain.py
+Refine_mujoco/models.py
+Refine_mujoco/PPO.py
+Refine_mujoco/environment.py
+Refine_mujoco/base_class.py
+Refine_mujoco/OnPolicyAlgorithm.py
+Refine_mujoco/utils.py
+Refine_mujoco/callback.py
+Refine_mujoco/monitor.py
+Refine_mujoco/retrain.sh
+2026-09-03 11:07:13 [info     ] model response: # Expectations
+For the MuJoCo environments, Section 3.3 and Algorithm 2 require Random Network Distillation (RND) exploration during refinement:
+
+- Maintain two networks: a fixed random target network \(f\) and a trainable predictor network \(\hat f\).
+- Compute an intrinsic reward at each transition from the squared error between target and predictor features of the next state:
+  \[
+  R_t^{RND} = \|f(s_{t+1}) - \hat f(s_{t+1})\|^2
+  \]
+  with normalization.
+- Add this bonus to the environment reward with a scaling coefficient \(\lambda\).
+- Update the predictor network \(\hat f\) via MSE regression toward the frozen target network.
+- Integrate this into the PPO refinement loop for MuJoCo agents.
+
+# Reality
+The submission contains actual code implementing RND for MuJoCo.
+
+- In `Refine_mujoco/models.py`, the `RNDModel` class defines:
+  - `self.predictor`, a trainable network,
+  - `self.target`, a network whose parameters are frozen via `requires_grad = False`,
+  - `compute_bonus()` which computes intrinsic reward as the squared difference between target and predictor features of `next_obs`.
+
+- In `Refine_mujoco/OnPolicyAlgorithm.py`:
+  - When `bonus == 'rnd'`, an `RNDModel` and Adam optimizer are initialized.
+  - During `collect_rollouts()`, after `env.step`, the code calls `self.rnd_model.compute_bonus(new_obs)`, normalizes the intrinsic rewards, and adds `self.bonus_scale * rnd_rewards` to the task rewards.
+
+- In `Refine_mujoco/PPO.py`:
+  - In `train()`, when `bonus == 'rnd'`, it computes:
+    ```python
+    forward_loss = F.mse_loss(predict_next_state_feature, target_next_state_feature.detach())
+    ```
+  - This MSE loss is added to the total PPO loss.
+  - The RND optimizer is stepped after `loss.backward()`, updating the predictor while the target remains frozen.
+
+- In `Refine_mujoco/retrain.py`:
+  - Command-line flags `--bonus` and `--bonus_scale` are provided and passed into `PPO.load(...)`.
+  - `Refine_mujoco/retrain.sh` demonstrates using `--bonus 'rnd'`.
+
+This is consistent with the RND exploration mechanism described in Section 3.3 and Algorithm 2. The normalization in `compute_bonus` and the use of a min-max normalization in `collect_rollouts` are compatible with Algorithm 2’s instruction to normalize the RND bonus.
+
+# Score
+1
+
+The criterion is met: the submission contains a concrete implementation of Random Network Distillation for MuJoCo refinement, including bonus computation, reward injection, and predictor training against a frozen target network.
+2026-09-03 11:07:13 [info     ] model response: # Expectations
+For the MuJoCo environments, Section 3.3 and Algorithm 2 require Random Network Distillation (RND) exploration during refinement:
+
+- Maintain two networks: a fixed random target network \(f\) and a trainable predictor network \(\hat f\).
+- Compute an intrinsic reward at each transition from the squared error between target and predictor features of the next state:
+  \[
+  R_t^{RND} = \|f(s_{t+1}) - \hat f(s_{t+1})\|^2
+  \]
+  with normalization.
+- Add this bonus to the environment reward with a scaling coefficient \(\lambda\).
+- Update the predictor network \(\hat f\) via MSE regression toward the frozen target network.
+- Integrate this into the PPO refinement loop for MuJoCo agents.
+
+# Reality
+The submission contains actual code implementing RND for MuJoCo.
+
+- In `Refine_mujoco/models.py`, the `RNDModel` class defines:
+  - `self.predictor`, a trainable network,
+  - `self.target`, a network whose parameters are frozen via `requires_grad = False`,
+  - `compute_bonus()` which computes intrinsic reward as the squared difference between target and predictor features of `next_obs`.
+
+- In `Refine_mujoco/OnPolicyAlgorithm.py`:
+  - When `bonus == 'rnd'`, an `RNDModel` and Adam optimizer are initialized.
+  - During `collect_rollouts()`, after `env.step`, the code calls `self.rnd_model.compute_bonus(new_obs)`, normalizes the intrinsic rewards, and adds `self.bonus_scale * rnd_rewards` to the task rewards.
+
+- In `Refine_mujoco/PPO.py`:
+  - In `train()`, when `bonus == 'rnd'`, it computes:
+    ```python
+    forward_loss = F.mse_loss(predict_next_state_feature, target_next_state_feature.detach())
+    ```
+  - This MSE loss is added to the total PPO loss.
+  - The RND optimizer is stepped after `loss.backward()`, updating the predictor while the target remains frozen.
+
+- In `Refine_mujoco/retrain.py`:
+  - Command-line flags `--bonus` and `--bonus_scale` are provided and passed into `PPO.load(...)`.
+  - `Refine_mujoco/retrain.sh` demonstrates using `--bonus 'rnd'`.
+
+This is consistent with the RND exploration mechanism described in Section 3.3 and Algorithm 2. The normalization in `compute_bonus` and the use of a min-max normalization in `collect_rollouts` are compatible with Algorithm 2’s instruction to normalize the RND bonus.
+
+# Score
+1
+
+The criterion is met: the submission contains a concrete implementation of Random Network Distillation for MuJoCo refinement, including bonus computation, reward injection, and predictor training against a frozen target network.

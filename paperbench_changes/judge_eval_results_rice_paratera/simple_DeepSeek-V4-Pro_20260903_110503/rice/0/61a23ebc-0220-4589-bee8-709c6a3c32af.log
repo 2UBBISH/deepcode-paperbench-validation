@@ -1,0 +1,65 @@
+2026-09-03 11:05:04 [info     ] Grading leaf: For the autonomous driving environment, the optimization of the mask network objective now uses PPO rather than the prime-dual method
+2026-09-03 11:06:31 [info     ] Model file selection raw output:
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_mujoco/masknet/cus_PPO.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/retrain.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/readme.md
+2026-09-03 11:06:31 [info     ] Model file selection raw output:
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_mujoco/masknet/cus_PPO.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/retrain.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/readme.md
+2026-09-03 11:07:37 [info     ] model response: # Expectations
+
+The paper proposes an optimized explanation method ("Ours") that replaces the original StateMask training objective and optimization. Instead of using the prime-dual method to solve the original objective (as in StateMask), the authors reformulate the objective to $\max \eta(\bar{\pi})$ and add a reward bonus for blinding. They then train the mask network using the standard PPO algorithm (Algorithm 1). I expect to see that for the autonomous driving environment, the code implements this training of the mask network using PPO, not the prime-dual method. Specifically, the mask network should be trained as a policy that outputs binary mask actions, the environment should provide a reward that includes the original task reward plus a bonus for masking, and the training loop should use PPO to update the mask network parameters.
+
+# Reality
+
+Looking at the submitted files for the autonomous driving environment:
+
+- `train_masknet.py` is the training script for the mask network. It uses DI-engine's `PPOPolicy` and `BaseLearner`, which are standard PPO implementations. The policy is configured to have an action space of dimension 2 (binary mask actions). The script sets up a collector, evaluator, and learner, and runs the training loop, which is typical PPO training.
+
+- `custom_masknet_env.py` defines the environment wrapper that implements the mask logic. In the `step` method, it gets the original agent's action from a pre-trained agent policy, then takes the mask network's action (0 or 1). If the mask action is 1, a random action is taken; otherwise the agent's action is used. The reward is augmented with a bonus for masking: `rew += self.lamb * mask` (or accumulated across the episode). This matches the reward bonus $R'(s_t, a_t) = R(s_t, a_t) + \alpha a_t^m$ described in the paper.
+
+- There is no sign of the prime-dual optimization used in the original StateMask. The training of the mask network relies entirely on PPO, as configured.
+
+- The `cus_PPO.py` file is a custom PPO implementation for MuJoCo environments, not used for the autonomous driving mask network. The autonomous driving mask network training uses DI-engine's built-in PPO.
+
+Thus, the implementation for the autonomous driving environment correctly uses PPO to optimize the mask network objective, as required by the "Ours" explanation method.
+
+# Score
+
+1 – The code contains a correct implementation of using PPO rather than the prime-dual method for optimizing the mask network in the autonomous driving environment.
+2026-09-03 11:07:37 [info     ] model response: # Expectations
+
+The paper proposes an optimized explanation method ("Ours") that replaces the original StateMask training objective and optimization. Instead of using the prime-dual method to solve the original objective (as in StateMask), the authors reformulate the objective to $\max \eta(\bar{\pi})$ and add a reward bonus for blinding. They then train the mask network using the standard PPO algorithm (Algorithm 1). I expect to see that for the autonomous driving environment, the code implements this training of the mask network using PPO, not the prime-dual method. Specifically, the mask network should be trained as a policy that outputs binary mask actions, the environment should provide a reward that includes the original task reward plus a bonus for masking, and the training loop should use PPO to update the mask network parameters.
+
+# Reality
+
+Looking at the submitted files for the autonomous driving environment:
+
+- `train_masknet.py` is the training script for the mask network. It uses DI-engine's `PPOPolicy` and `BaseLearner`, which are standard PPO implementations. The policy is configured to have an action space of dimension 2 (binary mask actions). The script sets up a collector, evaluator, and learner, and runs the training loop, which is typical PPO training.
+
+- `custom_masknet_env.py` defines the environment wrapper that implements the mask logic. In the `step` method, it gets the original agent's action from a pre-trained agent policy, then takes the mask network's action (0 or 1). If the mask action is 1, a random action is taken; otherwise the agent's action is used. The reward is augmented with a bonus for masking: `rew += self.lamb * mask` (or accumulated across the episode). This matches the reward bonus $R'(s_t, a_t) = R(s_t, a_t) + \alpha a_t^m$ described in the paper.
+
+- There is no sign of the prime-dual optimization used in the original StateMask. The training of the mask network relies entirely on PPO, as configured.
+
+- The `cus_PPO.py` file is a custom PPO implementation for MuJoCo environments, not used for the autonomous driving mask network. The autonomous driving mask network training uses DI-engine's built-in PPO.
+
+Thus, the implementation for the autonomous driving environment correctly uses PPO to optimize the mask network objective, as required by the "Ours" explanation method.
+
+# Score
+
+1 – The code contains a correct implementation of using PPO rather than the prime-dual method for optimizing the mask network in the autonomous driving environment.

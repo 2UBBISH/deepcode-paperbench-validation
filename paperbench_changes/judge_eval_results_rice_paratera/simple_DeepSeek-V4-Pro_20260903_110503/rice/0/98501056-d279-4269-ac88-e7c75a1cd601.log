@@ -1,0 +1,123 @@
+2026-09-03 11:06:40 [info     ] Grading leaf: For the selfish mining environment, the additional reward given when the mask net outputs "1" is governed by a mutable hyperparameter, i.e., a hyperparameter whose value can be changed (without having to edit the code directly), corresponding to $\alpha$ in the paper. Alternative hyperparameter names are allowed, as long as the functionality remains the same.
+2026-09-03 11:07:21 [info     ] Model file selection raw output:
+Refine_selfish_mining/masknet/train.py
+Refine_selfish_mining/masknet/utils.py
+Refine_selfish_mining/masknet/replay.py
+Refine_selfish_mining/masknet/replay.sh
+Refine_selfish_mining/masknet/fidelity_score.py
+Refine_selfish_mining/masknet/sample_mask_score.py
+Refine_selfish_mining/masknet/sample_value_score.py
+Refine_selfish_mining/utils.py
+Refine_selfish_mining/retrain.py
+Refine_selfish_mining/masknet/recordings
+2026-09-03 11:07:21 [info     ] Model file selection raw output:
+Refine_selfish_mining/masknet/train.py
+Refine_selfish_mining/masknet/utils.py
+Refine_selfish_mining/masknet/replay.py
+Refine_selfish_mining/masknet/replay.sh
+Refine_selfish_mining/masknet/fidelity_score.py
+Refine_selfish_mining/masknet/sample_mask_score.py
+Refine_selfish_mining/masknet/sample_value_score.py
+Refine_selfish_mining/utils.py
+Refine_selfish_mining/retrain.py
+Refine_selfish_mining/masknet/recordings
+2026-09-03 11:07:21 [info     ] File /home/deepevol/deepevol/frontier-evals/project/paperbench/data/judge_eval/rice/0/submission/Refine_selfish_mining/masknet/recordings is a directory!
+2026-09-03 11:07:21 [info     ] File /home/deepevol/deepevol/frontier-evals/project/paperbench/data/judge_eval/rice/0/submission/Refine_selfish_mining/masknet/recordings is a directory!
+2026-09-03 11:07:58 [info     ] model response: # Expectations
+
+The paper describes the optimized StateMask objective for training the mask network. To encourage the mask to actually blind steps, the reward is augmented:
+
+\[
+R'(s_t,a_t)=R(s_t,a_t)+\alpha a_t^m
+\]
+
+where \(a_t^m \in \{0,1\}\) and \(\alpha\) is a hyperparameter controlling the bonus given when the mask outputs “1”.
+
+For the selfish mining implementation, I expect to find:
+- an explicit, configurable hyperparameter corresponding to \(\alpha\), such as a CLI argument, config entry, or similar runtime-configurable value;
+- this hyperparameter being passed into the mask training environment or reward computation;
+- the environment using it to add a bonus to the reward when the mask action is 1.
+
+The key requirement is that the hyperparameter is **mutable without editing the code**, e.g. `--mask-alpha 0.01`, rather than a hardcoded constant.
+
+# Reality
+
+I examined the provided selfish mining mask-training files.
+
+In `Refine_selfish_mining/masknet/train.py`:
+- `get_args()` defines:
+  ```python
+  parser.add_argument('--alpha', help='miner size', default=0.35, type=float)
+  ```
+- That argument is used in `create_env()` as:
+  ```python
+  alpha = args.alpha
+  ...
+  mdp = BitcoinFeeModel(alpha=alpha, ...)
+  ```
+  So this `--alpha` is the blockchain miner size parameter, not the mask reward bonus \(\alpha\) from the RICE paper.
+- I do not see any argument such as `--mask-alpha`, `--mask-bonus`, or equivalent that would control the reward bonus for the mask outputting 1.
+- The mask environment itself is imported as
+  ```python
+  from reinforcement_learning.base.blockchain_simulator.mdp_blockchain_simulator_masknet import MDPBlockchainSimulatorMaskNet
+  ```
+  but this file is not included in the submission. Therefore, there is no visible implementation showing that the mask reward bonus is applied from a configurable hyperparameter.
+
+The other relevant files, such as `Refine_selfish_mining/masknet/sample_mask_score.py`, `replay.py`, and `Refine_selfish_mining/retrain.py`, similarly do not contain a configurable mask-action reward bonus parameter. `retrain.py` has RND-related hyperparameters such as `--rnd-bonus-scale`, but those are for exploration during refinement, not for the mask network reward bonus.
+
+Thus, there is no evidence in the provided code that the required mutable \(\alpha\) hyperparameter for the mask network reward bonus is implemented.
+
+# Score
+
+0
+
+The criterion has not been met. The submission does not contain a demonstrable implementation of a mutable hyperparameter governing the additional reward when the mask network outputs “1” for the selfish mining environment. The only `--alpha` argument present refers to the blockchain miner size, not the mask reward bonus, and the actual mask environment implementation is not included.
+2026-09-03 11:07:58 [info     ] model response: # Expectations
+
+The paper describes the optimized StateMask objective for training the mask network. To encourage the mask to actually blind steps, the reward is augmented:
+
+\[
+R'(s_t,a_t)=R(s_t,a_t)+\alpha a_t^m
+\]
+
+where \(a_t^m \in \{0,1\}\) and \(\alpha\) is a hyperparameter controlling the bonus given when the mask outputs “1”.
+
+For the selfish mining implementation, I expect to find:
+- an explicit, configurable hyperparameter corresponding to \(\alpha\), such as a CLI argument, config entry, or similar runtime-configurable value;
+- this hyperparameter being passed into the mask training environment or reward computation;
+- the environment using it to add a bonus to the reward when the mask action is 1.
+
+The key requirement is that the hyperparameter is **mutable without editing the code**, e.g. `--mask-alpha 0.01`, rather than a hardcoded constant.
+
+# Reality
+
+I examined the provided selfish mining mask-training files.
+
+In `Refine_selfish_mining/masknet/train.py`:
+- `get_args()` defines:
+  ```python
+  parser.add_argument('--alpha', help='miner size', default=0.35, type=float)
+  ```
+- That argument is used in `create_env()` as:
+  ```python
+  alpha = args.alpha
+  ...
+  mdp = BitcoinFeeModel(alpha=alpha, ...)
+  ```
+  So this `--alpha` is the blockchain miner size parameter, not the mask reward bonus \(\alpha\) from the RICE paper.
+- I do not see any argument such as `--mask-alpha`, `--mask-bonus`, or equivalent that would control the reward bonus for the mask outputting 1.
+- The mask environment itself is imported as
+  ```python
+  from reinforcement_learning.base.blockchain_simulator.mdp_blockchain_simulator_masknet import MDPBlockchainSimulatorMaskNet
+  ```
+  but this file is not included in the submission. Therefore, there is no visible implementation showing that the mask reward bonus is applied from a configurable hyperparameter.
+
+The other relevant files, such as `Refine_selfish_mining/masknet/sample_mask_score.py`, `replay.py`, and `Refine_selfish_mining/retrain.py`, similarly do not contain a configurable mask-action reward bonus parameter. `retrain.py` has RND-related hyperparameters such as `--rnd-bonus-scale`, but those are for exploration during refinement, not for the mask network reward bonus.
+
+Thus, there is no evidence in the provided code that the required mutable \(\alpha\) hyperparameter for the mask network reward bonus is implemented.
+
+# Score
+
+0
+
+The criterion has not been met. The submission does not contain a demonstrable implementation of a mutable hyperparameter governing the additional reward when the mask network outputs “1” for the selfish mining environment. The only `--alpha` argument present refers to the blockchain miner size, not the mask reward bonus, and the actual mask environment implementation is not included.

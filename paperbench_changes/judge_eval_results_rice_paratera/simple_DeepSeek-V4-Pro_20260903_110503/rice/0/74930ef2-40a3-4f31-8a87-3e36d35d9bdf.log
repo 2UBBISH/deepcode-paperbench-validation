@@ -1,0 +1,61 @@
+2026-09-03 11:06:49 [info     ] Grading leaf: For the network defence environment, for the "Ours" explanation method, code for measuring training time throughout training as outlined in Appendix C.3 and Table 4 has been implemented.
+2026-09-03 11:07:23 [info     ] Model file selection raw output:
+Refine_cage_challenge/rollout_mask.py
+Refine_cage_challenge/ppo_train.py
+Refine_cage_challenge/retrain.py
+Refine_cage_challenge/sample_mask_score.py
+Refine_cage_challenge/Agents/PPOAgent_mask.py
+Refine_cage_challenge/readme.md
+Refine_cage_challenge/replay.py
+Refine_cage_challenge/sample_value_score.py
+Refine_cage_challenge/rollout_ppo.py
+Refine_cage_challenge/Agents/PPOAgent_Retrain.py
+2026-09-03 11:07:23 [info     ] Model file selection raw output:
+Refine_cage_challenge/rollout_mask.py
+Refine_cage_challenge/ppo_train.py
+Refine_cage_challenge/retrain.py
+Refine_cage_challenge/sample_mask_score.py
+Refine_cage_challenge/Agents/PPOAgent_mask.py
+Refine_cage_challenge/readme.md
+Refine_cage_challenge/replay.py
+Refine_cage_challenge/sample_value_score.py
+Refine_cage_challenge/rollout_ppo.py
+Refine_cage_challenge/Agents/PPOAgent_Retrain.py
+2026-09-03 11:09:15 [info     ] model response: # Expectations
+
+The criterion requires that for the network defence environment (Cage Challenge 2), the submission includes code that measures the training time of the "Ours" explanation method (i.e., the mask network training) as described in Appendix C.3 and Table 4 of the paper. The paper states that Table 4 reports the efficiency of training the mask network, comparing StateMask and the proposed method. To reproduce this, there must be an implementation that records the wall‑clock time taken to train the mask network (the "Ours" explanation method) and possibly logs or outputs it. The code should contain explicit timing measurements (e.g., using `time` module, `torch.cuda.Event`, or similar) during the training loop of the mask network, and ideally store or print the elapsed time.
+
+I will look for an actual implementation of timing logic in the files related to the mask network training in the Cage Challenge environment.
+
+# Reality
+
+The submission contains several files for the network defence environment in the `Refine_cage_challenge` folder. The relevant files for training the mask network ("Ours" explanation method) are:
+
+- `rollout_mask.py` – This script trains the mask network using `PPOAgent_mask`. It runs episodes and prints average reward. There is **no** code that starts a timer, records elapsed time, or logs training time. The training loop does not contain any timing measurement.
+- `Agents/PPOAgent_mask.py` – This is the agent class used for the mask network. It handles action selection, storing transitions, and training. It does **not** contain any timing code.
+- `sample_mask_score.py`, `ppo_train.py`, `retrain.py`, `replay.py`, `sample_value_score.py` – These scripts are not related to measuring training time of the mask network; they either sample mask scores, train the baseline PPO, or perform retraining with RND. None of them include timing of the mask network training.
+
+None of the provided files implement any measurement of training time for the "Ours" explanation method. The submission lacks even a simple `time.time()` call to record the duration of mask network training. Therefore, the requirement is not fulfilled.
+
+# Score
+
+0 – The code does **not** contain any implementation for measuring the training time of the "Ours" explanation method in the network defence environment.
+2026-09-03 11:09:15 [info     ] model response: # Expectations
+
+The criterion requires that for the network defence environment (Cage Challenge 2), the submission includes code that measures the training time of the "Ours" explanation method (i.e., the mask network training) as described in Appendix C.3 and Table 4 of the paper. The paper states that Table 4 reports the efficiency of training the mask network, comparing StateMask and the proposed method. To reproduce this, there must be an implementation that records the wall‑clock time taken to train the mask network (the "Ours" explanation method) and possibly logs or outputs it. The code should contain explicit timing measurements (e.g., using `time` module, `torch.cuda.Event`, or similar) during the training loop of the mask network, and ideally store or print the elapsed time.
+
+I will look for an actual implementation of timing logic in the files related to the mask network training in the Cage Challenge environment.
+
+# Reality
+
+The submission contains several files for the network defence environment in the `Refine_cage_challenge` folder. The relevant files for training the mask network ("Ours" explanation method) are:
+
+- `rollout_mask.py` – This script trains the mask network using `PPOAgent_mask`. It runs episodes and prints average reward. There is **no** code that starts a timer, records elapsed time, or logs training time. The training loop does not contain any timing measurement.
+- `Agents/PPOAgent_mask.py` – This is the agent class used for the mask network. It handles action selection, storing transitions, and training. It does **not** contain any timing code.
+- `sample_mask_score.py`, `ppo_train.py`, `retrain.py`, `replay.py`, `sample_value_score.py` – These scripts are not related to measuring training time of the mask network; they either sample mask scores, train the baseline PPO, or perform retraining with RND. None of them include timing of the mask network training.
+
+None of the provided files implement any measurement of training time for the "Ours" explanation method. The submission lacks even a simple `time.time()` call to record the duration of mask network training. Therefore, the requirement is not fulfilled.
+
+# Score
+
+0 – The code does **not** contain any implementation for measuring the training time of the "Ours" explanation method in the network defence environment.

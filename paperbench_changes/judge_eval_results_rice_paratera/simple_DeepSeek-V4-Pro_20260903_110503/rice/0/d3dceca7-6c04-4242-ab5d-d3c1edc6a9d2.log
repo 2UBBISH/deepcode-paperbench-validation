@@ -1,0 +1,71 @@
+2026-09-03 11:05:04 [info     ] Grading leaf: In the (MuJoCo) Walker2d environment, the observations are normalized when training DRL agents (further information about this environment in Appendix C.2).
+2026-09-03 11:05:29 [info     ] Model file selection raw output:
+Refine_mujoco/environment.py
+Refine_mujoco/baseline/train.py
+Refine_mujoco/masknet/train.py
+Refine_mujoco/retrain.py
+Refine_mujoco/utils.py
+Refine_mujoco/models.py
+Refine_mujoco/masknet/environment.py
+Refine_mujoco/PPO.py
+Refine_mujoco/OnPolicyAlgorithm.py
+Refine_mujoco/base_class.py
+2026-09-03 11:05:29 [info     ] Model file selection raw output:
+Refine_mujoco/environment.py
+Refine_mujoco/baseline/train.py
+Refine_mujoco/masknet/train.py
+Refine_mujoco/retrain.py
+Refine_mujoco/utils.py
+Refine_mujoco/models.py
+Refine_mujoco/masknet/environment.py
+Refine_mujoco/PPO.py
+Refine_mujoco/OnPolicyAlgorithm.py
+Refine_mujoco/base_class.py
+2026-09-03 11:06:38 [info     ] model response: # Expectations
+The paper’s Appendix C.2 states that for the Walker2d environment, *“We use ‘Walker2d‑v3’ in our experiments and normalize the observation when training the DRL agent.”* Therefore, any code that trains a DRL agent in the Walker2d‑v3 environment should implement observation normalization. In practice this means using a wrapper like `VecNormalize` from stable‑baselines3 (or equivalent) to normalize observations before they are fed to the policy. I will look for actual code (not just comments) that creates a `VecNormalize` wrapper for the Walker2d environment and applies it to the training loop of a DRL agent.
+
+# Reality
+I examined the submitted files. The file `Refine_mujoco/retrain.py` is the main script for refining (retraining) the DRL agent. It contains a list of games that require normalization:
+
+```python
+norm_games = ["HalfCheetah-v3", "Walker2d-v3"]
+if args.env not in norm_games:
+    # ... no normalization
+else:
+    # ... setup VecNormalize
+    env = DummyVecEnv([...])
+    env = VecMonitor(env, log_path)
+    env = VecNormalize.load(args.vec_norm_path, env)
+    env.training = False
+```
+
+This block explicitly loads a pre‑trained `VecNormalize` wrapper for Walker2d‑v3 and applies it to the environment. The `VecNormalize` wrapper will normalize observations before they reach the policy. The agent is then trained using PPO with this normalized environment.  
+
+The other training scripts (`baseline/train.py` and `masknet/train.py`) are for Hopper, not Walker2d, and they do not contain normalization – but they are irrelevant to this criterion. The only code that trains a DRL agent in the Walker2d environment is the retraining script, and it correctly normalizes observations.
+
+# Score
+1 – The submission contains a correct implementation of observation normalization for the Walker2d‑v3 environment when training a DRL agent (the retraining process). The normalization is applied via the `VecNormalize` wrapper in `retrain.py`.
+2026-09-03 11:06:38 [info     ] model response: # Expectations
+The paper’s Appendix C.2 states that for the Walker2d environment, *“We use ‘Walker2d‑v3’ in our experiments and normalize the observation when training the DRL agent.”* Therefore, any code that trains a DRL agent in the Walker2d‑v3 environment should implement observation normalization. In practice this means using a wrapper like `VecNormalize` from stable‑baselines3 (or equivalent) to normalize observations before they are fed to the policy. I will look for actual code (not just comments) that creates a `VecNormalize` wrapper for the Walker2d environment and applies it to the training loop of a DRL agent.
+
+# Reality
+I examined the submitted files. The file `Refine_mujoco/retrain.py` is the main script for refining (retraining) the DRL agent. It contains a list of games that require normalization:
+
+```python
+norm_games = ["HalfCheetah-v3", "Walker2d-v3"]
+if args.env not in norm_games:
+    # ... no normalization
+else:
+    # ... setup VecNormalize
+    env = DummyVecEnv([...])
+    env = VecMonitor(env, log_path)
+    env = VecNormalize.load(args.vec_norm_path, env)
+    env.training = False
+```
+
+This block explicitly loads a pre‑trained `VecNormalize` wrapper for Walker2d‑v3 and applies it to the environment. The `VecNormalize` wrapper will normalize observations before they reach the policy. The agent is then trained using PPO with this normalized environment.  
+
+The other training scripts (`baseline/train.py` and `masknet/train.py`) are for Hopper, not Walker2d, and they do not contain normalization – but they are irrelevant to this criterion. The only code that trains a DRL agent in the Walker2d environment is the retraining script, and it correctly normalizes observations.
+
+# Score
+1 – The submission contains a correct implementation of observation normalization for the Walker2d‑v3 environment when training a DRL agent (the retraining process). The normalization is applied via the `VecNormalize` wrapper in `retrain.py`.

@@ -1,0 +1,55 @@
+2026-09-03 11:05:04 [info     ] Grading leaf: For the selfish mining environment, Random Network Distillation (RND) for exploration has been implemented as outlined in Section 3.3.
+2026-09-03 11:07:02 [info     ] Model file selection raw output:
+Refine_selfish_mining/rnd_model.py
+Refine_selfish_mining/rnd_policy.py
+Refine_selfish_mining/retrain.py
+Refine_selfish_mining/utils.py
+Refine_selfish_mining/baseline/net.py
+Refine_selfish_mining/baseline/train_ppo.py
+Refine_selfish_mining/masknet/utils.py
+Refine_selfish_mining/masknet/train.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/training/trainer.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/function_approximation/mlp_approximator.py
+2026-09-03 11:07:02 [info     ] Model file selection raw output:
+Refine_selfish_mining/rnd_model.py
+Refine_selfish_mining/rnd_policy.py
+Refine_selfish_mining/retrain.py
+Refine_selfish_mining/utils.py
+Refine_selfish_mining/baseline/net.py
+Refine_selfish_mining/baseline/train_ppo.py
+Refine_selfish_mining/masknet/utils.py
+Refine_selfish_mining/masknet/train.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/training/trainer.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/function_approximation/mlp_approximator.py
+2026-09-03 11:07:47 [info     ] model response: # Expectations
+The paper describes RND as part of the refining method: a predictor network \(\hat{f}\) and a fixed target network \(f\) are used to compute an intrinsic reward bonus \( \|f(s_{t+1}) - \hat{f}(s_{t+1})\|^2 \) (with normalization). This bonus is added to the task reward with a scaling factor \(\lambda\). The predictor is updated via MSE loss with respect to the target's output, while the target network remains fixed. The implementation should be integrated into the RL training loop for the selfish mining environment.
+
+# Reality
+The submission contains a dedicated RND module for the selfish mining environment:
+
+- **`rnd_model.py`**: Defines `RNDModel` with a target network and a predictor network. The `compute_bonus` method computes the intrinsic reward as \( \frac{1}{2} \sum (target - predictor)^2 \) (equivalent to the squared norm up to a constant factor). The `forward` method returns the MSE loss between predictor and target outputs for training the predictor.
+
+- **`rnd_policy.py`**: The `RNDPolicy` class wraps a base policy and adds RND. In `process_fn`, it computes the bonus for the next observations, normalizes it across the batch, and adds it to the original reward multiplied by `reward_scale` (which corresponds to \(\lambda\)). The `learn` method first updates the base policy, then computes the average RND MSE loss and backpropagates it to update the predictor network, while the target network remains frozen because its parameters are not updated (no gradient computation).
+
+- **`retrain.py`**: The main training script for the selfish mining environment loads a pretrained DQN policy and wraps it with `RNDPolicy`, then runs off‑policy training. This integrates RND exploration into the refinement process.
+
+The implementation captures the essential components of RND as outlined in Section 3.3: a fixed target network, a predictor updated via MSE loss, an intrinsic reward computed as the squared difference (with normalization), and integration into the RL training loop.
+
+# Score
+**1** – The submission contains a correct implementation of Random Network Distillation for the selfish mining environment, matching the description in the paper.
+2026-09-03 11:07:47 [info     ] model response: # Expectations
+The paper describes RND as part of the refining method: a predictor network \(\hat{f}\) and a fixed target network \(f\) are used to compute an intrinsic reward bonus \( \|f(s_{t+1}) - \hat{f}(s_{t+1})\|^2 \) (with normalization). This bonus is added to the task reward with a scaling factor \(\lambda\). The predictor is updated via MSE loss with respect to the target's output, while the target network remains fixed. The implementation should be integrated into the RL training loop for the selfish mining environment.
+
+# Reality
+The submission contains a dedicated RND module for the selfish mining environment:
+
+- **`rnd_model.py`**: Defines `RNDModel` with a target network and a predictor network. The `compute_bonus` method computes the intrinsic reward as \( \frac{1}{2} \sum (target - predictor)^2 \) (equivalent to the squared norm up to a constant factor). The `forward` method returns the MSE loss between predictor and target outputs for training the predictor.
+
+- **`rnd_policy.py`**: The `RNDPolicy` class wraps a base policy and adds RND. In `process_fn`, it computes the bonus for the next observations, normalizes it across the batch, and adds it to the original reward multiplied by `reward_scale` (which corresponds to \(\lambda\)). The `learn` method first updates the base policy, then computes the average RND MSE loss and backpropagates it to update the predictor network, while the target network remains frozen because its parameters are not updated (no gradient computation).
+
+- **`retrain.py`**: The main training script for the selfish mining environment loads a pretrained DQN policy and wraps it with `RNDPolicy`, then runs off‑policy training. This integrates RND exploration into the refinement process.
+
+The implementation captures the essential components of RND as outlined in Section 3.3: a fixed target network, a predictor updated via MSE loss, an intrinsic reward computed as the squared difference (with normalization), and integration into the RL training loop.
+
+# Score
+**1** – The submission contains a correct implementation of Random Network Distillation for the selfish mining environment, matching the description in the paper.

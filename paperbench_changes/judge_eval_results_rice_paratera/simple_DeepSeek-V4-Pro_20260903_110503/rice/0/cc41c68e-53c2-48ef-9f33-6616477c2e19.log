@@ -1,0 +1,85 @@
+2026-09-03 11:06:19 [info     ] Grading leaf: For the autonomous driving environment, the refining method has been implemented as outlined in Algorithm 2, integrating the mixed initial state distribution and RND.
+2026-09-03 11:07:00 [info     ] Model file selection raw output:
+Refine_auto_drive/retrain.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/readme.md
+README.md
+2026-09-03 11:07:00 [info     ] Model file selection raw output:
+Refine_auto_drive/retrain.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/readme.md
+README.md
+2026-09-03 11:08:26 [info     ] model response: # Expectations
+The criterion requires that for the autonomous driving environment, the refining method ("Ours") is implemented as outlined in Algorithm 2 of the paper. That algorithm integrates:
+
+- A mixed initial state distribution: with probability `p`, reset to the **most critical state** identified by the explanation method (i.e., the state mask); otherwise reset to the default initial state.
+- Random Network Distillation (RND) for exploration: during training from the chosen initial state, add an intrinsic reward bonus based on the MSE between a predictor and a target network, while continuing to optimize the policy with PPO.
+
+Therefore, I expect the code to:
+1. Use a pre‑trained policy and a trained mask network to obtain step‑wise importance scores.
+2. Run a trajectory, identify the single most critical state via the mask (e.g., the state with the highest mask probability of “0”).
+3. With probability `p`, reset the environment to that most critical state (by fast‑forwarding through the trajectory); with probability `1-p`, reset normally.
+4. During the subsequent rollout, compute the RND bonus for the next state and add it to the task reward.
+5. Update the policy with PPO and the RND predictor network with MSE loss.
+
+I will look for code that correctly selects the **most critical state** (not just any random state from the trajectory) and that correctly integrates the RND reward.
+
+# Reality
+The submission contains several files for the autonomous driving environment:
+
+- `Refine_auto_drive/retrain.py` – main training script, loads a pre‑trained policy and uses `CustomWrapper` (which implements the mixed initial state distribution) and `RndRewardModel` (RND).
+- `Refine_auto_drive/retrain_env.py` – defines `CustomWrapper`. In its `reset` method, when `np.random.rand() < self.p`, it calls `gen_one_traj` to obtain a trajectory with `mask_probs` (importance scores). Then it selects a starting index:
+  - If `self.random_sampling` is `True`, it picks a **random index** from the trajectory.
+  - If `False`, it would pick `np.argmax(traj.mask_probs)` (the most critical state).
+  The attribute `self.random_sampling` is explicitly set to `True` in the constructor and never changed. Therefore, the code always uses a random state, not the most critical state as required by Algorithm 2.
+- `Refine_auto_drive/gen_retrain_traj.py` – contains the function `gen_one_traj` that runs the pre‑trained policy and mask network to collect a trajectory and importance scores. The mask network outputs logits, from which they compute `importance_score` (the probability of not blinding). The list of these scores is stored in `traj.mask_probs`. This part is consistent with the explanation method.
+- `Refine_auto_drive/rnd_reward_model.py` – implements RND with a predictor/target network, MSE loss, normalization, and intrinsic reward scaling. This is correctly integrated.
+- `Refine_auto_drive/learner.py` – the learner collects data, trains the RND model, and then estimates rewards with the intrinsic bonus before passing the data to the policy. This matches the required RND integration.
+
+The critical flaw is that the selection of the initial state from the trajectory is **random**, not the **most critical** state as mandated by Algorithm 2. The paper’s method explicitly states: “Identify the most critical state s_t in τ via state mask”. The code does not implement this; it picks a random state. The fact that a flag exists to select the most critical state is irrelevant because the code as provided does not use it. The implementation therefore deviates from the specified algorithm.
+
+# Score
+0 – The refining method is not implemented as outlined in Algorithm 2 because it does not reset to the **most critical state** identified by the explanation method; it uses random sampling instead. The integration of the mixed initial distribution and RND is partly present, but the core selection mechanism is incorrect, so the criterion is not met.
+2026-09-03 11:08:26 [info     ] model response: # Expectations
+The criterion requires that for the autonomous driving environment, the refining method ("Ours") is implemented as outlined in Algorithm 2 of the paper. That algorithm integrates:
+
+- A mixed initial state distribution: with probability `p`, reset to the **most critical state** identified by the explanation method (i.e., the state mask); otherwise reset to the default initial state.
+- Random Network Distillation (RND) for exploration: during training from the chosen initial state, add an intrinsic reward bonus based on the MSE between a predictor and a target network, while continuing to optimize the policy with PPO.
+
+Therefore, I expect the code to:
+1. Use a pre‑trained policy and a trained mask network to obtain step‑wise importance scores.
+2. Run a trajectory, identify the single most critical state via the mask (e.g., the state with the highest mask probability of “0”).
+3. With probability `p`, reset the environment to that most critical state (by fast‑forwarding through the trajectory); with probability `1-p`, reset normally.
+4. During the subsequent rollout, compute the RND bonus for the next state and add it to the task reward.
+5. Update the policy with PPO and the RND predictor network with MSE loss.
+
+I will look for code that correctly selects the **most critical state** (not just any random state from the trajectory) and that correctly integrates the RND reward.
+
+# Reality
+The submission contains several files for the autonomous driving environment:
+
+- `Refine_auto_drive/retrain.py` – main training script, loads a pre‑trained policy and uses `CustomWrapper` (which implements the mixed initial state distribution) and `RndRewardModel` (RND).
+- `Refine_auto_drive/retrain_env.py` – defines `CustomWrapper`. In its `reset` method, when `np.random.rand() < self.p`, it calls `gen_one_traj` to obtain a trajectory with `mask_probs` (importance scores). Then it selects a starting index:
+  - If `self.random_sampling` is `True`, it picks a **random index** from the trajectory.
+  - If `False`, it would pick `np.argmax(traj.mask_probs)` (the most critical state).
+  The attribute `self.random_sampling` is explicitly set to `True` in the constructor and never changed. Therefore, the code always uses a random state, not the most critical state as required by Algorithm 2.
+- `Refine_auto_drive/gen_retrain_traj.py` – contains the function `gen_one_traj` that runs the pre‑trained policy and mask network to collect a trajectory and importance scores. The mask network outputs logits, from which they compute `importance_score` (the probability of not blinding). The list of these scores is stored in `traj.mask_probs`. This part is consistent with the explanation method.
+- `Refine_auto_drive/rnd_reward_model.py` – implements RND with a predictor/target network, MSE loss, normalization, and intrinsic reward scaling. This is correctly integrated.
+- `Refine_auto_drive/learner.py` – the learner collects data, trains the RND model, and then estimates rewards with the intrinsic bonus before passing the data to the policy. This matches the required RND integration.
+
+The critical flaw is that the selection of the initial state from the trajectory is **random**, not the **most critical** state as mandated by Algorithm 2. The paper’s method explicitly states: “Identify the most critical state s_t in τ via state mask”. The code does not implement this; it picks a random state. The fact that a flag exists to select the most critical state is irrelevant because the code as provided does not use it. The implementation therefore deviates from the specified algorithm.
+
+# Score
+0 – The refining method is not implemented as outlined in Algorithm 2 because it does not reset to the **most critical state** identified by the explanation method; it uses random sampling instead. The integration of the mixed initial distribution and RND is partly present, but the core selection mechanism is incorrect, so the criterion is not met.

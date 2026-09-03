@@ -1,0 +1,119 @@
+2026-09-03 11:05:04 [info     ] Grading leaf: For the selfish mining environment, The StateMask ("Ours") Explanation method can be selected for generating rollouts (without training)
+2026-09-03 11:05:38 [info     ] Model file selection raw output:
+Refine_selfish_mining/masknet/sample_mask_score.py
+Refine_selfish_mining/masknet/replay.py
+Refine_selfish_mining/masknet/fidelity_score.py
+Refine_selfish_mining/masknet/utils.py
+Refine_selfish_mining/masknet/replay.sh
+Refine_selfish_mining/retrain.py
+Refine_selfish_mining/utils.py
+Refine_selfish_mining/masknet/sample_value_score.py
+Refine_selfish_mining/masknet/recordings/mask_prob_log.txt
+Refine_selfish_mining/masknet/recordings/mask_replay_reward_log_2.txt
+2026-09-03 11:05:38 [info     ] Model file selection raw output:
+Refine_selfish_mining/masknet/sample_mask_score.py
+Refine_selfish_mining/masknet/replay.py
+Refine_selfish_mining/masknet/fidelity_score.py
+Refine_selfish_mining/masknet/utils.py
+Refine_selfish_mining/masknet/replay.sh
+Refine_selfish_mining/retrain.py
+Refine_selfish_mining/utils.py
+Refine_selfish_mining/masknet/sample_value_score.py
+Refine_selfish_mining/masknet/recordings/mask_prob_log.txt
+Refine_selfish_mining/masknet/recordings/mask_replay_reward_log_2.txt
+2026-09-03 11:07:21 [info     ] model response: # Expectations
+
+The criterion states: "For the selfish mining environment, The StateMask ('Ours') Explanation method can be selected for generating rollouts (without training)."
+
+This means that the submission must contain code that allows a user to choose the "Ours" explanation method (the optimized version of StateMask described in Section 3.3 and Algorithm 1) and then use that method to produce importance scores for states during trajectory rollouts, without any further training of the mask network. Specifically, the code should:
+
+- Load the pre-trained mask network (the "Ours" explanation model).
+- Run episodes in the selfish mining environment using the pre-trained agent policy.
+- At each step, query the mask network to obtain a state importance score (e.g., the probability of not masking).
+- Store or output those scores alongside the trajectories.
+
+Additionally, the selection mechanism should be explicit, e.g., via a command-line argument or a function parameter that allows choosing "Ours" (or "mask") as the explanation method.
+
+I will look for:
+
+- A script or function that loads the trained mask network (from a checkpoint).
+- Code that executes rollouts and uses the mask network to compute scores.
+- The ability to select this particular explanation method (as opposed to, say, random selection or other methods like "highlights").
+
+# Reality
+
+Looking at the provided files:
+
+- **`masknet/sample_mask_score.py`**:
+  - Loads both the DQN agent (`load_dqn_model()`) and the mask network (`load_mask_model(args)`).
+  - In `sample_traj()`, for each episode, it runs the environment step by step, using the DQN agent to select actions, and at each step it calls `mask_model(batch)` to obtain the probability of not masking (`mask_prob = mask_model(batch).logits[0][0]`). This is recorded as the importance score.
+  - The recorded mask probabilities are saved to `mask_prob_log.txt`.
+  - This function generates rollouts *without training* the mask (it only uses the pre-trained model). The rollouts are driven by the DQN agent, and the mask network merely computes scores.
+  - The script can be executed directly (e.g., `python sample_mask_score.py`), which would generate rollouts using the "Ours" explanation method.
+
+- **`masknet/replay.py`**:
+  - Contains a `replay` function that takes a `method` argument. If `method == "mask"`, it loads the `mask_prob_log.txt` (produced by the mask network) and uses those scores to select critical segments.
+  - This script can be called with `--method "mask"` to use the "Ours" explanation method. The `replay` function itself does not train the mask; it merely uses the precomputed scores to evaluate the explanation (by replaying the trajectory with random actions in the critical segment).
+  - The ability to select the "Ours" explanation method is thus provided via the `--method` argument.
+
+- **`masknet/utils.py`**:
+  - Defines `load_mask_model(args)` which loads the trained mask network (PPO-based) from a checkpoint (`ckpt1.pth`). This is the "Ours" implementation.
+
+- **`masknet/replay.sh`**:
+  - Shows that the replay script is run with `--method "mask"` to use the mask explanation.
+
+The code clearly implements the ability to select the "Ours" explanation method (the optimized StateMask) and use it to generate rollouts without further training. The mask network is loaded, and during rollout it computes importance scores per step.
+
+# Score
+
+The criterion is met. The submission contains code that loads the trained "Ours" mask network, runs rollouts, and computes state importance scores, and the method can be explicitly selected via the `--method "mask"` argument. Therefore, the score is 1.
+
+**Score: 1**
+2026-09-03 11:07:21 [info     ] model response: # Expectations
+
+The criterion states: "For the selfish mining environment, The StateMask ('Ours') Explanation method can be selected for generating rollouts (without training)."
+
+This means that the submission must contain code that allows a user to choose the "Ours" explanation method (the optimized version of StateMask described in Section 3.3 and Algorithm 1) and then use that method to produce importance scores for states during trajectory rollouts, without any further training of the mask network. Specifically, the code should:
+
+- Load the pre-trained mask network (the "Ours" explanation model).
+- Run episodes in the selfish mining environment using the pre-trained agent policy.
+- At each step, query the mask network to obtain a state importance score (e.g., the probability of not masking).
+- Store or output those scores alongside the trajectories.
+
+Additionally, the selection mechanism should be explicit, e.g., via a command-line argument or a function parameter that allows choosing "Ours" (or "mask") as the explanation method.
+
+I will look for:
+
+- A script or function that loads the trained mask network (from a checkpoint).
+- Code that executes rollouts and uses the mask network to compute scores.
+- The ability to select this particular explanation method (as opposed to, say, random selection or other methods like "highlights").
+
+# Reality
+
+Looking at the provided files:
+
+- **`masknet/sample_mask_score.py`**:
+  - Loads both the DQN agent (`load_dqn_model()`) and the mask network (`load_mask_model(args)`).
+  - In `sample_traj()`, for each episode, it runs the environment step by step, using the DQN agent to select actions, and at each step it calls `mask_model(batch)` to obtain the probability of not masking (`mask_prob = mask_model(batch).logits[0][0]`). This is recorded as the importance score.
+  - The recorded mask probabilities are saved to `mask_prob_log.txt`.
+  - This function generates rollouts *without training* the mask (it only uses the pre-trained model). The rollouts are driven by the DQN agent, and the mask network merely computes scores.
+  - The script can be executed directly (e.g., `python sample_mask_score.py`), which would generate rollouts using the "Ours" explanation method.
+
+- **`masknet/replay.py`**:
+  - Contains a `replay` function that takes a `method` argument. If `method == "mask"`, it loads the `mask_prob_log.txt` (produced by the mask network) and uses those scores to select critical segments.
+  - This script can be called with `--method "mask"` to use the "Ours" explanation method. The `replay` function itself does not train the mask; it merely uses the precomputed scores to evaluate the explanation (by replaying the trajectory with random actions in the critical segment).
+  - The ability to select the "Ours" explanation method is thus provided via the `--method` argument.
+
+- **`masknet/utils.py`**:
+  - Defines `load_mask_model(args)` which loads the trained mask network (PPO-based) from a checkpoint (`ckpt1.pth`). This is the "Ours" implementation.
+
+- **`masknet/replay.sh`**:
+  - Shows that the replay script is run with `--method "mask"` to use the mask explanation.
+
+The code clearly implements the ability to select the "Ours" explanation method (the optimized StateMask) and use it to generate rollouts without further training. The mask network is loaded, and during rollout it computes importance scores per step.
+
+# Score
+
+The criterion is met. The submission contains code that loads the trained "Ours" mask network, runs rollouts, and computes state importance scores, and the method can be explicitly selected via the `--method "mask"` argument. Therefore, the score is 1.
+
+**Score: 1**

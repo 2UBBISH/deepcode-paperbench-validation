@@ -1,0 +1,67 @@
+2026-09-03 11:05:04 [info     ] Grading leaf: For the selfish mining environment, the original StateMask Explanation method can be selected for generating rollouts (without training)
+2026-09-03 11:06:18 [info     ] Model file selection raw output:
+Refine_selfish_mining/masknet/sample_mask_score.py
+Refine_selfish_mining/masknet/sample_value_score.py
+Refine_selfish_mining/masknet/replay.py
+Refine_selfish_mining/masknet/replay.sh
+Refine_selfish_mining/masknet/fidelity_score.py
+Refine_selfish_mining/masknet/utils.py
+Refine_selfish_mining/masknet/train.py
+Refine_selfish_mining/retrain.py
+Refine_selfish_mining/utils.py
+Refine_selfish_mining/baseline/blockchain_mdps/bitcoin_bare_fee_model.py
+2026-09-03 11:06:18 [info     ] Model file selection raw output:
+Refine_selfish_mining/masknet/sample_mask_score.py
+Refine_selfish_mining/masknet/sample_value_score.py
+Refine_selfish_mining/masknet/replay.py
+Refine_selfish_mining/masknet/replay.sh
+Refine_selfish_mining/masknet/fidelity_score.py
+Refine_selfish_mining/masknet/utils.py
+Refine_selfish_mining/masknet/train.py
+Refine_selfish_mining/retrain.py
+Refine_selfish_mining/utils.py
+Refine_selfish_mining/baseline/blockchain_mdps/bitcoin_bare_fee_model.py
+2026-09-03 11:07:07 [info     ] model response: # Expectations
+The paper describes two explanation methods: the original StateMask (Cheng et al., 2023) and the proposed "Ours" variant. The original StateMask uses a mask network trained with the objective \(J(\theta)=\min |\eta(\pi)-\eta(\bar{\pi})|\) and a prime‑dual optimization. The criterion requires that for the selfish mining environment, the code allows the **original StateMask explanation method** to be selected for generating rollouts **without additional training** – i.e., a pre‑trained original StateMask model can be loaded and used to produce step‑level importance scores for trajectories (e.g., to compute fidelity scores or to identify critical states). I expect to find:
+
+- A separate implementation of the original StateMask mask network (or at least a way to load a model trained with that method).
+- A script or function that can use that model to compute importance scores for a given rollout (e.g., by running the environment, recording the mask network’s output, and saving the scores).
+- The ability to choose “original StateMask” as an explanation method (e.g., via a command‑line argument or a separate entry point) when generating rollouts.
+
+# Reality
+The provided files for the selfish mining environment are:
+
+- `masknet/train.py` – trains a mask network using PPO with a reward bonus, which is the “Ours” method.
+- `masknet/utils.py` – provides `load_mask_model(args)` that loads the checkpoint from `masknet/model/ckpt1.pth`, which is the “Ours” model.
+- `masknet/sample_mask_score.py` – uses `load_mask_model` to compute importance scores and save them; this is the “Ours” explanation.
+- `masknet/replay.py` and `masknet/replay.sh` – allow selecting explantion methods via `--method` (options: `random`, `trust`, `highlights`, `mask`, `max`). No option for “original StateMask” exists.
+- `masknet/fidelity_score.py` – computes fidelity scores for the methods listed above.
+- `masknet/sample_value_score.py` – computes value‑based scores, not mask‑based.
+- `retrain.py` – retraining code that does not expose an explanation method selection.
+
+Nowhere in these files is there a loading or usage of an original StateMask model. There is no script that trains the original StateMask, and neither `sample_mask_score.py` nor `replay.py` can be pointed to such a model. The “mask” method in `replay.py` loads the “Ours” mask network, not the original StateMask. The code lacks any path to select the original StateMask explanation method for generating rollouts.
+
+# Score
+0. The submission does not contain a correct implementation that allows the original StateMask explanation method to be selected for generating rollouts. The required code is absent.
+2026-09-03 11:07:07 [info     ] model response: # Expectations
+The paper describes two explanation methods: the original StateMask (Cheng et al., 2023) and the proposed "Ours" variant. The original StateMask uses a mask network trained with the objective \(J(\theta)=\min |\eta(\pi)-\eta(\bar{\pi})|\) and a prime‑dual optimization. The criterion requires that for the selfish mining environment, the code allows the **original StateMask explanation method** to be selected for generating rollouts **without additional training** – i.e., a pre‑trained original StateMask model can be loaded and used to produce step‑level importance scores for trajectories (e.g., to compute fidelity scores or to identify critical states). I expect to find:
+
+- A separate implementation of the original StateMask mask network (or at least a way to load a model trained with that method).
+- A script or function that can use that model to compute importance scores for a given rollout (e.g., by running the environment, recording the mask network’s output, and saving the scores).
+- The ability to choose “original StateMask” as an explanation method (e.g., via a command‑line argument or a separate entry point) when generating rollouts.
+
+# Reality
+The provided files for the selfish mining environment are:
+
+- `masknet/train.py` – trains a mask network using PPO with a reward bonus, which is the “Ours” method.
+- `masknet/utils.py` – provides `load_mask_model(args)` that loads the checkpoint from `masknet/model/ckpt1.pth`, which is the “Ours” model.
+- `masknet/sample_mask_score.py` – uses `load_mask_model` to compute importance scores and save them; this is the “Ours” explanation.
+- `masknet/replay.py` and `masknet/replay.sh` – allow selecting explantion methods via `--method` (options: `random`, `trust`, `highlights`, `mask`, `max`). No option for “original StateMask” exists.
+- `masknet/fidelity_score.py` – computes fidelity scores for the methods listed above.
+- `masknet/sample_value_score.py` – computes value‑based scores, not mask‑based.
+- `retrain.py` – retraining code that does not expose an explanation method selection.
+
+Nowhere in these files is there a loading or usage of an original StateMask model. There is no script that trains the original StateMask, and neither `sample_mask_score.py` nor `replay.py` can be pointed to such a model. The “mask” method in `replay.py` loads the “Ours” mask network, not the original StateMask. The code lacks any path to select the original StateMask explanation method for generating rollouts.
+
+# Score
+0. The submission does not contain a correct implementation that allows the original StateMask explanation method to be selected for generating rollouts. The required code is absent.

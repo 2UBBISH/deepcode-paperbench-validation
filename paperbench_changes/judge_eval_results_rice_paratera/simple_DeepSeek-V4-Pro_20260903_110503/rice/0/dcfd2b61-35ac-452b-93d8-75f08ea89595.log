@@ -1,0 +1,145 @@
+2026-09-03 11:05:04 [info     ] Grading leaf: For the autonomous driving environment, the original StateMask Explanation method can be selected for generating rollouts (without training)
+2026-09-03 11:06:20 [info     ] Model file selection raw output:
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/retrain.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/readme.md
+2026-09-03 11:06:20 [info     ] Model file selection raw output:
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/retrain.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/readme.md
+2026-09-03 11:07:16 [info     ] model response: # Expectations
+
+The paper describes two explanation methods relevant to RICE:
+
+1. **StateMask (original)**, from Cheng et al. (2023), which trains a mask network to minimize the absolute performance difference \(\min |\eta(\pi)-\eta(\bar{\pi})|\), often using a prime-dual optimization setup.
+2. **“Ours”**, the paper’s simplified variant, which reformulates the objective and adds a reward bonus for masking, then trains with PPO.
+
+For this criterion, the submission should show that, in the **autonomous driving environment**, a user can select the **original StateMask explanation method** specifically to generate rollouts/trajectories **without further training**. That means there should be code that:
+
+- loads or instantiates an original StateMask explanation model/checkpoint;
+- uses that original StateMask model during rollout generation, e.g. to produce state importance scores or identify critical states;
+- exposes a clear selection mechanism between explanation methods, including “original StateMask”;
+- does not require training the original StateMask in the same process when only generating rollouts.
+
+I would therefore look for an explanation-method parameter, separate original StateMask model loading path, or alternative branch in the autonomous driving rollout/critical-state generation code.
+
+# Reality
+
+The provided files relevant to the autonomous driving environment are under `Refine_auto_drive/`. They do not show an implementation allowing the **original StateMask** explanation method to be selected for rollout generation.
+
+Key observations:
+
+- `gen_retrain_traj.py` is the main file used to generate trajectories/importance scores for retraining. It hard-codes a single mask network checkpoint:
+  ```python
+  state_dict = torch.load('/home/zck7060/DI-drive/masknet_True_0.0001/ckpt/iteration_10000.pth.tar', map_location='cpu')
+  policy.eval_mode.load_state_dict(state_dict)
+  ```
+  This is the paper’s proposed “Ours” mask network, not the original StateMask method.
+
+- In `gen_retrain_traj.py`, the function `fid_play` uses the loaded masknet policy to compute an importance score:
+  ```python
+  masknet_output = masknet._model.forward(data, mode='compute_actor_critic')
+  ...
+  importance_score = torch.nn.functional.softmax(mask_logit[0])[0].cpu().numpy()
+  ```
+  There is no branch or argument allowing an original StateMask explanation model to be selected instead.
+
+- `retrain_env.py` calls `gen_one_traj` during reset when the mixed-initial-state branch is triggered:
+  ```python
+  traj = gen_one_traj(obs, self.env, self.seed)
+  ```
+  It then chooses a start index either randomly or using:
+  ```python
+  start_idx = np.argmax(traj.mask_probs)
+  ```
+  However, the explanation model used to produce `traj.mask_probs` is still the hard-coded “Ours” mask network from `gen_retrain_traj.py`.
+
+- `retrain_env.py` has only `self.random_sampling = True` hard-coded:
+  ```python
+  self.random_sampling = True
+  ```
+  There is no option such as `explanation_method='statemask'` or `use_original_statemask=True`.
+
+- `custom_masknet_env.py` and `train_masknet.py` implement/train the simplified “Ours” mask network with reward bonus behavior. They do not implement or load the original StateMask method for rollout generation.
+
+Therefore, while the submission contains code for generating rollouts using the proposed mask network, it does **not** provide a way to select the original StateMask explanation method for that purpose.
+
+# Score
+
+0
+
+The criterion is not met because the submission does not implement a selection mechanism or code path for using the original StateMask explanation method to generate rollouts without training in the autonomous driving environment. The rollout generation code only supports the hard-coded proposed mask network.
+2026-09-03 11:07:16 [info     ] model response: # Expectations
+
+The paper describes two explanation methods relevant to RICE:
+
+1. **StateMask (original)**, from Cheng et al. (2023), which trains a mask network to minimize the absolute performance difference \(\min |\eta(\pi)-\eta(\bar{\pi})|\), often using a prime-dual optimization setup.
+2. **“Ours”**, the paper’s simplified variant, which reformulates the objective and adds a reward bonus for masking, then trains with PPO.
+
+For this criterion, the submission should show that, in the **autonomous driving environment**, a user can select the **original StateMask explanation method** specifically to generate rollouts/trajectories **without further training**. That means there should be code that:
+
+- loads or instantiates an original StateMask explanation model/checkpoint;
+- uses that original StateMask model during rollout generation, e.g. to produce state importance scores or identify critical states;
+- exposes a clear selection mechanism between explanation methods, including “original StateMask”;
+- does not require training the original StateMask in the same process when only generating rollouts.
+
+I would therefore look for an explanation-method parameter, separate original StateMask model loading path, or alternative branch in the autonomous driving rollout/critical-state generation code.
+
+# Reality
+
+The provided files relevant to the autonomous driving environment are under `Refine_auto_drive/`. They do not show an implementation allowing the **original StateMask** explanation method to be selected for rollout generation.
+
+Key observations:
+
+- `gen_retrain_traj.py` is the main file used to generate trajectories/importance scores for retraining. It hard-codes a single mask network checkpoint:
+  ```python
+  state_dict = torch.load('/home/zck7060/DI-drive/masknet_True_0.0001/ckpt/iteration_10000.pth.tar', map_location='cpu')
+  policy.eval_mode.load_state_dict(state_dict)
+  ```
+  This is the paper’s proposed “Ours” mask network, not the original StateMask method.
+
+- In `gen_retrain_traj.py`, the function `fid_play` uses the loaded masknet policy to compute an importance score:
+  ```python
+  masknet_output = masknet._model.forward(data, mode='compute_actor_critic')
+  ...
+  importance_score = torch.nn.functional.softmax(mask_logit[0])[0].cpu().numpy()
+  ```
+  There is no branch or argument allowing an original StateMask explanation model to be selected instead.
+
+- `retrain_env.py` calls `gen_one_traj` during reset when the mixed-initial-state branch is triggered:
+  ```python
+  traj = gen_one_traj(obs, self.env, self.seed)
+  ```
+  It then chooses a start index either randomly or using:
+  ```python
+  start_idx = np.argmax(traj.mask_probs)
+  ```
+  However, the explanation model used to produce `traj.mask_probs` is still the hard-coded “Ours” mask network from `gen_retrain_traj.py`.
+
+- `retrain_env.py` has only `self.random_sampling = True` hard-coded:
+  ```python
+  self.random_sampling = True
+  ```
+  There is no option such as `explanation_method='statemask'` or `use_original_statemask=True`.
+
+- `custom_masknet_env.py` and `train_masknet.py` implement/train the simplified “Ours” mask network with reward bonus behavior. They do not implement or load the original StateMask method for rollout generation.
+
+Therefore, while the submission contains code for generating rollouts using the proposed mask network, it does **not** provide a way to select the original StateMask explanation method for that purpose.
+
+# Score
+
+0
+
+The criterion is not met because the submission does not implement a selection mechanism or code path for using the original StateMask explanation method to generate rollouts without training in the autonomous driving environment. The rollout generation code only supports the hard-coded proposed mask network.

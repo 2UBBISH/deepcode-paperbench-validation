@@ -1,0 +1,107 @@
+2026-09-03 11:05:04 [info     ] Grading leaf: For the autonomous driving environment, the policy network agents has been implemented
+2026-09-03 11:05:53 [info     ] Model file selection raw output:
+Refine_auto_drive/learner.py
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/retrain.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/readme.md
+README.md
+2026-09-03 11:05:53 [info     ] Model file selection raw output:
+Refine_auto_drive/learner.py
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/retrain.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/readme.md
+README.md
+2026-09-03 11:06:29 [info     ] model response: # Expectations
+
+The paper describes the autonomous driving environment (MetaDrive) and the use of a PPO‑based policy network agent. The agent is trained to output discrete actions (5 actions) from observations of shape `[5, 200, 200]`. The implementation should be a neural network policy compatible with PPO, with the specified observation and action spaces, and the code should show how such an agent is instantiated and trained (or at least defined). I will look for actual code that creates a PPO policy with the correct architecture for the autonomous driving task, not just instructions or comments.
+
+# Reality
+
+In the submission, the file `Refine_auto_drive/train_baseline.py` contains the following relevant code:
+
+- It defines a configuration dictionary `metadrive_macro_config` that includes a `policy` section:
+  ```python
+  policy=dict(
+      cuda=True,
+      action_space='discrete',
+      model=dict(
+          obs_shape=[5, 200, 200],
+          action_shape=5,
+          action_space='discrete',
+          encoder_hidden_size_list=[128, 128, 64],
+      ),
+      learn=dict(
+          epoch_per_collect=10,
+          batch_size=64,
+          learning_rate=3e-4,
+      ),
+      collect=dict(
+          n_sample=300,
+      ),
+  ),
+  ```
+- The main function uses `compile_config` and creates a `PPOPolicy` from `ding.policy`:
+  ```python
+  policy = PPOPolicy(cfg.policy)
+  ```
+- The same `PPOPolicy` is used in `retrain.py` and `gen_retrain_traj.py` when loading the pre‑trained agent.
+
+This demonstrates a concrete implementation of the policy network agent for the autonomous driving environment. The observation shape, action shape, and discrete action space match the MetaDrive task described in the paper. The agent is a PPO‑based policy, consistent with the paper’s description.
+
+# Score
+
+The criterion is met. The submission contains actual code that implements a policy network agent for the autonomous driving environment using PPO, with the correct observation and action specifications. 
+
+**Score: 1**
+2026-09-03 11:06:29 [info     ] model response: # Expectations
+
+The paper describes the autonomous driving environment (MetaDrive) and the use of a PPO‑based policy network agent. The agent is trained to output discrete actions (5 actions) from observations of shape `[5, 200, 200]`. The implementation should be a neural network policy compatible with PPO, with the specified observation and action spaces, and the code should show how such an agent is instantiated and trained (or at least defined). I will look for actual code that creates a PPO policy with the correct architecture for the autonomous driving task, not just instructions or comments.
+
+# Reality
+
+In the submission, the file `Refine_auto_drive/train_baseline.py` contains the following relevant code:
+
+- It defines a configuration dictionary `metadrive_macro_config` that includes a `policy` section:
+  ```python
+  policy=dict(
+      cuda=True,
+      action_space='discrete',
+      model=dict(
+          obs_shape=[5, 200, 200],
+          action_shape=5,
+          action_space='discrete',
+          encoder_hidden_size_list=[128, 128, 64],
+      ),
+      learn=dict(
+          epoch_per_collect=10,
+          batch_size=64,
+          learning_rate=3e-4,
+      ),
+      collect=dict(
+          n_sample=300,
+      ),
+  ),
+  ```
+- The main function uses `compile_config` and creates a `PPOPolicy` from `ding.policy`:
+  ```python
+  policy = PPOPolicy(cfg.policy)
+  ```
+- The same `PPOPolicy` is used in `retrain.py` and `gen_retrain_traj.py` when loading the pre‑trained agent.
+
+This demonstrates a concrete implementation of the policy network agent for the autonomous driving environment. The observation shape, action shape, and discrete action space match the MetaDrive task described in the paper. The agent is a PPO‑based policy, consistent with the paper’s description.
+
+# Score
+
+The criterion is met. The submission contains actual code that implements a policy network agent for the autonomous driving environment using PPO, with the correct observation and action specifications. 
+
+**Score: 1**

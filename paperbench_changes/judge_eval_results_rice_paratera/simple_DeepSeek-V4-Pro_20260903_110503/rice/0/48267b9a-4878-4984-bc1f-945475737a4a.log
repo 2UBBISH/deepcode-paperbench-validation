@@ -1,0 +1,39 @@
+2026-09-03 11:05:04 [info     ] Grading leaf: For the network defence environment, the explanation method implementation relies on a mask network that outputs "0" for critical steps and "1" otherwise
+2026-09-03 11:05:40 [info     ] Model file selection raw output:
+Refine_cage_challenge/Agents/PPOAgent_mask.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_mask.py
+Refine_cage_challenge/rollout_mask.py
+Refine_cage_challenge/sample_mask_score.py
+Refine_cage_challenge/ppo_train.py
+Refine_cage_challenge/PPO/ActorCritic.py
+Refine_cage_challenge/PPO/Memory.py
+Refine_cage_challenge/Agents/PPOAgent.py
+Refine_cage_challenge/Agents/MainAgent.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2.py
+2026-09-03 11:05:40 [info     ] Model file selection raw output:
+Refine_cage_challenge/Agents/PPOAgent_mask.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_mask.py
+Refine_cage_challenge/rollout_mask.py
+Refine_cage_challenge/sample_mask_score.py
+Refine_cage_challenge/ppo_train.py
+Refine_cage_challenge/PPO/ActorCritic.py
+Refine_cage_challenge/PPO/Memory.py
+Refine_cage_challenge/Agents/PPOAgent.py
+Refine_cage_challenge/Agents/MainAgent.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2.py
+2026-09-03 11:08:44 [info     ] model response: # Expectations
+The paper describes the explanation method as a mask network that outputs a binary action: `0` means the original agent's action is taken (the step is critical), and `1` means the action is replaced with a random action (the step is blinded). The mask network is trained to maximize the perturbed agent's reward while receiving a bonus for blinding (outputting `1`). The resulting mask network yields, for each state, a probability of outputting `0`, which is used as the importance score. For the network defence environment (Cage Challenge 2), the implementation must include a mask network that indeed outputs `0` for critical steps and `1` otherwise, and this mask network must be integrated into the training and evaluation code for that environment.
+
+# Reality
+The submission includes files specific to the network defence environment (Cage Challenge 2) under `Refine_cage_challenge/`. The key file is `Agents/PPOAgent_mask.py`, which defines the mask agent. In its `set_initial_values` method, the action space for the mask network is set to `self.n_actions_mask = 2`, meaning the mask network outputs a discrete binary action (0 or 1). The `get_action` method samples a mask action via `self.old_policy.act(...)`; if the mask action is `0`, the baseline (target) agent's action is used, and if it is `1`, a random action is taken. This directly implements the required behavior: output `0` for critical steps (preserve agent action) and `1` otherwise (blind). The mask network is trained using PPO in `rollout_mask.py`, where an additional reward (`lazy_reward`) is given when the mask action is `1`, matching the paper's description of encouraging blinding. The evaluation script `sample_mask_score.py` uses `get_mask_prob` to extract the probability of outputting `0` (critical step) for importance scoring. All these components are clearly tied to the network defence environment (Cage Challenge 2) via the use of CybORG and the ChallengeWrapper2.
+
+# Score
+1
+2026-09-03 11:08:44 [info     ] model response: # Expectations
+The paper describes the explanation method as a mask network that outputs a binary action: `0` means the original agent's action is taken (the step is critical), and `1` means the action is replaced with a random action (the step is blinded). The mask network is trained to maximize the perturbed agent's reward while receiving a bonus for blinding (outputting `1`). The resulting mask network yields, for each state, a probability of outputting `0`, which is used as the importance score. For the network defence environment (Cage Challenge 2), the implementation must include a mask network that indeed outputs `0` for critical steps and `1` otherwise, and this mask network must be integrated into the training and evaluation code for that environment.
+
+# Reality
+The submission includes files specific to the network defence environment (Cage Challenge 2) under `Refine_cage_challenge/`. The key file is `Agents/PPOAgent_mask.py`, which defines the mask agent. In its `set_initial_values` method, the action space for the mask network is set to `self.n_actions_mask = 2`, meaning the mask network outputs a discrete binary action (0 or 1). The `get_action` method samples a mask action via `self.old_policy.act(...)`; if the mask action is `0`, the baseline (target) agent's action is used, and if it is `1`, a random action is taken. This directly implements the required behavior: output `0` for critical steps (preserve agent action) and `1` otherwise (blind). The mask network is trained using PPO in `rollout_mask.py`, where an additional reward (`lazy_reward`) is given when the mask action is `1`, matching the paper's description of encouraging blinding. The evaluation script `sample_mask_score.py` uses `get_mask_prob` to extract the probability of outputting `0` (critical step) for importance scoring. All these components are clearly tied to the network defence environment (Cage Challenge 2) via the use of CybORG and the ChallengeWrapper2.
+
+# Score
+1

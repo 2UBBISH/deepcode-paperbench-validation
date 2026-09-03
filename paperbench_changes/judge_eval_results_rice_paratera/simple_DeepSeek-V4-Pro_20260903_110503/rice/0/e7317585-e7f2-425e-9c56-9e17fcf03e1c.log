@@ -1,0 +1,81 @@
+2026-09-03 11:05:04 [info     ] Grading leaf: For the network defence environment, the explanation fidelity score metric has been implemented as outlined in section 4.1 and 4.2: by forcing a given pretrained policy network agent to take random actions starting from each identified critical time step and measuring the average and maximum reward change.
+2026-09-03 11:05:34 [info     ] Model file selection raw output:
+Refine_cage_challenge/replay.py
+Refine_cage_challenge/sample_mask_score.py
+Refine_cage_challenge/rollout_mask.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_mask.py
+Refine_cage_challenge/Agents/PPOAgent_mask.py
+Refine_cage_challenge/ppo_train.py
+Refine_cage_challenge/sample_value_score.py
+Refine_cage_challenge/readme.md
+Refine_cage_challenge/retrain.py
+Refine_cage_challenge/Agents/MainAgent.py
+2026-09-03 11:05:34 [info     ] Model file selection raw output:
+Refine_cage_challenge/replay.py
+Refine_cage_challenge/sample_mask_score.py
+Refine_cage_challenge/rollout_mask.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_mask.py
+Refine_cage_challenge/Agents/PPOAgent_mask.py
+Refine_cage_challenge/ppo_train.py
+Refine_cage_challenge/sample_value_score.py
+Refine_cage_challenge/readme.md
+Refine_cage_challenge/retrain.py
+Refine_cage_challenge/Agents/MainAgent.py
+2026-09-03 11:06:21 [info     ] model response: # Expectations
+The paper describes the fidelity score metric for evaluating explanation methods in Section 4.1 and 4.2. For the network defence (Cage Challenge 2) environment, the implementation should:
+
+- Use a pretrained policy network agent.
+- For a given trajectory, apply an explanation method (e.g., the mask network) to produce step‑level importance scores.
+- Apply a sliding window of width \(l = L \times K\) (where \(L\) is the trajectory length and \(K\) a fraction like 10%, 20%, etc.) to find the segment of consecutive steps with the highest average importance score.
+- Fast‑forward the agent to the start of that critical segment and force it to take random actions for the \(l\) steps, then let the agent’s policy execute normally until the episode ends.
+- Measure the original reward \(R\) (without randomization) and the reward \(R'\) after randomization, computing \(d = |R' - R|\).
+- Define \(d_{\max}\) as the maximum possible reward change in the environment (the largest reward value allowed per episode).
+- Calculate the fidelity score as \(\log(d / d_{\max}) - \log(l / L)\).
+- Repeat this over many trajectories and averaging to obtain the fidelity score.
+
+I will look for actual code that performs these steps — specifically, that loads a pretrained policy, runs the explanation to get importance scores, selects the critical window using the sliding window and highest average importance, randomizes actions in that window, collects the reward changes, and finally computes the fidelity score using the formula.
+
+# Reality
+The submission contains several files for the Cage Challenge 2 environment:
+
+- `replay.py` defines a `rollout` function that loads a pretrained PPO policy agent, loads pre‑recorded action logs and (if using the mask method) mask probability logs. It uses `select_critical` to find the highest‑average‑importance window of length `sub_length` (with `width` corresponding to the fraction \(K\)). It then plays the episode: before the critical window it follows the recorded actions, during the window it takes random actions, and after the window it follows the agent’s policy. It collects the total reward for each episode and saves the reward logs to a file. However, it **does not** compute the fidelity score. It does not compute \(d_{\max}\), nor does it apply the formula \(\log(d/d_{\max}) - \log(l/L)\). The reward logs are saved, but the actual fidelity score calculation is not implemented in the code.
+
+- `sample_mask_score.py` generates mask probabilities and action logs for trajectories but does not implement the fidelity metric.
+
+- `sample_value_score.py` generates some value‑based scores but is unrelated to the fidelity metric.
+
+- `rollout_mask.py`, `ppo_train.py`, `retrain.py`, and the agent wrappers are not related to the fidelity score computation.
+
+No other script in the provided files computes the fidelity score. The `replay.py` script implements the randomization procedure but stops short of the final metric calculation. Therefore, the complete implementation of the explanation fidelity score metric as described in the paper is missing.
+
+# Score
+The criterion requires an implementation of the fidelity score metric for the network defence environment. The provided code does not include the calculation of the fidelity score (the formula using \(d\), \(d_{\max}\), and the log ratio). Because the code only implements part of the procedure (the randomization and reward collection) but does not compute the final metric, the implementation is incomplete. Score: 0.
+2026-09-03 11:06:21 [info     ] model response: # Expectations
+The paper describes the fidelity score metric for evaluating explanation methods in Section 4.1 and 4.2. For the network defence (Cage Challenge 2) environment, the implementation should:
+
+- Use a pretrained policy network agent.
+- For a given trajectory, apply an explanation method (e.g., the mask network) to produce step‑level importance scores.
+- Apply a sliding window of width \(l = L \times K\) (where \(L\) is the trajectory length and \(K\) a fraction like 10%, 20%, etc.) to find the segment of consecutive steps with the highest average importance score.
+- Fast‑forward the agent to the start of that critical segment and force it to take random actions for the \(l\) steps, then let the agent’s policy execute normally until the episode ends.
+- Measure the original reward \(R\) (without randomization) and the reward \(R'\) after randomization, computing \(d = |R' - R|\).
+- Define \(d_{\max}\) as the maximum possible reward change in the environment (the largest reward value allowed per episode).
+- Calculate the fidelity score as \(\log(d / d_{\max}) - \log(l / L)\).
+- Repeat this over many trajectories and averaging to obtain the fidelity score.
+
+I will look for actual code that performs these steps — specifically, that loads a pretrained policy, runs the explanation to get importance scores, selects the critical window using the sliding window and highest average importance, randomizes actions in that window, collects the reward changes, and finally computes the fidelity score using the formula.
+
+# Reality
+The submission contains several files for the Cage Challenge 2 environment:
+
+- `replay.py` defines a `rollout` function that loads a pretrained PPO policy agent, loads pre‑recorded action logs and (if using the mask method) mask probability logs. It uses `select_critical` to find the highest‑average‑importance window of length `sub_length` (with `width` corresponding to the fraction \(K\)). It then plays the episode: before the critical window it follows the recorded actions, during the window it takes random actions, and after the window it follows the agent’s policy. It collects the total reward for each episode and saves the reward logs to a file. However, it **does not** compute the fidelity score. It does not compute \(d_{\max}\), nor does it apply the formula \(\log(d/d_{\max}) - \log(l/L)\). The reward logs are saved, but the actual fidelity score calculation is not implemented in the code.
+
+- `sample_mask_score.py` generates mask probabilities and action logs for trajectories but does not implement the fidelity metric.
+
+- `sample_value_score.py` generates some value‑based scores but is unrelated to the fidelity metric.
+
+- `rollout_mask.py`, `ppo_train.py`, `retrain.py`, and the agent wrappers are not related to the fidelity score computation.
+
+No other script in the provided files computes the fidelity score. The `replay.py` script implements the randomization procedure but stops short of the final metric calculation. Therefore, the complete implementation of the explanation fidelity score metric as described in the paper is missing.
+
+# Score
+The criterion requires an implementation of the fidelity score metric for the network defence environment. The provided code does not include the calculation of the fidelity score (the formula using \(d\), \(d_{\max}\), and the log ratio). Because the code only implements part of the procedure (the randomization and reward collection) but does not compute the final metric, the implementation is incomplete. Score: 0.

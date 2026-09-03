@@ -1,0 +1,127 @@
+2026-09-03 11:05:04 [info     ] Grading leaf: For the MuJoCo environments, the policy network agents has been implemented
+2026-09-03 11:05:45 [info     ] Model file selection raw output:
+Refine_mujoco/models.py
+Refine_mujoco/PPO.py
+Refine_mujoco/OnPolicyAlgorithm.py
+Refine_mujoco/base_class.py
+Refine_mujoco/retrain.py
+Refine_mujoco/baseline/train.py
+Refine_mujoco/masknet/cus_PPO.py
+Refine_mujoco/masknet/train.py
+Refine_mujoco/environment.py
+Refine_mujoco/utils.py
+2026-09-03 11:05:45 [info     ] Model file selection raw output:
+Refine_mujoco/models.py
+Refine_mujoco/PPO.py
+Refine_mujoco/OnPolicyAlgorithm.py
+Refine_mujoco/base_class.py
+Refine_mujoco/retrain.py
+Refine_mujoco/baseline/train.py
+Refine_mujoco/masknet/cus_PPO.py
+Refine_mujoco/masknet/train.py
+Refine_mujoco/environment.py
+Refine_mujoco/utils.py
+2026-09-03 11:06:49 [info     ] model response: # Expectations
+The paper uses MuJoCo environments (Hopper, Walker2d, Reacher, HalfCheetah) with PPO-trained policy agents. The criterion requires that the submission actually implements policy network agents for these MuJoCo environments, not just describes them.
+
+A correct implementation should:
+- define or instantiate a PPO-compatible policy network that takes the MuJoCo environment observation/action spaces,
+- create the agent policy through code (e.g., Stable Baselines3 `MlpPolicy` or an equivalent custom policy),
+- show how the policy is used for pretraining/refinement.
+
+Since the addendum says the paper relies on default Stable Baselines3 policy architectures, using SB3's `MlpPolicy` is acceptable.
+
+# Reality
+The submission contains multiple relevant files under `Refine_mujoco/`:
+
+- `baseline/train.py` explicitly creates and trains a PPO policy network agent for a MuJoCo environment:
+  ```python
+  env = DummyVecEnv([lambda: gym.make("Hopper-v3")])
+  ...
+  model = PPO("MlpPolicy", env, tensorboard_log="weak_tmp/")
+  model.learn(total_timesteps=1e6, callback=callback)
+  model.save(log_dir + "ppo_hopper")
+  ```
+  This demonstrates a concrete PPO policy agent implementation for `Hopper-v3`.
+
+- `OnPolicyAlgorithm.py` implements policy network creation in `_setup_model`:
+  ```python
+  self.policy = self.policy_class(
+      self.observation_space,
+      self.action_space,
+      self.lr_schedule,
+      use_sde=self.use_sde,
+      **self.policy_kwargs
+  )
+  ```
+  This is the actual code that constructs the agent policy network from the environment spaces.
+
+- `PPO.py` defines the PPO algorithm class used for refinement and supports standard SB3 policy aliases:
+  ```python
+  policy_aliases = {
+      "MlpPolicy": ActorCriticPolicy,
+      ...
+  }
+  ```
+  It extends the on-policy algorithm code and therefore implements a PPO-compatible agent.
+
+- `retrain.py` is parameterized by `--env` and loads/starts a PPO agent for refinement. It can choose among MuJoCo environments, with special normalization handling for `HalfCheetah-v3` and `Walker2d-v3`.
+
+- `environment.py` contains environment-specific reset/observation logic for `Hopper`, `Walker2d`, `Reacher`, and `HalfCheetah`, further indicating the agent is intended to work across the MuJoCo tasks.
+
+So there is actual code implementing the policy network agent, primarily by leveraging Stable Baselines3's `MlpPolicy` with PPO. The implementation is generic enough to support the MuJoCo environments, and `baseline/train.py` provides an explicit training example for `Hopper-v3`.
+
+# Score
+1
+2026-09-03 11:06:49 [info     ] model response: # Expectations
+The paper uses MuJoCo environments (Hopper, Walker2d, Reacher, HalfCheetah) with PPO-trained policy agents. The criterion requires that the submission actually implements policy network agents for these MuJoCo environments, not just describes them.
+
+A correct implementation should:
+- define or instantiate a PPO-compatible policy network that takes the MuJoCo environment observation/action spaces,
+- create the agent policy through code (e.g., Stable Baselines3 `MlpPolicy` or an equivalent custom policy),
+- show how the policy is used for pretraining/refinement.
+
+Since the addendum says the paper relies on default Stable Baselines3 policy architectures, using SB3's `MlpPolicy` is acceptable.
+
+# Reality
+The submission contains multiple relevant files under `Refine_mujoco/`:
+
+- `baseline/train.py` explicitly creates and trains a PPO policy network agent for a MuJoCo environment:
+  ```python
+  env = DummyVecEnv([lambda: gym.make("Hopper-v3")])
+  ...
+  model = PPO("MlpPolicy", env, tensorboard_log="weak_tmp/")
+  model.learn(total_timesteps=1e6, callback=callback)
+  model.save(log_dir + "ppo_hopper")
+  ```
+  This demonstrates a concrete PPO policy agent implementation for `Hopper-v3`.
+
+- `OnPolicyAlgorithm.py` implements policy network creation in `_setup_model`:
+  ```python
+  self.policy = self.policy_class(
+      self.observation_space,
+      self.action_space,
+      self.lr_schedule,
+      use_sde=self.use_sde,
+      **self.policy_kwargs
+  )
+  ```
+  This is the actual code that constructs the agent policy network from the environment spaces.
+
+- `PPO.py` defines the PPO algorithm class used for refinement and supports standard SB3 policy aliases:
+  ```python
+  policy_aliases = {
+      "MlpPolicy": ActorCriticPolicy,
+      ...
+  }
+  ```
+  It extends the on-policy algorithm code and therefore implements a PPO-compatible agent.
+
+- `retrain.py` is parameterized by `--env` and loads/starts a PPO agent for refinement. It can choose among MuJoCo environments, with special normalization handling for `HalfCheetah-v3` and `Walker2d-v3`.
+
+- `environment.py` contains environment-specific reset/observation logic for `Hopper`, `Walker2d`, `Reacher`, and `HalfCheetah`, further indicating the agent is intended to work across the MuJoCo tasks.
+
+So there is actual code implementing the policy network agent, primarily by leveraging Stable Baselines3's `MlpPolicy` with PPO. The implementation is generic enough to support the MuJoCo environments, and `baseline/train.py` provides an explicit training example for `Hopper-v3`.
+
+# Score
+1

@@ -1,0 +1,97 @@
+2026-09-03 11:06:46 [info     ] Grading leaf: For the autonomous driving environment, the reward function is implemented such that an additional reward is given when the mask net outputs "1", as outlined in section 3.3.
+2026-09-03 11:07:20 [info     ] Model file selection raw output:
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/retrain.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/readme.md
+README.md
+2026-09-03 11:07:20 [info     ] Model file selection raw output:
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/retrain.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/readme.md
+README.md
+2026-09-03 11:08:15 [info     ] model response: # Expectations
+
+The paper describes an optimized version of the StateMask explanation method for the autonomous driving environment. In Section 3.3, the authors state:
+
+> "we add an additional reward by giving an extra bonus when the mask net outputs '1'. The new reward can be written as $R'(s_t, a_t) = R(s_t, a_t) + \alpha a_t^m$ where $\alpha$ is a hyper-parameter."
+
+Thus, for the autonomous driving environment, the code must implement a reward function that adds a bonus (controlled by a hyperparameter) whenever the mask network outputs a "1" (i.e., chooses to blind the agent). This bonus should be added to the original environment reward. The implementation must be present in the training loop for the mask network, as described in Algorithm 1 of the paper.
+
+# Reality
+
+The relevant files for the autonomous driving environment are located in the `Refine_auto_drive` directory.
+
+- `custom_masknet_env.py` defines `DriveEnvWrapper`, which wraps the autonomous driving environment for mask network training. In its `step` method (lines 80–127), the mask network's binary action is used to either take the agent's action (mask=0) or a random action (mask=1). The reward bonus is implemented as:
+
+  ```python
+  if not self.bonus_last:
+      rew += self.lamb * mask
+  ```
+  and later, when the episode ends:
+  ```python
+  if done:
+      info['final_eval_reward'] = self._final_eval_reward
+      if self.bonus_last:
+          rew += self.lamb * self.accu_mask
+  ```
+
+  The variable `self.lamb` (set to `1e-4` in the constructor) acts as the hyperparameter \(\alpha\), and `mask` is 1 when the mask net outputs "1". Thus, an extra reward is added for each step where the mask net outputs 1. The cumulative bonus is added at the end if `self.bonus_last` is `True` (default), which is functionally equivalent to adding a per‑step bonus.
+
+- `train_masknet.py` (line 47) uses `DriveEnvWrapper` as the environment for training the mask network. The mask network is trained with PPO (`PPOPolicy`), and the policy receives the augmented reward. This matches the algorithm described in the paper (Algorithm 1), where the mask network is trained to maximize the expected total reward of the perturbed agent, including the bonus.
+
+Therefore, the reward function for the autonomous driving environment indeed gives an extra reward when the mask net outputs “1”, as required by the criterion.
+
+# Score
+
+1
+
+The implementation correctly adds a reward bonus (controlled by `self.lamb`) whenever the mask network outputs “1” in the autonomous driving environment, adhering to the description in Section 3.3 of the paper.
+2026-09-03 11:08:15 [info     ] model response: # Expectations
+
+The paper describes an optimized version of the StateMask explanation method for the autonomous driving environment. In Section 3.3, the authors state:
+
+> "we add an additional reward by giving an extra bonus when the mask net outputs '1'. The new reward can be written as $R'(s_t, a_t) = R(s_t, a_t) + \alpha a_t^m$ where $\alpha$ is a hyper-parameter."
+
+Thus, for the autonomous driving environment, the code must implement a reward function that adds a bonus (controlled by a hyperparameter) whenever the mask network outputs a "1" (i.e., chooses to blind the agent). This bonus should be added to the original environment reward. The implementation must be present in the training loop for the mask network, as described in Algorithm 1 of the paper.
+
+# Reality
+
+The relevant files for the autonomous driving environment are located in the `Refine_auto_drive` directory.
+
+- `custom_masknet_env.py` defines `DriveEnvWrapper`, which wraps the autonomous driving environment for mask network training. In its `step` method (lines 80–127), the mask network's binary action is used to either take the agent's action (mask=0) or a random action (mask=1). The reward bonus is implemented as:
+
+  ```python
+  if not self.bonus_last:
+      rew += self.lamb * mask
+  ```
+  and later, when the episode ends:
+  ```python
+  if done:
+      info['final_eval_reward'] = self._final_eval_reward
+      if self.bonus_last:
+          rew += self.lamb * self.accu_mask
+  ```
+
+  The variable `self.lamb` (set to `1e-4` in the constructor) acts as the hyperparameter \(\alpha\), and `mask` is 1 when the mask net outputs "1". Thus, an extra reward is added for each step where the mask net outputs 1. The cumulative bonus is added at the end if `self.bonus_last` is `True` (default), which is functionally equivalent to adding a per‑step bonus.
+
+- `train_masknet.py` (line 47) uses `DriveEnvWrapper` as the environment for training the mask network. The mask network is trained with PPO (`PPOPolicy`), and the policy receives the augmented reward. This matches the algorithm described in the paper (Algorithm 1), where the mask network is trained to maximize the expected total reward of the perturbed agent, including the bonus.
+
+Therefore, the reward function for the autonomous driving environment indeed gives an extra reward when the mask net outputs “1”, as required by the criterion.
+
+# Score
+
+1
+
+The implementation correctly adds a reward bonus (controlled by `self.lamb`) whenever the mask network outputs “1” in the autonomous driving environment, adhering to the description in Section 3.3 of the paper.

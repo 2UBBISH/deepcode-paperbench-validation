@@ -1,0 +1,75 @@
+2026-09-03 11:05:04 [info     ] Grading leaf: For the network defence environment, the "PPO fine-tuning" refinement method has been implemented as outlined in section 4.1, i.e. lowering the learning rate and continuing training with the PPO algorithm.
+2026-09-03 11:05:26 [info     ] Model file selection raw output:
+Refine_cage_challenge/retrain.py
+Refine_cage_challenge/Agents/PPOAgent_Retrain.py
+Refine_cage_challenge/ppo_train.py
+Refine_cage_challenge/rollout_ppo.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_retrain.py
+Refine_cage_challenge/Agents/PPOAgent.py
+Refine_cage_challenge/PPO/ActorCritic.py
+Refine_cage_challenge/PPO/Memory.py
+Refine_cage_challenge/readme.md
+Refine_cage_challenge/Wrappers/ChallengeWrapper2.py
+2026-09-03 11:05:26 [info     ] Model file selection raw output:
+Refine_cage_challenge/retrain.py
+Refine_cage_challenge/Agents/PPOAgent_Retrain.py
+Refine_cage_challenge/ppo_train.py
+Refine_cage_challenge/rollout_ppo.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_retrain.py
+Refine_cage_challenge/Agents/PPOAgent.py
+Refine_cage_challenge/PPO/ActorCritic.py
+Refine_cage_challenge/PPO/Memory.py
+Refine_cage_challenge/readme.md
+Refine_cage_challenge/Wrappers/ChallengeWrapper2.py
+2026-09-03 11:06:41 [info     ] model response: # Expectations
+
+The paper describes the "PPO fine-tuning" baseline as a refinement method: "lowering the learning rate and continuing training with the PPO algorithm" (Section 4.1). For the network defence environment (Cage Challenge 2), I expect to find a concrete implementation that:
+
+- loads a pre-trained PPO agent (policy) for this environment,
+- reduces the learning rate (compared to the initial training rate),
+- continues training using the standard PPO algorithm (i.e., the same proximal policy optimization update steps, without any added exploration bonuses like RND, and without resetting to critical states or mixing initial distributions),
+- operates on the default initial state distribution of the environment (i.e., the normal reset function).
+
+This should be a separate, identifiable piece of code—likely a script or a function that can be run to produce the PPO fine-tuning baseline results.
+
+# Reality
+
+I examined all the provided files in `Refine_cage_challenge/`. The relevant files are:
+
+- `ppo_train.py`: trains the original PPO agent from scratch; it does not perform fine‑tuning.
+- `rollout_ppo.py`: evaluates a saved policy without training.
+- `retrain.py`: implements a retraining process, but it loads the pre‑trained agent and adds a Random Network Distillation (RND) exploration bonus (`bonus_scale=0.01`), and it uses `ChallengeWrapper2_retrain` which resets episodes to critical states identified by an explanation method (via `gen_one_traj`). This is clearly the paper’s proposed “Ours” refining method, **not** the simple PPO fine‑tuning baseline.
+- `Agents/PPOAgent_Retrain.py`: contains the RND model and its integration.
+- `Agents/PPOAgent.py`: the base PPO agent without RND, but this is only used for training from scratch and for rollout, not for fine‑tuning.
+
+There is no script or configuration that loads a pre‑trained policy, lowers the learning rate, and continues training with the standard PPO algorithm (without RND or mixed initial distribution) for the Cage Challenge 2 environment. The submission does not contain an implementation of the PPO fine‑tuning baseline.
+
+# Score
+
+**0** – The submission does not include an implementation of the “PPO fine‑tuning” refinement method for the network defence environment. The criterion is not met.
+2026-09-03 11:06:41 [info     ] model response: # Expectations
+
+The paper describes the "PPO fine-tuning" baseline as a refinement method: "lowering the learning rate and continuing training with the PPO algorithm" (Section 4.1). For the network defence environment (Cage Challenge 2), I expect to find a concrete implementation that:
+
+- loads a pre-trained PPO agent (policy) for this environment,
+- reduces the learning rate (compared to the initial training rate),
+- continues training using the standard PPO algorithm (i.e., the same proximal policy optimization update steps, without any added exploration bonuses like RND, and without resetting to critical states or mixing initial distributions),
+- operates on the default initial state distribution of the environment (i.e., the normal reset function).
+
+This should be a separate, identifiable piece of code—likely a script or a function that can be run to produce the PPO fine-tuning baseline results.
+
+# Reality
+
+I examined all the provided files in `Refine_cage_challenge/`. The relevant files are:
+
+- `ppo_train.py`: trains the original PPO agent from scratch; it does not perform fine‑tuning.
+- `rollout_ppo.py`: evaluates a saved policy without training.
+- `retrain.py`: implements a retraining process, but it loads the pre‑trained agent and adds a Random Network Distillation (RND) exploration bonus (`bonus_scale=0.01`), and it uses `ChallengeWrapper2_retrain` which resets episodes to critical states identified by an explanation method (via `gen_one_traj`). This is clearly the paper’s proposed “Ours” refining method, **not** the simple PPO fine‑tuning baseline.
+- `Agents/PPOAgent_Retrain.py`: contains the RND model and its integration.
+- `Agents/PPOAgent.py`: the base PPO agent without RND, but this is only used for training from scratch and for rollout, not for fine‑tuning.
+
+There is no script or configuration that loads a pre‑trained policy, lowers the learning rate, and continues training with the standard PPO algorithm (without RND or mixed initial distribution) for the Cage Challenge 2 environment. The submission does not contain an implementation of the PPO fine‑tuning baseline.
+
+# Score
+
+**0** – The submission does not include an implementation of the “PPO fine‑tuning” refinement method for the network defence environment. The criterion is not met.

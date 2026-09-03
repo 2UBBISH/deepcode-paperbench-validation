@@ -1,0 +1,53 @@
+2026-09-03 11:05:04 [info     ] Grading leaf: Any version of the autonomous driving environment has been correctly set up and can be initialized can be used to run the experiments (further information about this environment in Appendix C.2).
+2026-09-03 11:06:51 [info     ] Model file selection raw output:
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/retrain.py
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/readme.md
+README.md
+2026-09-03 11:06:51 [info     ] Model file selection raw output:
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/retrain.py
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/readme.md
+README.md
+2026-09-03 11:08:37 [info     ] model response: # Expectations
+The paper describes the autonomous driving environment as using the "Macro-v1" environment from the MetaDrive simulator (Li et al., 2022). The environment is set up via `gym.make("Macro-v1", config=...)`, with normalized actions and the PPO algorithm. The submission should contain actual code that instantiates this environment, configures it appropriately, and can be used to run experiments (e.g., training the mask network, refining the agent). The code must be present and functional, not just instructions.
+
+# Reality
+The submission includes several files related to the autonomous driving environment:
+
+- `Refine_auto_drive/custom_masknet_env.py` wraps the environment with `DriveEnvWrapper`, which internally creates `gym.make("Macro-v1", config=env_cfg)` and includes the necessary configuration.
+- `Refine_auto_drive/train_masknet.py` defines a config for the MetaDrive environment and uses `SyncSubprocessEnvManager` with `wrapped_env` that calls `DriveEnvWrapper(gym.make("Macro-v1", config=env_cfg), wrapper_cfg)`.
+- `Refine_auto_drive/retrain_env.py` defines a `CustomWrapper` that also uses `gym.make("Macro-v1", config=env_cfg)`.
+- `Refine_auto_drive/retrain.py` and `Refine_auto_drive/train_baseline.py` similarly create the environment using `gym.make("Macro-v1")` with proper configuration.
+
+The code imports necessary libraries (`metadrive`, `gym`, `easydict`, `ding`, etc.) and sets up the environment with `use_render=False` and other standard parameters. The environment is wrapped for DI‑engine compatibility, which aligns with the paper’s use of DI‑drive. While the code contains hardcoded paths for loading a pre‑trained policy (e.g., `/home/zck7060/...`), these are for loading a specific agent checkpoint and do not affect the correctness of the environment initialization. The environment itself is correctly instantiated and ready for use in the experiments.
+
+# Score
+1
+2026-09-03 11:08:37 [info     ] model response: # Expectations
+The paper describes the autonomous driving environment as using the "Macro-v1" environment from the MetaDrive simulator (Li et al., 2022). The environment is set up via `gym.make("Macro-v1", config=...)`, with normalized actions and the PPO algorithm. The submission should contain actual code that instantiates this environment, configures it appropriately, and can be used to run experiments (e.g., training the mask network, refining the agent). The code must be present and functional, not just instructions.
+
+# Reality
+The submission includes several files related to the autonomous driving environment:
+
+- `Refine_auto_drive/custom_masknet_env.py` wraps the environment with `DriveEnvWrapper`, which internally creates `gym.make("Macro-v1", config=env_cfg)` and includes the necessary configuration.
+- `Refine_auto_drive/train_masknet.py` defines a config for the MetaDrive environment and uses `SyncSubprocessEnvManager` with `wrapped_env` that calls `DriveEnvWrapper(gym.make("Macro-v1", config=env_cfg), wrapper_cfg)`.
+- `Refine_auto_drive/retrain_env.py` defines a `CustomWrapper` that also uses `gym.make("Macro-v1", config=env_cfg)`.
+- `Refine_auto_drive/retrain.py` and `Refine_auto_drive/train_baseline.py` similarly create the environment using `gym.make("Macro-v1")` with proper configuration.
+
+The code imports necessary libraries (`metadrive`, `gym`, `easydict`, `ding`, etc.) and sets up the environment with `use_render=False` and other standard parameters. The environment is wrapped for DI‑engine compatibility, which aligns with the paper’s use of DI‑drive. While the code contains hardcoded paths for loading a pre‑trained policy (e.g., `/home/zck7060/...`), these are for loading a specific agent checkpoint and do not affect the correctness of the environment initialization. The environment itself is correctly instantiated and ready for use in the experiments.
+
+# Score
+1

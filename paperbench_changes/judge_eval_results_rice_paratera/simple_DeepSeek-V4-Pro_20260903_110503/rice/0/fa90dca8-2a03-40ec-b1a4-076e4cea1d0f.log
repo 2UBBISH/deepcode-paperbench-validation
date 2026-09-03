@@ -1,0 +1,89 @@
+2026-09-03 11:06:42 [info     ] Grading leaf: For the network defence environment, the objective being optimized is $J(\theta)=\max \eta(\bar{\pi})$, as outlined in section 3.3.
+2026-09-03 11:07:48 [info     ] Model file selection raw output:
+Refine_cage_challenge/Agents/PPOAgent_mask.py
+Refine_cage_challenge/rollout_mask.py
+Refine_cage_challenge/ppo_train.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_mask.py
+Refine_cage_challenge/PPO/ActorCritic.py
+Refine_cage_challenge/PPO/Memory.py
+Refine_cage_challenge/sample_mask_score.py
+Refine_cage_challenge/Agents/MainAgent.py
+Refine_cage_challenge/sample_value_score.py
+Refine_cage_challenge/readme.md
+2026-09-03 11:07:48 [info     ] Model file selection raw output:
+Refine_cage_challenge/Agents/PPOAgent_mask.py
+Refine_cage_challenge/rollout_mask.py
+Refine_cage_challenge/ppo_train.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_mask.py
+Refine_cage_challenge/PPO/ActorCritic.py
+Refine_cage_challenge/PPO/Memory.py
+Refine_cage_challenge/sample_mask_score.py
+Refine_cage_challenge/Agents/MainAgent.py
+Refine_cage_challenge/sample_value_score.py
+Refine_cage_challenge/readme.md
+2026-09-03 11:08:46 [info     ] model response: # Expectations
+The paper states that for the optimized StateMask explanation method (referred to as "Ours"), the mask network objective is transformed to \(J(\theta) = \max \eta(\bar{\pi})\) (maximizing the expected total reward of the perturbed agent). To avoid a trivial solution (never masking), a bonus reward \(\alpha a_t^m\) is added when the mask outputs 1. The mask network is then trained using the vanilla PPO algorithm to maximize the sum of these modified rewards.
+
+For the network defence environment, a correct implementation must:
+- Define the mask network policy, which outputs a binary masking decision.
+- Compute the final action by blending the pre-trained policy action and a random action based on the mask output.
+- Use the reward \(R'(s_t, a_t) = R(s_t, a_t) + \alpha a_t^m\) (where \(a_t^m = 1\) if masking, 0 otherwise) as the signal for training.
+- Train the mask network using PPO, which optimizes the expected sum of these rewards, i.e., maximizes \(\eta(\bar{\pi})\).
+
+I will look for code that defines the agent, the reward modification, and the PPO training step that implements this objective.
+
+# Reality
+The submission provides several files for the network defence (CAGE Challenge) environment. The relevant ones are:
+
+- `Refine_cage_challenge/Agents/PPOAgent_mask.py` – defines the `PPOAgent_mask` class.
+- `Refine_cage_challenge/rollout_mask.py` – a script that uses `PPOAgent_mask`.
+- `Refine_cage_challenge/PPO/ActorCritic.py` and `PPO/Memory.py` – standard PPO building blocks.
+
+In `PPOAgent_mask.py`:
+- The mask network is the `policy` (an `ActorCritic` with `action_dim=2`), while the baseline policy is a separate pre-trained network (`baseline_policy`).
+- In `get_action`, the mask action is sampled from the mask policy. If the mask action is 0, the baseline action is taken; if 1, a random action is taken and `self.mask_this_state = True`. The method returns `action_` and `additional_reward = self.lazy_reward if self.mask_this_state else 0`.
+- The `train` method performs standard PPO updates on the collected transitions, using the stored rewards (which include the `additional_reward` added in the rollout).
+
+In `rollout_mask.py`:
+- The `train` function creates a `PPOAgent_mask` and runs episodes, adding `additional_reward` to the environment reward before storing it: `reward += additional_reward; agent.store(reward, done)`.
+- However, the script does **not** call `agent.train()` at any point. It only collects data and never updates the mask network. The mask network’s weights are not trained; they are loaded from a checkpoint and remain unchanged.
+
+The mask network training objective is correctly embedded in the reward computation and the PPO training method (`train` in `PPOAgent_mask`), which maximizes the expected sum of these modified rewards. The missing call to `agent.train()` in `rollout_mask.py` means the training loop is incomplete, but the objective itself is correctly implemented in the agent class. The criterion asks whether the code contains a correct implementation of the objective \(J(\theta) = \max \eta(\bar{\pi})\), not whether the training script is fully functional. The reward modification and the PPO update rule together realize that objective.
+
+# Score
+1
+
+The code correctly implements the maximization of \(\eta(\bar{\pi})\) via the modified reward and PPO training, even though the rollout script lacks a call to `agent.train()`. The objective is properly defined and computable from the agent’s design.
+2026-09-03 11:08:46 [info     ] model response: # Expectations
+The paper states that for the optimized StateMask explanation method (referred to as "Ours"), the mask network objective is transformed to \(J(\theta) = \max \eta(\bar{\pi})\) (maximizing the expected total reward of the perturbed agent). To avoid a trivial solution (never masking), a bonus reward \(\alpha a_t^m\) is added when the mask outputs 1. The mask network is then trained using the vanilla PPO algorithm to maximize the sum of these modified rewards.
+
+For the network defence environment, a correct implementation must:
+- Define the mask network policy, which outputs a binary masking decision.
+- Compute the final action by blending the pre-trained policy action and a random action based on the mask output.
+- Use the reward \(R'(s_t, a_t) = R(s_t, a_t) + \alpha a_t^m\) (where \(a_t^m = 1\) if masking, 0 otherwise) as the signal for training.
+- Train the mask network using PPO, which optimizes the expected sum of these rewards, i.e., maximizes \(\eta(\bar{\pi})\).
+
+I will look for code that defines the agent, the reward modification, and the PPO training step that implements this objective.
+
+# Reality
+The submission provides several files for the network defence (CAGE Challenge) environment. The relevant ones are:
+
+- `Refine_cage_challenge/Agents/PPOAgent_mask.py` – defines the `PPOAgent_mask` class.
+- `Refine_cage_challenge/rollout_mask.py` – a script that uses `PPOAgent_mask`.
+- `Refine_cage_challenge/PPO/ActorCritic.py` and `PPO/Memory.py` – standard PPO building blocks.
+
+In `PPOAgent_mask.py`:
+- The mask network is the `policy` (an `ActorCritic` with `action_dim=2`), while the baseline policy is a separate pre-trained network (`baseline_policy`).
+- In `get_action`, the mask action is sampled from the mask policy. If the mask action is 0, the baseline action is taken; if 1, a random action is taken and `self.mask_this_state = True`. The method returns `action_` and `additional_reward = self.lazy_reward if self.mask_this_state else 0`.
+- The `train` method performs standard PPO updates on the collected transitions, using the stored rewards (which include the `additional_reward` added in the rollout).
+
+In `rollout_mask.py`:
+- The `train` function creates a `PPOAgent_mask` and runs episodes, adding `additional_reward` to the environment reward before storing it: `reward += additional_reward; agent.store(reward, done)`.
+- However, the script does **not** call `agent.train()` at any point. It only collects data and never updates the mask network. The mask network’s weights are not trained; they are loaded from a checkpoint and remain unchanged.
+
+The mask network training objective is correctly embedded in the reward computation and the PPO training method (`train` in `PPOAgent_mask`), which maximizes the expected sum of these modified rewards. The missing call to `agent.train()` in `rollout_mask.py` means the training loop is incomplete, but the objective itself is correctly implemented in the agent class. The criterion asks whether the code contains a correct implementation of the objective \(J(\theta) = \max \eta(\bar{\pi})\), not whether the training script is fully functional. The reward modification and the PPO update rule together realize that objective.
+
+# Score
+1
+
+The code correctly implements the maximization of \(\eta(\bar{\pi})\) via the modified reward and PPO training, even though the rollout script lacks a call to `agent.train()`. The objective is properly defined and computable from the agent’s design.

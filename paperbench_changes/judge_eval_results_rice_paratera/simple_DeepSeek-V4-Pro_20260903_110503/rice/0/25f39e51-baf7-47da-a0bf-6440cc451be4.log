@@ -1,0 +1,61 @@
+2026-09-03 11:05:04 [info     ] Grading leaf: For the selfish mining environment, the explanation method implementation relies on a mask network that outputs "0" for critical steps and "1" otherwise
+2026-09-03 11:06:01 [info     ] Model file selection raw output:
+Refine_selfish_mining/masknet/train.py
+Refine_selfish_mining/masknet/sample_mask_score.py
+Refine_selfish_mining/masknet/utils.py
+Refine_selfish_mining/baseline/blockchain_simulator/mdp_blockchain_simulator_masknet.py
+Refine_selfish_mining/baseline/net.py
+Refine_selfish_mining/masknet/fidelity_score.py
+Refine_selfish_mining/masknet/replay.py
+Refine_selfish_mining/baseline/train_ppo.py
+Refine_selfish_mining/baseline/blockchain_mdps/bitcoin_fee_model.py
+Refine_selfish_mining/utils.py
+2026-09-03 11:06:01 [info     ] Model file selection raw output:
+Refine_selfish_mining/masknet/train.py
+Refine_selfish_mining/masknet/sample_mask_score.py
+Refine_selfish_mining/masknet/utils.py
+Refine_selfish_mining/baseline/blockchain_simulator/mdp_blockchain_simulator_masknet.py
+Refine_selfish_mining/baseline/net.py
+Refine_selfish_mining/masknet/fidelity_score.py
+Refine_selfish_mining/masknet/replay.py
+Refine_selfish_mining/baseline/train_ppo.py
+Refine_selfish_mining/baseline/blockchain_mdps/bitcoin_fee_model.py
+Refine_selfish_mining/utils.py
+2026-09-03 11:06:01 [info     ] File /home/deepevol/deepevol/frontier-evals/project/paperbench/data/judge_eval/rice/0/submission/Refine_selfish_mining/baseline/blockchain_simulator/mdp_blockchain_simulator_masknet.py not found!
+2026-09-03 11:06:01 [info     ] File /home/deepevol/deepevol/frontier-evals/project/paperbench/data/judge_eval/rice/0/submission/Refine_selfish_mining/baseline/blockchain_simulator/mdp_blockchain_simulator_masknet.py not found!
+2026-09-03 11:06:49 [info     ] model response: # Expectations
+From the paper, the mask network is a binary classifier that outputs either 0 or 1 for each time step. Output 0 means the agent's original action is taken (the step is critical), and output 1 means the action is randomized (the step is not critical). The importance of a state is measured by the probability of the mask network outputting 0. Therefore, for the selfish mining environment, a correct implementation of the explanation method must rely on a mask network that outputs 0 for critical steps and 1 otherwise, and the code must use the probability of 0 as the importance score for evaluating fidelity.
+
+# Reality
+The provided submission includes the following relevant files for the selfish mining mask network:
+
+- **`Refine_selfish_mining/masknet/train.py`**: This script trains a mask network using PPO. The mask network is defined with an action shape of 2 (binary), using a categorical distribution. The environment used is `MDPBlockchainSimulatorMaskNet`, which is expected to incorporate the mask network's binary action.
+
+- **`Refine_selfish_mining/masknet/sample_mask_score.py`**: This script loads the trained mask network and uses it to score trajectories. The line  
+  `mask_prob = mask_model(batch).logits[0][0] #the prob of not doing the mask-> state importance`  
+  explicitly treats the logit for action 0 as the probability of **not masking**, i.e., the step is critical. This shows that the mask network's output 0 corresponds to a critical step (the agent keeps its original action), and output 1 corresponds to a non‑critical step (the agent's action is randomized). The importance score is derived from the probability of outputting 0.
+
+- **`Refine_selfish_mining/masknet/utils.py`** and **`Refine_selfish_mining/masknet/fidelity_score.py`** further confirm that the mask network's output is used in this way.
+
+The implementation unambiguously relies on a mask network that outputs 0 for critical steps and 1 otherwise. The mask network is a binary policy, and the probability of 0 is used as the importance score. This matches the paper's description and the requirement.
+
+# Score
+1 – The code correctly implements the requirement: the mask network for the selfish mining environment outputs 0 for critical steps and 1 otherwise, and the implementation uses this interpretation for importance scoring.
+2026-09-03 11:06:49 [info     ] model response: # Expectations
+From the paper, the mask network is a binary classifier that outputs either 0 or 1 for each time step. Output 0 means the agent's original action is taken (the step is critical), and output 1 means the action is randomized (the step is not critical). The importance of a state is measured by the probability of the mask network outputting 0. Therefore, for the selfish mining environment, a correct implementation of the explanation method must rely on a mask network that outputs 0 for critical steps and 1 otherwise, and the code must use the probability of 0 as the importance score for evaluating fidelity.
+
+# Reality
+The provided submission includes the following relevant files for the selfish mining mask network:
+
+- **`Refine_selfish_mining/masknet/train.py`**: This script trains a mask network using PPO. The mask network is defined with an action shape of 2 (binary), using a categorical distribution. The environment used is `MDPBlockchainSimulatorMaskNet`, which is expected to incorporate the mask network's binary action.
+
+- **`Refine_selfish_mining/masknet/sample_mask_score.py`**: This script loads the trained mask network and uses it to score trajectories. The line  
+  `mask_prob = mask_model(batch).logits[0][0] #the prob of not doing the mask-> state importance`  
+  explicitly treats the logit for action 0 as the probability of **not masking**, i.e., the step is critical. This shows that the mask network's output 0 corresponds to a critical step (the agent keeps its original action), and output 1 corresponds to a non‑critical step (the agent's action is randomized). The importance score is derived from the probability of outputting 0.
+
+- **`Refine_selfish_mining/masknet/utils.py`** and **`Refine_selfish_mining/masknet/fidelity_score.py`** further confirm that the mask network's output is used in this way.
+
+The implementation unambiguously relies on a mask network that outputs 0 for critical steps and 1 otherwise. The mask network is a binary policy, and the probability of 0 is used as the importance score. This matches the paper's description and the requirement.
+
+# Score
+1 – The code correctly implements the requirement: the mask network for the selfish mining environment outputs 0 for critical steps and 1 otherwise, and the implementation uses this interpretation for importance scoring.

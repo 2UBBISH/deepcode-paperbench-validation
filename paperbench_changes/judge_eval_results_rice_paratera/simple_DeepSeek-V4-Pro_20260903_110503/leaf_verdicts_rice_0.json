@@ -1,0 +1,1070 @@
+[
+ [
+  "b60369ed-967c-4514-af16-b18de243f11c",
+  "TP",
+  "Code Development",
+  "Any version of the (MuJoCo) Hopper environment has been correctly set up and can be initialized can be used to run the experiments (further information about this environment in Appendix C.2)."
+ ],
+ [
+  "54ad568e-c5bc-43c1-a646-f7da9d2b9e23",
+  "TP",
+  "Code Development",
+  "The (MuJoCo) Hopper environment is version \"Hopper-v3\" (further information about this environment in Appendix C.2)."
+ ],
+ [
+  "3dfc9232-28e2-4e3d-a50a-dd4df1bfbea2",
+  "FP",
+  "Code Development",
+  "Any version of the (MuJoCo) Walker2d environment has been correctly set up and can be initialized can be used to run the experiments (further information about this environment in Appendix C.2)."
+ ],
+ [
+  "5f77df97-70ed-48f1-91e5-73662eb89caa",
+  "FP",
+  "Code Development",
+  "The (MuJoCo) Walker2d environment is version \"Walker2d-v3\" (further information about this environment in Appendix C.2)."
+ ],
+ [
+  "d3dceca7-6c04-4242-ab5d-d3c1edc6a9d2",
+  "FP",
+  "Code Development",
+  "In the (MuJoCo) Walker2d environment, the observations are normalized when training DRL agents (further information about this environment in Appendix C.2)."
+ ],
+ [
+  "3945867c-ec5f-4e54-b561-df85f481ef09",
+  "TN",
+  "Code Development",
+  "Any version of the (MuJoCo) Reacher environment has been correctly set up and can be initialized can be used to run the experiments (further information about this environment in Appendix C.2)."
+ ],
+ [
+  "22e87ccc-269c-47d3-b3bb-27859a744c3d",
+  "FP",
+  "Code Development",
+  "The (MuJoCo) Reacher environment is version \"Reacher-v2\" (further information about this environment in Appendix C.2)."
+ ],
+ [
+  "7d4737bb-db74-484f-b409-82233ac83d20",
+  "TP",
+  "Code Development",
+  "Any version of the (MuJoCo) HalfCheetah environment has been correctly set up and can be initialized can be used to run the experiments (further information about this environment in Appendix C.2)."
+ ],
+ [
+  "9396ab08-0f57-4ffd-8d25-123e9b33b40e",
+  "TP",
+  "Code Development",
+  "The (MuJoCo) HalfCheetah environment is version \"HalfCheetah-v3\" (further information about this environment in Appendix C.2)."
+ ],
+ [
+  "06a8c8ac-cabe-4df1-85d0-fcc70f0a9143",
+  "FP",
+  "Code Development",
+  "In the (MuJoCo) HalfCheetah environment, the observations are normalized when training DRL agents (further information about this environment in Appendix C.2)."
+ ],
+ [
+  "59bfcae3-8c9e-4e9d-9863-1fb4c272cafc",
+  "TP",
+  "Code Development",
+  "The Selfish Mining environment has been correctly set up and can be used to run the experiments (further information about this environment in Appendix C.2)."
+ ],
+ [
+  "05856a46-a296-40f6-82c6-61a886557059",
+  "FP",
+  "Code Development",
+  "Any version of the network defense environment has been correctly set up and can be initialized can be used to run the experiments (further information about this environment in Appendix C.2)."
+ ],
+ [
+  "04dc793d-62ec-418e-96b7-1b4137feb590",
+  "TP",
+  "Code Development",
+  "The network defence environment is version \"Cage Challenge 2\" (further information about this environment in Appendix C.2)."
+ ],
+ [
+  "0a075784-3464-4099-8448-e42c78e60c96",
+  "FP",
+  "Code Development",
+  "Any version of the autonomous driving environment has been correctly set up and can be initialized can be used to run the experiments (further information about this environment in Appendix C.2)."
+ ],
+ [
+  "7636093b-f7ff-440f-9575-c143ce61e222",
+  "TP",
+  "Code Development",
+  "The autonomous driving environment is the 'Macro-v1' environment powered by the MetaDrive simulator (further information about this environment in Appendix C.2)."
+ ],
+ [
+  "e4bb76d7-1210-4ff3-8b98-ec2c1a80ac25",
+  "TN",
+  "Code Development",
+  "Any version of the (MuJoCo) Sparse Hopper environment has been correctly set up and can be initialized can be used to run the experiments."
+ ],
+ [
+  "74e39b4f-7199-4cc6-93d0-c43907742f58",
+  "TN",
+  "Code Development",
+  "The (MuJoCo) Sparse Hopper environment is version \"Hopper-v3\""
+ ],
+ [
+  "ac87da61-66b6-45e7-819a-1cb9c226b4e8",
+  "TN",
+  "Code Development",
+  "Any version of the (MuJoCo) Sparse HalfCheetah environment has been correctly set up and can be initialized can be used to run the experiments."
+ ],
+ [
+  "fb3b2f03-5749-4110-ab2a-7decea5f6c1c",
+  "TN",
+  "Code Development",
+  "The (MuJoCo) Sparse HalfCheetah environment is version \"HalfCheetah-v3\""
+ ],
+ [
+  "a51b8a8e-01ea-4442-ba0b-d9483bd11485",
+  "TN",
+  "Code Development",
+  "In the (MuJoCo) Sparse HalfCheetah environment, the observations are normalized when training DRL agents (further information about this environment in Appendix C.2)."
+ ],
+ [
+  "c8ce16bb-cbcb-4a1f-86c5-41c101d5267c",
+  "TP",
+  "Code Development",
+  "For the MuJoCo environments, the policy network agents has been implemented"
+ ],
+ [
+  "a87331ac-4973-473a-b323-791133ed37a9",
+  "TN",
+  "Code Development",
+  "For the MuJoCo environments, code for pretraining the policy network agent on each environment has been setup"
+ ],
+ [
+  "c4731d7a-bd08-4745-99be-a07f57f2ec9f",
+  "TP",
+  "Code Development",
+  "For the selfish mining environment, the policy network agents has been implemented.  The network architecture of the PPO agent is a 4-layer Multi-Layer Perceptron (MLP) with a hidden size of 128, 128, 128, and 128 in each layer"
+ ],
+ [
+  "4f388c37-1aea-4ea4-a576-bbf5df58a531",
+  "TP",
+  "Code Development",
+  "For the selfish mining environment, code for pretraining the policy network agent has been setup"
+ ],
+ [
+  "2f25c14f-36c1-4ff5-a22c-87dac652d647",
+  "TP",
+  "Code Development",
+  "For the network defence environment, the policy network agents has been implemented"
+ ],
+ [
+  "a928c866-fcc6-45ea-b3ed-849ba18aeb2c",
+  "TP",
+  "Code Development",
+  "For the network defence environment, code for pretraining the policy network agent has been setup"
+ ],
+ [
+  "bf148262-ba3a-4bbd-ac47-779e7116a173",
+  "TP",
+  "Code Development",
+  "For the autonomous driving environment, the policy network agents has been implemented"
+ ],
+ [
+  "88993608-5568-47bc-90bd-113e2c08d8e0",
+  "TP",
+  "Code Development",
+  "For the autonomous driving environment, code for pretraining the policy network agent has been setup"
+ ],
+ [
+  "143f314c-a4da-4e35-b803-fa64e85694da",
+  "TN",
+  "Code Development",
+  "For the MuJoCo environments, the explanation method implementation relies on a mask network that outputs \"0\" for critical steps and \"1\" otherwise"
+ ],
+ [
+  "17729bfd-cd62-44c5-a92c-ea7a00005831",
+  "TN",
+  "Code Development",
+  "For the MuJoCo environments, the mask network objective $J(\\theta)$ has been implemented to match what is outlined in section 3.3, namely $J(\\theta)=\\min |\\eta(\\pi)-\\eta(\\bar{\\pi})|$"
+ ],
+ [
+  "b8d07797-0c38-47af-829a-cfb9b132ac82",
+  "TN",
+  "Code Development",
+  "For the MuJoCo environments, the optimization of the mask network objective of using prime-dual methods has been implemented."
+ ],
+ [
+  "d3c987e9-dcd2-40b8-9248-aa610dfb28c8",
+  "TN",
+  "Code Development",
+  "For the MuJoCo environments, the original StateMask Explanation method can be selected as the explanation method during retraining"
+ ],
+ [
+  "dcfd2b61-35ac-452b-93d8-75f08ea89592",
+  "TN",
+  "Code Development",
+  "For the MuJoCo environments, the original StateMask Explanation method can be selected for generating rollouts (without training)"
+ ],
+ [
+  "29f9e53c-e362-49bd-889b-ce1eb6d89826",
+  "TP",
+  "Code Development",
+  "For the MuJoCo environments, the objective being optimized is $J(\\theta)=\\max \\eta(\\bar{\\pi})$, as outlined in section 3.3."
+ ],
+ [
+  "22155807-0a6d-4107-9b5b-d06158631a78",
+  "TN",
+  "Code Development",
+  "For the MuJoCo environments, the reward function is implemented such that an additional reward is given when the mask net outputs \"1\", as outlined in section 3.3."
+ ],
+ [
+  "632df4ba-5fad-4af2-9a94-5735a9dcb739",
+  "TN",
+  "Code Development",
+  "For the MuJoCo environments, the additional reward given when the mask net outputs \"1\" is governed by a mutable hyperparameter, i.e., a hyperparameter whose value can be changed (without having to edit the code directly), corresponding to $\\alpha$ in the paper. Alternative hyperparameter names are allowed, as long as the functionality remains the same."
+ ],
+ [
+  "bf075d5c-8195-40a4-80a2-c007d73c47ee",
+  "TP",
+  "Code Development",
+  "For the MuJoCo environments, the optimization of the mask network objective now uses PPO rather than the prime-dual method"
+ ],
+ [
+  "358bcf48-8b43-4ff6-b853-9ed4248daf9e",
+  "TP",
+  "Code Development",
+  "For the MuJoCo environments, The StateMask (\"Ours\") Explanation method can be selected as the explanation method during retraining"
+ ],
+ [
+  "e743cd24-f55c-4c5a-9ef5-493a3cf6b131",
+  "FP",
+  "Code Development",
+  "For the MuJoCo environments, The StateMask (\"Ours\") Explanation method can be selected for generating rollouts (without training)"
+ ],
+ [
+  "48d9a794-eb7a-42c6-83e6-608567381ab9",
+  "FN",
+  "Code Development",
+  "For the MuJoCo environments, the \"Random\" Explanation method has been implemented as outlined in 4.1, wherein critical steps are identified by randomly selecting previously visited states."
+ ],
+ [
+  "ecf4440e-f5a1-4c5e-9849-b060001d37c8",
+  "FN",
+  "Code Development",
+  "For the MuJoCo environments, the \"Random\" Explanation method can be selected as the explanation method during retraining"
+ ],
+ [
+  "618a2e75-6514-4143-892f-4bba8babe64a",
+  "TN",
+  "Code Development",
+  "For the MuJoCo environments, the \"Random\" Explanation method can be selected for generating rollouts (without training)"
+ ],
+ [
+  "25f39e51-baf7-47da-a0bf-6440cc451be4",
+  "TP",
+  "Code Development",
+  "For the selfish mining environment, the explanation method implementation relies on a mask network that outputs \"0\" for critical steps and \"1\" otherwise"
+ ],
+ [
+  "af175fb2-35e4-4cb3-9e32-3ad099fe6438",
+  "TN",
+  "Code Development",
+  "For the selfish mining environment, the mask network objective $J(\\theta)$ has been implemented to match what is outlined in section 3.3, namely $J(\\theta)=\\min |\\eta(\\pi)-\\eta(\\bar{\\pi})|$"
+ ],
+ [
+  "d762d16f-1c84-450e-a1ca-816db533180e",
+  "TN",
+  "Code Development",
+  "For the selfish mining environment, the optimization of the mask network objective of using prime-dual methods has been implemented."
+ ],
+ [
+  "d3c987e9-dcd2-40b8-9248-aa610dfb28c7",
+  "TN",
+  "Code Development",
+  "For the selfish mining environment, the original StateMask Explanation method can be selected as the explanation method during retraining"
+ ],
+ [
+  "dcfd2b61-35ac-452b-93d8-75f08ea89593",
+  "TN",
+  "Code Development",
+  "For the selfish mining environment, the original StateMask Explanation method can be selected for generating rollouts (without training)"
+ ],
+ [
+  "3446e541-b0ab-4ad3-b38e-21e003bfaaac",
+  "TP",
+  "Code Development",
+  "For the selfish mining environment, the objective being optimized is $J(\\theta)=\\max \\eta(\\bar{\\pi})$, as outlined in section 3.3."
+ ],
+ [
+  "ace7345c-d997-4ad7-a123-d727d9073187",
+  "TP",
+  "Code Development",
+  "For the selfish mining environment, the reward function is implemented such that an additional reward is given when the mask net outputs \"1\", as outlined in section 3.3."
+ ],
+ [
+  "98501056-d279-4269-ac88-e7c75a1cd601",
+  "TN",
+  "Code Development",
+  "For the selfish mining environment, the additional reward given when the mask net outputs \"1\" is governed by a mutable hyperparameter, i.e., a hyperparameter whose value can be changed (without having to edit the code directly), corresponding to $\\alpha$ in the paper. Alternative hyperparameter names are allowed, as long as the functionality remains the same."
+ ],
+ [
+  "bc27a78d-3f40-456f-a6c3-6b847ef72400",
+  "TP",
+  "Code Development",
+  "For the selfish mining environment, the optimization of the mask network objective now uses PPO rather than the prime-dual method"
+ ],
+ [
+  "358bcf48-8b43-4ff6-b853-9ed4248daf9f",
+  "TN",
+  "Code Development",
+  "For the selfish mining environment, The StateMask (\"Ours\") Explanation method can be selected as the explanation method during retraining"
+ ],
+ [
+  "e743cd24-f55c-4c5a-9ef5-493a3cf6b132",
+  "TP",
+  "Code Development",
+  "For the selfish mining environment, The StateMask (\"Ours\") Explanation method can be selected for generating rollouts (without training)"
+ ],
+ [
+  "48d9a795-eb7a-42c6-83e6-608567381ab9",
+  "TP",
+  "Code Development",
+  "For the selfish mining environment, the \"Random\" Explanation method has been implemented as outlined in 4.1, wherein critical steps are identified by randomly selecting previously visited states."
+ ],
+ [
+  "ecf4440d-f5a1-4c5e-9849-b060001d37c8",
+  "FN",
+  "Code Development",
+  "For the selfish mining environment, the \"Random\" Explanation method can be selected as the explanation method during retraining"
+ ],
+ [
+  "618a2e76-6514-4143-892f-4bba8babe64a",
+  "TP",
+  "Code Development",
+  "For the selfish mining environment, the \"Random\" Explanation method can be selected for generating rollouts (without training)"
+ ],
+ [
+  "48267b9a-4878-4984-bc1f-945475737a4a",
+  "TP",
+  "Code Development",
+  "For the network defence environment, the explanation method implementation relies on a mask network that outputs \"0\" for critical steps and \"1\" otherwise"
+ ],
+ [
+  "fe4b4d42-5ff4-4ece-9d45-3a44b3f01465",
+  "TN",
+  "Code Development",
+  "For the network defence environment, the mask network objective $J(\\theta)$ has been implemented to match what is outlined in section 3.3, namely $J(\\theta)=\\min |\\eta(\\pi)-\\eta(\\bar{\\pi})|$"
+ ],
+ [
+  "a03abcad-579e-42d3-b1ea-180752715e0c",
+  "TN",
+  "Code Development",
+  "For the network defence environment, the optimization of the mask network objective of using prime-dual methods has been implemented."
+ ],
+ [
+  "d3c987e9-dcd2-40b8-9248-aa610dfb28c6",
+  "TN",
+  "Code Development",
+  "For the network defence environment, the original StateMask Explanation method can be selected as the explanation method during retraining"
+ ],
+ [
+  "dcfd2b61-35ac-452b-93d8-75f08ea89594",
+  "TN",
+  "Code Development",
+  "For the network defence environment, the original StateMask Explanation method can be selected for generating rollouts (without training)"
+ ],
+ [
+  "fa90dca8-2a03-40ec-b1a4-076e4cea1d0f",
+  "TP",
+  "Code Development",
+  "For the network defence environment, the objective being optimized is $J(\\theta)=\\max \\eta(\\bar{\\pi})$, as outlined in section 3.3."
+ ],
+ [
+  "9ccc3451-d267-4871-a454-a0bd6779806b",
+  "FP",
+  "Code Development",
+  "For the network defence environment, the reward function implemented such that an additional reward is given when the mask net outputs \"1\", as outlined in section 3.3."
+ ],
+ [
+  "150b3b4e-8f9c-4eb7-ad13-44a7f6812482",
+  "TN",
+  "Code Development",
+  "For the network defence environment, the additional reward given when the mask net outputs \"1\" is governed by a mutable hyperparameter, i.e., a hyperparameter whose value can be changed (without having to edit the code directly), corresponding to $\\alpha$ in the paper. Alternative hyperparameter names are allowed, as long as the functionality remains the same."
+ ],
+ [
+  "5d081990-a25f-4731-a72d-6e982c1bfa23",
+  "TP",
+  "Code Development",
+  "For the network defence environment, the optimization of the mask network objective now uses PPO rather than the prime-dual method"
+ ],
+ [
+  "358bcf48-8b43-4ff6-b853-9ed4248daf9g",
+  "TN",
+  "Code Development",
+  "For the network defense environment, The StateMask (\"Ours\") Explanation method can be selected as the explanation method during retraining"
+ ],
+ [
+  "e743cd24-f55c-4c5a-9ef5-493a3cf6b133",
+  "FP",
+  "Code Development",
+  "For the network defense environment, The StateMask (\"Ours\") Explanation method can be selected for generating rollouts (without training)"
+ ],
+ [
+  "48d9a796-eb7a-42c6-83e6-608567381ab9",
+  "FN",
+  "Code Development",
+  "For the network defence environment, the \"Random\" Explanation method has been implemented as outlined in 4.1, wherein critical steps are identified by randomly selecting previously visited states."
+ ],
+ [
+  "ecf4440e-f5a1-4c5e-9849-b060001d37c9",
+  "TN",
+  "Code Development",
+  "For the network defence environment, the \"Random\" Explanation method can be selected as the explanation method during retraining"
+ ],
+ [
+  "618a2e77-6514-4143-892f-4bba8babe64a",
+  "FP",
+  "Code Development",
+  "For the network defence environment, the \"Random\" Explanation method can be selected for generating rollouts (without training)"
+ ],
+ [
+  "1e68508f-5b90-42e6-b61d-8f4d0137b518",
+  "TP",
+  "Code Development",
+  "For the autonomous driving environment, the explanation method implementation relies on a mask network that outputs \"0\" for critical steps and \"1\" otherwise"
+ ],
+ [
+  "2242a902-29bb-4145-a4ae-21b7cf01be2a",
+  "TN",
+  "Code Development",
+  "For the autonomous driving environment, the mask network objective $J(\\theta)$ has been implemented to match what is outlined in section 3.3, namely $J(\\theta)=\\min |\\eta(\\pi)-\\eta(\\bar{\\pi})|$"
+ ],
+ [
+  "3c469e51-dfba-41e5-ad5f-0fcfa7e54f61",
+  "TN",
+  "Code Development",
+  "For the autonomous driving environment, the optimization of the mask network objective of using prime-dual methods has been implemented."
+ ],
+ [
+  "d3c987e9-dcd2-40b8-9248-aa610dfb28c5",
+  "TN",
+  "Code Development",
+  "For the autonomous driving environment, the original StateMask Explanation method can be selected as the explanation method during retraining"
+ ],
+ [
+  "dcfd2b61-35ac-452b-93d8-75f08ea89595",
+  "TN",
+  "Code Development",
+  "For the autonomous driving environment, the original StateMask Explanation method can be selected for generating rollouts (without training)"
+ ],
+ [
+  "f3889ec3-d5e7-4f0d-b03f-8895d459ef41",
+  "TP",
+  "Code Development",
+  "For the autonomous driving environment, the objective being optimized is $J(\\theta)=\\max \\eta(\\bar{\\pi})$, as outlined in section 3.3."
+ ],
+ [
+  "e840fdb8-082a-4697-91e8-9bf182fc120d",
+  "TP",
+  "Code Development",
+  "For the autonomous driving environment, the reward function is implemented such that an additional reward is given when the mask net outputs \"1\", as outlined in section 3.3."
+ ],
+ [
+  "cf4e46b6-1176-49ba-949c-69ff411784f6",
+  "TN",
+  "Code Development",
+  "For the autonomous driving environment, the additional reward given when the mask net outputs \"1\" is governed by a mutable hyperparameter, i.e., a hyperparameter whose value can be changed (without having to edit the code directly), corresponding to $\\alpha$ in the paper. Alternative hyperparameter names are allowed, as long as the functionality remains the same."
+ ],
+ [
+  "61a23ebc-0220-4589-bee8-709c6a3c32af",
+  "TP",
+  "Code Development",
+  "For the autonomous driving environment, the optimization of the mask network objective now uses PPO rather than the prime-dual method"
+ ],
+ [
+  "358bcf48-8b43-4ff6-b853-9ed4248daf9d",
+  "FP",
+  "Code Development",
+  "For the autonomous driving environment, The StateMask (\"Ours\") Explanation method can be selected as the explanation method during retraining"
+ ],
+ [
+  "e743cd24-f55c-4c5a-9ef5-493a3cf6b130",
+  "FP",
+  "Code Development",
+  "For the autonomous driving environment, The StateMask (\"Ours\") Explanation method can be selected for generating rollouts (without training)"
+ ],
+ [
+  "48d9a798-eb7a-42c6-83e6-608567381ab9",
+  "TP",
+  "Code Development",
+  "For the autonomous driving environment, the \"Random\" Explanation method has been implemented as outlined in 4.1, wherein critical steps are identified by randomly selecting previously visited states."
+ ],
+ [
+  "ecf4440g-f5a1-4c5e-9849-b060001d37c8",
+  "FP",
+  "Code Development",
+  "For the autonomous driving environment, the \"Random\" Explanation method can be selected as the explanation method during retraining"
+ ],
+ [
+  "618a2e78-6514-4143-892f-4bba8babe64a",
+  "FP",
+  "Code Development",
+  "For the autonomous driving environment, the \"Random\" Explanation method can be selected for generating rollouts (without training)"
+ ],
+ [
+  "5a8c16f5-d6e4-4dea-9e15-5af6901b8e21",
+  "TN",
+  "Code Development",
+  "For the MuJoCo environments, the explanation fidelity score metric has been implemented as outlined in section 4.1 and 4.2: by forcing a given pretrained policy network agent to take random actions starting from each identified critical time step and measuring the average and maximum reward change."
+ ],
+ [
+  "805a94ce-bc0c-4ea5-8864-b72fbc7f2635",
+  "FN",
+  "Code Development",
+  "For the selfish mining environment, the explanation fidelity score metric has been implemented as outlined in section 4.1 and 4.2: by forcing a given pretrained policy network agent to take random actions starting from each identified critical time step and measuring the average and maximum reward change."
+ ],
+ [
+  "e7317585-e7f2-425e-9c56-9e17fcf03e1c",
+  "TN",
+  "Code Development",
+  "For the network defence environment, the explanation fidelity score metric has been implemented as outlined in section 4.1 and 4.2: by forcing a given pretrained policy network agent to take random actions starting from each identified critical time step and measuring the average and maximum reward change."
+ ],
+ [
+  "81215dcd-7eb3-49f6-8a1b-4139befdd099",
+  "TN",
+  "Code Development",
+  "For the autonomous driving environment, the explanation fidelity score metric has been implemented as outlined in section 4.1 and 4.2: by forcing a given pretrained policy network agent to take random actions starting from each identified critical time step and measuring the average and maximum reward change."
+ ],
+ [
+  "6b2f7d07-12e1-4708-9cbc-11c42cf5e22b",
+  "FN",
+  "Code Development",
+  "For the non-sparse MuJoCo environments, for the \"StateMask\" explanation method, code for measuring training time throughout training as outlined in Appendix C.3 and Table 4 has been implemented."
+ ],
+ [
+  "a2fcbf80-2a03-42e0-9007-783ab2771895",
+  "FN",
+  "Code Development",
+  "For the non-sparse MuJoCo environments, for the \"Ours\" explanation method, code for measuring training time throughout training as outlined in Appendix C.3 and Table 4 has been implemented."
+ ],
+ [
+  "b1933dc0-9057-4dfc-8567-3df71e5af1cc",
+  "TN",
+  "Code Development",
+  "For the selfish mining environment, for the \"StateMask\" explanation method, code for measuring training time throughout training as outlined in Appendix C.3 and Table 4 has been implemented."
+ ],
+ [
+  "41a98a23-bb9c-41ec-a998-f73eeb305159",
+  "TN",
+  "Code Development",
+  "For the selfish mining environment, for the \"Ours\" explanation method, code for measuring training time throughout training as outlined in Appendix C.3 and Table 4 has been implemented."
+ ],
+ [
+  "78fc32e3-e336-4826-9929-e9524df38dbc",
+  "TN",
+  "Code Development",
+  "For the network defence environment, for the \"StateMask\" explanation method, code for measuring training time throughout training as outlined in Appendix C.3 and Table 4 has been implemented."
+ ],
+ [
+  "74930ef2-40a3-4f31-8a87-3e36d35d9bdf",
+  "TN",
+  "Code Development",
+  "For the network defence environment, for the \"Ours\" explanation method, code for measuring training time throughout training as outlined in Appendix C.3 and Table 4 has been implemented."
+ ],
+ [
+  "c1da7d61-c3d5-41f2-8d10-722a3ad00ab4",
+  "FN",
+  "Code Development",
+  "For the autonomous driving environment, for the \"StateMask\" explanation method, code for measuring training time throughout training as outlined in Appendix C.3 and Table 4 has been implemented."
+ ],
+ [
+  "8b6fa0ad-8049-456f-98d9-685d6d8d75a8",
+  "FN",
+  "Code Development",
+  "For the autonomous driving environment, for the \"Ours\" explanation method, code for measuring training time throughout training as outlined in Appendix C.3 and Table 4 has been implemented."
+ ],
+ [
+  "fc13b48a-9b1d-4ff9-9841-a133851f7822",
+  "FN",
+  "Code Development",
+  "For the MuJoCo environments, StateMask fine-tuning, aka \"StateMask-R\" has been implemented as outlined in section 4.1 and Cheng et al., 2023, i.e. resetting to the identified critical states and continuing training from there."
+ ],
+ [
+  "6ff262df-f3af-45d9-b0cb-81f37c61f007",
+  "TP",
+  "Code Development",
+  "For the MuJoCo environments, code for constructing a mixed initial state distribution by combining default initial states and critical states identified by the \"Ours\" explanation method has been implemented as described in Section 3.3."
+ ],
+ [
+  "c5acc159-3533-4235-830a-fd1ba6537607",
+  "TP",
+  "Code Development",
+  "For the MuJoCo environments, Random Network Distillation (RND) for exploration has been implemented as outlined in Section 3.3."
+ ],
+ [
+  "9d9512eb-0952-4cfa-abdc-3802377d9f4b",
+  "TP",
+  "Code Development",
+  "For the MuJoCo environments, the refining method has been implemented as outlined in Algorithm 2, integrating the mixed initial state distribution and RND."
+ ],
+ [
+  "ee6a8328-5573-469d-8650-efb5140dfce1",
+  "TP",
+  "Code Development",
+  "For the MuJoCo environments, the refining method has been implemented to support the hyperparameter $\\lambda$ to govern the trade-off between task reward and exploration bonus, as outlined in section 3.3. The $\\lambda$ hyperparameter must be mutable i.e., a hyperparameter whose value can be changed (without having to edit the code directly). Alternative hyperparameter names are allowed, as long as the functionality remains the same."
+ ],
+ [
+  "14841e38-1edc-4309-b1c9-cf437a016f1a",
+  "TP",
+  "Code Development",
+  "For the MuJoCo environments, the refining method has been implemented to support the hyperparameter $p$, the probability threshold defining the mixed initial state distribution, as evidenced in Algorithm 2.  The $p$ hyperparameter must be mutable i.e., a hyperparameter whose value can be changed (without having to edit the code directly). Alternative hyperparameter names are allowed, as long as the functionality remains the same."
+ ],
+ [
+  "9f7d0d0f-437a-448d-a09d-19f4e9a92b27",
+  "TN",
+  "Code Development",
+  "For the MuJoCo environments, the \"PPO fine-tuning\" refinement method has been implemented as outlined in section 4.1, i.e. lowering the learning rate and continuing training with the PPO algorithm."
+ ],
+ [
+  "1c311868-15ef-4b98-b6a9-af6fd0808f59",
+  "TN",
+  "Code Development",
+  "For the MuJoCo environments, the Jump-Start Reinforcement Learning (\"JSRL\") refinement method has been implemented as outlined in section 4.1 and Uchendu et al. (2023), i.e. through initializing the exploration policy $\\pi_{e}$ to be equal to the guided policy $\\pi_{g}$."
+ ],
+ [
+  "0ded0507-c1c6-47b8-b6e8-3d8a913dc3dc",
+  "FN",
+  "Code Development",
+  "For the selfish mining environment, StateMask fine-tuning, aka \"StateMask-R\" has been implemented as outlined in section 4.1 and Cheng et al., 2023, i.e. resetting to the identified critical states and continuing training from there."
+ ],
+ [
+  "b222c863-1bd7-4b30-a95c-f7229d1f1792",
+  "FN",
+  "Code Development",
+  "For the selfish mining environment, code for constructing a mixed initial state distribution by combining default initial states and critical states identified by the \"Ours\" explanation method has been implemented as described in Section 3.3."
+ ],
+ [
+  "6445da4f-76c3-4f4d-8d24-17e905999814",
+  "TP",
+  "Code Development",
+  "For the selfish mining environment, Random Network Distillation (RND) for exploration has been implemented as outlined in Section 3.3."
+ ],
+ [
+  "0946769e-627f-4184-b73a-5de1468b91d3",
+  "FN",
+  "Code Development",
+  "For the selfish mining environment, the refining method has been implemented as outlined in Algorithm 2, integrating the mixed initial state distribution and RND."
+ ],
+ [
+  "ee76420a-4f0b-4aff-b665-44eec80d921b",
+  "TP",
+  "Code Development",
+  "For the selfish mining environment, the refining method has been implemented to support the hyperparameter $\\lambda$ to govern the trade-off between task reward and exploration bonus, as outlined in section 3.3.  The $\\lambda$ hyperparameter must be mutable i.e., a hyperparameter whose value can be changed (without having to edit the code directly). Alternative hyperparameter names are allowed, as long as the functionality remains the same."
+ ],
+ [
+  "930a7131-4f6c-4ebc-af8a-18c752cf6241",
+  "TP",
+  "Code Development",
+  "For the selfish mining environment, the refining method has been implemented to support the hyperparameter $p$, the probability threshold defining the mixed initial state distribution, as evidenced in Algorithm 2.  The $p$ hyperparameter must be mutable i.e., a hyperparameter whose value can be changed (without having to edit the code directly). Alternative hyperparameter names are allowed, as long as the functionality remains the same."
+ ],
+ [
+  "5a57706d-f951-4db7-81ba-171146a2fdd5",
+  "FN",
+  "Code Development",
+  "For the selfish mining environment, the \"PPO fine-tuning\" refinement method has been implemented as outlined in section 4.1, i.e. lowering the learning rate and continuing training with the PPO algorithm."
+ ],
+ [
+  "63ca7f42-3f27-4893-a398-894e8c00bd3c",
+  "TN",
+  "Code Development",
+  "For the selfish mining environment, the Jump-Start Reinforcement Learning (\"JSRL\") refinement method has been implemented as outlined in section 4.1 and Uchendu et al. (2023), i.e. through initializing the exploration policy $\\pi_{e}$ to be equal to the guided policy $\\pi_{g}$."
+ ],
+ [
+  "b43f146d-a906-497f-b67a-809e89db56ec",
+  "TP",
+  "Code Development",
+  "For the network defence environment, StateMask fine-tuning, aka \"StateMask-R\" has been implemented as outlined in section 4.1 and Cheng et al., 2023, i.e. resetting to the identified critical states and continuing training from there."
+ ],
+ [
+  "653998ed-97fc-455d-85f8-a6720e892154",
+  "TN",
+  "Code Development",
+  "For the network defence environment, code for constructing a mixed initial state distribution by combining default initial states and critical states identified by the \"Ours\" explanation method has been implemented as described in Section 3.3."
+ ],
+ [
+  "81bc3959-8406-4504-af6c-cbf1531c2b1a",
+  "FN",
+  "Code Development",
+  "For the network defence environment, Random Network Distillation (RND) for exploration has been implemented as outlined in Section 3.3."
+ ],
+ [
+  "627db61c-0a46-4241-8348-4824120eb2af",
+  "FN",
+  "Code Development",
+  "For the network defence environment, the refining method has been implemented as outlined in Algorithm 2, integrating the mixed initial state distribution and RND."
+ ],
+ [
+  "a3bddd6c-f577-4df8-a33a-cadbf15d209f",
+  "TN",
+  "Code Development",
+  "For the network defence environment, the refining method has been implemented to support the hyperparameter $\\lambda$ to govern the trade-off between task reward and exploration bonus, as outlined in section 3.3.  The $\\lambda$ hyperparameter must be mutable i.e., a hyperparameter whose value can be changed (without having to edit the code directly). Alternative hyperparameter names are allowed, as long as the functionality remains the same."
+ ],
+ [
+  "6363752b-9cb9-4bfd-bdec-80d2a1b62870",
+  "TN",
+  "Code Development",
+  "For the network defence environment, the refining method has been implemented to support the hyperparameter $p$, the probability threshold defining the mixed initial state distribution, as evidenced in Algorithm 2.  The $p$ hyperparameter must be mutable i.e., a hyperparameter whose value can be changed (without having to edit the code directly). Alternative hyperparameter names are allowed, as long as the functionality remains the same."
+ ],
+ [
+  "804f2ff5-e618-4470-b13a-d37d3d03bce6",
+  "TN",
+  "Code Development",
+  "For the network defence environment, the \"PPO fine-tuning\" refinement method has been implemented as outlined in section 4.1, i.e. lowering the learning rate and continuing training with the PPO algorithm."
+ ],
+ [
+  "b3fe401a-eec7-4195-bf66-8259e9dc7d8e",
+  "TN",
+  "Code Development",
+  "For the network defence environment, the Jump-Start Reinforcement Learning (\"JSRL\") refinement method has been implemented as outlined in section 4.1 and Uchendu et al. (2023), i.e. through initializing the exploration policy $\\pi_{e}$ to be equal to the guided policy $\\pi_{g}$."
+ ],
+ [
+  "ea0324f1-adab-475d-b1ad-10274b949430",
+  "FN",
+  "Code Development",
+  "For the autonomous driving environment, StateMask fine-tuning, aka \"StateMask-R\" has been implemented as outlined in section 4.1 and Cheng et al., 2023, i.e. resetting to the identified critical states and continuing training from there."
+ ],
+ [
+  "b047472a-66c1-46dd-8f48-81efd715c955",
+  "TP",
+  "Code Development",
+  "For the autonomous driving environment, code for constructing a mixed initial state distribution by combining default initial states and critical states identified by the \"Ours\" explanation method has been implemented as described in Section 3.3."
+ ],
+ [
+  "293b9862-66c4-41b1-b568-24b7ae4ea82b",
+  "TP",
+  "Code Development",
+  "For the autonomous driving environment, Random Network Distillation (RND) for exploration has been implemented as outlined in Section 3.3."
+ ],
+ [
+  "cc41c68e-53c2-48ef-9f33-6616477c2e19",
+  "FN",
+  "Code Development",
+  "For the autonomous driving environment, the refining method has been implemented as outlined in Algorithm 2, integrating the mixed initial state distribution and RND."
+ ],
+ [
+  "aa2dcba1-3dda-4617-8250-6e168f20f160",
+  "TP",
+  "Code Development",
+  "For the autonomous driving environment, the refining method has been implemented to support the hyperparameter $\\lambda$ to govern the trade-off between task reward and exploration bonus, as outlined in section 3.3.  The $\\lambda$ hyperparameter must be mutable i.e., a hyperparameter whose value can be changed (without having to edit the code directly). Alternative hyperparameter names are allowed, as long as the functionality remains the same."
+ ],
+ [
+  "97382494-601b-408c-8f4c-2f3f5162b827",
+  "TP",
+  "Code Development",
+  "For the autonomous driving environment, the refining method has been implemented to support the hyperparameter $p$, the probability threshold defining the mixed initial state distribution, as evidenced in Algorithm 2.  The $p$ hyperparameter must be mutable i.e., a hyperparameter whose value can be changed (without having to edit the code directly). Alternative hyperparameter names are allowed, as long as the functionality remains the same."
+ ],
+ [
+  "e8649c70-1467-49ea-9b75-c63e7609b0aa",
+  "FN",
+  "Code Development",
+  "For the autonomous driving environment, the \"PPO fine-tuning\" refinement method has been implemented as outlined in section 4.1, i.e. lowering the learning rate and continuing training with the PPO algorithm."
+ ],
+ [
+  "492072c5-9a76-44e5-8741-f3347f6380aa",
+  "TN",
+  "Code Development",
+  "For the autonomous driving environment, the Jump-Start Reinforcement Learning (\"JSRL\") refinement method has been implemented as outlined in section 4.1 and Uchendu et al. (2023), i.e. through initializing the exploration policy $\\pi_{e}$ to be equal to the guided policy $\\pi_{g}$."
+ ],
+ [
+  "3d0f30f8-429c-4812-9c2b-b09bcdeb62a0",
+  "TP",
+  "Code Development",
+  "In Experiment II, for the MuJoCo environments, for the \"Ours\" refinement method, the optimized StateMask (\"Ours\") explanation method proposed in the paper is used as the explanation method."
+ ],
+ [
+  "caa6183f-caaa-4d3a-a5d8-631612896f65",
+  "TP",
+  "Code Development",
+  "In Experiment II, for the MuJoCo environments, for the \"Ours\" refinement method, code has been implemented for measuring cumulative reward throughout refinement"
+ ],
+ [
+  "9deb2911-f0ce-4d1a-9119-ad52eb5c636b",
+  "TP",
+  "Code Development",
+  "In Experiment II, for the MuJoCo environments, for the \"StateMask-R\" refinement method, the optimized StateMask (\"Ours\") explanation method proposed in the paper is used as the explanation method."
+ ],
+ [
+  "594ab235-bcd1-486e-b3a0-9b98b7563456",
+  "TP",
+  "Code Development",
+  "In Experiment II, for the MuJoCo environments, for the \"StateMask-R\" refinement method, code has been implemented for measuring cumulative reward throughout refinement"
+ ],
+ [
+  "f4b4ac13-5fa9-4c19-b39e-efaa7e0da090",
+  "TN",
+  "Code Development",
+  "In Experiment II, for the MuJoCo environments, for the \"JSRL\" refinement method, the optimized StateMask (\"Ours\") explanation method proposed in the paper is used as the explanation method."
+ ],
+ [
+  "39d246ed-6117-4ff8-9eb1-9f6a6baf6ed4",
+  "TN",
+  "Code Development",
+  "In Experiment II, for the MuJoCo environments, for the \"JSRL\" refinement method, code has been implemented for measuring cumulative reward throughout refinement"
+ ],
+ [
+  "3a59f5a5-ca3d-4d08-8cd9-978e00b9a636",
+  "TP",
+  "Code Development",
+  "In Experiment II, for the MuJoCo environments, for the \"PPO fine-tuning\" refinement method, the optimized StateMask (\"Ours\") explanation method proposed in the paper is used as the explanation method."
+ ],
+ [
+  "68caf0fd-f43f-4f7c-87e4-3dc3e7e7b5a6",
+  "TP",
+  "Code Development",
+  "In Experiment II, for the MuJoCo environments, for the \"PPO fine-tuning\" refinement method, code has been implemented for measuring cumulative reward throughout refinement"
+ ],
+ [
+  "ef69791e-c503-4ccf-8e58-d13d523abe91",
+  "FN",
+  "Code Development",
+  "In Experiment II, for the selfish mining environment, for the \"Ours\" refinement method, the optimized StateMask (\"Ours\") explanation method proposed in the paper is used as the explanation method."
+ ],
+ [
+  "81a0c802-e437-4fc1-93c1-53328997efe8",
+  "TP",
+  "Code Development",
+  "In Experiment II, for the selfish mining environment, for the \"Ours\" refinement method, code has been implemented for measuring cumulative reward throughout refinement"
+ ],
+ [
+  "de555901-3277-429a-9a29-dfa514856088",
+  "FN",
+  "Code Development",
+  "In Experiment II, for the selfish mining environment, for the \"StateMask-R\" refinement method, the optimized StateMask (\"Ours\") explanation method proposed in the paper is used as the explanation method."
+ ],
+ [
+  "dbfc317f-2f0c-4898-84f1-d585937f5f2e",
+  "FN",
+  "Code Development",
+  "In Experiment II, for the selfish mining environment, for the \"StateMask-R\" refinement method, code has been implemented for measuring cumulative reward throughout refinement"
+ ],
+ [
+  "7e555fd4-0e4b-4e2d-98fc-8f8df97998c4",
+  "TN",
+  "Code Development",
+  "In Experiment II, for the selfish mining environment, for the \"JSRL\" refinement method, the optimized StateMask (\"Ours\") explanation method proposed in the paper is used as the explanation method."
+ ],
+ [
+  "71b57362-0367-418f-9bc8-5f9a21a36477",
+  "TN",
+  "Code Development",
+  "In Experiment II, for the selfish mining environment, for the \"JSRL\" refinement method, code has been implemented for measuring cumulative reward throughout refinement"
+ ],
+ [
+  "3b7743f3-721f-4757-9266-a3bc33609678",
+  "FN",
+  "Code Development",
+  "In Experiment II, for the selfish mining environment, for the \"PPO fine-tuning\" refinement method, the optimized StateMask (\"Ours\") explanation method proposed in the paper is used as the explanation method."
+ ],
+ [
+  "d185734e-92cc-496f-8b55-f5e4175086e5",
+  "FN",
+  "Code Development",
+  "In Experiment II, for the selfish mining environment, for the \"PPO fine-tuning\" refinement method, code has been implemented for measuring cumulative reward throughout refinement"
+ ],
+ [
+  "fb06efcf-1919-4114-a80b-0ee29d0e765e",
+  "FN",
+  "Code Development",
+  "In Experiment II, for the network defence environment, for the \"Ours\" refinement method, the optimized StateMask (\"Ours\") explanation method proposed in the paper is used as the explanation method."
+ ],
+ [
+  "e32ff814-ee7b-47fe-ba35-afdd9b2b222e",
+  "TP",
+  "Code Development",
+  "In Experiment II, for the network defence environment, for the \"Ours\" refinement method, code has been implemented for measuring cumulative reward throughout refinement"
+ ],
+ [
+  "f80b8e72-e3f6-4216-9532-a337c265d7d2",
+  "TN",
+  "Code Development",
+  "In Experiment II, for the network defence environment, for the \"StateMask-R\" refinement method, the optimized StateMask (\"Ours\") explanation method proposed in the paper is used as the explanation method."
+ ],
+ [
+  "d4a3a84a-fa5b-4be2-b89e-726bc2b6ec98",
+  "FN",
+  "Code Development",
+  "In Experiment II, for the network defence environment, for the \"StateMask-R\" refinement method, code has been implemented for measuring cumulative reward throughout refinement"
+ ],
+ [
+  "41d3ab5b-d43e-453c-9545-ea7835e313bf",
+  "TN",
+  "Code Development",
+  "In Experiment II, for the network defence environment, for the \"JSRL\" refinement method, the optimized StateMask (\"Ours\") explanation method proposed in the paper is used as the explanation method."
+ ],
+ [
+  "f83fcc66-8c82-43b6-b1cc-b40a5256953e",
+  "TN",
+  "Code Development",
+  "In Experiment II, for the network defence environment, for the \"JSRL\" refinement method, code has been implemented for measuring cumulative reward throughout refinement"
+ ],
+ [
+  "51ad4bd4-e0d1-47d1-ba25-5ce61aad6ff8",
+  "TN",
+  "Code Development",
+  "In Experiment II, for the network defence environment, for the \"PPO fine-tuning\" refinement method, the optimized StateMask (\"Ours\") explanation method proposed in the paper is used as the explanation method."
+ ],
+ [
+  "30254cd9-6410-4ba0-9f42-77ecb59d5dbf",
+  "FN",
+  "Code Development",
+  "In Experiment II, for the network defence environment, for the \"PPO fine-tuning\" refinement method, code has been implemented for measuring cumulative reward throughout refinement"
+ ],
+ [
+  "7a03e65b-ad72-431e-ba6d-9a51ae5b7e91",
+  "TP",
+  "Code Development",
+  "For the autonomous driving environment, for the \"Ours\" refinement method, the optimized StateMask (\"Ours\") explanation method proposed in the paper is used as the explanation method."
+ ],
+ [
+  "b9a7f062-c057-4dee-a118-cbcfea5abfb2",
+  "TP",
+  "Code Development",
+  "For the autonomous driving environment, for the \"Ours\" refinement method, code has been implemented for measuring cumulative reward throughout refinement"
+ ],
+ [
+  "e8761267-206a-40b6-9c51-a45394c6ed8c",
+  "TN",
+  "Code Development",
+  "In Experiment II, for the autonomous driving environment, for the \"StateMask-R\" refinement method, the optimized StateMask (\"Ours\") explanation method proposed in the paper is used as the explanation method."
+ ],
+ [
+  "64856ae5-da63-4742-b98e-e23aec8eec41",
+  "FN",
+  "Code Development",
+  "In Experiment II, for the autonomous driving environment, for the \"StateMask-R\" refinement method, code has been implemented for measuring cumulative reward throughout refinement"
+ ],
+ [
+  "babd0c7f-7cec-4fb6-9928-1d591e56bfd5",
+  "TN",
+  "Code Development",
+  "In Experiment II, for the autonomous driving environment, for the \"JSRL\" refinement method, the optimized StateMask (\"Ours\") explanation method proposed in the paper is used as the explanation method."
+ ],
+ [
+  "1e18c5ee-352f-4bb3-aa8e-62b786b43870",
+  "TN",
+  "Code Development",
+  "In Experiment II, for the autonomous driving environment, for the \"JSRL\" refinement method, code has been implemented for measuring cumulative reward throughout refinement"
+ ],
+ [
+  "3022872d-7b70-4069-876a-9f717b3c7d30",
+  "TN",
+  "Code Development",
+  "In Experiment II, for the autonomous driving environment, for the \"PPO fine-tuning\" refinement method, the optimized StateMask (\"Ours\") explanation method proposed in the paper is used as the explanation method."
+ ],
+ [
+  "79f36bad-3cb9-4de5-b07b-52e1b36d28f7",
+  "FN",
+  "Code Development",
+  "In Experiment II, for the autonomous driving environment, for the \"PPO fine-tuning\" refinement method, code has been implemented for measuring cumulative reward throughout refinement"
+ ],
+ [
+  "5ce51a77-e57e-47aa-a8d1-c62855eb02f6",
+  "TP",
+  "Code Development",
+  "For the MuJoCo environments, for the \"Random\" explanation method, code has been implemented for measuring cumulative reward throughout refinement"
+ ],
+ [
+  "c3b8089b-f396-4084-99f9-0008f9459482",
+  "TP",
+  "Code Development",
+  "For the MuJoCo environments, for the \"StateMask\" explanation method, code has been implemented for measuring cumulative reward throughout refinement"
+ ],
+ [
+  "bc3b005f-1f6d-4202-a4ca-8a22e946d5fd",
+  "TP",
+  "Code Development",
+  "For the MuJoCo environments, for the \"Ours\" explanation method, code has been implemented for measuring cumulative reward throughout refinement"
+ ],
+ [
+  "a238c792-a3ab-4ff2-b877-f46faecf92d4",
+  "TP",
+  "Code Development",
+  "For the selfish mining environment, for the \"Random\" explanation method, code has been implemented for measuring cumulative reward throughout refinement"
+ ],
+ [
+  "6698755e-499a-4c4c-9d80-60fc520b325c",
+  "FN",
+  "Code Development",
+  "For the selfish mining environment, for the \"StateMask\" explanation method, code has been implemented for measuring cumulative reward throughout refinement"
+ ],
+ [
+  "9b3a4b00-af89-45c0-99bd-a60d876aa2cc",
+  "FN",
+  "Code Development",
+  "For the selfish mining environment, for the \"Ours\" explanation method, code has been implemented for measuring cumulative reward throughout refinement"
+ ],
+ [
+  "94b90d6f-3766-4dc1-bc41-9c69dabe3a8c",
+  "FN",
+  "Code Development",
+  "For the network defence environment, for the \"Random\" explanation method, code has been implemented for measuring cumulative reward throughout refinement"
+ ],
+ [
+  "ab3285db-0751-4fc4-8689-0f2269324ea4",
+  "FN",
+  "Code Development",
+  "For the network defence environment, for the \"StateMask\" explanation method, code has been implemented for measuring cumulative reward throughout refinement"
+ ],
+ [
+  "af1d0d58-3ff3-4a00-9344-53da8998bcac",
+  "TN",
+  "Code Development",
+  "For the network defence environment, the \"Ours\" explanation method has been utilized to identify the critical step to refine from"
+ ],
+ [
+  "f1ce799c-8cea-4511-abb9-5dcf6e220bc1",
+  "TP",
+  "Code Development",
+  "For the network defence environment, for the \"Ours\" explanation method, code has been implemented for measuring cumulative reward throughout refinement"
+ ],
+ [
+  "6522375f-c8ca-4a55-96b1-b4dd9c976eb6",
+  "TP",
+  "Code Development",
+  "For the autonomous driving environment, for the \"Random\" explanation method, code has been implemented for measuring cumulative reward throughout refinement"
+ ],
+ [
+  "7d21ace7-ba27-4318-9c12-ecf9e210be59",
+  "TN",
+  "Code Development",
+  "For the autonomous driving environment, the \"StateMask\" explanation method has been utilized to identify the critical step to refine from"
+ ],
+ [
+  "ad9f4260-cbeb-423b-9e58-89d5f8b1f837",
+  "TP",
+  "Code Development",
+  "For the autonomous driving environment, for the \"StateMask\" explanation method, code has been implemented for measuring cumulative reward throughout refinement"
+ ],
+ [
+  "0c158966-d9fa-4733-ac36-46f1f3249ece",
+  "FP",
+  "Code Development",
+  "For the autonomous driving environment, the \"Ours\" explanation method has been utilized to identify the critical step to refine from"
+ ],
+ [
+  "5cb0eedf-904d-4a5b-9bd5-57ac312eabc9",
+  "TP",
+  "Code Development",
+  "For the autonomous driving environment, for the \"Ours\" explanation method, code has been implemented for measuring cumulative reward throughout refinement"
+ ],
+ [
+  "3dd86059-494b-4d54-957e-7c44fea66150",
+  "TN",
+  "Code Development",
+  "Code for pretraining a Soft Actor Critic (SAC) network agent on the dense MuJoCo Hopper environment has been implemented"
+ ],
+ [
+  "42a4230a-dbfb-4e46-8d78-2b0307ad26da",
+  "FP",
+  "Code Development",
+  "Code for measuring reward throughout pretraining and refinement has been implemented"
+ ],
+ [
+  "3cbadd76-0962-4231-9453-2f2a722cdca0",
+  "TN",
+  "Code Development",
+  "Code for applying Generative Adversarial Imitation Learning (GAIL) to a given SAC network agent has been implemented"
+ ]
+]

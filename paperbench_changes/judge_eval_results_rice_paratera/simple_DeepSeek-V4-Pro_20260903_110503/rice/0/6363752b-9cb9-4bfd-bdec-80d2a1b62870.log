@@ -1,0 +1,109 @@
+2026-09-03 11:07:01 [info     ] Grading leaf: For the network defence environment, the refining method has been implemented to support the hyperparameter $p$, the probability threshold defining the mixed initial state distribution, as evidenced in Algorithm 2.  The $p$ hyperparameter must be mutable i.e., a hyperparameter whose value can be changed (without having to edit the code directly). Alternative hyperparameter names are allowed, as long as the functionality remains the same.
+2026-09-03 11:07:46 [info     ] Model file selection raw output:
+Refine_cage_challenge/retrain.py
+Refine_cage_challenge/Agents/PPOAgent_Retrain.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_retrain.py
+Refine_cage_challenge/Agents/MainAgent.py
+Refine_cage_challenge/readme.md
+Refine_cage_challenge/Agents/rnd_model.py
+Refine_cage_challenge/Agents/PPOAgent.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2.py
+Refine_cage_challenge/Wrappers/utils.py
+Refine_cage_challenge/rollout_ppo.py
+2026-09-03 11:07:46 [info     ] Model file selection raw output:
+Refine_cage_challenge/retrain.py
+Refine_cage_challenge/Agents/PPOAgent_Retrain.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_retrain.py
+Refine_cage_challenge/Agents/MainAgent.py
+Refine_cage_challenge/readme.md
+Refine_cage_challenge/Agents/rnd_model.py
+Refine_cage_challenge/Agents/PPOAgent.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2.py
+Refine_cage_challenge/Wrappers/utils.py
+Refine_cage_challenge/rollout_ppo.py
+2026-09-03 11:08:21 [info     ] model response: # Expectations
+
+The criterion requires that the refining method for the network defence environment (Cage Challenge 2) supports a hyperparameter \(p\)—the probability threshold that defines the mixed initial state distribution. According to Algorithm 2 in the paper, \(p\) is used to decide whether to reset the environment to a critical state (identified by the explanation method) or to the default initial state. The implementation must make \(p\) **mutable**, meaning its value can be changed without directly editing the source code (e.g., via a command‑line argument, a configuration file, or a function parameter). Alternative names for the parameter are acceptable as long as the same functionality is preserved.
+
+I will look for code in the submission that:
+- Implements the mixed initial state distribution as described in Section 3.3 and Algorithm 2.
+- Contains a variable that acts as the probability threshold \(p\).
+- Allows that variable to be set externally (e.g., as an argument to a training script or to a wrapper constructor) rather than being hardcoded.
+
+# Reality
+
+The relevant files for the Cage Challenge 2 environment are:
+
+- `Refine_cage_challenge/Wrappers/ChallengeWrapper2_retrain.py` – the environment wrapper used during retraining.
+- `Refine_cage_challenge/retrain.py` – the training script that invokes the wrapper.
+
+In `ChallengeWrapper2_retrain.py`, the class `ChallengeWrapper2_Retrain` has an `__init__` method that sets:
+
+```python
+self.go_prob = 0.5
+```
+
+The `reset` method uses `self.go_prob` to decide whether to start from a critical state:
+
+```python
+def reset(self):
+    self.step_counter = 0
+    if np.random.rand() < self.go_prob:
+        action_record, mask_record = gen_one_traj()
+        ...
+```
+
+This `go_prob` variable acts as the probability threshold \(p\). However, it is **hardcoded** to `0.5` inside the `__init__` method. There is no parameter in the `__init__` signature to accept a different value, and the training script `retrain.py` does not pass any such value when creating the wrapper:
+
+```python
+env = ChallengeWrapper2_Retrain(env=CYBORG, agent_name="Blue")
+```
+
+Therefore, there is no way to change \(p\) without editing the source code of `ChallengeWrapper2_retrain.py`. The hyperparameter is not mutable, even though the underlying logic (using `go_prob`) correctly implements the mixed initial distribution.
+
+# Score
+
+**0** – The code does not meet the criterion because the hyperparameter \(p\) (named `go_prob`) is hardcoded and cannot be changed without editing the source code directly. The requirement for mutability is not satisfied.
+2026-09-03 11:08:21 [info     ] model response: # Expectations
+
+The criterion requires that the refining method for the network defence environment (Cage Challenge 2) supports a hyperparameter \(p\)—the probability threshold that defines the mixed initial state distribution. According to Algorithm 2 in the paper, \(p\) is used to decide whether to reset the environment to a critical state (identified by the explanation method) or to the default initial state. The implementation must make \(p\) **mutable**, meaning its value can be changed without directly editing the source code (e.g., via a command‑line argument, a configuration file, or a function parameter). Alternative names for the parameter are acceptable as long as the same functionality is preserved.
+
+I will look for code in the submission that:
+- Implements the mixed initial state distribution as described in Section 3.3 and Algorithm 2.
+- Contains a variable that acts as the probability threshold \(p\).
+- Allows that variable to be set externally (e.g., as an argument to a training script or to a wrapper constructor) rather than being hardcoded.
+
+# Reality
+
+The relevant files for the Cage Challenge 2 environment are:
+
+- `Refine_cage_challenge/Wrappers/ChallengeWrapper2_retrain.py` – the environment wrapper used during retraining.
+- `Refine_cage_challenge/retrain.py` – the training script that invokes the wrapper.
+
+In `ChallengeWrapper2_retrain.py`, the class `ChallengeWrapper2_Retrain` has an `__init__` method that sets:
+
+```python
+self.go_prob = 0.5
+```
+
+The `reset` method uses `self.go_prob` to decide whether to start from a critical state:
+
+```python
+def reset(self):
+    self.step_counter = 0
+    if np.random.rand() < self.go_prob:
+        action_record, mask_record = gen_one_traj()
+        ...
+```
+
+This `go_prob` variable acts as the probability threshold \(p\). However, it is **hardcoded** to `0.5` inside the `__init__` method. There is no parameter in the `__init__` signature to accept a different value, and the training script `retrain.py` does not pass any such value when creating the wrapper:
+
+```python
+env = ChallengeWrapper2_Retrain(env=CYBORG, agent_name="Blue")
+```
+
+Therefore, there is no way to change \(p\) without editing the source code of `ChallengeWrapper2_retrain.py`. The hyperparameter is not mutable, even though the underlying logic (using `go_prob`) correctly implements the mixed initial distribution.
+
+# Score
+
+**0** – The code does not meet the criterion because the hyperparameter \(p\) (named `go_prob`) is hardcoded and cannot be changed without editing the source code directly. The requirement for mutability is not satisfied.

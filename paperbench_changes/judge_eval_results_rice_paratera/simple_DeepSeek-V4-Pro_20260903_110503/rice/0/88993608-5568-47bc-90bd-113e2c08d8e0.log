@@ -1,0 +1,71 @@
+2026-09-03 11:05:04 [info     ] Grading leaf: For the autonomous driving environment, code for pretraining the policy network agent has been setup
+2026-09-03 11:06:27 [info     ] Model file selection raw output:
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/retrain.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/readme.md
+2026-09-03 11:06:27 [info     ] Model file selection raw output:
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/retrain.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/readme.md
+2026-09-03 11:07:19 [info     ] model response: # Expectations
+The paper describes the autonomous driving environment using MetaDrive ("Macro-v1") and DI-engine/DI-drive for training. The agent is a PPO policy network. The reproduction must include code that pretrains such an agent from scratch. I expect to see a script that:
+- Uses the MetaDrive environment ("Macro-v1") via gym,
+- Configures a PPO policy with appropriate observation/action spaces (e.g., bird's eye view, discrete actions),
+- Sets up training components (collector, evaluator, learner) from DI-engine,
+- Runs a training loop to produce a pretrained checkpoint.
+
+The code should be executable and actually implement the pretraining, not just a description or placeholder.
+
+# Reality
+The submission contains `Refine_auto_drive/train_baseline.py`. This file:
+
+- Imports `metadrive`, `gym`, and DI-engine components (`PPOPolicy`, `BaseLearner`, `SampleSerialCollector`, `InteractionSerialEvaluator`).
+- Defines a config with `obs_shape=[5, 200, 200]` and discrete action space of size 5, matching the expected autonomous driving setup.
+- Wraps the environment with `DriveEnvWrapper` (from `core.envs`, presumably part of DI-drive).
+- Creates the policy, learner, collector, and evaluator.
+- Runs a training loop: `while True: eval, collect, learner.train(...)` until evaluation signals stop.
+- This is a complete, executable training script that will pretrain a PPO agent for the autonomous driving task.
+
+The code is actual implementation, not just instructions. It directly corresponds to the pretraining step required for the autonomous driving environment.
+
+# Score
+1
+
+The criterion is met because the submission includes a working script (`train_baseline.py`) that sets up and executes the pretraining of a policy network agent for the autonomous driving environment.
+2026-09-03 11:07:19 [info     ] model response: # Expectations
+The paper describes the autonomous driving environment using MetaDrive ("Macro-v1") and DI-engine/DI-drive for training. The agent is a PPO policy network. The reproduction must include code that pretrains such an agent from scratch. I expect to see a script that:
+- Uses the MetaDrive environment ("Macro-v1") via gym,
+- Configures a PPO policy with appropriate observation/action spaces (e.g., bird's eye view, discrete actions),
+- Sets up training components (collector, evaluator, learner) from DI-engine,
+- Runs a training loop to produce a pretrained checkpoint.
+
+The code should be executable and actually implement the pretraining, not just a description or placeholder.
+
+# Reality
+The submission contains `Refine_auto_drive/train_baseline.py`. This file:
+
+- Imports `metadrive`, `gym`, and DI-engine components (`PPOPolicy`, `BaseLearner`, `SampleSerialCollector`, `InteractionSerialEvaluator`).
+- Defines a config with `obs_shape=[5, 200, 200]` and discrete action space of size 5, matching the expected autonomous driving setup.
+- Wraps the environment with `DriveEnvWrapper` (from `core.envs`, presumably part of DI-drive).
+- Creates the policy, learner, collector, and evaluator.
+- Runs a training loop: `while True: eval, collect, learner.train(...)` until evaluation signals stop.
+- This is a complete, executable training script that will pretrain a PPO agent for the autonomous driving task.
+
+The code is actual implementation, not just instructions. It directly corresponds to the pretraining step required for the autonomous driving environment.
+
+# Score
+1
+
+The criterion is met because the submission includes a working script (`train_baseline.py`) that sets up and executes the pretraining of a policy network agent for the autonomous driving environment.

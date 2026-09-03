@@ -1,0 +1,69 @@
+2026-09-03 11:07:58 [info     ] Grading leaf: For the selfish mining environment, for the "StateMask" explanation method, code has been implemented for measuring cumulative reward throughout refinement
+2026-09-03 11:09:21 [info     ] Model file selection raw output:
+Refine_selfish_mining/retrain.py
+Refine_selfish_mining/utils.py
+Refine_selfish_mining/masknet/replay.py
+Refine_selfish_mining/masknet/utils.py
+Refine_selfish_mining/masknet/train.py
+Refine_selfish_mining/masknet/sample_mask_score.py
+Refine_selfish_mining/masknet/fidelity_score.py
+Refine_selfish_mining/rnd_policy.py
+Refine_selfish_mining/baseline/train_ppo.py
+Refine_selfish_mining/masknet/sample_value_score.py
+2026-09-03 11:09:21 [info     ] Model file selection raw output:
+Refine_selfish_mining/retrain.py
+Refine_selfish_mining/utils.py
+Refine_selfish_mining/masknet/replay.py
+Refine_selfish_mining/masknet/utils.py
+Refine_selfish_mining/masknet/train.py
+Refine_selfish_mining/masknet/sample_mask_score.py
+Refine_selfish_mining/masknet/fidelity_score.py
+Refine_selfish_mining/rnd_policy.py
+Refine_selfish_mining/baseline/train_ppo.py
+Refine_selfish_mining/masknet/sample_value_score.py
+2026-09-03 11:10:23 [info     ] model response: # Expectations
+- The criterion requires that for the selfish mining environment, when using the **StateMask** explanation method, the submission contains code that **measures the cumulative reward throughout the refinement process** (i.e., during training of the refined agent).
+- The paper’s Experiment III fixes the refining method (RICE) and varies the explanation method; for the selfish mining case, it should run the RICE refinement with StateMask as the explanation method and report the agent’s performance (reward) as training progresses.
+- I expect to see a script that:
+  1. Loads the pre-trained agent (DQN) and the StateMask explanation model (mask network).
+  2. Uses the mask network to identify critical states and constructs a mixed initial state distribution (as in Algorithm 2).
+  3. Runs the refinement training (e.g., with PPO + RND bonus) and records the cumulative reward (or average episodic reward) over training epochs/steps so that the refinement curve can be plotted.
+- The code must explicitly use the StateMask explanation method (i.e., the mask model) to guide the resetting, and the training loop must log the reward.
+
+# Reality
+- The provided files include `Refine_selfish_mining/retrain.py`, which is the main refinement script for the selfish mining environment.
+- In `retrain.py`:
+  - It loads a pre-trained DQN policy from a checkpoint, then wraps it with an `RNDPolicy` (for exploration bonus).
+  - It uses `MDPBlockchainSimulatorRetrain` (not shown in the files) as the training environment.
+  - The training loop (`offpolicy_trainer`) logs test rewards, which could be considered cumulative reward throughout refinement.
+  - However, nowhere in `retrain.py` is the **StateMask explanation model** loaded or used. The mask network (e.g., from `utils.load_mask_model`) is not imported or invoked.
+  - The script does not use any explanation method to identify critical states; there is no critical-state resetting based on StateMask scores.
+  - The `go_prob` argument and `wo_exp` flag exist, but they do not connect to the mask model.
+- The `masknet/` directory contains code for training the mask model and evaluating fidelity, but no refinement‑with‑StateMask script.
+- Therefore, there is **no code** that implements the refinement process using the StateMask explanation method and measures the cumulative reward during that refinement. The existing `retrain.py` is a generic RND‑based refinement without explanation‑guided initial state mixing.
+
+# Score
+0 – The submission lacks the required implementation: for the selfish mining environment, no code specifically uses the StateMask explanation method to guide refinement and measure cumulative reward throughout the process. The provided refinement script does not incorporate the StateMask model, so the criterion is not met.
+2026-09-03 11:10:23 [info     ] model response: # Expectations
+- The criterion requires that for the selfish mining environment, when using the **StateMask** explanation method, the submission contains code that **measures the cumulative reward throughout the refinement process** (i.e., during training of the refined agent).
+- The paper’s Experiment III fixes the refining method (RICE) and varies the explanation method; for the selfish mining case, it should run the RICE refinement with StateMask as the explanation method and report the agent’s performance (reward) as training progresses.
+- I expect to see a script that:
+  1. Loads the pre-trained agent (DQN) and the StateMask explanation model (mask network).
+  2. Uses the mask network to identify critical states and constructs a mixed initial state distribution (as in Algorithm 2).
+  3. Runs the refinement training (e.g., with PPO + RND bonus) and records the cumulative reward (or average episodic reward) over training epochs/steps so that the refinement curve can be plotted.
+- The code must explicitly use the StateMask explanation method (i.e., the mask model) to guide the resetting, and the training loop must log the reward.
+
+# Reality
+- The provided files include `Refine_selfish_mining/retrain.py`, which is the main refinement script for the selfish mining environment.
+- In `retrain.py`:
+  - It loads a pre-trained DQN policy from a checkpoint, then wraps it with an `RNDPolicy` (for exploration bonus).
+  - It uses `MDPBlockchainSimulatorRetrain` (not shown in the files) as the training environment.
+  - The training loop (`offpolicy_trainer`) logs test rewards, which could be considered cumulative reward throughout refinement.
+  - However, nowhere in `retrain.py` is the **StateMask explanation model** loaded or used. The mask network (e.g., from `utils.load_mask_model`) is not imported or invoked.
+  - The script does not use any explanation method to identify critical states; there is no critical-state resetting based on StateMask scores.
+  - The `go_prob` argument and `wo_exp` flag exist, but they do not connect to the mask model.
+- The `masknet/` directory contains code for training the mask model and evaluating fidelity, but no refinement‑with‑StateMask script.
+- Therefore, there is **no code** that implements the refinement process using the StateMask explanation method and measures the cumulative reward during that refinement. The existing `retrain.py` is a generic RND‑based refinement without explanation‑guided initial state mixing.
+
+# Score
+0 – The submission lacks the required implementation: for the selfish mining environment, no code specifically uses the StateMask explanation method to guide refinement and measure cumulative reward throughout the process. The provided refinement script does not incorporate the StateMask model, so the criterion is not met.

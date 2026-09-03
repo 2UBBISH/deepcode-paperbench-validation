@@ -1,0 +1,53 @@
+2026-09-03 11:07:37 [info     ] Grading leaf: In Experiment II, for the network defence environment, for the "PPO fine-tuning" refinement method, code has been implemented for measuring cumulative reward throughout refinement
+2026-09-03 11:08:32 [info     ] Model file selection raw output:
+Refine_cage_challenge/retrain.py
+Refine_cage_challenge/Agents/PPOAgent_Retrain.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_retrain.py
+Refine_cage_challenge/rollout_ppo.py
+Refine_cage_challenge/ppo_train.py
+Refine_cage_challenge/readme.md
+Refine_cage_challenge/PPO/Memory.py
+Refine_cage_challenge/PPO/ActorCritic.py
+Refine_cage_challenge/Agents/PPOAgent.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2.py
+2026-09-03 11:08:32 [info     ] Model file selection raw output:
+Refine_cage_challenge/retrain.py
+Refine_cage_challenge/Agents/PPOAgent_Retrain.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_retrain.py
+Refine_cage_challenge/rollout_ppo.py
+Refine_cage_challenge/ppo_train.py
+Refine_cage_challenge/readme.md
+Refine_cage_challenge/PPO/Memory.py
+Refine_cage_challenge/PPO/ActorCritic.py
+Refine_cage_challenge/Agents/PPOAgent.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2.py
+2026-09-03 11:09:17 [info     ] model response: # Expectations
+The criterion requires that for the "PPO fine-tuning" refinement method applied to the network defence environment (Cage Challenge 2), the submission must contain code that measures cumulative reward during the refinement process. According to the paper, "PPO fine-tuning" means lowering the learning rate and continuing training with the PPO algorithm from the default initial states—without any explanation‑based state resetting, RND exploration bonuses, or mixed initial distributions. The measurement of cumulative reward could be implemented as logging of running average reward, episode rewards, or test‑set rewards at regular intervals during the fine‑tuning training loop. I will look for a file that loads a pre‑trained PPO agent, continues training with PPO, and records cumulative reward metrics (e.g., printing average reward, saving to a log, or storing in a variable). The code should be specific to the network defence environment and should be distinct from the "Ours" (RICE) refinement script.
+
+# Reality
+The provided submission files for the network defence environment are:
+
+- `Refine_cage_challenge/retrain.py` – This is the refinement script for the "Ours" method. It uses `ChallengeWrapper2_Retrain` (which resets to critical states with probability `go_prob=0.5`) and `PPOAgent_Retrain` (which includes an RND model for exploration bonuses). The training loop prints training and test average rewards, so it measures cumulative reward, but it is **not** the PPO fine‑tuning method.
+- `Refine_cage_challenge/ppo_train.py` – This trains a PPO agent from scratch (no pre‑trained loading) using `ChallengeWrapper2` and `PPOAgent` (without RND). It prints average reward, but it is not fine‑tuning—it is initial training.
+- `Refine_cage_challenge/rollout_ppo.py` – This evaluates a pre‑trained policy deterministically; it does not train or refine.
+- Other files (`PPOAgent.py`, `PPOAgent_Retrain.py`, wrappers, etc.) support the above scripts.
+
+There is **no** file that implements the PPO fine‑tuning baseline for the network defence environment. No script loads a pre‑trained agent and continues training with PPO alone (no RND, no critical‑state resetting) while measuring cumulative reward. The `retrain.py` script could be altered to set `go_prob=0` and `bonus_scale=0`, but the code as provided does not do that; it is hardcoded for the "Ours" method. The criterion explicitly asks for the "PPO fine‑tuning" refinement method, and the necessary implementation is absent.
+
+# Score
+0 – The submission does not contain code that implements the "PPO fine‑tuning" refinement method for the network defence environment and therefore lacks any code for measuring cumulative reward throughout that specific refinement. All provided scripts either implement the "Ours" method or initial training/evaluation, not the required baseline.
+2026-09-03 11:09:17 [info     ] model response: # Expectations
+The criterion requires that for the "PPO fine-tuning" refinement method applied to the network defence environment (Cage Challenge 2), the submission must contain code that measures cumulative reward during the refinement process. According to the paper, "PPO fine-tuning" means lowering the learning rate and continuing training with the PPO algorithm from the default initial states—without any explanation‑based state resetting, RND exploration bonuses, or mixed initial distributions. The measurement of cumulative reward could be implemented as logging of running average reward, episode rewards, or test‑set rewards at regular intervals during the fine‑tuning training loop. I will look for a file that loads a pre‑trained PPO agent, continues training with PPO, and records cumulative reward metrics (e.g., printing average reward, saving to a log, or storing in a variable). The code should be specific to the network defence environment and should be distinct from the "Ours" (RICE) refinement script.
+
+# Reality
+The provided submission files for the network defence environment are:
+
+- `Refine_cage_challenge/retrain.py` – This is the refinement script for the "Ours" method. It uses `ChallengeWrapper2_Retrain` (which resets to critical states with probability `go_prob=0.5`) and `PPOAgent_Retrain` (which includes an RND model for exploration bonuses). The training loop prints training and test average rewards, so it measures cumulative reward, but it is **not** the PPO fine‑tuning method.
+- `Refine_cage_challenge/ppo_train.py` – This trains a PPO agent from scratch (no pre‑trained loading) using `ChallengeWrapper2` and `PPOAgent` (without RND). It prints average reward, but it is not fine‑tuning—it is initial training.
+- `Refine_cage_challenge/rollout_ppo.py` – This evaluates a pre‑trained policy deterministically; it does not train or refine.
+- Other files (`PPOAgent.py`, `PPOAgent_Retrain.py`, wrappers, etc.) support the above scripts.
+
+There is **no** file that implements the PPO fine‑tuning baseline for the network defence environment. No script loads a pre‑trained agent and continues training with PPO alone (no RND, no critical‑state resetting) while measuring cumulative reward. The `retrain.py` script could be altered to set `go_prob=0` and `bonus_scale=0`, but the code as provided does not do that; it is hardcoded for the "Ours" method. The criterion explicitly asks for the "PPO fine‑tuning" refinement method, and the necessary implementation is absent.
+
+# Score
+0 – The submission does not contain code that implements the "PPO fine‑tuning" refinement method for the network defence environment and therefore lacks any code for measuring cumulative reward throughout that specific refinement. All provided scripts either implement the "Ours" method or initial training/evaluation, not the required baseline.

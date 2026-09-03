@@ -1,0 +1,121 @@
+2026-09-03 11:06:03 [info     ] Grading leaf: For the autonomous driving environment, code for constructing a mixed initial state distribution by combining default initial states and critical states identified by the "Ours" explanation method has been implemented as described in Section 3.3.
+2026-09-03 11:06:48 [info     ] Model file selection raw output:
+Refine_auto_drive/retrain.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/readme.md
+2026-09-03 11:06:48 [info     ] Model file selection raw output:
+Refine_auto_drive/retrain.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/readme.md
+2026-09-03 11:08:36 [info     ] model response: # Expectations
+
+The paper describes constructing a mixed initial state distribution by combining default initial states and critical states identified by the explanation method. Specifically, Section 3.3 states:
+
+- With the trained state mask \(\tilde{\pi}\), randomly sample a trajectory by executing the pre-trained policy \(\pi\).
+- Apply the state mask to pinpoint the **most important state** within that trajectory.
+- Form a mixture initial distribution: \(\mu(s) = \beta d_{\rho}^{\hat{\pi}}(s) + (1-\beta) \rho(s)\), i.e., with probability \(\beta\) start from an identified critical state, and with probability \(1-\beta\) start from the default initial distribution \(\rho\).
+- Algorithm 2 (Refining the DRL Agent) explicitly shows:  
+  - With probability \(p\), run \(\pi\) to obtain a trajectory, identify the most critical state \(s_t\) via the state mask, and set the initial state to \(s_t\).  
+  - Otherwise, set the initial state from \(\rho\).
+
+Thus, for the autonomous driving environment, a correct implementation must:
+1. Use the “Ours” explanation method (the mask network trained with the bonus for blinding) to obtain importance scores for states in a trajectory.
+2. Select a critical state (ideally the one with the highest importance score) from that trajectory.
+3. In the environment reset, with probability \(p\) (the mixing hyper‑parameter) restore the environment to the selected critical state, and with probability \(1-p\) reset to the default initial state.
+4. The code must be an actual implementation, not just a description.
+
+# Reality
+
+The submission contains the following relevant files for the autonomous driving environment:
+
+- `Refine_auto_drive/retrain_env.py` – This defines `CustomWrapper`, which overrides the `reset` method.
+- `Refine_auto_drive/gen_retrain_traj.py` – This implements the function `gen_one_traj` that runs the pre-trained policy and uses the mask network to collect importance scores.
+- `Refine_auto_drive/train_masknet.py` and `Refine_auto_drive/custom_masknet_env.py` – These train the mask network using the “Ours” explanation method (PPO with a reward bonus for blinding, as described in Section 3.3).
+
+In `retrain_env.py`, the `reset` method does:
+
+```python
+if np.random.rand() < self.p:
+    obs = self.env.reset(force_seed=0)
+    traj = gen_one_traj(obs, self.env, self.seed)
+    if self.random_sampling:
+        start_idx = np.random.choice(traj.eps_len)
+    else:
+        start_idx = np.argmax(traj.mask_probs)
+    # … then roll forward to start_idx to restore the environment to that critical state
+else:
+    # default reset from the original initial distribution
+```
+
+- `gen_one_traj` uses the mask network (loaded from a checkpoint) to compute importance scores (`mask_probs`) for each step of the generated trajectory.
+- With probability `self.p` (the mixing hyper‑parameter), the code selects a critical state (either the most important via `argmax` or a random state) and restores the environment to that state; otherwise it does a normal reset.
+- This exactly matches the mixture construction \(\mu(s) = \beta d_{\rho}^{\hat{\pi}}(s) + (1-\beta) \rho(s)\), with \(\beta\) corresponding to `p`.
+- The mask network is the “Ours” explanation method (trained with the bonus for blinding), as seen in `custom_masknet_env.py` where the reward is augmented with `self.lamb * mask`.
+
+Therefore, the submission contains a working **code implementation** that constructs the mixed initial state distribution by combining default initial states and critical states identified by the “Ours” explanation method, precisely as described in Section 3.3.
+
+# Score
+
+**1** – The code correctly implements the required functionality for the autonomous driving environment.
+2026-09-03 11:08:36 [info     ] model response: # Expectations
+
+The paper describes constructing a mixed initial state distribution by combining default initial states and critical states identified by the explanation method. Specifically, Section 3.3 states:
+
+- With the trained state mask \(\tilde{\pi}\), randomly sample a trajectory by executing the pre-trained policy \(\pi\).
+- Apply the state mask to pinpoint the **most important state** within that trajectory.
+- Form a mixture initial distribution: \(\mu(s) = \beta d_{\rho}^{\hat{\pi}}(s) + (1-\beta) \rho(s)\), i.e., with probability \(\beta\) start from an identified critical state, and with probability \(1-\beta\) start from the default initial distribution \(\rho\).
+- Algorithm 2 (Refining the DRL Agent) explicitly shows:  
+  - With probability \(p\), run \(\pi\) to obtain a trajectory, identify the most critical state \(s_t\) via the state mask, and set the initial state to \(s_t\).  
+  - Otherwise, set the initial state from \(\rho\).
+
+Thus, for the autonomous driving environment, a correct implementation must:
+1. Use the “Ours” explanation method (the mask network trained with the bonus for blinding) to obtain importance scores for states in a trajectory.
+2. Select a critical state (ideally the one with the highest importance score) from that trajectory.
+3. In the environment reset, with probability \(p\) (the mixing hyper‑parameter) restore the environment to the selected critical state, and with probability \(1-p\) reset to the default initial state.
+4. The code must be an actual implementation, not just a description.
+
+# Reality
+
+The submission contains the following relevant files for the autonomous driving environment:
+
+- `Refine_auto_drive/retrain_env.py` – This defines `CustomWrapper`, which overrides the `reset` method.
+- `Refine_auto_drive/gen_retrain_traj.py` – This implements the function `gen_one_traj` that runs the pre-trained policy and uses the mask network to collect importance scores.
+- `Refine_auto_drive/train_masknet.py` and `Refine_auto_drive/custom_masknet_env.py` – These train the mask network using the “Ours” explanation method (PPO with a reward bonus for blinding, as described in Section 3.3).
+
+In `retrain_env.py`, the `reset` method does:
+
+```python
+if np.random.rand() < self.p:
+    obs = self.env.reset(force_seed=0)
+    traj = gen_one_traj(obs, self.env, self.seed)
+    if self.random_sampling:
+        start_idx = np.random.choice(traj.eps_len)
+    else:
+        start_idx = np.argmax(traj.mask_probs)
+    # … then roll forward to start_idx to restore the environment to that critical state
+else:
+    # default reset from the original initial distribution
+```
+
+- `gen_one_traj` uses the mask network (loaded from a checkpoint) to compute importance scores (`mask_probs`) for each step of the generated trajectory.
+- With probability `self.p` (the mixing hyper‑parameter), the code selects a critical state (either the most important via `argmax` or a random state) and restores the environment to that state; otherwise it does a normal reset.
+- This exactly matches the mixture construction \(\mu(s) = \beta d_{\rho}^{\hat{\pi}}(s) + (1-\beta) \rho(s)\), with \(\beta\) corresponding to `p`.
+- The mask network is the “Ours” explanation method (trained with the bonus for blinding), as seen in `custom_masknet_env.py` where the reward is augmented with `self.lamb * mask`.
+
+Therefore, the submission contains a working **code implementation** that constructs the mixed initial state distribution by combining default initial states and critical states identified by the “Ours” explanation method, precisely as described in Section 3.3.
+
+# Score
+
+**1** – The code correctly implements the required functionality for the autonomous driving environment.

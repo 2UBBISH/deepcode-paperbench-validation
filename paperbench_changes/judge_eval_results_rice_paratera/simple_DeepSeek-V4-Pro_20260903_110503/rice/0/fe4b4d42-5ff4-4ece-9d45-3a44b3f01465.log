@@ -1,0 +1,97 @@
+2026-09-03 11:05:04 [info     ] Grading leaf: For the network defence environment, the mask network objective $J(\theta)$ has been implemented to match what is outlined in section 3.3, namely $J(\theta)=\min |\eta(\pi)-\eta(\bar{\pi})|$
+2026-09-03 11:06:20 [info     ] Model file selection raw output:
+Refine_cage_challenge/rollout_mask.py
+Refine_cage_challenge/Agents/PPOAgent_mask.py
+Refine_cage_challenge/PPO/ActorCritic.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_mask.py
+Refine_cage_challenge/sample_mask_score.py
+Refine_cage_challenge/PPO/Memory.py
+Refine_cage_challenge/ppo_train.py
+Refine_cage_challenge/retrain.py
+Refine_cage_challenge/Agents/MainAgent.py
+Refine_cage_challenge/readme.md
+2026-09-03 11:06:20 [info     ] Model file selection raw output:
+Refine_cage_challenge/rollout_mask.py
+Refine_cage_challenge/Agents/PPOAgent_mask.py
+Refine_cage_challenge/PPO/ActorCritic.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_mask.py
+Refine_cage_challenge/sample_mask_score.py
+Refine_cage_challenge/PPO/Memory.py
+Refine_cage_challenge/ppo_train.py
+Refine_cage_challenge/retrain.py
+Refine_cage_challenge/Agents/MainAgent.py
+Refine_cage_challenge/readme.md
+2026-09-03 11:07:25 [info     ] model response: # Expectations
+
+The paper states in Section 3.3 that StateMask trains the mask network by minimizing:
+
+\[
+J(\theta)=\min |\eta(\pi)-\eta(\bar{\pi})|
+\]
+
+where \(\eta(\pi)\) is the expected total reward of the target policy and \(\eta(\bar{\pi})\) is the expected total reward of the perturbed/blinded policy produced by combining the target policy with the mask network.
+
+For the network defence environment, I would therefore expect to see an implementation that explicitly or implicitly computes or estimates the performance of both the original agent and the masked/blinded agent and trains the mask network to minimize the absolute reward difference between them. Merely training a PPO agent to maximize a reward signal is not the same objective, unless it can be clearly connected to the minimization of \(|\eta(\pi)-\eta(\bar{\pi})|\) through the stated theoretical transformation, and even then the criterion specifically names the \( \min |\eta(\pi)-\eta(\bar{\pi})| \) objective.
+
+# Reality
+
+The submitted network defence code does not implement this objective.
+
+- In `Refine_cage_challenge/Agents/PPOAgent_mask.py`, the `PPOAgent_mask` class has a `train()` method, but it implements a standard PPO clipped surrogate loss:
+
+  - It computes discounted rewards from stored transitions.
+  - It computes advantages as `rewards - state_values.detach()`.
+  - It updates the actor and critic using the usual PPO surrogate and critic MSE losses.
+
+  There is no computation of \(\eta(\pi)\), no computation of \(\eta(\bar{\pi})\), and no minimization of \(|\eta(\pi)-\eta(\bar{\pi})|\).
+
+- In `Refine_cage_challenge/rollout_mask.py`, the mask agent is initialized with `deterministic=True`, and the training loop never calls `agent.train()`. Therefore, there is no mask-network training objective actually executed in this script.
+
+- `Refine_cage_challenge/sample_mask_score.py` only records mask probabilities and actions; it does not train the mask network under the required objective.
+
+- `Refine_cage_challenge/retrain.py` concerns refining the RL agent with exploration bonuses, not training the mask network with the specified StateMask objective.
+
+Thus, while there is code for using a mask policy to choose between the baseline policy and random actions, the actual objective \(J(\theta)=\min |\eta(\pi)-\eta(\bar{\pi})|\) is absent.
+
+# Score
+
+0
+
+The criterion has not been met because the submitted network defence code does not implement the mask network objective \(J(\theta)=\min |\eta(\pi)-\eta(\bar{\pi})|\). The available training code instead implements a generic PPO update or performs inference, with no explicit or equivalent minimization of the absolute performance difference between the target and masked policies.
+2026-09-03 11:07:25 [info     ] model response: # Expectations
+
+The paper states in Section 3.3 that StateMask trains the mask network by minimizing:
+
+\[
+J(\theta)=\min |\eta(\pi)-\eta(\bar{\pi})|
+\]
+
+where \(\eta(\pi)\) is the expected total reward of the target policy and \(\eta(\bar{\pi})\) is the expected total reward of the perturbed/blinded policy produced by combining the target policy with the mask network.
+
+For the network defence environment, I would therefore expect to see an implementation that explicitly or implicitly computes or estimates the performance of both the original agent and the masked/blinded agent and trains the mask network to minimize the absolute reward difference between them. Merely training a PPO agent to maximize a reward signal is not the same objective, unless it can be clearly connected to the minimization of \(|\eta(\pi)-\eta(\bar{\pi})|\) through the stated theoretical transformation, and even then the criterion specifically names the \( \min |\eta(\pi)-\eta(\bar{\pi})| \) objective.
+
+# Reality
+
+The submitted network defence code does not implement this objective.
+
+- In `Refine_cage_challenge/Agents/PPOAgent_mask.py`, the `PPOAgent_mask` class has a `train()` method, but it implements a standard PPO clipped surrogate loss:
+
+  - It computes discounted rewards from stored transitions.
+  - It computes advantages as `rewards - state_values.detach()`.
+  - It updates the actor and critic using the usual PPO surrogate and critic MSE losses.
+
+  There is no computation of \(\eta(\pi)\), no computation of \(\eta(\bar{\pi})\), and no minimization of \(|\eta(\pi)-\eta(\bar{\pi})|\).
+
+- In `Refine_cage_challenge/rollout_mask.py`, the mask agent is initialized with `deterministic=True`, and the training loop never calls `agent.train()`. Therefore, there is no mask-network training objective actually executed in this script.
+
+- `Refine_cage_challenge/sample_mask_score.py` only records mask probabilities and actions; it does not train the mask network under the required objective.
+
+- `Refine_cage_challenge/retrain.py` concerns refining the RL agent with exploration bonuses, not training the mask network with the specified StateMask objective.
+
+Thus, while there is code for using a mask policy to choose between the baseline policy and random actions, the actual objective \(J(\theta)=\min |\eta(\pi)-\eta(\bar{\pi})|\) is absent.
+
+# Score
+
+0
+
+The criterion has not been met because the submitted network defence code does not implement the mask network objective \(J(\theta)=\min |\eta(\pi)-\eta(\bar{\pi})|\). The available training code instead implements a generic PPO update or performs inference, with no explicit or equivalent minimization of the absolute performance difference between the target and masked policies.

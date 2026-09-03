@@ -1,0 +1,73 @@
+2026-09-03 11:05:04 [info     ] Grading leaf: For the selfish mining environment, the policy network agents has been implemented.  The network architecture of the PPO agent is a 4-layer Multi-Layer Perceptron (MLP) with a hidden size of 128, 128, 128, and 128 in each layer
+2026-09-03 11:05:41 [info     ] Model file selection raw output:
+Refine_selfish_mining/baseline/net.py
+Refine_selfish_mining/baseline/train_ppo.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/function_approximation/mlp_approximator.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/function_approximation/approximator.py
+Refine_selfish_mining/retrain.py
+Refine_selfish_mining/baseline/reinforcement_learning/dqn/dqn_agent.py
+Refine_selfish_mining/baseline/reinforcement_learning/dqn/dqn_trainer.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/training/trainer.py
+Refine_selfish_mining/utils.py
+Refine_selfish_mining/masknet/train.py
+2026-09-03 11:05:41 [info     ] Model file selection raw output:
+Refine_selfish_mining/baseline/net.py
+Refine_selfish_mining/baseline/train_ppo.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/function_approximation/mlp_approximator.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/function_approximation/approximator.py
+Refine_selfish_mining/retrain.py
+Refine_selfish_mining/baseline/reinforcement_learning/dqn/dqn_agent.py
+Refine_selfish_mining/baseline/reinforcement_learning/dqn/dqn_trainer.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/training/trainer.py
+Refine_selfish_mining/utils.py
+Refine_selfish_mining/masknet/train.py
+2026-09-03 11:06:24 [info     ] model response: # Expectations
+The paper states that for the selfish mining environment, the PPO agent's network architecture is a 4‑layer MLP with hidden sizes [128, 128, 128, 128] in each layer. To satisfy this criterion, the submission must contain actual code that implements a PPO agent for that environment using exactly these hidden layer sizes. I expect to find a script that sets up a PPO policy with a network built from a `Net` configuration where `hidden_sizes = [128, 128, 128, 128]`, and that the script is clearly designed for the selfish mining task.
+
+# Reality
+The file `baseline/train_ppo.py` is the training script for the PPO agent in the selfish mining environment. It imports `Net` from `tianshou.utils.net.common` and uses it to create the policy network:
+
+```python
+net = Net(
+    args.state_shape,
+    args.action_shape,
+    hidden_sizes=args.hidden_sizes,
+    device=args.device,
+).to(args.device)
+```
+
+The `hidden_sizes` argument is defined in the argument parser with:
+
+```python
+parser.add_argument('--hidden-sizes', type=int, nargs='*', default=[128, 128, 128, 128])
+```
+
+This default list of four values (128, 128, 128, 128) corresponds to a 4‑layer MLP with 128 units in each hidden layer. The `Net` class (from tianshou) builds an MLP that includes exactly these hidden layers before the output layer. The actor and critic are then built from this net, and the whole is wrapped in a `PPOPolicy`. The script is specifically for the selfish mining environment (`--task blockchainfee`). Therefore, the implementation meets the exact requirement described in the paper.
+
+# Score
+**1** – The code contains a correct implementation of the PPO agent with the specified 4‑layer MLP architecture (hidden sizes [128, 128, 128, 128]) for the selfish mining environment.
+2026-09-03 11:06:24 [info     ] model response: # Expectations
+The paper states that for the selfish mining environment, the PPO agent's network architecture is a 4‑layer MLP with hidden sizes [128, 128, 128, 128] in each layer. To satisfy this criterion, the submission must contain actual code that implements a PPO agent for that environment using exactly these hidden layer sizes. I expect to find a script that sets up a PPO policy with a network built from a `Net` configuration where `hidden_sizes = [128, 128, 128, 128]`, and that the script is clearly designed for the selfish mining task.
+
+# Reality
+The file `baseline/train_ppo.py` is the training script for the PPO agent in the selfish mining environment. It imports `Net` from `tianshou.utils.net.common` and uses it to create the policy network:
+
+```python
+net = Net(
+    args.state_shape,
+    args.action_shape,
+    hidden_sizes=args.hidden_sizes,
+    device=args.device,
+).to(args.device)
+```
+
+The `hidden_sizes` argument is defined in the argument parser with:
+
+```python
+parser.add_argument('--hidden-sizes', type=int, nargs='*', default=[128, 128, 128, 128])
+```
+
+This default list of four values (128, 128, 128, 128) corresponds to a 4‑layer MLP with 128 units in each hidden layer. The `Net` class (from tianshou) builds an MLP that includes exactly these hidden layers before the output layer. The actor and critic are then built from this net, and the whole is wrapped in a `PPOPolicy`. The script is specifically for the selfish mining environment (`--task blockchainfee`). Therefore, the implementation meets the exact requirement described in the paper.
+
+# Score
+**1** – The code contains a correct implementation of the PPO agent with the specified 4‑layer MLP architecture (hidden sizes [128, 128, 128, 128]) for the selfish mining environment.

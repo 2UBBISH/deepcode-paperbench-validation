@@ -1,0 +1,59 @@
+2026-09-03 11:05:04 [info     ] Grading leaf: For the network defence environment, the "Random" Explanation method can be selected as the explanation method during retraining
+2026-09-03 11:05:51 [info     ] Model file selection raw output:
+Refine_cage_challenge/retrain.py
+Refine_cage_challenge/replay.py
+Refine_cage_challenge/sample_mask_score.py
+Refine_cage_challenge/sample_value_score.py
+Refine_cage_challenge/ppo_train.py
+Refine_cage_challenge/rollout_ppo.py
+Refine_cage_challenge/rollout_mask.py
+Refine_cage_challenge/Agents/PPOAgent_Retrain.py
+Refine_cage_challenge/Agents/PPOAgent_mask.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_retrain.py
+2026-09-03 11:05:51 [info     ] Model file selection raw output:
+Refine_cage_challenge/retrain.py
+Refine_cage_challenge/replay.py
+Refine_cage_challenge/sample_mask_score.py
+Refine_cage_challenge/sample_value_score.py
+Refine_cage_challenge/ppo_train.py
+Refine_cage_challenge/rollout_ppo.py
+Refine_cage_challenge/rollout_mask.py
+Refine_cage_challenge/Agents/PPOAgent_Retrain.py
+Refine_cage_challenge/Agents/PPOAgent_mask.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_retrain.py
+2026-09-03 11:06:44 [info     ] model response: # Expectations
+
+The paper describes the "Random" explanation method as a baseline where critical steps are identified by randomly selecting a visited state. In the context of the refining procedure (Algorithm 2), the agent's training uses a mixed initial state distribution that includes critical states identified by an explanation method. The evaluation in Experiment III (and the relevant part of Table 1) requires the ability to run the refining method with different explanation methods, including "Random". Therefore, for the network defence (Cage Challenge 2) environment, the submission must provide a way to select the "Random" explanation method during the retraining/refining process. That means there should be a mechanism (e.g., a command‑line argument, configuration flag, or a function parameter) that allows the user to specify that the retraining should use the randomly selected critical states rather than the mask‑network‑based ones. The implementation of the random selection itself (i.e., picking a random index from a trajectory) is not sufficient; it must be integrated into the retraining pipeline such that it can be chosen at runtime.
+
+# Reality
+
+The relevant files are `Refine_cage_challenge/retrain.py` and `Refine_cage_challenge/Wrappers/ChallengeWrapper2_retrain.py`.  
+
+- `ChallengeWrapper2_retrain.py` defines a wrapper with a `reset()` method that uses `gen_one_traj()` to obtain a trajectory and then selects a start index. The class has an attribute `self.random_sampling` (initialized to `False`) that controls whether to pick a random index (`np.random.choice(eps_len)`) or the index with the highest mask probability (`np.argmax(mask_record)`). This logic is exactly what is needed to implement the "Random" explanation.  
+- However, `retrain.py` — the script that performs the actual retraining — creates the `ChallengeWrapper2_Retrain` environment without any provision to set `random_sampling = True`. There is no command‑line argument, configuration file, or function parameter that allows the user to choose the "Random" explanation method. The retraining script always uses the default `False` value, meaning only the mask‑based explanation is used.
+
+Thus, although the underlying code contains the logic for random critical‑state selection, the retraining entry point does not expose a way to select it. The "Random" explanation method cannot be chosen during retraining as the submission is presented.
+
+# Score
+
+0
+
+**Explanation:** The criterion requires that the Random explanation method can be selected as the explanation method during retraining. The provided code for the network defence environment includes the necessary logic inside `ChallengeWrapper2_Retrain` but does not integrate it into the retraining pipeline—there is no mechanism to enable the random method when running the retraining script. Therefore, the submission fails to meet this criterion.
+2026-09-03 11:06:44 [info     ] model response: # Expectations
+
+The paper describes the "Random" explanation method as a baseline where critical steps are identified by randomly selecting a visited state. In the context of the refining procedure (Algorithm 2), the agent's training uses a mixed initial state distribution that includes critical states identified by an explanation method. The evaluation in Experiment III (and the relevant part of Table 1) requires the ability to run the refining method with different explanation methods, including "Random". Therefore, for the network defence (Cage Challenge 2) environment, the submission must provide a way to select the "Random" explanation method during the retraining/refining process. That means there should be a mechanism (e.g., a command‑line argument, configuration flag, or a function parameter) that allows the user to specify that the retraining should use the randomly selected critical states rather than the mask‑network‑based ones. The implementation of the random selection itself (i.e., picking a random index from a trajectory) is not sufficient; it must be integrated into the retraining pipeline such that it can be chosen at runtime.
+
+# Reality
+
+The relevant files are `Refine_cage_challenge/retrain.py` and `Refine_cage_challenge/Wrappers/ChallengeWrapper2_retrain.py`.  
+
+- `ChallengeWrapper2_retrain.py` defines a wrapper with a `reset()` method that uses `gen_one_traj()` to obtain a trajectory and then selects a start index. The class has an attribute `self.random_sampling` (initialized to `False`) that controls whether to pick a random index (`np.random.choice(eps_len)`) or the index with the highest mask probability (`np.argmax(mask_record)`). This logic is exactly what is needed to implement the "Random" explanation.  
+- However, `retrain.py` — the script that performs the actual retraining — creates the `ChallengeWrapper2_Retrain` environment without any provision to set `random_sampling = True`. There is no command‑line argument, configuration file, or function parameter that allows the user to choose the "Random" explanation method. The retraining script always uses the default `False` value, meaning only the mask‑based explanation is used.
+
+Thus, although the underlying code contains the logic for random critical‑state selection, the retraining entry point does not expose a way to select it. The "Random" explanation method cannot be chosen during retraining as the submission is presented.
+
+# Score
+
+0
+
+**Explanation:** The criterion requires that the Random explanation method can be selected as the explanation method during retraining. The provided code for the network defence environment includes the necessary logic inside `ChallengeWrapper2_Retrain` but does not integrate it into the retraining pipeline—there is no mechanism to enable the random method when running the retraining script. Therefore, the submission fails to meet this criterion.

@@ -1,0 +1,113 @@
+2026-09-03 11:05:04 [info     ] Grading leaf: For the MuJoCo environments, the original StateMask Explanation method can be selected for generating rollouts (without training)
+2026-09-03 11:07:22 [info     ] Model file selection raw output:
+Refine_mujoco/masknet/gen_fid.py
+Refine_mujoco/masknet/fid_test.py
+Refine_mujoco/masknet/environment.py
+Refine_mujoco/models.py
+Refine_mujoco/masknet/cus_PPO.py
+Refine_mujoco/masknet/train.py
+Refine_mujoco/masknet/readme.md
+Refine_mujoco/environment.py
+Refine_mujoco/PPO.py
+Refine_mujoco/base_class.py
+2026-09-03 11:07:22 [info     ] Model file selection raw output:
+Refine_mujoco/masknet/gen_fid.py
+Refine_mujoco/masknet/fid_test.py
+Refine_mujoco/masknet/environment.py
+Refine_mujoco/models.py
+Refine_mujoco/masknet/cus_PPO.py
+Refine_mujoco/masknet/train.py
+Refine_mujoco/masknet/readme.md
+Refine_mujoco/environment.py
+Refine_mujoco/PPO.py
+Refine_mujoco/base_class.py
+2026-09-03 11:08:17 [info     ] model response: # Expectations
+
+The paper describes two explanation methods relevant to the MuJoCo experiments:
+
+- **Original StateMask** from Cheng et al. (2023), which uses the objective  
+  \(J(\theta)=\min |\eta(\pi)-\eta(\bar{\pi})|\) and a prime-dual optimization procedure.
+- **“Ours”**, the simplified mask-network design proposed in Section 3.3, which maximizes \(\eta(\bar{\pi})\) with an added blinding bonus.
+
+This criterion requires that, for MuJoCo environments, the submission includes actual code that can **select the original StateMask explanation method for generating rollouts without training it**. That is, there should be a code path allowing a pre-existing original StateMask mask network to be loaded and used to compute state importance scores during trajectory generation, distinct from simply training or using the proposed simplified mask.
+
+I would expect to see something like:
+
+- An explicit explanation-method selector such as `method="statemask"` vs `method="ours"`.
+- Loading code for an original StateMask mask model.
+- Rollout-generation code that uses that loaded original StateMask model to produce step-level importance masks for MuJoCo trajectories.
+- No requirement to retrain the original StateMask in this workflow.
+
+# Reality
+
+The submitted files do not contain such an implementation.
+
+Looking at the relevant files:
+
+- `Refine_mujoco/masknet/train.py` trains a mask network using `cus_PPO` and `Multi2SingleEnv`. The environment adds a reward bonus in `Multi2SingleEnv.step`:
+  ```python
+  if self.train:
+      reward += self.alpha * (1 - action)
+  ```
+  This corresponds to the **“Ours”** explanation design, not the original StateMask objective.
+
+- `Refine_mujoco/masknet/environment.py` implements `Multi2SingleEnv`, again for the proposed simplified mask training. There is no implementation of the original StateMask objective or selection mechanism.
+
+- `Refine_mujoco/environment.py` defines `RetrainEnv` for refining MuJoCo agents. It accepts a `masknet_path` and uses it in `gen_one_traj`, but there is no argument such as `explanation_method="statemask"` or an explicit branch for original StateMask. The only related option is `rand_sampling`, which randomly chooses visited states instead of critical ones.
+
+- `Refine_mujoco/masknet/gen_fid.py` and `Refine_mujoco/masknet/fid_test.py` load a mask PPO model and record mask probabilities, but they do not implement or select an original StateMask mask network. They simply use a pre-saved mask model path, with no evidence that this path corresponds to an original StateMask implementation.
+
+- `Refine_mujoco/masknet/cus_PPO.py` is a custom PPO implementation used for the simplified mask training, not the original StateMask prime-dual optimization.
+
+Overall, there is no code path that allows selecting the original StateMask explanation method for rollout generation. The submission appears to implement only the proposed simplified mask method.
+
+# Score
+
+0
+
+The criterion is not met because the provided code does not contain an implementation that allows the original StateMask explanation method to be selected for generating rollouts without training in MuJoCo environments.
+2026-09-03 11:08:17 [info     ] model response: # Expectations
+
+The paper describes two explanation methods relevant to the MuJoCo experiments:
+
+- **Original StateMask** from Cheng et al. (2023), which uses the objective  
+  \(J(\theta)=\min |\eta(\pi)-\eta(\bar{\pi})|\) and a prime-dual optimization procedure.
+- **“Ours”**, the simplified mask-network design proposed in Section 3.3, which maximizes \(\eta(\bar{\pi})\) with an added blinding bonus.
+
+This criterion requires that, for MuJoCo environments, the submission includes actual code that can **select the original StateMask explanation method for generating rollouts without training it**. That is, there should be a code path allowing a pre-existing original StateMask mask network to be loaded and used to compute state importance scores during trajectory generation, distinct from simply training or using the proposed simplified mask.
+
+I would expect to see something like:
+
+- An explicit explanation-method selector such as `method="statemask"` vs `method="ours"`.
+- Loading code for an original StateMask mask model.
+- Rollout-generation code that uses that loaded original StateMask model to produce step-level importance masks for MuJoCo trajectories.
+- No requirement to retrain the original StateMask in this workflow.
+
+# Reality
+
+The submitted files do not contain such an implementation.
+
+Looking at the relevant files:
+
+- `Refine_mujoco/masknet/train.py` trains a mask network using `cus_PPO` and `Multi2SingleEnv`. The environment adds a reward bonus in `Multi2SingleEnv.step`:
+  ```python
+  if self.train:
+      reward += self.alpha * (1 - action)
+  ```
+  This corresponds to the **“Ours”** explanation design, not the original StateMask objective.
+
+- `Refine_mujoco/masknet/environment.py` implements `Multi2SingleEnv`, again for the proposed simplified mask training. There is no implementation of the original StateMask objective or selection mechanism.
+
+- `Refine_mujoco/environment.py` defines `RetrainEnv` for refining MuJoCo agents. It accepts a `masknet_path` and uses it in `gen_one_traj`, but there is no argument such as `explanation_method="statemask"` or an explicit branch for original StateMask. The only related option is `rand_sampling`, which randomly chooses visited states instead of critical ones.
+
+- `Refine_mujoco/masknet/gen_fid.py` and `Refine_mujoco/masknet/fid_test.py` load a mask PPO model and record mask probabilities, but they do not implement or select an original StateMask mask network. They simply use a pre-saved mask model path, with no evidence that this path corresponds to an original StateMask implementation.
+
+- `Refine_mujoco/masknet/cus_PPO.py` is a custom PPO implementation used for the simplified mask training, not the original StateMask prime-dual optimization.
+
+Overall, there is no code path that allows selecting the original StateMask explanation method for rollout generation. The submission appears to implement only the proposed simplified mask method.
+
+# Score
+
+0
+
+The criterion is not met because the provided code does not contain an implementation that allows the original StateMask explanation method to be selected for generating rollouts without training in MuJoCo environments.

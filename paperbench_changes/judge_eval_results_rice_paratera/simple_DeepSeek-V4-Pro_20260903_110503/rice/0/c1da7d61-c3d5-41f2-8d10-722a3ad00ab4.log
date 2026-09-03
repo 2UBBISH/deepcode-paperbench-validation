@@ -1,0 +1,75 @@
+2026-09-03 11:06:50 [info     ] Grading leaf: For the autonomous driving environment, for the "StateMask" explanation method, code for measuring training time throughout training as outlined in Appendix C.3 and Table 4 has been implemented.
+2026-09-03 11:07:58 [info     ] Model file selection raw output:
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/retrain.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/readme.md
+Refine_mujoco/masknet/gen_fid.py
+2026-09-03 11:07:58 [info     ] Model file selection raw output:
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/retrain.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/readme.md
+Refine_mujoco/masknet/gen_fid.py
+2026-09-03 11:09:09 [info     ] model response: # Expectations
+
+The criterion requires that for the autonomous driving environment, the code for the "StateMask" explanation method includes an implementation of measuring training time throughout training, as outlined in Appendix C.3 and Table 4. Specifically, Table 4 reports the "number of seconds when training the mask using a fixed number of samples" for both the StateMask and the authors' own method. Therefore, I expect to see code that:
+
+- Trains a mask network according to the StateMask algorithm (the baseline from Cheng et al. 2023) for the autonomous driving environment.
+- Records the wall‑clock time when training starts and when it finishes, and computes the elapsed time.
+- The training should be run for a fixed number of samples (e.g., the 2,443,260 samples listed for the autonomous driving environment in Table 4) and the total time should be logged or saved, allowing the efficiency comparison called for in the paper.
+
+The measurement must be explicitly implemented in the code, not just a description. Simply having an inner training loop without timing is not sufficient.
+
+# Reality
+
+The submission provides a set of files related to the autonomous driving environment:
+
+- `Refine_auto_drive/train_masknet.py` – trains the mask network for the "Ours" explanation method.
+- `Refine_auto_drive/custom_masknet_env.py` – environment wrapper for the "Ours" mask network.
+- `Refine_auto_drive/learner.py` – a custom learner that includes some timing hooks (e.g., `_time_wrapper` for train_time), but these measure per‑iteration training time, not the total training time to reach a fixed sample count.
+- Other files (`retrain.py`, `retrain_env.py`, `rnd_reward_model.py`, `gen_retrain_traj.py`, `train_baseline.py`) are related to the refinement stage, not to the mask network training.
+
+There is **no code** that implements the StateMask explanation method. The entire submission only contains the authors' own mask network design (Ours). Consequently, there is no code that measures the training time for the StateMask explanation method. The existing `train_masknet.py` does not contain any explicit wall‑clock timing for the overall training process; it only runs a loop until an evaluator stop condition, without recording the total elapsed time.
+
+Because the submission does not implement the StateMask baseline at all, it cannot possibly measure its training time. The requirement of measuring training time for the StateMask method is therefore not fulfilled.
+
+# Score
+
+**0** – The code required for measuring the training time of the StateMask explanation method in the autonomous driving environment is absent. No implementation of the StateMask baseline is provided, and the existing code does not include timing measurement for that method.
+2026-09-03 11:09:09 [info     ] model response: # Expectations
+
+The criterion requires that for the autonomous driving environment, the code for the "StateMask" explanation method includes an implementation of measuring training time throughout training, as outlined in Appendix C.3 and Table 4. Specifically, Table 4 reports the "number of seconds when training the mask using a fixed number of samples" for both the StateMask and the authors' own method. Therefore, I expect to see code that:
+
+- Trains a mask network according to the StateMask algorithm (the baseline from Cheng et al. 2023) for the autonomous driving environment.
+- Records the wall‑clock time when training starts and when it finishes, and computes the elapsed time.
+- The training should be run for a fixed number of samples (e.g., the 2,443,260 samples listed for the autonomous driving environment in Table 4) and the total time should be logged or saved, allowing the efficiency comparison called for in the paper.
+
+The measurement must be explicitly implemented in the code, not just a description. Simply having an inner training loop without timing is not sufficient.
+
+# Reality
+
+The submission provides a set of files related to the autonomous driving environment:
+
+- `Refine_auto_drive/train_masknet.py` – trains the mask network for the "Ours" explanation method.
+- `Refine_auto_drive/custom_masknet_env.py` – environment wrapper for the "Ours" mask network.
+- `Refine_auto_drive/learner.py` – a custom learner that includes some timing hooks (e.g., `_time_wrapper` for train_time), but these measure per‑iteration training time, not the total training time to reach a fixed sample count.
+- Other files (`retrain.py`, `retrain_env.py`, `rnd_reward_model.py`, `gen_retrain_traj.py`, `train_baseline.py`) are related to the refinement stage, not to the mask network training.
+
+There is **no code** that implements the StateMask explanation method. The entire submission only contains the authors' own mask network design (Ours). Consequently, there is no code that measures the training time for the StateMask explanation method. The existing `train_masknet.py` does not contain any explicit wall‑clock timing for the overall training process; it only runs a loop until an evaluator stop condition, without recording the total elapsed time.
+
+Because the submission does not implement the StateMask baseline at all, it cannot possibly measure its training time. The requirement of measuring training time for the StateMask method is therefore not fulfilled.
+
+# Score
+
+**0** – The code required for measuring the training time of the StateMask explanation method in the autonomous driving environment is absent. No implementation of the StateMask baseline is provided, and the existing code does not include timing measurement for that method.

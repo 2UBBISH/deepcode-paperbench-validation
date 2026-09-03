@@ -1,0 +1,39 @@
+2026-09-03 11:05:04 [info     ] Grading leaf: For the selfish mining environment, the optimization of the mask network objective of using prime-dual methods has been implemented.
+2026-09-03 11:05:25 [info     ] Model file selection raw output:
+Refine_selfish_mining/masknet/train.py
+Refine_selfish_mining/masknet/utils.py
+Refine_selfish_mining/masknet/sample_mask_score.py
+Refine_selfish_mining/masknet/fidelity_score.py
+Refine_selfish_mining/masknet/replay.py
+Refine_selfish_mining/utils.py
+Refine_selfish_mining/retrain.py
+Refine_selfish_mining/rnd_policy.py
+Refine_selfish_mining/rnd_model.py
+Refine_selfish_mining/baseline/train_ppo.py
+2026-09-03 11:05:25 [info     ] Model file selection raw output:
+Refine_selfish_mining/masknet/train.py
+Refine_selfish_mining/masknet/utils.py
+Refine_selfish_mining/masknet/sample_mask_score.py
+Refine_selfish_mining/masknet/fidelity_score.py
+Refine_selfish_mining/masknet/replay.py
+Refine_selfish_mining/utils.py
+Refine_selfish_mining/retrain.py
+Refine_selfish_mining/rnd_policy.py
+Refine_selfish_mining/rnd_model.py
+Refine_selfish_mining/baseline/train_ppo.py
+2026-09-03 11:06:04 [info     ] model response: # Expectations
+The criterion requires that the submission implements the optimization of the mask network objective using prime‑dual methods for the selfish mining environment. The paper describes that the original StateMask method (Cheng et al., 2023) solves the objective function \(J(\theta) = \min|\eta(\pi) - \eta(\bar{\pi})|\) by designing a surrogate function and using prime‑dual optimization to train the mask network \(\tilde{\pi}\). The submission is expected to contain code that explicitly performs a prime‑dual optimization, not a simple PPO‑based training that the paper later introduces for the improved “Ours” method. I will look for things like Lagrangian multipliers, dual variables, constraint handling, or a prime‑dual update loop in the mask network training code within the selfish mining files.
+
+# Reality
+The provided files for the selfish mining environment include a mask network training script (`Refine_selfish_mining/masknet/train.py`). This file sets up a `PPOPolicy` and uses Tianshou’s `onpolicy_trainer` to train the mask network. The objective is the standard PPO clipped surrogate loss, and there is no sign of a prime‑dual formulation, Lagrange multipliers, dual variables, or any constraint‑based optimization. The training loop simply calls `onpolicy_trainer` with the PPO policy, which is the standard PPO algorithm. None of the other files in the submission (e.g., `utils.py`, `sample_mask_score.py`, `replay.py`, `retrain.py`, `rnd_policy.py`, `rnd_model.py`, `baseline/train_ppo.py`) contain any prime‑dual optimization either. The code appears to implement the simplified “Ours” method (reward bonus + PPO) described in the paper, not the original StateMask prime‑dual approach.
+
+# Score
+0 – The submission does not implement the prime‑dual optimization for the mask network objective in the selfish mining environment. The training code uses only a standard PPO policy, which lacks the required prime‑dual method.
+2026-09-03 11:06:04 [info     ] model response: # Expectations
+The criterion requires that the submission implements the optimization of the mask network objective using prime‑dual methods for the selfish mining environment. The paper describes that the original StateMask method (Cheng et al., 2023) solves the objective function \(J(\theta) = \min|\eta(\pi) - \eta(\bar{\pi})|\) by designing a surrogate function and using prime‑dual optimization to train the mask network \(\tilde{\pi}\). The submission is expected to contain code that explicitly performs a prime‑dual optimization, not a simple PPO‑based training that the paper later introduces for the improved “Ours” method. I will look for things like Lagrangian multipliers, dual variables, constraint handling, or a prime‑dual update loop in the mask network training code within the selfish mining files.
+
+# Reality
+The provided files for the selfish mining environment include a mask network training script (`Refine_selfish_mining/masknet/train.py`). This file sets up a `PPOPolicy` and uses Tianshou’s `onpolicy_trainer` to train the mask network. The objective is the standard PPO clipped surrogate loss, and there is no sign of a prime‑dual formulation, Lagrange multipliers, dual variables, or any constraint‑based optimization. The training loop simply calls `onpolicy_trainer` with the PPO policy, which is the standard PPO algorithm. None of the other files in the submission (e.g., `utils.py`, `sample_mask_score.py`, `replay.py`, `retrain.py`, `rnd_policy.py`, `rnd_model.py`, `baseline/train_ppo.py`) contain any prime‑dual optimization either. The code appears to implement the simplified “Ours” method (reward bonus + PPO) described in the paper, not the original StateMask prime‑dual approach.
+
+# Score
+0 – The submission does not implement the prime‑dual optimization for the mask network objective in the selfish mining environment. The training code uses only a standard PPO policy, which lacks the required prime‑dual method.

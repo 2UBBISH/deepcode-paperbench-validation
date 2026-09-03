@@ -1,0 +1,77 @@
+2026-09-03 11:05:04 [info     ] Grading leaf: For the selfish mining environment, code for pretraining the policy network agent has been setup
+2026-09-03 11:05:44 [info     ] Model file selection raw output:
+Refine_selfish_mining/baseline/train_ppo.py
+Refine_selfish_mining/baseline/net.py
+Refine_selfish_mining/utils.py
+Refine_selfish_mining/baseline/blockchain_mdps/bitcoin_bare_fee_model.py
+Refine_selfish_mining/baseline/blockchain_mdps/bitcoin_fee_model.py
+Refine_selfish_mining/baseline/blockchain_mdps/base/blockchain_model.py
+Refine_selfish_mining/baseline/blockchain_mdps/base/blockchain_mdps/blockchain_mdp.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/function_approximation/mlp_approximator.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/experience_acquisition/agents/agent.py
+Refine_selfish_mining/baseline/reinforcement_learning/dqn/dqn_trainer.py
+2026-09-03 11:05:44 [info     ] Model file selection raw output:
+Refine_selfish_mining/baseline/train_ppo.py
+Refine_selfish_mining/baseline/net.py
+Refine_selfish_mining/utils.py
+Refine_selfish_mining/baseline/blockchain_mdps/bitcoin_bare_fee_model.py
+Refine_selfish_mining/baseline/blockchain_mdps/bitcoin_fee_model.py
+Refine_selfish_mining/baseline/blockchain_mdps/base/blockchain_model.py
+Refine_selfish_mining/baseline/blockchain_mdps/base/blockchain_mdps/blockchain_mdp.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/function_approximation/mlp_approximator.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/experience_acquisition/agents/agent.py
+Refine_selfish_mining/baseline/reinforcement_learning/dqn/dqn_trainer.py
+2026-09-03 11:07:52 [info     ] model response: # Expectations
+The paper describes training a PPO agent for the selfish mining environment using the blockchain model by Bar-Zur et al. The network architecture is a 4-layer MLP with hidden sizes [128, 128, 128, 128]. The criterion requires that the submission contains actual code that sets up the pretraining of this agent. This should include a training script or module that instantiates the environment, defines the policy network with the specified architecture, configures the PPO algorithm, runs the training loop, and saves the resulting model. The code should be complete enough to demonstrate that pretraining has been implemented, not just described.
+
+I will look for a file that contains:
+- Definition of the selfish mining environment (e.g., using the BitcoinFeeModel).
+- Creation of a PPO agent with the specified MLP architecture.
+- A training loop (e.g., using `onpolicy_trainer` or similar) that gathers experience, updates the policy, and saves the model.
+- Proper hyperparameters consistent with the paper (e.g., learning rate, batch size, etc. are not critical but the architecture is).
+
+The code should be present in the submission files.
+
+# Reality
+The submission includes the file `Refine_selfish_mining/baseline/train_ppo.py`. This file defines a function `train_ppo` that:
+
+- Uses `BitcoinFeeModel` (from `blockchain_mdps.bitcoin_fee_model`, which is also provided in the submission) to create the selfish mining environment via `create_env(args)`.
+- Sets the state and action shapes from the environment.
+- Creates a `Net` (from `tianshou.utils.net.common`) with `hidden_sizes=[128, 128, 128, 128]` (the default argument matches the paper's architecture). This Net is wrapped into an `ActorCritic` with `Actor` and `Critic`.
+- Configures a `PPOPolicy` with appropriate hyperparameters (discount factor, GAE lambda, etc.).
+- Sets up data collectors and uses `onpolicy_trainer` from Tianshou to run the training loop.
+- Saves the best model and checkpoints.
+
+The script thus contains the core code for pretraining a PPO agent on the selfish mining task. The environment model (`bitcoin_fee_model.py`), the blockchain model base classes, and helper modules are also present in the submission. The script imports some modules from `reinforcement_learning` that are not fully provided (e.g., `MDPBlockchainSimulatorDQN`), but the actual pretraining logic is visible and uses the environment defined in the provided files. Even if some runtime dependencies are missing, the code for pretraining is set up in the submission.
+
+# Score
+1
+
+The submission contains a concrete Python script (`train_ppo.py`) that implements pretraining of the PPO agent for the selfish mining environment with the required architecture. The code is present and correctly structured, meeting the criterion.
+2026-09-03 11:07:52 [info     ] model response: # Expectations
+The paper describes training a PPO agent for the selfish mining environment using the blockchain model by Bar-Zur et al. The network architecture is a 4-layer MLP with hidden sizes [128, 128, 128, 128]. The criterion requires that the submission contains actual code that sets up the pretraining of this agent. This should include a training script or module that instantiates the environment, defines the policy network with the specified architecture, configures the PPO algorithm, runs the training loop, and saves the resulting model. The code should be complete enough to demonstrate that pretraining has been implemented, not just described.
+
+I will look for a file that contains:
+- Definition of the selfish mining environment (e.g., using the BitcoinFeeModel).
+- Creation of a PPO agent with the specified MLP architecture.
+- A training loop (e.g., using `onpolicy_trainer` or similar) that gathers experience, updates the policy, and saves the model.
+- Proper hyperparameters consistent with the paper (e.g., learning rate, batch size, etc. are not critical but the architecture is).
+
+The code should be present in the submission files.
+
+# Reality
+The submission includes the file `Refine_selfish_mining/baseline/train_ppo.py`. This file defines a function `train_ppo` that:
+
+- Uses `BitcoinFeeModel` (from `blockchain_mdps.bitcoin_fee_model`, which is also provided in the submission) to create the selfish mining environment via `create_env(args)`.
+- Sets the state and action shapes from the environment.
+- Creates a `Net` (from `tianshou.utils.net.common`) with `hidden_sizes=[128, 128, 128, 128]` (the default argument matches the paper's architecture). This Net is wrapped into an `ActorCritic` with `Actor` and `Critic`.
+- Configures a `PPOPolicy` with appropriate hyperparameters (discount factor, GAE lambda, etc.).
+- Sets up data collectors and uses `onpolicy_trainer` from Tianshou to run the training loop.
+- Saves the best model and checkpoints.
+
+The script thus contains the core code for pretraining a PPO agent on the selfish mining task. The environment model (`bitcoin_fee_model.py`), the blockchain model base classes, and helper modules are also present in the submission. The script imports some modules from `reinforcement_learning` that are not fully provided (e.g., `MDPBlockchainSimulatorDQN`), but the actual pretraining logic is visible and uses the environment defined in the provided files. Even if some runtime dependencies are missing, the code for pretraining is set up in the submission.
+
+# Score
+1
+
+The submission contains a concrete Python script (`train_ppo.py`) that implements pretraining of the PPO agent for the selfish mining environment with the required architecture. The code is present and correctly structured, meeting the criterion.

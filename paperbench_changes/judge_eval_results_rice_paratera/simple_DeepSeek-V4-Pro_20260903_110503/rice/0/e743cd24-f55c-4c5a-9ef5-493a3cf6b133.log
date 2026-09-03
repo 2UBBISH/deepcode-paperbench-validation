@@ -1,0 +1,39 @@
+2026-09-03 11:05:04 [info     ] Grading leaf: For the network defense environment, The StateMask ("Ours") Explanation method can be selected for generating rollouts (without training)
+2026-09-03 11:05:17 [info     ] Model file selection raw output:
+Refine_cage_challenge/rollout_mask.py
+Refine_cage_challenge/sample_mask_score.py
+Refine_cage_challenge/sample_value_score.py
+Refine_cage_challenge/replay.py
+Refine_cage_challenge/ppo_train.py
+Refine_cage_challenge/rollout_ppo.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_mask.py
+Refine_cage_challenge/Agents/PPOAgent_mask.py
+Refine_cage_challenge/readme.md
+Refine_cage_challenge/retrain.py
+2026-09-03 11:05:17 [info     ] Model file selection raw output:
+Refine_cage_challenge/rollout_mask.py
+Refine_cage_challenge/sample_mask_score.py
+Refine_cage_challenge/sample_value_score.py
+Refine_cage_challenge/replay.py
+Refine_cage_challenge/ppo_train.py
+Refine_cage_challenge/rollout_ppo.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_mask.py
+Refine_cage_challenge/Agents/PPOAgent_mask.py
+Refine_cage_challenge/readme.md
+Refine_cage_challenge/retrain.py
+2026-09-03 11:06:01 [info     ] model response: # Expectations
+I expect to find code that uses the "Ours" explanation method (the optimized StateMask trained via PPO with the added reward bonus) to generate rollouts without training. Specifically, for the network defense environment (CAGE Challenge 2), there should be an implementation that loads a pre-trained mask network and the target agent, runs episodes, and collects the mask network's importance scores (e.g., probability of not masking) for each state. This is necessary for fidelity evaluation or for constructing the mixed initial state distribution. The code should be specific to the network defense environment and should not involve training the mask network; it should be a pure inference/rollout procedure.
+
+# Reality
+The submission contains `Refine_cage_challenge/sample_mask_score.py`. This file loads a pre-trained mask network checkpoint (`/home/jys3649/projects/xai_masknet/cyborg-cage-2/Models/bline_mask/4000.pth`) and the PPO agent checkpoint (`/home/jys3649/projects/xai_masknet/cyborg-cage-2/Models/bline/99800.pth`). It then runs episodes in the CybORG/CAGE Challenge 2 environment (using `ChallengeWrapper2`). In each episode, it calls `agent_mask.get_mask_prob(state)` to obtain the mask network's output (the probability of not masking, which serves as the importance score). The collected mask probabilities, actions, and rewards are saved to `recordings/`. The mask network is used in deterministic mode (`deterministic=True`) and the target agent's actions are taken from the PPO agent. No training of the mask network occurs during this process. This directly implements the required functionality: the "Ours" explanation method is applied to generate rollouts for the network defense environment.
+
+# Score
+1 (The criterion is met. The code provides the ability to select the "Ours" explanation method for generating rollouts without training, as demonstrated in `sample_mask_score.py`.)
+2026-09-03 11:06:01 [info     ] model response: # Expectations
+I expect to find code that uses the "Ours" explanation method (the optimized StateMask trained via PPO with the added reward bonus) to generate rollouts without training. Specifically, for the network defense environment (CAGE Challenge 2), there should be an implementation that loads a pre-trained mask network and the target agent, runs episodes, and collects the mask network's importance scores (e.g., probability of not masking) for each state. This is necessary for fidelity evaluation or for constructing the mixed initial state distribution. The code should be specific to the network defense environment and should not involve training the mask network; it should be a pure inference/rollout procedure.
+
+# Reality
+The submission contains `Refine_cage_challenge/sample_mask_score.py`. This file loads a pre-trained mask network checkpoint (`/home/jys3649/projects/xai_masknet/cyborg-cage-2/Models/bline_mask/4000.pth`) and the PPO agent checkpoint (`/home/jys3649/projects/xai_masknet/cyborg-cage-2/Models/bline/99800.pth`). It then runs episodes in the CybORG/CAGE Challenge 2 environment (using `ChallengeWrapper2`). In each episode, it calls `agent_mask.get_mask_prob(state)` to obtain the mask network's output (the probability of not masking, which serves as the importance score). The collected mask probabilities, actions, and rewards are saved to `recordings/`. The mask network is used in deterministic mode (`deterministic=True`) and the target agent's actions are taken from the PPO agent. No training of the mask network occurs during this process. This directly implements the required functionality: the "Ours" explanation method is applied to generate rollouts for the network defense environment.
+
+# Score
+1 (The criterion is met. The code provides the ability to select the "Ours" explanation method for generating rollouts without training, as demonstrated in `sample_mask_score.py`.)

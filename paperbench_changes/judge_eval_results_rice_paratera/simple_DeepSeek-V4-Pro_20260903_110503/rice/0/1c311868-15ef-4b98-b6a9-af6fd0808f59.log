@@ -1,0 +1,87 @@
+2026-09-03 11:05:04 [info     ] Grading leaf: For the MuJoCo environments, the Jump-Start Reinforcement Learning ("JSRL") refinement method has been implemented as outlined in section 4.1 and Uchendu et al. (2023), i.e. through initializing the exploration policy $\pi_{e}$ to be equal to the guided policy $\pi_{g}$.
+2026-09-03 11:05:27 [info     ] Model file selection raw output:
+Refine_mujoco/retrain.py
+Refine_mujoco/PPO.py
+Refine_mujoco/OnPolicyAlgorithm.py
+Refine_mujoco/base_class.py
+Refine_mujoco/environment.py
+Refine_mujoco/utils.py
+Refine_mujoco/callback.py
+Refine_mujoco/models.py
+Refine_mujoco/baseline/train.py
+Refine_mujoco/masknet/cus_PPO.py
+2026-09-03 11:05:27 [info     ] Model file selection raw output:
+Refine_mujoco/retrain.py
+Refine_mujoco/PPO.py
+Refine_mujoco/OnPolicyAlgorithm.py
+Refine_mujoco/base_class.py
+Refine_mujoco/environment.py
+Refine_mujoco/utils.py
+Refine_mujoco/callback.py
+Refine_mujoco/models.py
+Refine_mujoco/baseline/train.py
+Refine_mujoco/masknet/cus_PPO.py
+2026-09-03 11:06:28 [info     ] model response: # Expectations
+The paper describes JSRL as a baseline refining method (Section 4.1). JSRL uses a guided policy π_g to set up a curriculum that trains an exploration policy π_e. The curriculum gradually reduces the number of steps that the guide policy is used, and the exploration policy is initialized to be equal to the guided policy (π_e = π_g). This transforms JSRL into a refining method that can further improve the performance of the guided policy.
+
+For the MuJoCo environments, the implementation must:
+- Load or use a pre-trained policy as the guide policy π_g.
+- Initialize an exploration policy π_e with the same weights as π_g.
+- Implement a curriculum that controls the "roll-in" length (the number of steps the guide policy executes before the exploration policy takes over) and gradually decreases it.
+- Train the exploration policy using PPO (or similar) while the guide policy is fixed.
+- The code should be present and runnable as part of the experiment pipeline.
+
+I will look for a script or module that explicitly implements JSRL, including the curriculum logic and the initialization of the exploration policy from the guide policy.
+
+# Reality
+The submitted files include:
+- `Refine_mujoco/retrain.py`
+- `Refine_mujoco/PPO.py`
+- `Refine_mujoco/OnPolicyAlgorithm.py`
+- `Refine_mujoco/base_class.py`
+- `Refine_mujoco/environment.py`
+- `Refine_mujoco/utils.py`
+- `Refine_mujoco/callback.py`
+- `Refine_mujoco/models.py`
+- `Refine_mujoco/baseline/train.py`
+- `Refine_mujoco/masknet/cus_PPO.py`
+
+None of these files contain an implementation of JSRL. The `retrain.py` script is designed for the “Ours” (RICE) method, using a custom environment that resets to critical states mixed with default initial states, and optionally adds exploration bonuses (RND or e3b). It does not implement a curriculum of gradually decreasing guide-policy steps, nor does it maintain a separate exploration policy that is initialized from the guide policy. The `PPO.py` and `OnPolicyAlgorithm.py` files extend the standard PPO algorithm to support exploration bonuses (RND, e3b) but do not include JSRL-specific logic.
+
+There is no file or code snippet that imports or implements JSRL, nor any argument or configuration that would switch to a JSRL mode. The submission therefore lacks a concrete implementation of the JSRL refinement method.
+
+# Score
+The criterion is not met. No JSRL implementation is present in the submission.  
+Score: **0**
+2026-09-03 11:06:28 [info     ] model response: # Expectations
+The paper describes JSRL as a baseline refining method (Section 4.1). JSRL uses a guided policy π_g to set up a curriculum that trains an exploration policy π_e. The curriculum gradually reduces the number of steps that the guide policy is used, and the exploration policy is initialized to be equal to the guided policy (π_e = π_g). This transforms JSRL into a refining method that can further improve the performance of the guided policy.
+
+For the MuJoCo environments, the implementation must:
+- Load or use a pre-trained policy as the guide policy π_g.
+- Initialize an exploration policy π_e with the same weights as π_g.
+- Implement a curriculum that controls the "roll-in" length (the number of steps the guide policy executes before the exploration policy takes over) and gradually decreases it.
+- Train the exploration policy using PPO (or similar) while the guide policy is fixed.
+- The code should be present and runnable as part of the experiment pipeline.
+
+I will look for a script or module that explicitly implements JSRL, including the curriculum logic and the initialization of the exploration policy from the guide policy.
+
+# Reality
+The submitted files include:
+- `Refine_mujoco/retrain.py`
+- `Refine_mujoco/PPO.py`
+- `Refine_mujoco/OnPolicyAlgorithm.py`
+- `Refine_mujoco/base_class.py`
+- `Refine_mujoco/environment.py`
+- `Refine_mujoco/utils.py`
+- `Refine_mujoco/callback.py`
+- `Refine_mujoco/models.py`
+- `Refine_mujoco/baseline/train.py`
+- `Refine_mujoco/masknet/cus_PPO.py`
+
+None of these files contain an implementation of JSRL. The `retrain.py` script is designed for the “Ours” (RICE) method, using a custom environment that resets to critical states mixed with default initial states, and optionally adds exploration bonuses (RND or e3b). It does not implement a curriculum of gradually decreasing guide-policy steps, nor does it maintain a separate exploration policy that is initialized from the guide policy. The `PPO.py` and `OnPolicyAlgorithm.py` files extend the standard PPO algorithm to support exploration bonuses (RND, e3b) but do not include JSRL-specific logic.
+
+There is no file or code snippet that imports or implements JSRL, nor any argument or configuration that would switch to a JSRL mode. The submission therefore lacks a concrete implementation of the JSRL refinement method.
+
+# Score
+The criterion is not met. No JSRL implementation is present in the submission.  
+Score: **0**

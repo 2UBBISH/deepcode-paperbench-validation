@@ -1,0 +1,73 @@
+2026-09-03 11:05:04 [info     ] Grading leaf: For the selfish mining environment, StateMask fine-tuning, aka "StateMask-R" has been implemented as outlined in section 4.1 and Cheng et al., 2023, i.e. resetting to the identified critical states and continuing training from there.
+2026-09-03 11:06:27 [info     ] Model file selection raw output:
+Refine_selfish_mining/retrain.py
+Refine_selfish_mining/utils.py
+Refine_selfish_mining/masknet/sample_mask_score.py
+Refine_selfish_mining/masknet/replay.py
+Refine_selfish_mining/masknet/train.py
+Refine_selfish_mining/masknet/fidelity_score.py
+Refine_selfish_mining/masknet/utils.py
+Refine_selfish_mining/baseline/train_ppo.py
+Refine_selfish_mining/baseline/net.py
+Refine_selfish_mining/masknet/sample_value_score.py
+2026-09-03 11:06:27 [info     ] Model file selection raw output:
+Refine_selfish_mining/retrain.py
+Refine_selfish_mining/utils.py
+Refine_selfish_mining/masknet/sample_mask_score.py
+Refine_selfish_mining/masknet/replay.py
+Refine_selfish_mining/masknet/train.py
+Refine_selfish_mining/masknet/fidelity_score.py
+Refine_selfish_mining/masknet/utils.py
+Refine_selfish_mining/baseline/train_ppo.py
+Refine_selfish_mining/baseline/net.py
+Refine_selfish_mining/masknet/sample_value_score.py
+2026-09-03 11:07:44 [info     ] model response: # Expectations
+The criterion requires that for the selfish mining environment, the "StateMask-R" refining method has been implemented as described in Section 4.1 and the original StateMask paper (Cheng et al., 2023). StateMask-R is a baseline refining approach that resets the environment to critical states (identified by an explanation method) and then continues training the agent from those states. The method should not include the mixed initial state distribution or the exploration bonus (RND) introduced in RICE; it is simply fine‑tuning starting from the critical states.
+
+Thus, I expect to find in the submission actual code that:
+- Loads the pre‑trained agent for the selfish mining environment.
+- Uses the explanation method (mask network) to identify critical states.
+- For each training episode, resets the environment to one of those critical states (e.g., by fast‑forwarding or using a dedicated reset function).
+- Collects transitions and updates the policy using PPO (or the same learning algorithm as the pre‑trained agent) **without** mixing with the default initial state distribution and **without** any exploration bonus (RND).
+- The code should be separate from the RICE implementation (or at least clearly configurable to run as StateMask‑R).
+
+# Reality
+The submission provides files under `Refine_selfish_mining/`. The main refining script is `retrain.py`. This script:
+- Imports `RNDPolicy` and uses an RND model with an exploration bonus.
+- Contains a parameter `--go-prob` (default 0.5) and `--wo_exp` (without exploration) flag.
+- Uses a custom environment `MDPBlockchainSimulatorRetrain` that appears to implement the mixed initial state distribution (critical states mixed with default initial states).
+- The training loop in `retrain.py` is built around the RICE algorithm (mixing + exploration), not the plain StateMask‑R.
+
+There is no separate script that implements only resetting to critical states and continuing training without mixing and without exploration. The `masknet/replay.py` is for evaluating explanation fidelity by replaying episodes with random actions at critical segments, not for training. The `baseline/train_ppo.py` trains a PPO agent from scratch, not fine‑tuning.
+
+Even if `retrain.py` could be configured to disable exploration (`--wo_exp`) and set `--go-prob` to 1 (always start from critical states), it would still use the retrain environment that mixes initial states and is not a pure implementation of StateMask‑R. Moreover, the paper’s evaluation in Experiment II requires a distinct baseline implementation, and the submission does not provide one for selfish mining.
+
+Therefore, the code for StateMask‑R specifically for the selfish mining environment is missing.
+
+# Score
+0 – The submission does not contain an implementation of StateMask‑R for the selfish mining environment. The provided refining code (`retrain.py`) implements the RICE method, not the baseline StateMask‑R. No other file provides the required fine‑tuning from critical states without mixing or exploration.
+2026-09-03 11:07:44 [info     ] model response: # Expectations
+The criterion requires that for the selfish mining environment, the "StateMask-R" refining method has been implemented as described in Section 4.1 and the original StateMask paper (Cheng et al., 2023). StateMask-R is a baseline refining approach that resets the environment to critical states (identified by an explanation method) and then continues training the agent from those states. The method should not include the mixed initial state distribution or the exploration bonus (RND) introduced in RICE; it is simply fine‑tuning starting from the critical states.
+
+Thus, I expect to find in the submission actual code that:
+- Loads the pre‑trained agent for the selfish mining environment.
+- Uses the explanation method (mask network) to identify critical states.
+- For each training episode, resets the environment to one of those critical states (e.g., by fast‑forwarding or using a dedicated reset function).
+- Collects transitions and updates the policy using PPO (or the same learning algorithm as the pre‑trained agent) **without** mixing with the default initial state distribution and **without** any exploration bonus (RND).
+- The code should be separate from the RICE implementation (or at least clearly configurable to run as StateMask‑R).
+
+# Reality
+The submission provides files under `Refine_selfish_mining/`. The main refining script is `retrain.py`. This script:
+- Imports `RNDPolicy` and uses an RND model with an exploration bonus.
+- Contains a parameter `--go-prob` (default 0.5) and `--wo_exp` (without exploration) flag.
+- Uses a custom environment `MDPBlockchainSimulatorRetrain` that appears to implement the mixed initial state distribution (critical states mixed with default initial states).
+- The training loop in `retrain.py` is built around the RICE algorithm (mixing + exploration), not the plain StateMask‑R.
+
+There is no separate script that implements only resetting to critical states and continuing training without mixing and without exploration. The `masknet/replay.py` is for evaluating explanation fidelity by replaying episodes with random actions at critical segments, not for training. The `baseline/train_ppo.py` trains a PPO agent from scratch, not fine‑tuning.
+
+Even if `retrain.py` could be configured to disable exploration (`--wo_exp`) and set `--go-prob` to 1 (always start from critical states), it would still use the retrain environment that mixes initial states and is not a pure implementation of StateMask‑R. Moreover, the paper’s evaluation in Experiment II requires a distinct baseline implementation, and the submission does not provide one for selfish mining.
+
+Therefore, the code for StateMask‑R specifically for the selfish mining environment is missing.
+
+# Score
+0 – The submission does not contain an implementation of StateMask‑R for the selfish mining environment. The provided refining code (`retrain.py`) implements the RICE method, not the baseline StateMask‑R. No other file provides the required fine‑tuning from critical states without mixing or exploration.

@@ -1,0 +1,167 @@
+2026-09-03 11:05:04 [info     ] Grading leaf: For the network defence environment, the refining method has been implemented as outlined in Algorithm 2, integrating the mixed initial state distribution and RND.
+2026-09-03 11:05:45 [info     ] Model file selection raw output:
+Refine_cage_challenge/retrain.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_retrain.py
+Refine_cage_challenge/Agents/PPOAgent_Retrain.py
+Refine_cage_challenge/Agents/rnd_model.py
+Refine_cage_challenge/sample_mask_score.py
+Refine_cage_challenge/rollout_mask.py
+Refine_cage_challenge/rollout_ppo.py
+Refine_cage_challenge/Agents/PPOAgent_mask.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2.py
+Refine_cage_challenge/replay.py
+2026-09-03 11:05:45 [info     ] Model file selection raw output:
+Refine_cage_challenge/retrain.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_retrain.py
+Refine_cage_challenge/Agents/PPOAgent_Retrain.py
+Refine_cage_challenge/Agents/rnd_model.py
+Refine_cage_challenge/sample_mask_score.py
+Refine_cage_challenge/rollout_mask.py
+Refine_cage_challenge/rollout_ppo.py
+Refine_cage_challenge/Agents/PPOAgent_mask.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2.py
+Refine_cage_challenge/replay.py
+2026-09-03 11:07:36 [info     ] model response: ### Expectations
+For this criterion, I expect the network defence (CAGE Challenge 2) code to implement a refining loop matching Algorithm 2 of the paper:
+
+- The environment reset should construct a **mixed initial state distribution**: with some probability it resets to the default initial state, and otherwise it resets to an identified critical state from a trajectory produced by the pretrained policy and explanation/mask.
+- The training loop should add a **Random Network Distillation (RND)** exploration bonus to the environment reward.
+- The RND module should be correctly implemented and trainable:
+  - a target network and predictor network over states,
+  - a correct forward pass,
+  - a bonus computation proportional to squared prediction error,
+  - an MSE update for the predictor network.
+- Both policy optimization and RND optimization should occur during refinement.
+
+### Reality
+The submission contains relevant network defence refining code in:
+
+- `Refine_cage_challenge/retrain.py`
+- `Refine_cage_challenge/Wrappers/ChallengeWrapper2_retrain.py`
+- `Refine_cage_challenge/Agents/PPOAgent_Retrain.py`
+- `Refine_cage_challenge/Agents/rnd_model.py`
+
+The mixed initial state distribution is partially present:
+
+- In `ChallengeWrapper2_retrain.py`, `reset()` uses `go_prob = 0.5`.
+- If a random value is below `go_prob`, it calls `gen_one_traj()`, gets `action_record` and `mask_record`, chooses an index via `np.argmax(mask_record)`, then resets and replays actions to that point.
+- Otherwise it uses the default reset.
+
+This is consistent in spirit with Algorithm 2. However:
+
+- `gen_one_traj` is imported from `utils`, but `utils` is not among the provided files, so the trajectory-generation/mask-score-generation part cannot be verified from the submitted files.
+- The core RND implementation is not correct.
+
+In `Refine_cage_challenge/Agents/rnd_model.py`:
+
+```python
+class RNDModel(nn.Module):
+    def __init__(self, state_dim, action_dim):
+        super(RNDModel, self).__init__()
+        self.predict_model = nn.Sequential(
+            nn.Linear(state_dim, 64),
+            nn.ReLU(),
+            nn.Linear(64, 64),
+        )
+        self.target_model = nn.Sequential(
+            nn.Linear(state_dim, 64),
+            nn.ReLU(),
+            nn.Linear(64, 64),
+        )
+
+    def foward(self, obs):  # typo: should be forward
+        ...
+```
+
+But in `PPOAgent_Retrain.py`, the model is initialized as:
+
+```python
+self.rnd_model = RNDModel(self.device, input_dim, output_dim).to(self.device)
+```
+
+Here `self.device` is passed as `state_dim`, not an integer. This would make `nn.Linear(state_dim, 64)` fail because `state_dim` is a `torch.device`.
+
+Also:
+
+- The class defines `foward`, not `forward`.
+- Therefore `self.rnd_model(new_observations)` in `PPOAgent_Retrain.train()` would not work.
+- `compute_bonus` uses `self.device`, `self.target`, and `self.predictor`, but those attributes are never defined. The actual attributes are `predict_model` and `target_model`.
+
+Thus the RND part of Algorithm 2 is not correctly implemented.
+
+### Score
+**0**
+
+Although the submission shows an attempt to implement a mixed initial state distribution for the network defence environment, the RND component is broken in multiple ways, so the integrated refining method required by Algorithm 2 is not correctly implemented.
+2026-09-03 11:07:36 [info     ] model response: ### Expectations
+For this criterion, I expect the network defence (CAGE Challenge 2) code to implement a refining loop matching Algorithm 2 of the paper:
+
+- The environment reset should construct a **mixed initial state distribution**: with some probability it resets to the default initial state, and otherwise it resets to an identified critical state from a trajectory produced by the pretrained policy and explanation/mask.
+- The training loop should add a **Random Network Distillation (RND)** exploration bonus to the environment reward.
+- The RND module should be correctly implemented and trainable:
+  - a target network and predictor network over states,
+  - a correct forward pass,
+  - a bonus computation proportional to squared prediction error,
+  - an MSE update for the predictor network.
+- Both policy optimization and RND optimization should occur during refinement.
+
+### Reality
+The submission contains relevant network defence refining code in:
+
+- `Refine_cage_challenge/retrain.py`
+- `Refine_cage_challenge/Wrappers/ChallengeWrapper2_retrain.py`
+- `Refine_cage_challenge/Agents/PPOAgent_Retrain.py`
+- `Refine_cage_challenge/Agents/rnd_model.py`
+
+The mixed initial state distribution is partially present:
+
+- In `ChallengeWrapper2_retrain.py`, `reset()` uses `go_prob = 0.5`.
+- If a random value is below `go_prob`, it calls `gen_one_traj()`, gets `action_record` and `mask_record`, chooses an index via `np.argmax(mask_record)`, then resets and replays actions to that point.
+- Otherwise it uses the default reset.
+
+This is consistent in spirit with Algorithm 2. However:
+
+- `gen_one_traj` is imported from `utils`, but `utils` is not among the provided files, so the trajectory-generation/mask-score-generation part cannot be verified from the submitted files.
+- The core RND implementation is not correct.
+
+In `Refine_cage_challenge/Agents/rnd_model.py`:
+
+```python
+class RNDModel(nn.Module):
+    def __init__(self, state_dim, action_dim):
+        super(RNDModel, self).__init__()
+        self.predict_model = nn.Sequential(
+            nn.Linear(state_dim, 64),
+            nn.ReLU(),
+            nn.Linear(64, 64),
+        )
+        self.target_model = nn.Sequential(
+            nn.Linear(state_dim, 64),
+            nn.ReLU(),
+            nn.Linear(64, 64),
+        )
+
+    def foward(self, obs):  # typo: should be forward
+        ...
+```
+
+But in `PPOAgent_Retrain.py`, the model is initialized as:
+
+```python
+self.rnd_model = RNDModel(self.device, input_dim, output_dim).to(self.device)
+```
+
+Here `self.device` is passed as `state_dim`, not an integer. This would make `nn.Linear(state_dim, 64)` fail because `state_dim` is a `torch.device`.
+
+Also:
+
+- The class defines `foward`, not `forward`.
+- Therefore `self.rnd_model(new_observations)` in `PPOAgent_Retrain.train()` would not work.
+- `compute_bonus` uses `self.device`, `self.target`, and `self.predictor`, but those attributes are never defined. The actual attributes are `predict_model` and `target_model`.
+
+Thus the RND part of Algorithm 2 is not correctly implemented.
+
+### Score
+**0**
+
+Although the submission shows an attempt to implement a mixed initial state distribution for the network defence environment, the RND component is broken in multiple ways, so the integrated refining method required by Algorithm 2 is not correctly implemented.

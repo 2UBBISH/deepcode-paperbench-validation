@@ -1,0 +1,95 @@
+2026-09-03 11:08:03 [info     ] Grading leaf: For the autonomous driving environment, for the "StateMask" explanation method, code has been implemented for measuring cumulative reward throughout refinement
+2026-09-03 11:09:06 [info     ] Model file selection raw output:
+Refine_auto_drive/retrain.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/readme.md
+2026-09-03 11:09:06 [info     ] Model file selection raw output:
+Refine_auto_drive/retrain.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/readme.md
+2026-09-03 11:10:01 [info     ] model response: # Expectations
+
+The criterion requires that for the autonomous driving environment, when using the "StateMask" explanation method, the submission contains code that measures the cumulative reward during the refinement process. In the context of Experiment III, the refinement method (RICE) is fixed, and the explanation method is varied. The refinement process involves training the agent on a mixed initial state distribution that includes critical states identified by the explanation method. The cumulative reward throughout refinement must be monitored (e.g., by periodically evaluating the agent's performance on the environment and logging the total reward). I will look for code that:
+
+- Periodically evaluates the agent during the refinement loop.
+- Computes and logs the cumulative reward (e.g., episodic return) from the autonomous driving environment.
+- The evaluation is performed while the refinement algorithm is running, using the critical states derived from the "StateMask" explanation method.
+
+I do not require that the experiment has been executed or that results are presented; only that the code implementation supports this measurement.
+
+# Reality
+
+The submission provides several files under `Refine_auto_drive/`. The main refinement script is `retrain.py`. It sets up a training loop with a PPO policy, an RND reward model, and an evaluator:
+
+```python
+evaluator = InteractionSerialEvaluator(
+    cfg.policy.eval.evaluator, evaluator_env, policy.eval_mode, tb_logger, exp_name=cfg.exp_name
+)
+...
+while True:
+    if evaluator.should_eval(learner.train_iter):
+        stop, rate = evaluator.eval(learner.save_checkpoint, learner.train_iter, 1)
+        if stop:
+            break
+    new_data = collector.collect(...)
+    learner.train(new_data, collector.envstep)
+```
+
+The `InteractionSerialEvaluator` (from the DI‑engine library) is designed to evaluate the policy at intervals and return the evaluation reward (`rate`). This is the cumulative reward measurement. The evaluator uses `evaluator_env`, which is wrapped in `DriveEnvWrapper` (the same autonomous driving environment). The reward is recorded in the environment wrapper (e.g., `final_eval_reward` in `retrain_env.py`).
+
+The refinement process uses the "StateMask" explanation method to identify critical states. The mask network is trained in `train_masknet.py` and used in `gen_retrain_traj.py` to compute importance scores. In `retrain_env.py` (the `CustomWrapper`), the `reset()` method uses the mask network to generate a trajectory and select a starting index based on the mask probabilities (the critical state). This ensures that the refinement starts from the critical states identified by the StateMask explanation.
+
+Thus, the code implements a refinement loop that periodically evaluates the agent and measures the cumulative reward. The evaluation is performed using the same autonomous driving environment, and the explanation method used is StateMask.
+
+# Score
+
+The criterion is met. The code contains the necessary implementation for measuring cumulative reward throughout refinement for the autonomous driving environment with the "StateMask" explanation method. Score: 1.
+2026-09-03 11:10:01 [info     ] model response: # Expectations
+
+The criterion requires that for the autonomous driving environment, when using the "StateMask" explanation method, the submission contains code that measures the cumulative reward during the refinement process. In the context of Experiment III, the refinement method (RICE) is fixed, and the explanation method is varied. The refinement process involves training the agent on a mixed initial state distribution that includes critical states identified by the explanation method. The cumulative reward throughout refinement must be monitored (e.g., by periodically evaluating the agent's performance on the environment and logging the total reward). I will look for code that:
+
+- Periodically evaluates the agent during the refinement loop.
+- Computes and logs the cumulative reward (e.g., episodic return) from the autonomous driving environment.
+- The evaluation is performed while the refinement algorithm is running, using the critical states derived from the "StateMask" explanation method.
+
+I do not require that the experiment has been executed or that results are presented; only that the code implementation supports this measurement.
+
+# Reality
+
+The submission provides several files under `Refine_auto_drive/`. The main refinement script is `retrain.py`. It sets up a training loop with a PPO policy, an RND reward model, and an evaluator:
+
+```python
+evaluator = InteractionSerialEvaluator(
+    cfg.policy.eval.evaluator, evaluator_env, policy.eval_mode, tb_logger, exp_name=cfg.exp_name
+)
+...
+while True:
+    if evaluator.should_eval(learner.train_iter):
+        stop, rate = evaluator.eval(learner.save_checkpoint, learner.train_iter, 1)
+        if stop:
+            break
+    new_data = collector.collect(...)
+    learner.train(new_data, collector.envstep)
+```
+
+The `InteractionSerialEvaluator` (from the DI‑engine library) is designed to evaluate the policy at intervals and return the evaluation reward (`rate`). This is the cumulative reward measurement. The evaluator uses `evaluator_env`, which is wrapped in `DriveEnvWrapper` (the same autonomous driving environment). The reward is recorded in the environment wrapper (e.g., `final_eval_reward` in `retrain_env.py`).
+
+The refinement process uses the "StateMask" explanation method to identify critical states. The mask network is trained in `train_masknet.py` and used in `gen_retrain_traj.py` to compute importance scores. In `retrain_env.py` (the `CustomWrapper`), the `reset()` method uses the mask network to generate a trajectory and select a starting index based on the mask probabilities (the critical state). This ensures that the refinement starts from the critical states identified by the StateMask explanation.
+
+Thus, the code implements a refinement loop that periodically evaluates the agent and measures the cumulative reward. The evaluation is performed using the same autonomous driving environment, and the explanation method used is StateMask.
+
+# Score
+
+The criterion is met. The code contains the necessary implementation for measuring cumulative reward throughout refinement for the autonomous driving environment with the "StateMask" explanation method. Score: 1.

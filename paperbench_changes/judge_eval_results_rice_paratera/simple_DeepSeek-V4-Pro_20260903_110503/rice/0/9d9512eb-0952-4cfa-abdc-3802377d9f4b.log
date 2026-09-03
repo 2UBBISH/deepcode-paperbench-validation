@@ -1,0 +1,93 @@
+2026-09-03 11:05:04 [info     ] Grading leaf: For the MuJoCo environments, the refining method has been implemented as outlined in Algorithm 2, integrating the mixed initial state distribution and RND.
+2026-09-03 11:05:35 [info     ] Model file selection raw output:
+Refine_mujoco/retrain.py
+Refine_mujoco/PPO.py
+Refine_mujoco/models.py
+Refine_mujoco/environment.py
+Refine_mujoco/utils.py
+Refine_mujoco/OnPolicyAlgorithm.py
+Refine_mujoco/base_class.py
+Refine_mujoco/callback.py
+Refine_mujoco/monitor.py
+Refine_mujoco/retrain.sh
+2026-09-03 11:05:35 [info     ] Model file selection raw output:
+Refine_mujoco/retrain.py
+Refine_mujoco/PPO.py
+Refine_mujoco/models.py
+Refine_mujoco/environment.py
+Refine_mujoco/utils.py
+Refine_mujoco/OnPolicyAlgorithm.py
+Refine_mujoco/base_class.py
+Refine_mujoco/callback.py
+Refine_mujoco/monitor.py
+Refine_mujoco/retrain.sh
+2026-09-03 11:06:44 [info     ] model response: # Expectations
+The criterion requires that for the MuJoCo environments, the refining method is implemented exactly as described in Algorithm 2 of the paper. This means:
+
+- The code must construct a **mixed initial state distribution** by combining the default initial states and critical states identified by the "Ours" explanation method. Specifically, with probability `p` (the reset probability threshold) the episode should start from the most critical state found in a trajectory rolled out with the pre‑trained policy and mask network; with probability `1-p` it should start from the default initial state distribution.
+- The code must incorporate **Random Network Distillation (RND)** as an exploration bonus, i.e., compute the intrinsic reward `R_t^{RND} = ‖f(s_{t+1}) - f̂(s_{t+1})‖^2`, normalize it, and add it to the environment reward before optimizing the policy. The RND predictor network should be updated via MSE loss on the collected data using Adam.
+- The overall structure should follow Algorithm 2: collect rollouts, add the RND bonus, update the policy with PPO, and update the RND predictor.
+
+I will look for:
+- An environment wrapper that on reset either restores a critical state (using the mask network and trajectory) or uses the default reset.
+- An RND model implementation, with bonus computation and a training step that updates the predictor network.
+- The integration of the mixed initial distribution and RND into the PPO training loop.
+
+# Reality
+The submission contains a directory `Refine_mujoco/` with the relevant files:
+
+- **`environment.py`** defines `RetrainEnv`, a gym wrapper. Its `reset()` method:
+  - Uses a random threshold: `if np.random.rand() > self.p:` to decide whether to start from a critical state or the default distribution.
+  - When starting from a critical state, it calls `gen_one_traj` (from `utils.py`) to roll out a trajectory with the pre‑trained policy and mask network, then selects the state with the highest mask probability (`np.argmax(traj.mask_probs)`) as the new initial state. It restores the MuJoCo simulator state via `self.env.sim.set_state(...)` and computes the observation.
+  - Otherwise, it resets with the default initial distribution.
+  This implements the mixed initial state distribution.
+
+- **`utils.py`** contains `gen_one_traj`, which loads the mask network and base agent, runs an episode, records mask probabilities, and returns a `Traj` object. The most critical state is identified by `argmax` of mask probabilities, matching the paper’s step “Identify the most critical state \(s_t\) in \(\tau\) via state mask \(\tilde{\pi}\)”.
+
+- **`models.py`** contains `RNDModel`, which has a predictor network and a fixed target network. The `compute_bonus` method computes the intrinsic reward as `(target_feature - predict_feature).pow(2).sum(1) / 2`, which is the squared difference. This is the RND bonus.
+
+- **`OnPolicyAlgorithm.py`** (the base class for the PPO implementation) initializes the RND model and optimizer when `bonus == 'rnd'`. In `collect_rollouts`, if `self.bonus == 'rnd'`, it calls `self.rnd_model.compute_bonus(new_obs)`, normalizes the bonus, and adds it to the environment reward: `rewards = rewards + self.bonus_scale * rnd_rewards`. This integrates the exploration bonus into the collected data.
+
+- **`PPO.py`** defines the `PPO` class (inherits from `OnPolicyAlgorithm`). In `train()`, when `bonus == 'rnd'`, it adds the MSE loss between the predictor and target features (the forward loss) to the total loss, and performs an optimizer step on the RND predictor. This implements “Optimize \(\hat{f}_\theta\) w.r.t. MSE loss on \(\mathcal{D}\) using Adam”.
+
+- **`retrain.py`** sets up the environment via `make_retrain_env`, loads the pre‑trained PPO model, and continues training with the specified bonus settings. The training loop is the standard PPO loop from `OnPolicyAlgorithm.learn()`, which uses the mixed initial distribution (via the environment wrapper) and the RND bonus.
+
+All the pieces of Algorithm 2 are present: the mixed initial distribution is implemented in the environment wrapper, and RND is integrated into the PPO training loop. The code is specific to MuJoCo (it handles different MuJoCo environments’ observation reconstruction and uses `self.env.sim.set_state`). Therefore, the implementation correctly meets the criterion.
+
+# Score
+1
+2026-09-03 11:06:44 [info     ] model response: # Expectations
+The criterion requires that for the MuJoCo environments, the refining method is implemented exactly as described in Algorithm 2 of the paper. This means:
+
+- The code must construct a **mixed initial state distribution** by combining the default initial states and critical states identified by the "Ours" explanation method. Specifically, with probability `p` (the reset probability threshold) the episode should start from the most critical state found in a trajectory rolled out with the pre‑trained policy and mask network; with probability `1-p` it should start from the default initial state distribution.
+- The code must incorporate **Random Network Distillation (RND)** as an exploration bonus, i.e., compute the intrinsic reward `R_t^{RND} = ‖f(s_{t+1}) - f̂(s_{t+1})‖^2`, normalize it, and add it to the environment reward before optimizing the policy. The RND predictor network should be updated via MSE loss on the collected data using Adam.
+- The overall structure should follow Algorithm 2: collect rollouts, add the RND bonus, update the policy with PPO, and update the RND predictor.
+
+I will look for:
+- An environment wrapper that on reset either restores a critical state (using the mask network and trajectory) or uses the default reset.
+- An RND model implementation, with bonus computation and a training step that updates the predictor network.
+- The integration of the mixed initial distribution and RND into the PPO training loop.
+
+# Reality
+The submission contains a directory `Refine_mujoco/` with the relevant files:
+
+- **`environment.py`** defines `RetrainEnv`, a gym wrapper. Its `reset()` method:
+  - Uses a random threshold: `if np.random.rand() > self.p:` to decide whether to start from a critical state or the default distribution.
+  - When starting from a critical state, it calls `gen_one_traj` (from `utils.py`) to roll out a trajectory with the pre‑trained policy and mask network, then selects the state with the highest mask probability (`np.argmax(traj.mask_probs)`) as the new initial state. It restores the MuJoCo simulator state via `self.env.sim.set_state(...)` and computes the observation.
+  - Otherwise, it resets with the default initial distribution.
+  This implements the mixed initial state distribution.
+
+- **`utils.py`** contains `gen_one_traj`, which loads the mask network and base agent, runs an episode, records mask probabilities, and returns a `Traj` object. The most critical state is identified by `argmax` of mask probabilities, matching the paper’s step “Identify the most critical state \(s_t\) in \(\tau\) via state mask \(\tilde{\pi}\)”.
+
+- **`models.py`** contains `RNDModel`, which has a predictor network and a fixed target network. The `compute_bonus` method computes the intrinsic reward as `(target_feature - predict_feature).pow(2).sum(1) / 2`, which is the squared difference. This is the RND bonus.
+
+- **`OnPolicyAlgorithm.py`** (the base class for the PPO implementation) initializes the RND model and optimizer when `bonus == 'rnd'`. In `collect_rollouts`, if `self.bonus == 'rnd'`, it calls `self.rnd_model.compute_bonus(new_obs)`, normalizes the bonus, and adds it to the environment reward: `rewards = rewards + self.bonus_scale * rnd_rewards`. This integrates the exploration bonus into the collected data.
+
+- **`PPO.py`** defines the `PPO` class (inherits from `OnPolicyAlgorithm`). In `train()`, when `bonus == 'rnd'`, it adds the MSE loss between the predictor and target features (the forward loss) to the total loss, and performs an optimizer step on the RND predictor. This implements “Optimize \(\hat{f}_\theta\) w.r.t. MSE loss on \(\mathcal{D}\) using Adam”.
+
+- **`retrain.py`** sets up the environment via `make_retrain_env`, loads the pre‑trained PPO model, and continues training with the specified bonus settings. The training loop is the standard PPO loop from `OnPolicyAlgorithm.learn()`, which uses the mixed initial distribution (via the environment wrapper) and the RND bonus.
+
+All the pieces of Algorithm 2 are present: the mixed initial distribution is implemented in the environment wrapper, and RND is integrated into the PPO training loop. The code is specific to MuJoCo (it handles different MuJoCo environments’ observation reconstruction and uses `self.env.sim.set_state`). Therefore, the implementation correctly meets the criterion.
+
+# Score
+1

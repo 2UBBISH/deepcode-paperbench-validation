@@ -2,3 +2,26 @@
 2026-09-03 11:05:03 [warning  ] Model DeepSeek-V4-Pro not found in tiktoken, using o200k_base component=preparedness_turn_completer.oai_completions_turn_completer
 2026-09-03 11:05:03 [warning  ] Model DeepSeek-V4-Pro not found in tiktoken, using o200k_base component=preparedness_turn_completer.oai_completions_turn_completer
 2026-09-03 11:05:03 [warning  ] Model DeepSeek-V4-Pro not found in tiktoken, using o200k_base component=preparedness_turn_completer.oai_completions_turn_completer
+2026-09-03 11:12:03 [info     ] Code Development accuracy: 0.7191 component=paperbench.judge.judge_eval.evaluate
+2026-09-03 11:12:03 [info     ] Code Development precision: 0.7254 component=paperbench.judge.judge_eval.evaluate
+2026-09-03 11:12:03 [info     ] Code Development recall: 0.7245 component=paperbench.judge.judge_eval.evaluate
+2026-09-03 11:12:03 [info     ] Code Development f1: 0.7191    component=paperbench.judge.judge_eval.evaluate
+2026-09-03 11:12:03 [info     ] Code Development num_positives: 96.0000 component=paperbench.judge.judge_eval.evaluate
+2026-09-03 11:12:03 [info     ] Code Development num_negatives: 82.0000 component=paperbench.judge.judge_eval.evaluate
+2026-09-03 11:12:03 [info     ] Code Development num_samples: 178.0000 component=paperbench.judge.judge_eval.evaluate
+2026-09-03 11:12:03 [info     ] Overall accuracy: 0.7191       component=paperbench.judge.judge_eval.evaluate
+2026-09-03 11:12:03 [info     ] Overall precision: 0.7254      component=paperbench.judge.judge_eval.evaluate
+2026-09-03 11:12:03 [info     ] Overall recall: 0.7245         component=paperbench.judge.judge_eval.evaluate
+2026-09-03 11:12:03 [info     ] Overall f1: 0.7191             component=paperbench.judge.judge_eval.evaluate
+2026-09-03 11:12:03 [info     ] Overall num_positives: 96.0000 component=paperbench.judge.judge_eval.evaluate
+2026-09-03 11:12:03 [info     ] Overall num_negatives: 82.0000 component=paperbench.judge.judge_eval.evaluate
+2026-09-03 11:12:03 [info     ] Overall num_samples: 178.0000  component=paperbench.judge.judge_eval.evaluate
+/home/deepevol/deepevol/frontier-evals/project/paperbench/.venv/lib/python3.11/site-packages/numpy/lib/_function_base_impl.py:571: RuntimeWarning: Mean of empty slice.
+  avg = a.mean(axis, **keepdims_kw)
+/home/deepevol/deepevol/frontier-evals/project/paperbench/.venv/lib/python3.11/site-packages/numpy/_core/_methods.py:144: RuntimeWarning: invalid value encountered in scalar divide
+  ret = ret.dtype.type(ret / rcount)
+/home/deepevol/deepevol/frontier-evals/project/paperbench/.venv/lib/python3.11/site-packages/numpy/lib/_function_base_impl.py:571: RuntimeWarning: Mean of empty slice.
+  avg = a.mean(axis, **keepdims_kw)
+/home/deepevol/deepevol/frontier-evals/project/paperbench/.venv/lib/python3.11/site-packages/numpy/_core/_methods.py:144: RuntimeWarning: invalid value encountered in scalar divide
+  ret = ret.dtype.type(ret / rcount)
+2026-09-03 11:12:03 [info     ] Evaluation results written to: judge_eval_results_rice_paratera/simple_DeepSeek-V4-Pro_20260903_110503/results.json component=__main__

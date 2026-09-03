@@ -1,0 +1,57 @@
+2026-09-03 11:07:59 [info     ] Grading leaf: For the network defence environment, for the "Random" explanation method, code has been implemented for measuring cumulative reward throughout refinement
+2026-09-03 11:08:25 [info     ] Model file selection raw output:
+Refine_cage_challenge/retrain.py
+Refine_cage_challenge/readme.md
+Refine_cage_challenge/Agents/PPOAgent_Retrain.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_retrain.py
+Refine_cage_challenge/Agents/rnd_model.py
+Refine_cage_challenge/rollout_ppo.py
+Refine_cage_challenge/rollout_mask.py
+Refine_cage_challenge/sample_mask_score.py
+Refine_cage_challenge/replay.py
+Refine_cage_challenge/sample_value_score.py
+2026-09-03 11:08:25 [info     ] Model file selection raw output:
+Refine_cage_challenge/retrain.py
+Refine_cage_challenge/readme.md
+Refine_cage_challenge/Agents/PPOAgent_Retrain.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_retrain.py
+Refine_cage_challenge/Agents/rnd_model.py
+Refine_cage_challenge/rollout_ppo.py
+Refine_cage_challenge/rollout_mask.py
+Refine_cage_challenge/sample_mask_score.py
+Refine_cage_challenge/replay.py
+Refine_cage_challenge/sample_value_score.py
+2026-09-03 11:09:27 [info     ] model response: # Expectations
+The criterion requires that for the network defence environment (CAGE Challenge 2), the submission includes code that implements the measurement of cumulative reward throughout the refinement process when using the "Random" explanation method. According to Experiment III (Section 4.2), the refinement process uses the same refining method but varies the explanation method to identify critical states. For the "Random" explanation, the critical state is selected randomly from the visited states. The code should therefore:
+
+- Run the refinement (i.e., continue training the agent from a mixed initial distribution that includes the randomly selected critical state) for some number of episodes/timesteps.
+- Track and report the cumulative reward (or running average reward) during the refinement, so that the performance improvement can be observed over time.
+
+I will look for a script that explicitly sets the explanation method to "Random" and logs the reward during training. The measurement of cumulative reward is typically done via `running_reward`, printed per interval, or stored in a file.
+
+# Reality
+The provided files for the network defence environment are under `Refine_cage_challenge/`. The main refinement script appears to be `retrain.py`. It defines a `train` function that uses `ChallengeWrapper2_Retrain` and `PPOAgent_Retrain`. The training loop accumulates `running_reward` and prints the average reward every `print_interval` episodes, along with a test reward evaluation. This does measure cumulative reward during refinement.
+
+However, the explanation method is controlled by the wrapper `ChallengeWrapper2_Retrain`. In its `__init__`, the wrapper sets `self.random_sampling = False`. The `reset()` method uses this flag to decide whether to select a random state (`random_sampling=True`) or the most critical state according to the mask (`random_sampling=False`). The `retrain.py` script instantiates the wrapper with the default `random_sampling=False`, which corresponds to the “Ours” (mask-based) explanation, not the “Random” explanation. There is no other script or configuration in the submission that sets `random_sampling=True` and runs the refinement for the “Random” explanation method. The files `rollout_mask.py`, `rollout_ppo.py` and `replay.py` are for explanation evaluation or trajectory collection, not for refinement with the Random explanation. Therefore, the code that implements the measurement of cumulative reward during refinement is not actually set up to use the “Random” explanation method; it only implements the “Ours” (mask) variant.
+
+# Score
+The criterion is not met because the submission does not contain code that implements the measurement of cumulative reward throughout refinement **for the “Random” explanation method**. While the training loop does measure reward, the explanation method is hardcoded to the mask-based selection, not to random. The necessary code to run the Random explanation variant (e.g., setting `random_sampling=True` in the wrapper and running the training) is absent.  
+
+Score: **0**
+2026-09-03 11:09:27 [info     ] model response: # Expectations
+The criterion requires that for the network defence environment (CAGE Challenge 2), the submission includes code that implements the measurement of cumulative reward throughout the refinement process when using the "Random" explanation method. According to Experiment III (Section 4.2), the refinement process uses the same refining method but varies the explanation method to identify critical states. For the "Random" explanation, the critical state is selected randomly from the visited states. The code should therefore:
+
+- Run the refinement (i.e., continue training the agent from a mixed initial distribution that includes the randomly selected critical state) for some number of episodes/timesteps.
+- Track and report the cumulative reward (or running average reward) during the refinement, so that the performance improvement can be observed over time.
+
+I will look for a script that explicitly sets the explanation method to "Random" and logs the reward during training. The measurement of cumulative reward is typically done via `running_reward`, printed per interval, or stored in a file.
+
+# Reality
+The provided files for the network defence environment are under `Refine_cage_challenge/`. The main refinement script appears to be `retrain.py`. It defines a `train` function that uses `ChallengeWrapper2_Retrain` and `PPOAgent_Retrain`. The training loop accumulates `running_reward` and prints the average reward every `print_interval` episodes, along with a test reward evaluation. This does measure cumulative reward during refinement.
+
+However, the explanation method is controlled by the wrapper `ChallengeWrapper2_Retrain`. In its `__init__`, the wrapper sets `self.random_sampling = False`. The `reset()` method uses this flag to decide whether to select a random state (`random_sampling=True`) or the most critical state according to the mask (`random_sampling=False`). The `retrain.py` script instantiates the wrapper with the default `random_sampling=False`, which corresponds to the “Ours” (mask-based) explanation, not the “Random” explanation. There is no other script or configuration in the submission that sets `random_sampling=True` and runs the refinement for the “Random” explanation method. The files `rollout_mask.py`, `rollout_ppo.py` and `replay.py` are for explanation evaluation or trajectory collection, not for refinement with the Random explanation. Therefore, the code that implements the measurement of cumulative reward during refinement is not actually set up to use the “Random” explanation method; it only implements the “Ours” (mask) variant.
+
+# Score
+The criterion is not met because the submission does not contain code that implements the measurement of cumulative reward throughout refinement **for the “Random” explanation method**. While the training loop does measure reward, the explanation method is hardcoded to the mask-based selection, not to random. The necessary code to run the Random explanation variant (e.g., setting `random_sampling=True` in the wrapper and running the training) is absent.  
+
+Score: **0**

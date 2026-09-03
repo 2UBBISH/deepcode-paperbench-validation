@@ -1,0 +1,153 @@
+2026-09-03 11:07:16 [info     ] Grading leaf: In Experiment II, for the selfish mining environment, for the "Ours" refinement method, the optimized StateMask ("Ours") explanation method proposed in the paper is used as the explanation method.
+2026-09-03 11:07:42 [info     ] Model file selection raw output:
+Refine_selfish_mining/retrain.py
+Refine_selfish_mining/masknet/train.py
+Refine_selfish_mining/utils.py
+Refine_selfish_mining/masknet/sample_mask_score.py
+Refine_selfish_mining/masknet/utils.py
+Refine_selfish_mining/masknet/fidelity_score.py
+Refine_selfish_mining/rnd_policy.py
+Refine_selfish_mining/baseline/train_ppo.py
+Refine_selfish_mining/baseline/net.py
+Refine_selfish_mining/masknet/replay.py
+2026-09-03 11:07:42 [info     ] Model file selection raw output:
+Refine_selfish_mining/retrain.py
+Refine_selfish_mining/masknet/train.py
+Refine_selfish_mining/utils.py
+Refine_selfish_mining/masknet/sample_mask_score.py
+Refine_selfish_mining/masknet/utils.py
+Refine_selfish_mining/masknet/fidelity_score.py
+Refine_selfish_mining/rnd_policy.py
+Refine_selfish_mining/baseline/train_ppo.py
+Refine_selfish_mining/baseline/net.py
+Refine_selfish_mining/masknet/replay.py
+2026-09-03 11:08:38 [info     ] model response: # Expectations
+
+For Experiment II in the selfish mining environment, the paper’s `"Ours"` refining method should follow Algorithm 2:
+
+1. Use the pretrained selfish-mining policy.
+2. Use the **optimized StateMask explanation method** described in Section 3.3.
+3. With probability `p`, run the pretrained policy to obtain a trajectory, apply the trained mask network to identify the most critical state in that trajectory, and reset the training environment to that critical state.
+4. Otherwise, reset to the default initial state distribution.
+5. Add the RND exploration bonus during refinement.
+
+So I expect to see actual code in the submission where:
+- a trained mask network checkpoint is loaded,
+- the mask network is evaluated on states collected from the pretrained policy,
+- the most critical state is selected from that trajectory,
+- and that selected state is used as the reset state during `"Ours"` refinement.
+
+I would specifically look for integration between the explanation/mask-net code and the selfish-mining refinement loop.
+
+# Reality
+
+The main selfish-mining refinement file appears to be:
+
+- `Refine_selfish_mining/retrain.py`
+
+This file implements an RND-wrapped refinement policy:
+
+```python
+policy = RNDPolicy(
+    policy, rnd_model, rnd_optim, args.rnd_bonus_scale, args.rnd_loss_weight
+).to(args.device)
+```
+
+It also has a `--go-prob` argument and trains with `create_retrain_env(args)`. However, it does **not** load any trained mask network, does not import the mask-net utilities, and does not use explanation outputs to choose critical states during training.
+
+The provided code references a custom simulator:
+
+```python
+from baseline.reinforcement_learning.base.blockchain_simulator.mdp_blockchain_simulator_retrain import MDPBlockchainSimulatorRetrain
+```
+
+but that file is not included in the submission. Furthermore, `MDPBlockchainSimulatorRetrain` is constructed only with `args` and the blockchain model; no mask network or explanation model is passed into it.
+
+The mask-network code exists separately in:
+
+- `Refine_selfish_mining/masknet/train.py`
+- `Refine_selfish_mining/masknet/utils.py`
+- `Refine_selfish_mining/masknet/sample_mask_score.py`
+- `Refine_selfish_mining/masknet/replay.py`
+
+These files implement training and evaluating a mask network, including fidelity-score computation. For example, `replay.py` uses mask scores to select critical segments:
+
+```python
+mask_prob_set = np.loadtxt(path + str(method) + "_prob_log.txt")[i]
+best_score_index, sub_length = select_critical(mask_prob_set, width)
+```
+
+But this is used for replay/fidelity evaluation, not for the `"Ours"` refinement procedure in Experiment II.
+
+Therefore, within the submitted files, there is no connection showing that the `"Ours"` refinement method for selfish mining uses the optimized StateMask explanation to identify critical states. The refinement script `retrain.py` appears to use RND exploration, but not the trained mask network.
+
+# Score
+
+0
+
+The criterion requires that, in the selfish-mining Experiment II `"Ours"` refinement method, the optimized StateMask explanation method is actually used as the explanation method. The provided refinement code does not load or use the mask network, and the explanation code is only used separately for mask training/fidelity. Therefore, the criterion is not met.
+2026-09-03 11:08:38 [info     ] model response: # Expectations
+
+For Experiment II in the selfish mining environment, the paper’s `"Ours"` refining method should follow Algorithm 2:
+
+1. Use the pretrained selfish-mining policy.
+2. Use the **optimized StateMask explanation method** described in Section 3.3.
+3. With probability `p`, run the pretrained policy to obtain a trajectory, apply the trained mask network to identify the most critical state in that trajectory, and reset the training environment to that critical state.
+4. Otherwise, reset to the default initial state distribution.
+5. Add the RND exploration bonus during refinement.
+
+So I expect to see actual code in the submission where:
+- a trained mask network checkpoint is loaded,
+- the mask network is evaluated on states collected from the pretrained policy,
+- the most critical state is selected from that trajectory,
+- and that selected state is used as the reset state during `"Ours"` refinement.
+
+I would specifically look for integration between the explanation/mask-net code and the selfish-mining refinement loop.
+
+# Reality
+
+The main selfish-mining refinement file appears to be:
+
+- `Refine_selfish_mining/retrain.py`
+
+This file implements an RND-wrapped refinement policy:
+
+```python
+policy = RNDPolicy(
+    policy, rnd_model, rnd_optim, args.rnd_bonus_scale, args.rnd_loss_weight
+).to(args.device)
+```
+
+It also has a `--go-prob` argument and trains with `create_retrain_env(args)`. However, it does **not** load any trained mask network, does not import the mask-net utilities, and does not use explanation outputs to choose critical states during training.
+
+The provided code references a custom simulator:
+
+```python
+from baseline.reinforcement_learning.base.blockchain_simulator.mdp_blockchain_simulator_retrain import MDPBlockchainSimulatorRetrain
+```
+
+but that file is not included in the submission. Furthermore, `MDPBlockchainSimulatorRetrain` is constructed only with `args` and the blockchain model; no mask network or explanation model is passed into it.
+
+The mask-network code exists separately in:
+
+- `Refine_selfish_mining/masknet/train.py`
+- `Refine_selfish_mining/masknet/utils.py`
+- `Refine_selfish_mining/masknet/sample_mask_score.py`
+- `Refine_selfish_mining/masknet/replay.py`
+
+These files implement training and evaluating a mask network, including fidelity-score computation. For example, `replay.py` uses mask scores to select critical segments:
+
+```python
+mask_prob_set = np.loadtxt(path + str(method) + "_prob_log.txt")[i]
+best_score_index, sub_length = select_critical(mask_prob_set, width)
+```
+
+But this is used for replay/fidelity evaluation, not for the `"Ours"` refinement procedure in Experiment II.
+
+Therefore, within the submitted files, there is no connection showing that the `"Ours"` refinement method for selfish mining uses the optimized StateMask explanation to identify critical states. The refinement script `retrain.py` appears to use RND exploration, but not the trained mask network.
+
+# Score
+
+0
+
+The criterion requires that, in the selfish-mining Experiment II `"Ours"` refinement method, the optimized StateMask explanation method is actually used as the explanation method. The provided refinement code does not load or use the mask network, and the explanation code is only used separately for mask training/fidelity. Therefore, the criterion is not met.

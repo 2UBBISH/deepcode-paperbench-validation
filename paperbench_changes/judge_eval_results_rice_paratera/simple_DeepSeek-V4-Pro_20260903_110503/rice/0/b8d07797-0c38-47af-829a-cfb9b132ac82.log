@@ -1,0 +1,143 @@
+2026-09-03 11:05:04 [info     ] Grading leaf: For the MuJoCo environments, the optimization of the mask network objective of using prime-dual methods has been implemented.
+2026-09-03 11:06:01 [info     ] Model file selection raw output:
+Refine_mujoco/masknet/train.py
+Refine_mujoco/masknet/cus_PPO.py
+Refine_mujoco/masknet/environment.py
+Refine_mujoco/masknet/gen_fid.py
+Refine_mujoco/masknet/fid_test.py
+Refine_mujoco/masknet/readme.md
+Refine_mujoco/PPO.py
+Refine_mujoco/OnPolicyAlgorithm.py
+Refine_mujoco/base_class.py
+Refine_mujoco/models.py
+2026-09-03 11:06:01 [info     ] Model file selection raw output:
+Refine_mujoco/masknet/train.py
+Refine_mujoco/masknet/cus_PPO.py
+Refine_mujoco/masknet/environment.py
+Refine_mujoco/masknet/gen_fid.py
+Refine_mujoco/masknet/fid_test.py
+Refine_mujoco/masknet/readme.md
+Refine_mujoco/PPO.py
+Refine_mujoco/OnPolicyAlgorithm.py
+Refine_mujoco/base_class.py
+Refine_mujoco/models.py
+2026-09-03 11:06:55 [info     ] model response: # Expectations
+
+The criterion asks whether the submission includes an implementation of **prime-dual (primal-dual) optimization** for the mask network objective in the MuJoCo environments.
+
+From the paper, the original StateMask explanation method used a carefully designed surrogate function and **prime-dual methods** to optimize the perturbed policy/mask network:
+
+> To solve the Eqn. (2) with monotonicaly guarantee, StateMask carefully designs a surrogate function and utilize the prime-dual methods to optimize the \tilde{\pi}.
+
+So a correct implementation of this criterion should contain actual optimization code that:
+
+- formulates the mask-network training as some constrained or Lagrangian/surrogate optimization problem;
+- maintains or updates **dual variables / Lagrange multipliers**;
+- alternates or jointly updates primal policy/mask parameters and dual variables;
+- is distinguishable from a plain PPO update.
+
+This is separate from RICE’s simplified method, which replaces that objective and uses vanilla PPO with an added intrinsic reward.
+
+Therefore, I should look for a concrete implementation of the primal-dual optimization used by StateMask.
+
+# Reality
+
+The provided submission does **not** contain an implementation of primal-dual optimization for the mask network.
+
+The relevant MuJoCo mask-network files are:
+
+- `Refine_mujoco/masknet/cus_PPO.py`
+- `Refine_mujoco/masknet/train.py`
+- `Refine_mujoco/masknet/environment.py`
+- `Refine_mujoco/masknet/gen_fid.py`
+- `Refine_mujoco/masknet/fid_test.py`
+
+In `Refine_mujoco/masknet/cus_PPO.py`, the mask network is trained using the standard **PPO clipped surrogate objective**:
+
+```python
+policy_loss_1 = advantages * ratio
+policy_loss_2 = advantages * th.clamp(ratio, 1 - clip_range, 1 + clip_range)
+policy_loss = -th.min(policy_loss_1, policy_loss_2).mean()
+...
+loss = policy_loss + self.ent_coef * entropy_loss + self.vf_coef * value_loss
+```
+
+There is no Lagrangian, no dual variables, no constrained surrogate optimization, and no primal-dual update loop. The only related-looking variable is:
+
+```python
+self.lambda_1 = 1e-4
+```
+
+but it is never used in any optimization step.
+
+`Refine_mujoco/masknet/environment.py` implements the simplified reward wrapper for RICE, not the original StateMask primal-dual training. `Refine_mujoco/masknet/train.py` simply calls the custom PPO learner on that environment.
+
+The other files under `Refine_mujoco/` (`PPO.py`, `OnPolicyAlgorithm.py`, `base_class.py`, `models.py`) implement refinement-side PPO with RND/E3B bonuses, not the mask-network primal-dual optimization.
+
+Thus, although the submission implements a mask network and PPO training, it does not implement the specific primal-dual optimization method required by this criterion.
+
+# Score
+
+**Score: 0**
+
+The submission does not implement primal-dual optimization for the mask network objective in the MuJoCo environments. It instead uses a standard PPO update, which corresponds to the simplified RICE method rather than the original StateMask prime-dual approach described in the paper.
+2026-09-03 11:06:55 [info     ] model response: # Expectations
+
+The criterion asks whether the submission includes an implementation of **prime-dual (primal-dual) optimization** for the mask network objective in the MuJoCo environments.
+
+From the paper, the original StateMask explanation method used a carefully designed surrogate function and **prime-dual methods** to optimize the perturbed policy/mask network:
+
+> To solve the Eqn. (2) with monotonicaly guarantee, StateMask carefully designs a surrogate function and utilize the prime-dual methods to optimize the \tilde{\pi}.
+
+So a correct implementation of this criterion should contain actual optimization code that:
+
+- formulates the mask-network training as some constrained or Lagrangian/surrogate optimization problem;
+- maintains or updates **dual variables / Lagrange multipliers**;
+- alternates or jointly updates primal policy/mask parameters and dual variables;
+- is distinguishable from a plain PPO update.
+
+This is separate from RICE’s simplified method, which replaces that objective and uses vanilla PPO with an added intrinsic reward.
+
+Therefore, I should look for a concrete implementation of the primal-dual optimization used by StateMask.
+
+# Reality
+
+The provided submission does **not** contain an implementation of primal-dual optimization for the mask network.
+
+The relevant MuJoCo mask-network files are:
+
+- `Refine_mujoco/masknet/cus_PPO.py`
+- `Refine_mujoco/masknet/train.py`
+- `Refine_mujoco/masknet/environment.py`
+- `Refine_mujoco/masknet/gen_fid.py`
+- `Refine_mujoco/masknet/fid_test.py`
+
+In `Refine_mujoco/masknet/cus_PPO.py`, the mask network is trained using the standard **PPO clipped surrogate objective**:
+
+```python
+policy_loss_1 = advantages * ratio
+policy_loss_2 = advantages * th.clamp(ratio, 1 - clip_range, 1 + clip_range)
+policy_loss = -th.min(policy_loss_1, policy_loss_2).mean()
+...
+loss = policy_loss + self.ent_coef * entropy_loss + self.vf_coef * value_loss
+```
+
+There is no Lagrangian, no dual variables, no constrained surrogate optimization, and no primal-dual update loop. The only related-looking variable is:
+
+```python
+self.lambda_1 = 1e-4
+```
+
+but it is never used in any optimization step.
+
+`Refine_mujoco/masknet/environment.py` implements the simplified reward wrapper for RICE, not the original StateMask primal-dual training. `Refine_mujoco/masknet/train.py` simply calls the custom PPO learner on that environment.
+
+The other files under `Refine_mujoco/` (`PPO.py`, `OnPolicyAlgorithm.py`, `base_class.py`, `models.py`) implement refinement-side PPO with RND/E3B bonuses, not the mask-network primal-dual optimization.
+
+Thus, although the submission implements a mask network and PPO training, it does not implement the specific primal-dual optimization method required by this criterion.
+
+# Score
+
+**Score: 0**
+
+The submission does not implement primal-dual optimization for the mask network objective in the MuJoCo environments. It instead uses a standard PPO update, which corresponds to the simplified RICE method rather than the original StateMask prime-dual approach described in the paper.

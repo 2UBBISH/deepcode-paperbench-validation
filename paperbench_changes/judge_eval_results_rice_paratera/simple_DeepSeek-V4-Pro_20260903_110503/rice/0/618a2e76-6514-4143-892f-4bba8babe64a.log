@@ -1,0 +1,73 @@
+2026-09-03 11:05:04 [info     ] Grading leaf: For the selfish mining environment, the "Random" Explanation method can be selected for generating rollouts (without training)
+2026-09-03 11:06:17 [info     ] Model file selection raw output:
+Refine_selfish_mining/masknet/replay.py
+Refine_selfish_mining/masknet/sample_mask_score.py
+Refine_selfish_mining/masknet/utils.py
+Refine_selfish_mining/masknet/fidelity_score.py
+Refine_selfish_mining/masknet/replay.sh
+Refine_selfish_mining/masknet/recordings/random_replay_reward_log_2.txt
+Refine_selfish_mining/masknet/recordings/random_replay_reward_log_4.txt
+Refine_selfish_mining/masknet/recordings/random_replay_reward_log_6.txt
+Refine_selfish_mining/masknet/recordings/random_replay_reward_log_8.txt
+Refine_selfish_mining/masknet/sample_value_score.py
+2026-09-03 11:06:17 [info     ] Model file selection raw output:
+Refine_selfish_mining/masknet/replay.py
+Refine_selfish_mining/masknet/sample_mask_score.py
+Refine_selfish_mining/masknet/utils.py
+Refine_selfish_mining/masknet/fidelity_score.py
+Refine_selfish_mining/masknet/replay.sh
+Refine_selfish_mining/masknet/recordings/random_replay_reward_log_2.txt
+Refine_selfish_mining/masknet/recordings/random_replay_reward_log_4.txt
+Refine_selfish_mining/masknet/recordings/random_replay_reward_log_6.txt
+Refine_selfish_mining/masknet/recordings/random_replay_reward_log_8.txt
+Refine_selfish_mining/masknet/sample_value_score.py
+2026-09-03 11:08:04 [info     ] model response: # Expectations
+The criterion requires that in the selfish mining environment, the "Random" explanation method can be selected for generating rollouts without training. According to the paper (Section 4.1), the "Random" explanation baseline identifies critical steps by randomly selecting a visited state as the critical state. I expect to find code that:
+- Implements the "Random" explanation method for the selfish mining environment.
+- Provides a mechanism to select this method (e.g., via a command‑line argument or configuration).
+- Uses this method to generate rollouts (i.e., run episodes and identify critical states) without invoking any training process (no mask network training, no policy updates).
+- The rollouts should be usable for tasks like fidelity evaluation as described in the paper.
+
+# Reality
+The submission includes `Refine_selfish_mining/masknet/replay.py`, which is specifically designed for replaying episodes and evaluating explanation methods in the selfish mining environment. In this file:
+- The `replay()` function accepts a `method` parameter. When `method == "random"`, it computes a random critical segment by:
+  ```python
+  sub_length = int(action_set.shape[0] * width)
+  best_score_index = np.random.randint(0, action_set.shape[0] - sub_length)
+  ```
+  This randomly selects a starting index for the critical segment, effectively identifying a random visited state as the critical step, exactly as described in the paper.
+- The script uses `--method` as a command‑line argument (e.g., `--method "random"`), as shown in the `replay.sh` shell script that launches multiple replay runs with different methods, including `"random"`.
+- The replay process loads pre‑recorded action logs (from `sample_mask_score.py`) and simulates the environment, randomizing actions within the randomly chosen critical window to compute fidelity scores. It does not involve any training of the mask network or the policy – it is purely evaluation/generation of rollouts using the random explanation.
+- The environment is created via `create_env` from `sample_mask_score.py`, which instantiates the blockchain‑based selfish mining environment, confirming the context is the selfish mining task.
+
+Thus, the code demonstrates that the "Random" explanation method can be selected (via `--method "random"`) and used to generate rollouts without any training.
+
+# Score
+1
+
+The submission contains a correct implementation that allows selecting the "Random" explanation method for generating rollouts in the selfish mining environment, satisfying the criterion.
+2026-09-03 11:08:04 [info     ] model response: # Expectations
+The criterion requires that in the selfish mining environment, the "Random" explanation method can be selected for generating rollouts without training. According to the paper (Section 4.1), the "Random" explanation baseline identifies critical steps by randomly selecting a visited state as the critical state. I expect to find code that:
+- Implements the "Random" explanation method for the selfish mining environment.
+- Provides a mechanism to select this method (e.g., via a command‑line argument or configuration).
+- Uses this method to generate rollouts (i.e., run episodes and identify critical states) without invoking any training process (no mask network training, no policy updates).
+- The rollouts should be usable for tasks like fidelity evaluation as described in the paper.
+
+# Reality
+The submission includes `Refine_selfish_mining/masknet/replay.py`, which is specifically designed for replaying episodes and evaluating explanation methods in the selfish mining environment. In this file:
+- The `replay()` function accepts a `method` parameter. When `method == "random"`, it computes a random critical segment by:
+  ```python
+  sub_length = int(action_set.shape[0] * width)
+  best_score_index = np.random.randint(0, action_set.shape[0] - sub_length)
+  ```
+  This randomly selects a starting index for the critical segment, effectively identifying a random visited state as the critical step, exactly as described in the paper.
+- The script uses `--method` as a command‑line argument (e.g., `--method "random"`), as shown in the `replay.sh` shell script that launches multiple replay runs with different methods, including `"random"`.
+- The replay process loads pre‑recorded action logs (from `sample_mask_score.py`) and simulates the environment, randomizing actions within the randomly chosen critical window to compute fidelity scores. It does not involve any training of the mask network or the policy – it is purely evaluation/generation of rollouts using the random explanation.
+- The environment is created via `create_env` from `sample_mask_score.py`, which instantiates the blockchain‑based selfish mining environment, confirming the context is the selfish mining task.
+
+Thus, the code demonstrates that the "Random" explanation method can be selected (via `--method "random"`) and used to generate rollouts without any training.
+
+# Score
+1
+
+The submission contains a correct implementation that allows selecting the "Random" explanation method for generating rollouts in the selfish mining environment, satisfying the criterion.

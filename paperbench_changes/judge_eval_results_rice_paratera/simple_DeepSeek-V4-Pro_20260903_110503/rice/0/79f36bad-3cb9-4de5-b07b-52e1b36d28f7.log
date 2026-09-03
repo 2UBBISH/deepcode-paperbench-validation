@@ -1,0 +1,57 @@
+2026-09-03 11:07:50 [info     ] Grading leaf: In Experiment II, for the autonomous driving environment, for the "PPO fine-tuning" refinement method, code has been implemented for measuring cumulative reward throughout refinement
+2026-09-03 11:08:54 [info     ] Model file selection raw output:
+Refine_auto_drive/retrain.py
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/readme.md
+2026-09-03 11:08:54 [info     ] Model file selection raw output:
+Refine_auto_drive/retrain.py
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/readme.md
+2026-09-03 11:09:38 [info     ] model response: # Expectations
+The criterion asks: "In Experiment II, for the autonomous driving environment, for the 'PPO fine-tuning' refinement method, code has been implemented for measuring cumulative reward throughout refinement."  
+From the paper, the "PPO fine‑tuning" baseline is described as lowering the learning rate and continuing training the pre‑trained agent with the PPO algorithm. To reproduce Experiment II, the candidate must implement this refinement procedure for the autonomous driving environment, and the code must include a mechanism to measure cumulative reward (e.g., by logging the final reward or recording evaluation returns) during that refinement. I will look for a script that:
+- Loads the pre‑trained autonomous driving policy.
+- Continues PPO training with a lower learning rate (or otherwise fine‑tuning).
+- Periodically evaluates the agent and records the cumulative reward (e.g., via an evaluator, tensorboard logs, or printed reward values).
+
+# Reality
+I examined all the files provided for the submission. The `Refine_auto_drive/` directory contains:
+
+- `train_baseline.py` – This script trains a PPO agent from scratch on the `Macro-v1` environment; it does **not** load a pre‑trained model and does not resemble a fine‑tuning method.  
+- `retrain.py` – This script implements the RICE (Ours) method, which loads a pre‑trained model, resets to critical states, and uses RND exploration. It is **not** the “PPO fine‑tuning” baseline.  
+- Other files (`retrain_env.py`, `learner.py`, `gen_retrain_traj.py`, `custom_masknet_env.py`, `rnd_reward_model.py`, `train_masknet.py`) are auxiliary to the above two scripts and do not implement a separate PPO fine‑tuning baseline.
+
+Nowhere is there a script that takes the pre‑trained autonomous driving policy and continues PPO training with a lower learning rate (the “PPO fine‑tuning” refinement method). Consequently, there is no code specifically associated with that refinement method that would measure cumulative reward during refinement. The evaluation logging that exists in `train_baseline.py` (e.g., periodic evaluator calls) is part of a from‑scratch training script, not a fine‑tuning refinement procedure. Therefore, the requested implementation is absent.
+
+# Score
+**0** – The submission does not contain code that implements the “PPO fine‑tuning” refinement method for the autonomous driving environment, nor does it contain any measurement of cumulative reward specifically for that refinement method.
+2026-09-03 11:09:38 [info     ] model response: # Expectations
+The criterion asks: "In Experiment II, for the autonomous driving environment, for the 'PPO fine-tuning' refinement method, code has been implemented for measuring cumulative reward throughout refinement."  
+From the paper, the "PPO fine‑tuning" baseline is described as lowering the learning rate and continuing training the pre‑trained agent with the PPO algorithm. To reproduce Experiment II, the candidate must implement this refinement procedure for the autonomous driving environment, and the code must include a mechanism to measure cumulative reward (e.g., by logging the final reward or recording evaluation returns) during that refinement. I will look for a script that:
+- Loads the pre‑trained autonomous driving policy.
+- Continues PPO training with a lower learning rate (or otherwise fine‑tuning).
+- Periodically evaluates the agent and records the cumulative reward (e.g., via an evaluator, tensorboard logs, or printed reward values).
+
+# Reality
+I examined all the files provided for the submission. The `Refine_auto_drive/` directory contains:
+
+- `train_baseline.py` – This script trains a PPO agent from scratch on the `Macro-v1` environment; it does **not** load a pre‑trained model and does not resemble a fine‑tuning method.  
+- `retrain.py` – This script implements the RICE (Ours) method, which loads a pre‑trained model, resets to critical states, and uses RND exploration. It is **not** the “PPO fine‑tuning” baseline.  
+- Other files (`retrain_env.py`, `learner.py`, `gen_retrain_traj.py`, `custom_masknet_env.py`, `rnd_reward_model.py`, `train_masknet.py`) are auxiliary to the above two scripts and do not implement a separate PPO fine‑tuning baseline.
+
+Nowhere is there a script that takes the pre‑trained autonomous driving policy and continues PPO training with a lower learning rate (the “PPO fine‑tuning” refinement method). Consequently, there is no code specifically associated with that refinement method that would measure cumulative reward during refinement. The evaluation logging that exists in `train_baseline.py` (e.g., periodic evaluator calls) is part of a from‑scratch training script, not a fine‑tuning refinement procedure. Therefore, the requested implementation is absent.
+
+# Score
+**0** – The submission does not contain code that implements the “PPO fine‑tuning” refinement method for the autonomous driving environment, nor does it contain any measurement of cumulative reward specifically for that refinement method.

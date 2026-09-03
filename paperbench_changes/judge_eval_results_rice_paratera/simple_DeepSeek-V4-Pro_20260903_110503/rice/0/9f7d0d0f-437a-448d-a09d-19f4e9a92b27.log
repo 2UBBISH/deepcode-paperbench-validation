@@ -1,0 +1,61 @@
+2026-09-03 11:05:04 [info     ] Grading leaf: For the MuJoCo environments, the "PPO fine-tuning" refinement method has been implemented as outlined in section 4.1, i.e. lowering the learning rate and continuing training with the PPO algorithm.
+2026-09-03 11:07:12 [info     ] Model file selection raw output:
+Refine_mujoco/retrain.py
+Refine_mujoco/PPO.py
+Refine_mujoco/OnPolicyAlgorithm.py
+Refine_mujoco/base_class.py
+Refine_mujoco/models.py
+Refine_mujoco/baseline/train.py
+Refine_mujoco/retrain.sh
+Refine_mujoco/environment.py
+Refine_mujoco/utils.py
+Refine_mujoco/callback.py
+2026-09-03 11:07:12 [info     ] Model file selection raw output:
+Refine_mujoco/retrain.py
+Refine_mujoco/PPO.py
+Refine_mujoco/OnPolicyAlgorithm.py
+Refine_mujoco/base_class.py
+Refine_mujoco/models.py
+Refine_mujoco/baseline/train.py
+Refine_mujoco/retrain.sh
+Refine_mujoco/environment.py
+Refine_mujoco/utils.py
+Refine_mujoco/callback.py
+2026-09-03 11:07:42 [info     ] model response: # Expectations
+The paper describes the "PPO fine-tuning" baseline in Section 4.1 as "lowering the learning rate and continuing training with the PPO algorithm." It is a simple refinement method: load a pre-trained PPO agent, reduce its learning rate, and continue training on the same environment (without any modification to the initial state distribution, no resetting to critical states, no exploration bonuses). For the MuJoCo environments, I expect to see a clear, separate implementation (e.g., a script) that:
+- loads a pre-trained PPO model,
+- reduces its learning rate (e.g., to a lower value like 1e-5),
+- continues training using the standard PPO algorithm on the original environment (no wrapper that changes the reset behavior),
+- and does not incorporate any of the RICE-specific components (critical state sampling, RND bonus, mixed initial distribution).
+
+# Reality
+Looking at the provided files, the only script that appears to be intended for refinement is `Refine_mujoco/retrain.py`. This script loads a PPO agent, sets a custom learning rate of 1e-5, and calls `model.learn`. However, it is clearly designed for the RICE method, not the PPO fine-tuning baseline:
+- It uses a `RetrainEnv` wrapper (`environment.py`) that overrides `reset` to sometimes start from critical states identified by the mask network (with probability `go_prob`), and tracks an initial reward offset. This is exactly the mixed initial distribution described in Section 3.3.
+- It accepts `--bonus` and `--bonus_scale` arguments to add exploration bonuses (RND or e3b), and the `PPO` class in `PPO.py` includes logic for these bonuses.
+- The `retrain.sh` example runs with `--go_prob 1` and `--bonus 'rnd'`, which is not a simple PPO fine-tuning.
+
+There is no separate script or mode that implements the baseline PPO fine-tuning – i.e., loading the pre-trained agent, lowering the learning rate, and training on the original environment without any wrapper changes. The `baseline/train.py` is just a script for training a new agent from scratch, not fine-tuning an existing one.
+
+Thus, the submission does not provide a correct implementation of the "PPO fine-tuning" refinement method as described in the paper.
+
+# Score
+0 – The submission lacks an implementation of the PPO fine-tuning baseline; the provided code only implements the full RICE method and does not satisfy the criterion.
+2026-09-03 11:07:42 [info     ] model response: # Expectations
+The paper describes the "PPO fine-tuning" baseline in Section 4.1 as "lowering the learning rate and continuing training with the PPO algorithm." It is a simple refinement method: load a pre-trained PPO agent, reduce its learning rate, and continue training on the same environment (without any modification to the initial state distribution, no resetting to critical states, no exploration bonuses). For the MuJoCo environments, I expect to see a clear, separate implementation (e.g., a script) that:
+- loads a pre-trained PPO model,
+- reduces its learning rate (e.g., to a lower value like 1e-5),
+- continues training using the standard PPO algorithm on the original environment (no wrapper that changes the reset behavior),
+- and does not incorporate any of the RICE-specific components (critical state sampling, RND bonus, mixed initial distribution).
+
+# Reality
+Looking at the provided files, the only script that appears to be intended for refinement is `Refine_mujoco/retrain.py`. This script loads a PPO agent, sets a custom learning rate of 1e-5, and calls `model.learn`. However, it is clearly designed for the RICE method, not the PPO fine-tuning baseline:
+- It uses a `RetrainEnv` wrapper (`environment.py`) that overrides `reset` to sometimes start from critical states identified by the mask network (with probability `go_prob`), and tracks an initial reward offset. This is exactly the mixed initial distribution described in Section 3.3.
+- It accepts `--bonus` and `--bonus_scale` arguments to add exploration bonuses (RND or e3b), and the `PPO` class in `PPO.py` includes logic for these bonuses.
+- The `retrain.sh` example runs with `--go_prob 1` and `--bonus 'rnd'`, which is not a simple PPO fine-tuning.
+
+There is no separate script or mode that implements the baseline PPO fine-tuning – i.e., loading the pre-trained agent, lowering the learning rate, and training on the original environment without any wrapper changes. The `baseline/train.py` is just a script for training a new agent from scratch, not fine-tuning an existing one.
+
+Thus, the submission does not provide a correct implementation of the "PPO fine-tuning" refinement method as described in the paper.
+
+# Score
+0 – The submission lacks an implementation of the PPO fine-tuning baseline; the provided code only implements the full RICE method and does not satisfy the criterion.

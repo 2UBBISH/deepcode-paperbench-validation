@@ -1,0 +1,63 @@
+2026-09-03 11:05:04 [info     ] Grading leaf: For the autonomous driving environment, the "Random" Explanation method can be selected as the explanation method during retraining
+2026-09-03 11:06:06 [info     ] Model file selection raw output:
+Refine_auto_drive/retrain.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/readme.md
+README.md
+2026-09-03 11:06:06 [info     ] Model file selection raw output:
+Refine_auto_drive/retrain.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/readme.md
+README.md
+2026-09-03 11:08:20 [info     ] model response: # Expectations
+
+The paper describes the "Random" explanation method as a baseline where critical steps are identified by randomly selecting a previously visited state. During the retraining phase (Algorithm 2), the agent is reset to a mixture of default initial states and these critical states. The submission must allow the "Random" explanation method to be used during retraining for the autonomous driving environment. This means the retraining code should have a mechanism to incorporate the Random explanation: after generating a trajectory, it should randomly pick a state from that trajectory to serve as the critical state from which the agent will start. The code should also be able to run the retraining loop with this selection logic active. The presence of a flag or configuration that enables this random selection (as opposed to the mask‑based explanation) would be sufficient, but at minimum the retraining pipeline must actually use the Random method by default or be able to switch to it.
+
+# Reality
+
+Looking at the submitted files for the autonomous driving environment:
+
+- `retrain.py` is the main retraining script. It creates a `CustomWrapper` (from `retrain_env.py`) with `go_prob` and `bonus_scale` arguments.  
+- In `retrain_env.py`, the `CustomWrapper` class contains a `reset` method. When a random number is less than `self.p` (the mixing probability), it calls `gen_one_traj` from `gen_retrain_traj.py` to obtain a full trajectory (`traj`). The `reset` method then decides which state to start from:  
+  - If `self.random_sampling` is `True`, it picks a random start index using `np.random.choice(traj.eps_len)`.  
+  - If `self.random_sampling` is `False`, it picks the start index with the highest mask probability (`np.argmax(traj.mask_probs)`).  
+- The `CustomWrapper.__init__` sets `self.random_sampling = True` unconditionally.  
+- The `gen_retrain_traj.py` file contains `fid_play`, which runs the pre‑trained target agent and a mask network to collect the trajectory, and it stores `mask_probs` (explanation importance scores) as well as the action sequence and episode length. This data is used both for the Random method (to know the length of the episode) and for the mask‑based method (to use the argmax).  
+
+The retraining pipeline therefore directly uses the Random explanation method: when `self.p` triggers a reset from a critical state, the critical state is chosen at random from the trajectory. The code does not expose a command‑line argument to toggle between Random and mask‑based selection, but the Random method is the one that is actually employed during retraining. The submission thus contains a correct implementation of the Random explanation method being used in the retraining loop.
+
+# Score
+
+1 – The criterion is met. The retraining code for the autonomous driving environment incorporates the Random explanation method (randomly selecting a visited state as the critical state) and uses it when performing the mixed initial state reset. The implementation is present and functional.
+2026-09-03 11:08:20 [info     ] model response: # Expectations
+
+The paper describes the "Random" explanation method as a baseline where critical steps are identified by randomly selecting a previously visited state. During the retraining phase (Algorithm 2), the agent is reset to a mixture of default initial states and these critical states. The submission must allow the "Random" explanation method to be used during retraining for the autonomous driving environment. This means the retraining code should have a mechanism to incorporate the Random explanation: after generating a trajectory, it should randomly pick a state from that trajectory to serve as the critical state from which the agent will start. The code should also be able to run the retraining loop with this selection logic active. The presence of a flag or configuration that enables this random selection (as opposed to the mask‑based explanation) would be sufficient, but at minimum the retraining pipeline must actually use the Random method by default or be able to switch to it.
+
+# Reality
+
+Looking at the submitted files for the autonomous driving environment:
+
+- `retrain.py` is the main retraining script. It creates a `CustomWrapper` (from `retrain_env.py`) with `go_prob` and `bonus_scale` arguments.  
+- In `retrain_env.py`, the `CustomWrapper` class contains a `reset` method. When a random number is less than `self.p` (the mixing probability), it calls `gen_one_traj` from `gen_retrain_traj.py` to obtain a full trajectory (`traj`). The `reset` method then decides which state to start from:  
+  - If `self.random_sampling` is `True`, it picks a random start index using `np.random.choice(traj.eps_len)`.  
+  - If `self.random_sampling` is `False`, it picks the start index with the highest mask probability (`np.argmax(traj.mask_probs)`).  
+- The `CustomWrapper.__init__` sets `self.random_sampling = True` unconditionally.  
+- The `gen_retrain_traj.py` file contains `fid_play`, which runs the pre‑trained target agent and a mask network to collect the trajectory, and it stores `mask_probs` (explanation importance scores) as well as the action sequence and episode length. This data is used both for the Random method (to know the length of the episode) and for the mask‑based method (to use the argmax).  
+
+The retraining pipeline therefore directly uses the Random explanation method: when `self.p` triggers a reset from a critical state, the critical state is chosen at random from the trajectory. The code does not expose a command‑line argument to toggle between Random and mask‑based selection, but the Random method is the one that is actually employed during retraining. The submission thus contains a correct implementation of the Random explanation method being used in the retraining loop.
+
+# Score
+
+1 – The criterion is met. The retraining code for the autonomous driving environment incorporates the Random explanation method (randomly selecting a visited state as the critical state) and uses it when performing the mixed initial state reset. The implementation is present and functional.

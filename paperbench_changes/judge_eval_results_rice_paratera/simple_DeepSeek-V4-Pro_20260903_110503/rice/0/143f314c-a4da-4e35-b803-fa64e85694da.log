@@ -1,0 +1,115 @@
+2026-09-03 11:05:04 [info     ] Grading leaf: For the MuJoCo environments, the explanation method implementation relies on a mask network that outputs "0" for critical steps and "1" otherwise
+2026-09-03 11:05:31 [info     ] Model file selection raw output:
+Refine_mujoco/masknet/train.py
+Refine_mujoco/masknet/cus_PPO.py
+Refine_mujoco/masknet/environment.py
+Refine_mujoco/models.py
+Refine_mujoco/masknet/fid_test.py
+Refine_mujoco/masknet/gen_fid.py
+Refine_mujoco/retrain.py
+Refine_mujoco/PPO.py
+Refine_mujoco/OnPolicyAlgorithm.py
+Refine_mujoco/utils.py
+2026-09-03 11:05:31 [info     ] Model file selection raw output:
+Refine_mujoco/masknet/train.py
+Refine_mujoco/masknet/cus_PPO.py
+Refine_mujoco/masknet/environment.py
+Refine_mujoco/models.py
+Refine_mujoco/masknet/fid_test.py
+Refine_mujoco/masknet/gen_fid.py
+Refine_mujoco/retrain.py
+Refine_mujoco/PPO.py
+Refine_mujoco/OnPolicyAlgorithm.py
+Refine_mujoco/utils.py
+2026-09-03 11:06:29 [info     ] model response: # Expectations
+
+According to the paper, the mask network for the explanation method should output a binary action: **0** for critical steps (i.e., the agent's action should be kept) and **1** for non‑critical steps (i.e., the agent's action is replaced by a random action). The paper states:
+
+> “For an input state $s_t$, the mask net outputs a binary action $a_t^m$ of either ‘zero’ or ‘one’, and the target agent will sample the action $a_t$ from its policy. The final action is determined by the following equation  
+> $a_t \odot a_t^m = \begin{cases} a_t, & \text{if } a_t^m = 0 \\ a_{\text{random}} & \text{if } a_t^m = 1 \end{cases}$”
+
+Thus, **output 0** → keep the pre‑trained policy’s action (critical step), **output 1** → take a random action (blinding). The importance of a step is then “the probability of mask network outputting ‘0’”.
+
+The criterion explicitly requires: “For the MuJoCo environments, the explanation method implementation relies on a mask network that outputs ‘0’ for critical steps and ‘1’ otherwise”. I will therefore look for evidence in the code that the mask network indeed outputs 0 for critical steps (i.e., when the step should not be blinded) and 1 for non‑critical steps (blinding).
+
+# Reality
+
+The relevant implementation is in `Refine_mujoco/masknet/environment.py` and `Refine_mujoco/masknet/cus_PPO.py`, along with the fidelity testing in `Refine_mujoco/masknet/gen_fid.py` and `Refine_mujoco/masknet/fid_test.py`.
+
+In `environment.py`, the `Multi2SingleEnv.step()` method decides the action to be taken in the environment:
+
+```python
+def step(self, action):
+    base_action, _states = self.base_model.predict(self.obs, deterministic=True)
+    if action == 0:
+        real_action = self.env.action_space.sample()
+    else:
+        real_action = base_action
+```
+
+- **action == 0** → `real_action = random action` (blinding)  
+- **action == 1** → `real_action = base_action` (keep the pre‑trained policy’s action)
+
+So the mask network’s output is interpreted as: **0** = blind, **1** = keep. This is the **opposite** of the paper’s convention, where 0 should mean keep (critical) and 1 should mean blind.
+
+In `Refine_mujoco/masknet/gen_fid.py`, the importance score is computed as the probability of action **1**:
+
+```python
+mask_prob = np.exp(mask_dist.log_prob(torch.Tensor([1]).cuda()).detach().cpu().numpy()[0])
+...
+mask_probs.append(mask_prob)
+```
+
+Later, in `Refine_mujoco/masknet/fid_test.py`, the critical steps are selected by taking the **top‑k** values of these `mask_probs` (which are probabilities of outputting 1). This means the implementation treats steps where the mask network is likely to output **1** as critical. That is again the opposite of the paper’s definition, because the paper’s importance is the probability of outputting **0**.
+
+Therefore, the mask network in this submission outputs **1** for critical steps and **0** for non‑critical steps. The criterion requires the opposite: output **0** for critical steps and **1** otherwise. The implementation does not satisfy this requirement.
+
+# Score
+
+The implementation does not meet the criterion. The mask network outputs ‘1’ for critical steps and ‘0’ otherwise, which is the reverse of what the paper describes and what the criterion requires. **Score: 0**.
+2026-09-03 11:06:29 [info     ] model response: # Expectations
+
+According to the paper, the mask network for the explanation method should output a binary action: **0** for critical steps (i.e., the agent's action should be kept) and **1** for non‑critical steps (i.e., the agent's action is replaced by a random action). The paper states:
+
+> “For an input state $s_t$, the mask net outputs a binary action $a_t^m$ of either ‘zero’ or ‘one’, and the target agent will sample the action $a_t$ from its policy. The final action is determined by the following equation  
+> $a_t \odot a_t^m = \begin{cases} a_t, & \text{if } a_t^m = 0 \\ a_{\text{random}} & \text{if } a_t^m = 1 \end{cases}$”
+
+Thus, **output 0** → keep the pre‑trained policy’s action (critical step), **output 1** → take a random action (blinding). The importance of a step is then “the probability of mask network outputting ‘0’”.
+
+The criterion explicitly requires: “For the MuJoCo environments, the explanation method implementation relies on a mask network that outputs ‘0’ for critical steps and ‘1’ otherwise”. I will therefore look for evidence in the code that the mask network indeed outputs 0 for critical steps (i.e., when the step should not be blinded) and 1 for non‑critical steps (blinding).
+
+# Reality
+
+The relevant implementation is in `Refine_mujoco/masknet/environment.py` and `Refine_mujoco/masknet/cus_PPO.py`, along with the fidelity testing in `Refine_mujoco/masknet/gen_fid.py` and `Refine_mujoco/masknet/fid_test.py`.
+
+In `environment.py`, the `Multi2SingleEnv.step()` method decides the action to be taken in the environment:
+
+```python
+def step(self, action):
+    base_action, _states = self.base_model.predict(self.obs, deterministic=True)
+    if action == 0:
+        real_action = self.env.action_space.sample()
+    else:
+        real_action = base_action
+```
+
+- **action == 0** → `real_action = random action` (blinding)  
+- **action == 1** → `real_action = base_action` (keep the pre‑trained policy’s action)
+
+So the mask network’s output is interpreted as: **0** = blind, **1** = keep. This is the **opposite** of the paper’s convention, where 0 should mean keep (critical) and 1 should mean blind.
+
+In `Refine_mujoco/masknet/gen_fid.py`, the importance score is computed as the probability of action **1**:
+
+```python
+mask_prob = np.exp(mask_dist.log_prob(torch.Tensor([1]).cuda()).detach().cpu().numpy()[0])
+...
+mask_probs.append(mask_prob)
+```
+
+Later, in `Refine_mujoco/masknet/fid_test.py`, the critical steps are selected by taking the **top‑k** values of these `mask_probs` (which are probabilities of outputting 1). This means the implementation treats steps where the mask network is likely to output **1** as critical. That is again the opposite of the paper’s definition, because the paper’s importance is the probability of outputting **0**.
+
+Therefore, the mask network in this submission outputs **1** for critical steps and **0** for non‑critical steps. The criterion requires the opposite: output **0** for critical steps and **1** otherwise. The implementation does not satisfy this requirement.
+
+# Score
+
+The implementation does not meet the criterion. The mask network outputs ‘1’ for critical steps and ‘0’ otherwise, which is the reverse of what the paper describes and what the criterion requires. **Score: 0**.

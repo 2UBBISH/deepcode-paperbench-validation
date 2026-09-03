@@ -1,0 +1,59 @@
+2026-09-03 11:05:04 [info     ] Grading leaf: For the network defence environment, the "Random" Explanation method has been implemented as outlined in 4.1, wherein critical steps are identified by randomly selecting previously visited states.
+2026-09-03 11:05:29 [info     ] Model file selection raw output:
+Refine_cage_challenge/retrain.py
+Refine_cage_challenge/replay.py
+Refine_cage_challenge/rollout_mask.py
+Refine_cage_challenge/sample_mask_score.py
+Refine_cage_challenge/sample_value_score.py
+Refine_cage_challenge/rollout_ppo.py
+Refine_cage_challenge/ppo_train.py
+Refine_cage_challenge/Agents/PPOAgent_Retrain.py
+Refine_cage_challenge/readme.md
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_retrain.py
+2026-09-03 11:05:29 [info     ] Model file selection raw output:
+Refine_cage_challenge/retrain.py
+Refine_cage_challenge/replay.py
+Refine_cage_challenge/rollout_mask.py
+Refine_cage_challenge/sample_mask_score.py
+Refine_cage_challenge/sample_value_score.py
+Refine_cage_challenge/rollout_ppo.py
+Refine_cage_challenge/ppo_train.py
+Refine_cage_challenge/Agents/PPOAgent_Retrain.py
+Refine_cage_challenge/readme.md
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_retrain.py
+2026-09-03 11:07:18 [info     ] model response: # Expectations
+The paper defines a "Random" baseline explanation method in Section 4.1: "Random identifies critical steps by randomly selecting a visited state as the critical state." For the network defence environment (Cage Challenge 2), a correct implementation must randomly pick one of the previously visited states (i.e., a step index from the trajectory) to serve as the identified critical step. The implementation should allow selecting any valid step index uniformly from the trajectory, and should be used to evaluate the fidelity score (Experiment I) or to supply critical states for refining. The code should be present in the submission and correctly produce a random index over the full set of visited states in the trajectory.
+
+# Reality
+The submission includes a file `Refine_cage_challenge/replay.py` that contains a `rollout` function intended to evaluate fidelity scores. In this function, when `method == "random"`, it calculates a sub‑window length and then picks a random start index with:
+
+```python
+best_score_index = np.random.randint(0,30)
+```
+
+The trajectory length (from `action_set.shape[0]`) is 100 (as set by `max_timesteps = 100` in the environment setup). The correct range for a random start index should be `0` to `action_set.shape[0] - sub_length` (i.e., 0 to 90) to uniformly sample any valid start position. The hard‑coded upper bound of 30 does **not** randomly select from all previously visited states; it restricts the selection to a small subset of possible indices. This is not a faithful implementation of the random explanation method described in the paper.
+
+No other file provides a corrected implementation of the random explanation for the network defence environment. The `ChallengeWrapper2_retrain.py` file contains a `random_sampling` flag, but it is not used in the provided scripts and is not a dedicated implementation of the explanation method.
+
+# Score
+0
+
+The implementation is incorrect because it does not randomly select a visited state from the full trajectory; it uses an arbitrary, fixed range that does not match the trajectory length. Therefore, the criterion is not met.
+2026-09-03 11:07:18 [info     ] model response: # Expectations
+The paper defines a "Random" baseline explanation method in Section 4.1: "Random identifies critical steps by randomly selecting a visited state as the critical state." For the network defence environment (Cage Challenge 2), a correct implementation must randomly pick one of the previously visited states (i.e., a step index from the trajectory) to serve as the identified critical step. The implementation should allow selecting any valid step index uniformly from the trajectory, and should be used to evaluate the fidelity score (Experiment I) or to supply critical states for refining. The code should be present in the submission and correctly produce a random index over the full set of visited states in the trajectory.
+
+# Reality
+The submission includes a file `Refine_cage_challenge/replay.py` that contains a `rollout` function intended to evaluate fidelity scores. In this function, when `method == "random"`, it calculates a sub‑window length and then picks a random start index with:
+
+```python
+best_score_index = np.random.randint(0,30)
+```
+
+The trajectory length (from `action_set.shape[0]`) is 100 (as set by `max_timesteps = 100` in the environment setup). The correct range for a random start index should be `0` to `action_set.shape[0] - sub_length` (i.e., 0 to 90) to uniformly sample any valid start position. The hard‑coded upper bound of 30 does **not** randomly select from all previously visited states; it restricts the selection to a small subset of possible indices. This is not a faithful implementation of the random explanation method described in the paper.
+
+No other file provides a corrected implementation of the random explanation for the network defence environment. The `ChallengeWrapper2_retrain.py` file contains a `random_sampling` flag, but it is not used in the provided scripts and is not a dedicated implementation of the explanation method.
+
+# Score
+0
+
+The implementation is incorrect because it does not randomly select a visited state from the full trajectory; it uses an arbitrary, fixed range that does not match the trajectory length. Therefore, the criterion is not met.

@@ -1,0 +1,65 @@
+2026-09-03 11:05:04 [info     ] Grading leaf: For the autonomous driving environment, the "PPO fine-tuning" refinement method has been implemented as outlined in section 4.1, i.e. lowering the learning rate and continuing training with the PPO algorithm.
+2026-09-03 11:05:46 [info     ] Model file selection raw output:
+Refine_auto_drive/retrain.py
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/readme.md
+2026-09-03 11:05:46 [info     ] Model file selection raw output:
+Refine_auto_drive/retrain.py
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/readme.md
+2026-09-03 11:06:15 [info     ] model response: # Expectations
+The criterion requires that for the autonomous driving environment, the "PPO fine-tuning" refinement method is implemented. In the paper, Section 4.1 defines this baseline as: "lowering the learning rate and continuing training with the PPO algorithm." So the implementation should:
+- Start from a pre-trained agent (the same agent that would be refined by other methods).
+- Reduce the learning rate compared to the original training.
+- Continue training using the PPO algorithm (same policy class, but with a lower learning rate).
+- The code should be a separate, identifiable script or function that loads the pre-trained policy and runs PPO updates with a reduced learning rate, specifically for the autonomous driving environment.
+
+I will look for actual code that loads a pre-trained policy, sets a lower learning rate, and performs PPO updates. I will check the provided files in `Refine_auto_drive/`.
+
+# Reality
+The submission contains several files for the autonomous driving environment:
+
+- `Refine_auto_drive/train_baseline.py`: This script trains a PPO agent from scratch using the default configuration (`learning_rate=3e-4`). It does not load any pre-trained weights, nor does it lower the learning rate for fine-tuning. It is a fresh training, not a refinement method.
+
+- `Refine_auto_drive/retrain.py`: This is the main refinement script that implements the RICE method (the paper's "Ours" method). It loads a pre-trained policy (`ckpt_best.pth.tar`) and uses a custom environment with RND and mixed initial states. It is not PPO fine-tuning.
+
+- Other files (`learner.py`, `retrain_env.py`, `rnd_reward_model.py`, etc.) are supporting classes for the RICE method, not for PPO fine-tuning.
+
+- There is no separate script that loads the pre-trained policy and performs PPO updates with a lowered learning rate. The `readme.md` is empty, providing no instructions. The "PPO fine-tuning" baseline is not implemented in the submitted code for the autonomous driving environment.
+
+# Score
+0 – The submission does not contain an implementation of the PPO fine-tuning refinement method for the autonomous driving environment. The criterion requires a code implementation, and no such code exists. Therefore, the criterion is not met.
+2026-09-03 11:06:15 [info     ] model response: # Expectations
+The criterion requires that for the autonomous driving environment, the "PPO fine-tuning" refinement method is implemented. In the paper, Section 4.1 defines this baseline as: "lowering the learning rate and continuing training with the PPO algorithm." So the implementation should:
+- Start from a pre-trained agent (the same agent that would be refined by other methods).
+- Reduce the learning rate compared to the original training.
+- Continue training using the PPO algorithm (same policy class, but with a lower learning rate).
+- The code should be a separate, identifiable script or function that loads the pre-trained policy and runs PPO updates with a reduced learning rate, specifically for the autonomous driving environment.
+
+I will look for actual code that loads a pre-trained policy, sets a lower learning rate, and performs PPO updates. I will check the provided files in `Refine_auto_drive/`.
+
+# Reality
+The submission contains several files for the autonomous driving environment:
+
+- `Refine_auto_drive/train_baseline.py`: This script trains a PPO agent from scratch using the default configuration (`learning_rate=3e-4`). It does not load any pre-trained weights, nor does it lower the learning rate for fine-tuning. It is a fresh training, not a refinement method.
+
+- `Refine_auto_drive/retrain.py`: This is the main refinement script that implements the RICE method (the paper's "Ours" method). It loads a pre-trained policy (`ckpt_best.pth.tar`) and uses a custom environment with RND and mixed initial states. It is not PPO fine-tuning.
+
+- Other files (`learner.py`, `retrain_env.py`, `rnd_reward_model.py`, etc.) are supporting classes for the RICE method, not for PPO fine-tuning.
+
+- There is no separate script that loads the pre-trained policy and performs PPO updates with a lowered learning rate. The `readme.md` is empty, providing no instructions. The "PPO fine-tuning" baseline is not implemented in the submitted code for the autonomous driving environment.
+
+# Score
+0 – The submission does not contain an implementation of the PPO fine-tuning refinement method for the autonomous driving environment. The criterion requires a code implementation, and no such code exists. Therefore, the criterion is not met.

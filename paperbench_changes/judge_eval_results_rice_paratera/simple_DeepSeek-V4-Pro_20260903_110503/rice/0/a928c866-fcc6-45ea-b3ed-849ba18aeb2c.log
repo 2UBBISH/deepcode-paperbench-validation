@@ -1,0 +1,61 @@
+2026-09-03 11:05:04 [info     ] Grading leaf: For the network defence environment, code for pretraining the policy network agent has been setup
+2026-09-03 11:05:41 [info     ] Model file selection raw output:
+Refine_cage_challenge/ppo_train.py
+Refine_cage_challenge/Agents/PPOAgent.py
+Refine_cage_challenge/PPO/ActorCritic.py
+Refine_cage_challenge/PPO/Memory.py
+Refine_cage_challenge/rollout_ppo.py
+Refine_cage_challenge/readme.md
+Refine_cage_challenge/Wrappers/ChallengeWrapper2.py
+Refine_cage_challenge/Agents/MainAgent.py
+Refine_cage_challenge/Wrappers/utils.py
+Refine_cage_challenge/Agents/PPOAgent_Retrain.py
+2026-09-03 11:05:41 [info     ] Model file selection raw output:
+Refine_cage_challenge/ppo_train.py
+Refine_cage_challenge/Agents/PPOAgent.py
+Refine_cage_challenge/PPO/ActorCritic.py
+Refine_cage_challenge/PPO/Memory.py
+Refine_cage_challenge/rollout_ppo.py
+Refine_cage_challenge/readme.md
+Refine_cage_challenge/Wrappers/ChallengeWrapper2.py
+Refine_cage_challenge/Agents/MainAgent.py
+Refine_cage_challenge/Wrappers/utils.py
+Refine_cage_challenge/Agents/PPOAgent_Retrain.py
+2026-09-03 11:06:15 [info     ] model response: # Expectations
+The paper describes using the CAGE Challenge 2 environment for network defence. The target agent is a PPO-based blue agent trained to defend against a red agent (B-line). The paper mentions that they trained a PPO agent, though it does not give explicit training hyperparameters for this environment. The addendum clarifies that the exact architecture is not critical; the reproduction should work with any generic RL agent policy compatible with the environment. The criterion expects that the submission contains actual code that sets up and runs pretraining of a policy network agent for this network defence environment. I will look for code that initializes the environment, creates a PPO agent, runs a training loop, and saves checkpoints.
+
+# Reality
+The submission includes several files related to the CAGE Challenge 2 environment. In `Refine_cage_challenge/ppo_train.py`, there is a `train` function that:
+- Creates an instance of the environment using `CybORG` with `B_lineAgent` as red, wrapped in `ChallengeWrapper2`.
+- Defines the action space and `start_actions` as described in the paper.
+- Instantiates a `PPOAgent` (from `Agents/PPOAgent.py`) with the environment's input dimensions and action space.
+- Runs a training loop over episodes, collecting experiences via `agent.get_action`, `env.step`, and storing rewards.
+- Performs PPO updates after every `update_timestep` steps (agent.train, clear_memory).
+- Saves model checkpoints every `save_interval` episodes.
+- The script sets random seeds and can be executed directly to train the agent.
+
+The `PPOAgent` class in `Agents/PPOAgent.py` implements the actor-critic architecture (two hidden layers of 64 units, as mentioned in the paper's addendum for this environment) and the PPO update logic. The `PPO/ActorCritic.py` defines the network. The training loop uses standard PPO with the specified hyperparameters (lr=0.002, gamma=0.99, etc.). The code is functional and clearly intended for pretraining a policy network agent for the network defence task.
+
+This matches the expectation: there is actual runnable code that pretrains a PPO agent for the CAGE Challenge 2 environment. The existence of `ppo_train.py` and the agent implementation constitutes a correct setup for pretraining.
+
+# Score
+1
+2026-09-03 11:06:15 [info     ] model response: # Expectations
+The paper describes using the CAGE Challenge 2 environment for network defence. The target agent is a PPO-based blue agent trained to defend against a red agent (B-line). The paper mentions that they trained a PPO agent, though it does not give explicit training hyperparameters for this environment. The addendum clarifies that the exact architecture is not critical; the reproduction should work with any generic RL agent policy compatible with the environment. The criterion expects that the submission contains actual code that sets up and runs pretraining of a policy network agent for this network defence environment. I will look for code that initializes the environment, creates a PPO agent, runs a training loop, and saves checkpoints.
+
+# Reality
+The submission includes several files related to the CAGE Challenge 2 environment. In `Refine_cage_challenge/ppo_train.py`, there is a `train` function that:
+- Creates an instance of the environment using `CybORG` with `B_lineAgent` as red, wrapped in `ChallengeWrapper2`.
+- Defines the action space and `start_actions` as described in the paper.
+- Instantiates a `PPOAgent` (from `Agents/PPOAgent.py`) with the environment's input dimensions and action space.
+- Runs a training loop over episodes, collecting experiences via `agent.get_action`, `env.step`, and storing rewards.
+- Performs PPO updates after every `update_timestep` steps (agent.train, clear_memory).
+- Saves model checkpoints every `save_interval` episodes.
+- The script sets random seeds and can be executed directly to train the agent.
+
+The `PPOAgent` class in `Agents/PPOAgent.py` implements the actor-critic architecture (two hidden layers of 64 units, as mentioned in the paper's addendum for this environment) and the PPO update logic. The `PPO/ActorCritic.py` defines the network. The training loop uses standard PPO with the specified hyperparameters (lr=0.002, gamma=0.99, etc.). The code is functional and clearly intended for pretraining a policy network agent for the network defence task.
+
+This matches the expectation: there is actual runnable code that pretrains a PPO agent for the CAGE Challenge 2 environment. The existence of `ppo_train.py` and the agent implementation constitutes a correct setup for pretraining.
+
+# Score
+1

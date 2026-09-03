@@ -1,0 +1,77 @@
+2026-09-03 11:06:33 [info     ] Grading leaf: For the selfish mining environment, the reward function is implemented such that an additional reward is given when the mask net outputs "1", as outlined in section 3.3.
+2026-09-03 11:07:13 [info     ] Model file selection raw output:
+Refine_selfish_mining/masknet/train.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/blockchain_simulator/mdp_blockchain_simulator_masknet.py
+Refine_selfish_mining/masknet/utils.py
+Refine_selfish_mining/baseline/blockchain_mdps/bitcoin_fee_model.py
+Refine_selfish_mining/baseline/blockchain_mdps/base/blockchain_model.py
+Refine_selfish_mining/baseline/blockchain_mdps/base/blockchain_mdps/blockchain_mdp.py
+Refine_selfish_mining/baseline/blockchain_mdps/bitcoin_bare_fee_model.py
+Refine_selfish_mining/baseline/blockchain_mdps/base/blockchain_mdps/sparse_blockchain_mdp.py
+Refine_selfish_mining/baseline/blockchain_mdps/__init__.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/blockchain_simulator/__init__.py
+2026-09-03 11:07:13 [info     ] Model file selection raw output:
+Refine_selfish_mining/masknet/train.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/blockchain_simulator/mdp_blockchain_simulator_masknet.py
+Refine_selfish_mining/masknet/utils.py
+Refine_selfish_mining/baseline/blockchain_mdps/bitcoin_fee_model.py
+Refine_selfish_mining/baseline/blockchain_mdps/base/blockchain_model.py
+Refine_selfish_mining/baseline/blockchain_mdps/base/blockchain_mdps/blockchain_mdp.py
+Refine_selfish_mining/baseline/blockchain_mdps/bitcoin_bare_fee_model.py
+Refine_selfish_mining/baseline/blockchain_mdps/base/blockchain_mdps/sparse_blockchain_mdp.py
+Refine_selfish_mining/baseline/blockchain_mdps/__init__.py
+Refine_selfish_mining/baseline/reinforcement_learning/base/blockchain_simulator/__init__.py
+2026-09-03 11:08:02 [info     ] model response: # Expectations
+The paper proposes an optimized version of StateMask for step-level explanation. In Section 3.3, it describes that the mask network is trained to maximize the expected total reward of the perturbed agent, but to avoid a trivial solution (never blinding), an extra reward bonus is added when the mask net outputs “1” (blinding). The new reward is defined as:
+
+\[
+R'(s_t, a_t) = R(s_t, a_t) + \alpha \, a_t^m
+\]
+
+where \(a_t^m \in \{0,1\}\) is the mask network’s action, and \(\alpha\) is a hyperparameter. The mask network is trained using PPO (Algorithm 1) with this modified reward.
+
+For the selfish mining environment, the criterion requires that the implementation actually adds this bonus reward when the mask net outputs “1”, i.e., when the mask action is 1. The implementation must be present in the code that simulates the environment for mask network training.
+
+# Reality
+The relevant implementation is in the file `Refine_selfish_mining/baseline/reinforcement_learning/base/blockchain_simulator/mdp_blockchain_simulator_masknet.py`, specifically the class `MDPBlockchainSimulatorMaskNet` and its `step` method.
+
+- In the `__init__` method, a bonus reward is defined as `self.lazy_reward = 0.15` (with a commented‑out alternative `# self.lazy_reward = 0.05`). This corresponds to the hyperparameter \(\alpha\).
+- Inside the `step` method, the mask action (`action`) is used to determine whether blinding occurs: `mask_this_step = False` initially; if `action == 1`, then `mask_this_step = True`.
+- Later, after computing the original reward from the environment transition, the code adds the bonus:
+  ```python
+  if mask_this_step:
+      reward += self.lazy_reward
+  ```
+  This exactly matches the formula \(R'(s_t, a_t) = R(s_t, a_t) + \alpha \cdot a_t^m\) because the bonus is only added when `mask_this_step` is `True` (i.e., when the mask action is 1).
+
+Thus, the mask network’s PPO training (in `Refine_selfish_mining/masknet/train.py`) uses this environment, and the reward returned by `step` includes the extra bonus whenever the mask net outputs “1”. The implementation satisfies the requirement.
+
+# Score
+1 – The criterion is met because the code correctly implements the reward function as described in the paper: an additional reward (bonus) is given when the mask net outputs “1”, and this bonus is added to the original environment reward.
+2026-09-03 11:08:02 [info     ] model response: # Expectations
+The paper proposes an optimized version of StateMask for step-level explanation. In Section 3.3, it describes that the mask network is trained to maximize the expected total reward of the perturbed agent, but to avoid a trivial solution (never blinding), an extra reward bonus is added when the mask net outputs “1” (blinding). The new reward is defined as:
+
+\[
+R'(s_t, a_t) = R(s_t, a_t) + \alpha \, a_t^m
+\]
+
+where \(a_t^m \in \{0,1\}\) is the mask network’s action, and \(\alpha\) is a hyperparameter. The mask network is trained using PPO (Algorithm 1) with this modified reward.
+
+For the selfish mining environment, the criterion requires that the implementation actually adds this bonus reward when the mask net outputs “1”, i.e., when the mask action is 1. The implementation must be present in the code that simulates the environment for mask network training.
+
+# Reality
+The relevant implementation is in the file `Refine_selfish_mining/baseline/reinforcement_learning/base/blockchain_simulator/mdp_blockchain_simulator_masknet.py`, specifically the class `MDPBlockchainSimulatorMaskNet` and its `step` method.
+
+- In the `__init__` method, a bonus reward is defined as `self.lazy_reward = 0.15` (with a commented‑out alternative `# self.lazy_reward = 0.05`). This corresponds to the hyperparameter \(\alpha\).
+- Inside the `step` method, the mask action (`action`) is used to determine whether blinding occurs: `mask_this_step = False` initially; if `action == 1`, then `mask_this_step = True`.
+- Later, after computing the original reward from the environment transition, the code adds the bonus:
+  ```python
+  if mask_this_step:
+      reward += self.lazy_reward
+  ```
+  This exactly matches the formula \(R'(s_t, a_t) = R(s_t, a_t) + \alpha \cdot a_t^m\) because the bonus is only added when `mask_this_step` is `True` (i.e., when the mask action is 1).
+
+Thus, the mask network’s PPO training (in `Refine_selfish_mining/masknet/train.py`) uses this environment, and the reward returned by `step` includes the extra bonus whenever the mask net outputs “1”. The implementation satisfies the requirement.
+
+# Score
+1 – The criterion is met because the code correctly implements the reward function as described in the paper: an additional reward (bonus) is given when the mask net outputs “1”, and this bonus is added to the original environment reward.

@@ -1,0 +1,37 @@
+2026-09-03 11:05:04 [info     ] Grading leaf: For the autonomous driving environment, the original StateMask Explanation method can be selected as the explanation method during retraining
+2026-09-03 11:05:30 [info     ] Model file selection raw output:
+Refine_auto_drive/retrain.py
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/readme.md
+2026-09-03 11:05:30 [info     ] Model file selection raw output:
+Refine_auto_drive/retrain.py
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/readme.md
+2026-09-03 11:06:28 [info     ] model response: # Expectations
+According to the paper, the original StateMask explanation method (from Cheng et al., 2023) is one of the baseline explanation methods used in the evaluation. For the autonomous driving environment, the code should include an implementation of the original StateMask (i.e., the mask network trained with the original objective \(J(\theta)=\min |\eta(\pi)-\eta(\bar{\pi})|\) and using prime‑dual optimization) and allow it to be selected as the explanation method during the retraining procedure. The retraining pipeline (e.g., `retrain_env.py` and `gen_retrain_traj.py`) should be able to use the original StateMask to identify critical states for constructing the mixed initial distribution. Therefore, I should look for code that implements the original StateMask explanation, not just the simplified “Ours” version, and for a mechanism that can plug it into the retraining flow.
+
+# Reality
+The submission files for the autonomous driving environment are located in `Refine_auto_drive/`. The mask network training is implemented in `train_masknet.py` and `custom_masknet_env.py`. The environment wrapper in `custom_masknet_env.py` uses a reward bonus (`lamb`) and adds it to the reward when the mask network outputs 1. This matches the proposed “Ours” explanation method (Section 3.3, Algorithm 1), which reformulates the objective to \(\max \eta(\bar{\pi})\) and adds a bonus for blinding. There is no implementation of the original StateMask objective (\(\min |\eta(\pi)-\eta(\bar{\pi})|\)) or its prime‑dual optimization. The retraining setup in `retrain_env.py` calls `gen_retrain_traj.py` to collect trajectories and uses the mask probabilities from the single mask network trained with the “Ours” method. There is no code that allows switching to the original StateMask explanation method, nor any function that provides an alternative explanation method. No file contains an implementation of the original StateMask.
+
+# Score
+0 – The submission does not contain an implementation of the original StateMask explanation method for the autonomous driving environment, nor any code that would allow selecting it as the explanation method during retraining. The criterion is therefore not met.
+2026-09-03 11:06:28 [info     ] model response: # Expectations
+According to the paper, the original StateMask explanation method (from Cheng et al., 2023) is one of the baseline explanation methods used in the evaluation. For the autonomous driving environment, the code should include an implementation of the original StateMask (i.e., the mask network trained with the original objective \(J(\theta)=\min |\eta(\pi)-\eta(\bar{\pi})|\) and using prime‑dual optimization) and allow it to be selected as the explanation method during the retraining procedure. The retraining pipeline (e.g., `retrain_env.py` and `gen_retrain_traj.py`) should be able to use the original StateMask to identify critical states for constructing the mixed initial distribution. Therefore, I should look for code that implements the original StateMask explanation, not just the simplified “Ours” version, and for a mechanism that can plug it into the retraining flow.
+
+# Reality
+The submission files for the autonomous driving environment are located in `Refine_auto_drive/`. The mask network training is implemented in `train_masknet.py` and `custom_masknet_env.py`. The environment wrapper in `custom_masknet_env.py` uses a reward bonus (`lamb`) and adds it to the reward when the mask network outputs 1. This matches the proposed “Ours” explanation method (Section 3.3, Algorithm 1), which reformulates the objective to \(\max \eta(\bar{\pi})\) and adds a bonus for blinding. There is no implementation of the original StateMask objective (\(\min |\eta(\pi)-\eta(\bar{\pi})|\)) or its prime‑dual optimization. The retraining setup in `retrain_env.py` calls `gen_retrain_traj.py` to collect trajectories and uses the mask probabilities from the single mask network trained with the “Ours” method. There is no code that allows switching to the original StateMask explanation method, nor any function that provides an alternative explanation method. No file contains an implementation of the original StateMask.
+
+# Score
+0 – The submission does not contain an implementation of the original StateMask explanation method for the autonomous driving environment, nor any code that would allow selecting it as the explanation method during retraining. The criterion is therefore not met.

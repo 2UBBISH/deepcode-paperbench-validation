@@ -1,0 +1,69 @@
+2026-09-03 11:07:04 [info     ] Grading leaf: In Experiment II, for the MuJoCo environments, for the "Ours" refinement method, the optimized StateMask ("Ours") explanation method proposed in the paper is used as the explanation method.
+2026-09-03 11:09:10 [info     ] Model file selection raw output:
+Refine_mujoco/retrain.py
+Refine_mujoco/masknet/train.py
+Refine_mujoco/retrain.sh
+Refine_mujoco/environment.py
+Refine_mujoco/masknet/cus_PPO.py
+Refine_mujoco/masknet/environment.py
+Refine_mujoco/utils.py
+Refine_mujoco/PPO.py
+Refine_mujoco/OnPolicyAlgorithm.py
+Refine_mujoco/base_class.py
+2026-09-03 11:09:10 [info     ] Model file selection raw output:
+Refine_mujoco/retrain.py
+Refine_mujoco/masknet/train.py
+Refine_mujoco/retrain.sh
+Refine_mujoco/environment.py
+Refine_mujoco/masknet/cus_PPO.py
+Refine_mujoco/masknet/environment.py
+Refine_mujoco/utils.py
+Refine_mujoco/PPO.py
+Refine_mujoco/OnPolicyAlgorithm.py
+Refine_mujoco/base_class.py
+2026-09-03 11:10:16 [info     ] model response: # Expectations
+The criterion requires that for the MuJoCo environments in Experiment II, the "Ours" refinement method uses the **optimized StateMask explanation ("Ours")** as described in the paper. Specifically:
+
+- The refinement process (Algorithm 2) must rely on the mask network trained with the **improved objective** (maximizing \(\eta(\bar{\pi})\)) and the **reward bonus** \(\alpha\) for blinding, as described in Section 3.3.
+- The mask network should be trained to output a mask probability for each state, and the refinement code should use that mask network to identify the **most critical state** (i.e., the state with the highest mask probability) in a trajectory, rather than selecting a random state.
+- The code must show that the mask network is loaded and its predictions are used to select the critical state when resetting the environment.
+
+# Reality
+Looking at the provided files:
+
+- **Mask network training** (`masknet/train.py`, `masknet/environment.py`, `masknet/cus_PPO.py`):  
+  The `Multi2SingleEnv` wrapper implements the “Ours” explanation method. When the mask network outputs action `0` (meaning “blind” – use random action), the reward is augmented with `alpha * (1 - action)`, which corresponds to the bonus described in the paper. The mask network is trained with PPO using this reward scheme. This matches the reformulated objective and bonus mechanism.
+
+- **Refinement code** (`Refine_mujoco/retrain.py`, `Refine_mujoco/environment.py`, `Refine_mujoco/utils.py`):  
+  The retraining script accepts a `--masknet_path` argument and loads the mask network. In `environment.py`, the `RetrainEnv.reset()` method calls `gen_one_traj()` from `utils.py`. Inside `gen_one_traj`, the mask network is loaded and used to obtain `mask_probs` for each state. The critical state is selected by `np.argmax(traj.mask_probs)` when `random_sampling` is `False` (the default). This demonstrates that the refinement uses the mask network’s predictions to choose the exploration frontier.
+
+- **Execution script** (`Refine_mujoco/retrain.sh`):  
+  The script specifies `--masknet_path "masknet/best_model"`, pointing to the mask network trained with the “Ours” method.
+
+Thus, the refinement method for MuJoCo environments indeed uses the optimized StateMask explanation to identify critical states.
+
+# Score
+1 – The code correctly implements the requirement: the “Ours” refinement method loads the mask network trained with the improved objective and reward bonus, and uses it to determine the most critical state during refinement.
+2026-09-03 11:10:16 [info     ] model response: # Expectations
+The criterion requires that for the MuJoCo environments in Experiment II, the "Ours" refinement method uses the **optimized StateMask explanation ("Ours")** as described in the paper. Specifically:
+
+- The refinement process (Algorithm 2) must rely on the mask network trained with the **improved objective** (maximizing \(\eta(\bar{\pi})\)) and the **reward bonus** \(\alpha\) for blinding, as described in Section 3.3.
+- The mask network should be trained to output a mask probability for each state, and the refinement code should use that mask network to identify the **most critical state** (i.e., the state with the highest mask probability) in a trajectory, rather than selecting a random state.
+- The code must show that the mask network is loaded and its predictions are used to select the critical state when resetting the environment.
+
+# Reality
+Looking at the provided files:
+
+- **Mask network training** (`masknet/train.py`, `masknet/environment.py`, `masknet/cus_PPO.py`):  
+  The `Multi2SingleEnv` wrapper implements the “Ours” explanation method. When the mask network outputs action `0` (meaning “blind” – use random action), the reward is augmented with `alpha * (1 - action)`, which corresponds to the bonus described in the paper. The mask network is trained with PPO using this reward scheme. This matches the reformulated objective and bonus mechanism.
+
+- **Refinement code** (`Refine_mujoco/retrain.py`, `Refine_mujoco/environment.py`, `Refine_mujoco/utils.py`):  
+  The retraining script accepts a `--masknet_path` argument and loads the mask network. In `environment.py`, the `RetrainEnv.reset()` method calls `gen_one_traj()` from `utils.py`. Inside `gen_one_traj`, the mask network is loaded and used to obtain `mask_probs` for each state. The critical state is selected by `np.argmax(traj.mask_probs)` when `random_sampling` is `False` (the default). This demonstrates that the refinement uses the mask network’s predictions to choose the exploration frontier.
+
+- **Execution script** (`Refine_mujoco/retrain.sh`):  
+  The script specifies `--masknet_path "masknet/best_model"`, pointing to the mask network trained with the “Ours” method.
+
+Thus, the refinement method for MuJoCo environments indeed uses the optimized StateMask explanation to identify critical states.
+
+# Score
+1 – The code correctly implements the requirement: the “Ours” refinement method loads the mask network trained with the improved objective and reward bonus, and uses it to determine the most critical state during refinement.

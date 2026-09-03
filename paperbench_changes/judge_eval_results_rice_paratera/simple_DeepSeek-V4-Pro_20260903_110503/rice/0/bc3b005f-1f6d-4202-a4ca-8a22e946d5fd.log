@@ -1,0 +1,133 @@
+2026-09-03 11:07:55 [info     ] Grading leaf: For the MuJoCo environments, for the "Ours" explanation method, code has been implemented for measuring cumulative reward throughout refinement
+2026-09-03 11:09:01 [info     ] Model file selection raw output:
+Refine_mujoco/retrain.py
+Refine_mujoco/callback.py
+Refine_mujoco/monitor.py
+Refine_mujoco/utils.py
+Refine_mujoco/PPO.py
+Refine_mujoco/OnPolicyAlgorithm.py
+Refine_mujoco/environment.py
+Refine_mujoco/base_class.py
+Refine_mujoco/models.py
+Refine_mujoco/retrain.sh
+2026-09-03 11:09:01 [info     ] Model file selection raw output:
+Refine_mujoco/retrain.py
+Refine_mujoco/callback.py
+Refine_mujoco/monitor.py
+Refine_mujoco/utils.py
+Refine_mujoco/PPO.py
+Refine_mujoco/OnPolicyAlgorithm.py
+Refine_mujoco/environment.py
+Refine_mujoco/base_class.py
+Refine_mujoco/models.py
+Refine_mujoco/retrain.sh
+2026-09-03 11:10:53 [info     ] model response: # Expectations
+
+The paper's Experiment III (Section 4.2/4.3, Table 1) evaluates the downstream refining process when critical states are identified by different explanation methods: Random, StateMask, and "Ours."
+
+For the MuJoCo environments and the "Ours" explanation method, I expect the submitted code to:
+
+1. Provide a refinement loop that uses the mask network / "Ours" explanation to select critical states as refinement reset states.
+2. During that refinement loop, periodically measure and record cumulative reward, either from training rollouts or from separate evaluation rollouts.
+3. Log or store those rewards so that the refinement performance can be inspected over time.
+
+Concretely, I would look for:
+- An environment wrapper that resets to mask-identified critical states.
+- A monitoring wrapper such as `VecMonitor`, `Monitor`, or an `EvalCallback`.
+- Code that repeatedly gathers episode returns throughout `model.learn(...)`, not just at the end.
+
+# Reality
+
+The relevant code is in `Refine_mujoco/`.
+
+`Refine_mujoco/retrain.py`:
+- Parses `--random_sampling` with default `False`, meaning the retraining environment uses the non-random "Ours" explanation path by default.
+- Builds the training environment from `make_retrain_env(...)` and wraps it with `VecMonitor`.
+- Builds a separate evaluation environment and wraps it with `VecMonitor`.
+- Adds `EvalCallback` and `CustomCallback`.
+- Calls `model.learn(total_timesteps=..., callback=eval_callback)`.
+
+`Refine_mujoco/environment.py`:
+- `RetrainEnv.reset()` calls `gen_one_traj(...)`.
+- When `random_sampling=False`, it selects the critical state by:
+  ```python
+  start_idx = np.argmax(traj.mask_probs)
+  ```
+  which corresponds to the "Ours" explanation method path, as opposed to random critical-state selection.
+
+`Refine_mujoco/utils.py`:
+- `gen_one_traj(...)` loads both the mask network and the pretrained agent, rolls out a trajectory, records `mask_probs`, states, rewards, and returns a trajectory object.
+
+`Refine_mujoco/callback.py`:
+- `CustomCallback` reads monitor logs and computes/logs `train/mean_reward`, which is a form of cumulative reward tracking throughout training.
+
+`Refine_mujoco/retrain.py` also wires `EvalCallback`, which evaluates and stores the best model and logs evaluation returns during refinement.
+
+So the submission does contain code that, when using the "Ours" explanation-based reset path, monitors and records episode rewards throughout refinement.
+
+There are some implementation concerns outside this specific criterion:
+- `retrain.sh` sets `--go_prob 1` and `--bonus_scale 0`. Given the reset logic `if np.random.rand() > self.p`, `p=1` would actually disable the critical-state/go-explore resets, and `bonus_scale=0` disables the RND bonus. So the provided shell script may not exercise the intended "Ours" refinement configuration even though the code supports it for other values.
+- The file `Refine_mujoco/monitor.py` defines a custom `VecMonitor`, but `retrain.py` imports Stable-Baselines3's `VecMonitor`, so the custom file is not actually used.
+
+However, the criterion is specifically about whether code has been implemented for measuring cumulative reward throughout refinement in the "Ours" path, and that code is present in `retrain.py` via `VecMonitor`, `EvalCallback`, and `CustomCallback`.
+
+# Score
+
+Score: 1
+
+The submission contains actual code that supports the "Ours" explanation-based critical-state reset path and measures cumulative reward throughout the refinement process using monitoring and evaluation logging. Some hyperparameter/configuration issues exist, but they do not negate the presence of the requested reward-measurement implementation.
+2026-09-03 11:10:53 [info     ] model response: # Expectations
+
+The paper's Experiment III (Section 4.2/4.3, Table 1) evaluates the downstream refining process when critical states are identified by different explanation methods: Random, StateMask, and "Ours."
+
+For the MuJoCo environments and the "Ours" explanation method, I expect the submitted code to:
+
+1. Provide a refinement loop that uses the mask network / "Ours" explanation to select critical states as refinement reset states.
+2. During that refinement loop, periodically measure and record cumulative reward, either from training rollouts or from separate evaluation rollouts.
+3. Log or store those rewards so that the refinement performance can be inspected over time.
+
+Concretely, I would look for:
+- An environment wrapper that resets to mask-identified critical states.
+- A monitoring wrapper such as `VecMonitor`, `Monitor`, or an `EvalCallback`.
+- Code that repeatedly gathers episode returns throughout `model.learn(...)`, not just at the end.
+
+# Reality
+
+The relevant code is in `Refine_mujoco/`.
+
+`Refine_mujoco/retrain.py`:
+- Parses `--random_sampling` with default `False`, meaning the retraining environment uses the non-random "Ours" explanation path by default.
+- Builds the training environment from `make_retrain_env(...)` and wraps it with `VecMonitor`.
+- Builds a separate evaluation environment and wraps it with `VecMonitor`.
+- Adds `EvalCallback` and `CustomCallback`.
+- Calls `model.learn(total_timesteps=..., callback=eval_callback)`.
+
+`Refine_mujoco/environment.py`:
+- `RetrainEnv.reset()` calls `gen_one_traj(...)`.
+- When `random_sampling=False`, it selects the critical state by:
+  ```python
+  start_idx = np.argmax(traj.mask_probs)
+  ```
+  which corresponds to the "Ours" explanation method path, as opposed to random critical-state selection.
+
+`Refine_mujoco/utils.py`:
+- `gen_one_traj(...)` loads both the mask network and the pretrained agent, rolls out a trajectory, records `mask_probs`, states, rewards, and returns a trajectory object.
+
+`Refine_mujoco/callback.py`:
+- `CustomCallback` reads monitor logs and computes/logs `train/mean_reward`, which is a form of cumulative reward tracking throughout training.
+
+`Refine_mujoco/retrain.py` also wires `EvalCallback`, which evaluates and stores the best model and logs evaluation returns during refinement.
+
+So the submission does contain code that, when using the "Ours" explanation-based reset path, monitors and records episode rewards throughout refinement.
+
+There are some implementation concerns outside this specific criterion:
+- `retrain.sh` sets `--go_prob 1` and `--bonus_scale 0`. Given the reset logic `if np.random.rand() > self.p`, `p=1` would actually disable the critical-state/go-explore resets, and `bonus_scale=0` disables the RND bonus. So the provided shell script may not exercise the intended "Ours" refinement configuration even though the code supports it for other values.
+- The file `Refine_mujoco/monitor.py` defines a custom `VecMonitor`, but `retrain.py` imports Stable-Baselines3's `VecMonitor`, so the custom file is not actually used.
+
+However, the criterion is specifically about whether code has been implemented for measuring cumulative reward throughout refinement in the "Ours" path, and that code is present in `retrain.py` via `VecMonitor`, `EvalCallback`, and `CustomCallback`.
+
+# Score
+
+Score: 1
+
+The submission contains actual code that supports the "Ours" explanation-based critical-state reset path and measures cumulative reward throughout the refinement process using monitoring and evaluation logging. Some hyperparameter/configuration issues exist, but they do not negate the presence of the requested reward-measurement implementation.

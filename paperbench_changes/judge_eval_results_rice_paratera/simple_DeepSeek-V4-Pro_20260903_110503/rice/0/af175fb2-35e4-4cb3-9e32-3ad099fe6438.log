@@ -1,0 +1,53 @@
+2026-09-03 11:05:04 [info     ] Grading leaf: For the selfish mining environment, the mask network objective $J(\theta)$ has been implemented to match what is outlined in section 3.3, namely $J(\theta)=\min |\eta(\pi)-\eta(\bar{\pi})|$
+2026-09-03 11:05:50 [info     ] Model file selection raw output:
+Refine_selfish_mining/masknet/train.py
+Refine_selfish_mining/masknet/utils.py
+Refine_selfish_mining/baseline/blockchain_simulator/mdp_blockchain_simulator_masknet.py
+Refine_selfish_mining/masknet/replay.py
+Refine_selfish_mining/baseline/net.py
+Refine_selfish_mining/masknet/sample_mask_score.py
+Refine_selfish_mining/masknet/fidelity_score.py
+Refine_selfish_mining/baseline/blockchain_mdps/bitcoin_fee_model.py
+Refine_selfish_mining/baseline/train_ppo.py
+Refine_selfish_mining/masknet/sample_value_score.py
+2026-09-03 11:05:50 [info     ] Model file selection raw output:
+Refine_selfish_mining/masknet/train.py
+Refine_selfish_mining/masknet/utils.py
+Refine_selfish_mining/baseline/blockchain_simulator/mdp_blockchain_simulator_masknet.py
+Refine_selfish_mining/masknet/replay.py
+Refine_selfish_mining/baseline/net.py
+Refine_selfish_mining/masknet/sample_mask_score.py
+Refine_selfish_mining/masknet/fidelity_score.py
+Refine_selfish_mining/baseline/blockchain_mdps/bitcoin_fee_model.py
+Refine_selfish_mining/baseline/train_ppo.py
+Refine_selfish_mining/masknet/sample_value_score.py
+2026-09-03 11:05:50 [info     ] File /home/deepevol/deepevol/frontier-evals/project/paperbench/data/judge_eval/rice/0/submission/Refine_selfish_mining/baseline/blockchain_simulator/mdp_blockchain_simulator_masknet.py not found!
+2026-09-03 11:05:50 [info     ] File /home/deepevol/deepevol/frontier-evals/project/paperbench/data/judge_eval/rice/0/submission/Refine_selfish_mining/baseline/blockchain_simulator/mdp_blockchain_simulator_masknet.py not found!
+2026-09-03 11:06:43 [info     ] model response: # Expectations
+The criterion requires that the mask network objective \( J(\theta) = \min |\eta(\pi) - \eta(\bar{\pi})| \) (as originally used in StateMask) is implemented in the code for the selfish mining environment. The paper describes this original objective in Section 3.3, where StateMask optimizes a mask network to minimize the absolute difference in total reward between the original policy \(\pi\) and the perturbed policy \(\bar{\pi}\). The implementation should contain actual code that computes this objective and uses it to train the mask network, not just a description. Since the preceding criteria mandate that the **original StateMask** explanation method (not the proposed “Ours”) is implemented, the code must reflect the original StateMask’s objective and training procedure (e.g., using a surrogate function and prime-dual methods as described in the paper). I will look for explicit computation of \( |\eta(\pi) - \eta(\bar{\pi})| \) and optimization steps that minimize it.
+
+# Reality
+The provided files for the selfish mining mask network training are located in `masknet/train.py`, `masknet/utils.py`, and related files.  
+- `masknet/train.py` uses PPO to train a mask network. The environment `MDPBlockchainSimulatorMaskNet` is used, but the reward function is not explicitly shown; the training loop is a standard PPO setup.  
+- The paper clearly states that the original StateMask “carefully designs a surrogate function and utilize the prime-dual methods to optimize the \(\tilde{\pi}\)” and that the proposed “Ours” reformulates the objective to \(J(\theta) = \max \eta(\bar{\pi})\) and uses vanilla PPO with a reward bonus.  
+- The code in `masknet/train.py` implements the proposed method (PPO with added reward bonus), not the original StateMask objective. There is no code that computes \(|\eta(\pi) - \eta(\bar{\pi})|\) and minimizes it.  
+- No other files in the submission contain an implementation of the original StateMask objective for the selfish mining environment.  
+
+Therefore, the original objective \(J(\theta) = \min |\eta(\pi) - \eta(\bar{\pi})|\) is not implemented.
+
+# Score
+The criterion is not met. **Score: 0**
+2026-09-03 11:06:43 [info     ] model response: # Expectations
+The criterion requires that the mask network objective \( J(\theta) = \min |\eta(\pi) - \eta(\bar{\pi})| \) (as originally used in StateMask) is implemented in the code for the selfish mining environment. The paper describes this original objective in Section 3.3, where StateMask optimizes a mask network to minimize the absolute difference in total reward between the original policy \(\pi\) and the perturbed policy \(\bar{\pi}\). The implementation should contain actual code that computes this objective and uses it to train the mask network, not just a description. Since the preceding criteria mandate that the **original StateMask** explanation method (not the proposed “Ours”) is implemented, the code must reflect the original StateMask’s objective and training procedure (e.g., using a surrogate function and prime-dual methods as described in the paper). I will look for explicit computation of \( |\eta(\pi) - \eta(\bar{\pi})| \) and optimization steps that minimize it.
+
+# Reality
+The provided files for the selfish mining mask network training are located in `masknet/train.py`, `masknet/utils.py`, and related files.  
+- `masknet/train.py` uses PPO to train a mask network. The environment `MDPBlockchainSimulatorMaskNet` is used, but the reward function is not explicitly shown; the training loop is a standard PPO setup.  
+- The paper clearly states that the original StateMask “carefully designs a surrogate function and utilize the prime-dual methods to optimize the \(\tilde{\pi}\)” and that the proposed “Ours” reformulates the objective to \(J(\theta) = \max \eta(\bar{\pi})\) and uses vanilla PPO with a reward bonus.  
+- The code in `masknet/train.py` implements the proposed method (PPO with added reward bonus), not the original StateMask objective. There is no code that computes \(|\eta(\pi) - \eta(\bar{\pi})|\) and minimizes it.  
+- No other files in the submission contain an implementation of the original StateMask objective for the selfish mining environment.  
+
+Therefore, the original objective \(J(\theta) = \min |\eta(\pi) - \eta(\bar{\pi})|\) is not implemented.
+
+# Score
+The criterion is not met. **Score: 0**

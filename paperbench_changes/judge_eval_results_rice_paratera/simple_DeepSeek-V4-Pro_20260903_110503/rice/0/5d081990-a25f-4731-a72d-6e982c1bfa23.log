@@ -1,0 +1,71 @@
+2026-09-03 11:05:04 [info     ] Grading leaf: For the network defence environment, the optimization of the mask network objective now uses PPO rather than the prime-dual method
+2026-09-03 11:05:22 [info     ] Model file selection raw output:
+Refine_cage_challenge/ppo_train.py
+Refine_cage_challenge/Agents/PPOAgent_mask.py
+Refine_cage_challenge/rollout_mask.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_mask.py
+Refine_cage_challenge/sample_mask_score.py
+Refine_cage_challenge/replay.py
+Refine_cage_challenge/retrain.py
+Refine_cage_challenge/rollout_ppo.py
+Refine_cage_challenge/Agents/PPOAgent.py
+Refine_cage_challenge/readme.md
+2026-09-03 11:05:22 [info     ] Model file selection raw output:
+Refine_cage_challenge/ppo_train.py
+Refine_cage_challenge/Agents/PPOAgent_mask.py
+Refine_cage_challenge/rollout_mask.py
+Refine_cage_challenge/Wrappers/ChallengeWrapper2_mask.py
+Refine_cage_challenge/sample_mask_score.py
+Refine_cage_challenge/replay.py
+Refine_cage_challenge/retrain.py
+Refine_cage_challenge/rollout_ppo.py
+Refine_cage_challenge/Agents/PPOAgent.py
+Refine_cage_challenge/readme.md
+2026-09-03 11:06:14 [info     ] model response: # Expectations
+The paper describes an optimized mask network training method for the "Ours" explanation, which replaces the prime-dual optimization used in the original StateMask with a vanilla PPO algorithm. In the network defence environment (CAGE Challenge 2), the mask network is trained to maximise the expected total reward of the perturbed agent, using a reward bonus for blinding: $R'(s_t, a_t) = R(s_t, a_t) + \alpha a_t^m$. The training loop (Algorithm 1) collects trajectories with the mask network and target agent, then updates the mask network parameters using PPO. I expect to see:
+
+- A mask network implemented as an actor-critic with a 2-output action space (mask or not mask).
+- The mask network's policy is trained using PPO clipped surrogate loss, not the prime-dual method.
+- The reward used for training includes the environment reward plus an additional bonus for masking.
+- The training loop calls a PPO update (e.g., a `train()` method that implements the PPO algorithm) on the mask network.
+
+# Reality
+The submission includes several files for the network defence environment. The most relevant file is `Refine_cage_challenge/Agents/PPOAgent_mask.py`, which defines the mask agent class `PPOAgent_mask`. This class contains:
+
+- A policy network (`self.policy`) with `n_actions_mask = 2` (mask action 0 or 1), implemented as an `ActorCritic`.
+- A `train()` method that implements the standard PPO update: it computes discounted returns, advantages, and then optimises the clipped surrogate objective (surr1, surr2) and critic loss, exactly as described in PPO.
+- The `get_action()` method returns an action for the combined agent (baseline or random) and an additional reward `self.lazy_reward` when the mask action is 1 (blinding). This additional reward is later added to the environment reward during rollout (e.g., in `rollout_mask.py`), so the agent's reward effectively becomes $R_t + \alpha a_t^m$.
+- The `train()` method uses the stored rewards (which include the bonus) to compute advantages and update the mask network parameters via PPO.
+
+No prime-dual method is used anywhere; the entire training logic relies on the PPO clipped loss.
+
+Thus, the implementation of the mask network optimization for the network defence environment correctly uses PPO, as required by the criterion.
+
+# Score
+1
+
+The code in `PPOAgent_mask.py` provides a correct implementation of training the mask network objective using PPO rather than the prime-dual method. The PPO training step is present, the reward bonus for blinding is incorporated, and no prime-dual optimization is employed. The criterion is satisfied.
+2026-09-03 11:06:14 [info     ] model response: # Expectations
+The paper describes an optimized mask network training method for the "Ours" explanation, which replaces the prime-dual optimization used in the original StateMask with a vanilla PPO algorithm. In the network defence environment (CAGE Challenge 2), the mask network is trained to maximise the expected total reward of the perturbed agent, using a reward bonus for blinding: $R'(s_t, a_t) = R(s_t, a_t) + \alpha a_t^m$. The training loop (Algorithm 1) collects trajectories with the mask network and target agent, then updates the mask network parameters using PPO. I expect to see:
+
+- A mask network implemented as an actor-critic with a 2-output action space (mask or not mask).
+- The mask network's policy is trained using PPO clipped surrogate loss, not the prime-dual method.
+- The reward used for training includes the environment reward plus an additional bonus for masking.
+- The training loop calls a PPO update (e.g., a `train()` method that implements the PPO algorithm) on the mask network.
+
+# Reality
+The submission includes several files for the network defence environment. The most relevant file is `Refine_cage_challenge/Agents/PPOAgent_mask.py`, which defines the mask agent class `PPOAgent_mask`. This class contains:
+
+- A policy network (`self.policy`) with `n_actions_mask = 2` (mask action 0 or 1), implemented as an `ActorCritic`.
+- A `train()` method that implements the standard PPO update: it computes discounted returns, advantages, and then optimises the clipped surrogate objective (surr1, surr2) and critic loss, exactly as described in PPO.
+- The `get_action()` method returns an action for the combined agent (baseline or random) and an additional reward `self.lazy_reward` when the mask action is 1 (blinding). This additional reward is later added to the environment reward during rollout (e.g., in `rollout_mask.py`), so the agent's reward effectively becomes $R_t + \alpha a_t^m$.
+- The `train()` method uses the stored rewards (which include the bonus) to compute advantages and update the mask network parameters via PPO.
+
+No prime-dual method is used anywhere; the entire training logic relies on the PPO clipped loss.
+
+Thus, the implementation of the mask network optimization for the network defence environment correctly uses PPO, as required by the criterion.
+
+# Score
+1
+
+The code in `PPOAgent_mask.py` provides a correct implementation of training the mask network objective using PPO rather than the prime-dual method. The PPO training step is present, the reward bonus for blinding is incorporated, and no prime-dual optimization is employed. The criterion is satisfied.

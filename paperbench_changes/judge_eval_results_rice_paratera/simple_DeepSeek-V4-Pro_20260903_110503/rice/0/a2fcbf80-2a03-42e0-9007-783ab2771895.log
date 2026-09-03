@@ -1,0 +1,91 @@
+2026-09-03 11:06:48 [info     ] Grading leaf: For the non-sparse MuJoCo environments, for the "Ours" explanation method, code for measuring training time throughout training as outlined in Appendix C.3 and Table 4 has been implemented.
+2026-09-03 11:07:17 [info     ] Model file selection raw output:
+Refine_mujoco/masknet/train.py
+Refine_mujoco/masknet/cus_PPO.py
+Refine_mujoco/masknet/environment.py
+Refine_mujoco/utils.py
+Refine_mujoco/monitor.py
+Refine_mujoco/masknet/gen_fid.py
+Refine_mujoco/masknet/fid_test.py
+Refine_mujoco/callback.py
+Refine_mujoco/retrain.sh
+Refine_mujoco/masknet/readme.md
+2026-09-03 11:07:17 [info     ] Model file selection raw output:
+Refine_mujoco/masknet/train.py
+Refine_mujoco/masknet/cus_PPO.py
+Refine_mujoco/masknet/environment.py
+Refine_mujoco/utils.py
+Refine_mujoco/monitor.py
+Refine_mujoco/masknet/gen_fid.py
+Refine_mujoco/masknet/fid_test.py
+Refine_mujoco/callback.py
+Refine_mujoco/retrain.sh
+Refine_mujoco/masknet/readme.md
+2026-09-03 11:08:15 [info     ] model response: # Expectations
+
+The criterion requires that, for the non-sparse MuJoCo environments (Hopper, Walker2d, Reacher, HalfCheetah), the submission contains actual code that measures training time while training the “Ours” explanation method. This corresponds to Appendix C.3 and Table 4, where the paper reports the number of seconds required to train the mask network with a fixed number of samples.
+
+A correct implementation would include explicit timing logic around the mask-network training loop, such as:
+
+- recording a start time before `model.learn(...)`,
+- recording an end time after training,
+- computing and logging/printing the elapsed wall-clock time,
+- or a custom training callback that records elapsed training time per update/interval.
+
+I would expect this code to appear in the mask-network training script, most likely `Refine_mujoco/masknet/train.py` or in a supporting training/callback module.
+
+# Reality
+
+I inspected the provided files.
+
+- `Refine_mujoco/masknet/train.py` trains the mask network with `PPO` and `model.learn(total_timesteps=3e5, callback=callback)`. However, it does not import `time`, does not create any timing variables, does not compute elapsed time, and does not log or print training time. It only defines the environment, callbacks, model, and saves the trained model.
+
+- `Refine_mujoco/masknet/cus_PPO.py` is a custom PPO implementation for training the mask network. It overrides `train()` but contains no timing measurement. It does not record wall-clock training time.
+
+- `Refine_mujoco/callback.py` defines a custom callback, but it only logs mean reward from loaded monitor results. It contains no timing instrumentation.
+
+- `Refine_mujoco/monitor.py` does use `time.time()` and records episode time `t`, but this is part of the `VecMonitor` episode monitoring, not measurement of mask-network training time as required by Table 4.
+
+- `Refine_mujoco/masknet/gen_fid.py` and `Refine_mujoco/masknet/fid_test.py` are concerned with explanation fidelity evaluation, not training-time measurement.
+
+- `Refine_mujoco/retrain.sh` launches refinement, not mask-network training, and does not measure training time.
+
+Thus, I find no explicit implementation for measuring training time throughout mask-network training for the “Ours” explanation method. While Stable Baselines3 may internally log some time-related metrics during `learn`, the submission itself does not contain code that explicitly measures, records, or reports the training time needed for Table 4.
+
+# Score
+
+0
+2026-09-03 11:08:15 [info     ] model response: # Expectations
+
+The criterion requires that, for the non-sparse MuJoCo environments (Hopper, Walker2d, Reacher, HalfCheetah), the submission contains actual code that measures training time while training the “Ours” explanation method. This corresponds to Appendix C.3 and Table 4, where the paper reports the number of seconds required to train the mask network with a fixed number of samples.
+
+A correct implementation would include explicit timing logic around the mask-network training loop, such as:
+
+- recording a start time before `model.learn(...)`,
+- recording an end time after training,
+- computing and logging/printing the elapsed wall-clock time,
+- or a custom training callback that records elapsed training time per update/interval.
+
+I would expect this code to appear in the mask-network training script, most likely `Refine_mujoco/masknet/train.py` or in a supporting training/callback module.
+
+# Reality
+
+I inspected the provided files.
+
+- `Refine_mujoco/masknet/train.py` trains the mask network with `PPO` and `model.learn(total_timesteps=3e5, callback=callback)`. However, it does not import `time`, does not create any timing variables, does not compute elapsed time, and does not log or print training time. It only defines the environment, callbacks, model, and saves the trained model.
+
+- `Refine_mujoco/masknet/cus_PPO.py` is a custom PPO implementation for training the mask network. It overrides `train()` but contains no timing measurement. It does not record wall-clock training time.
+
+- `Refine_mujoco/callback.py` defines a custom callback, but it only logs mean reward from loaded monitor results. It contains no timing instrumentation.
+
+- `Refine_mujoco/monitor.py` does use `time.time()` and records episode time `t`, but this is part of the `VecMonitor` episode monitoring, not measurement of mask-network training time as required by Table 4.
+
+- `Refine_mujoco/masknet/gen_fid.py` and `Refine_mujoco/masknet/fid_test.py` are concerned with explanation fidelity evaluation, not training-time measurement.
+
+- `Refine_mujoco/retrain.sh` launches refinement, not mask-network training, and does not measure training time.
+
+Thus, I find no explicit implementation for measuring training time throughout mask-network training for the “Ours” explanation method. While Stable Baselines3 may internally log some time-related metrics during `learn`, the submission itself does not contain code that explicitly measures, records, or reports the training time needed for Table 4.
+
+# Score
+
+0

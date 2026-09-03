@@ -1,0 +1,113 @@
+2026-09-03 11:07:37 [info     ] Grading leaf: For the autonomous driving environment, for the "Ours" refinement method, the optimized StateMask ("Ours") explanation method proposed in the paper is used as the explanation method.
+2026-09-03 11:08:44 [info     ] Model file selection raw output:
+Refine_auto_drive/retrain.py
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/readme.md
+README.md
+2026-09-03 11:08:44 [info     ] Model file selection raw output:
+Refine_auto_drive/retrain.py
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/readme.md
+README.md
+2026-09-03 11:09:27 [info     ] model response: # Expectations
+
+The paper proposes an optimized version of StateMask as the explanation method (referred to as "Ours" explanation). According to Section 3.3 and Algorithm 1, the key differences from the original StateMask are:
+
+- The objective function is reformulated to maximize the perturbed agent's total reward (since Theorem 3.3 guarantees it is upper bounded by the original policy's reward).
+- An extra reward bonus \( \alpha a_t^m \) is added to encourage masking, avoiding the trivial solution of never masking.
+- The mask network is trained using PPO with this modified reward.
+
+Thus, for the "Ours" refinement method in the autonomous driving environment, the explanation method used must be this optimized StateMask: the mask network that outputs importance scores should have been trained with the reward bonus, and the importance score corresponds to the probability of outputting 0 (not masking).
+
+In the submission, I need to verify:
+1. The mask network training code implements the reward bonus and the proper objective.
+2. The refinement code for autonomous driving uses a mask network trained in this way (i.e., loads the checkpoint from such training) to identify critical states for the mixed initial distribution.
+
+# Reality
+
+The submission contains the following relevant files for the autonomous driving environment:
+
+- `Refine_auto_drive/custom_masknet_env.py`: This defines the environment wrapper for training the mask network. The `DriveEnvWrapper` class blends the target agent's actions with random actions based on the mask network's output (0 or 1). Crucially, it adds a reward bonus:
+  ```python
+  self.lamb = 1e-4
+  ...
+  if not self.bonus_last:
+      rew += self.lamb * mask
+  ...
+  if done:
+      ...
+      if self.bonus_last:
+          rew += self.lamb * self.accu_mask
+  ```
+  This matches the paper's \( \alpha a_t^m \) bonus. The reward bonus is added when the mask network outputs 1 (mask). The mask network is trained with PPO on this modified reward (maximizing the total reward of the perturbed agent), consistent with the reformulated objective.
+
+- `Refine_auto_drive/train_masknet.py`: This script trains the mask network using the `DriveEnvWrapper` and PPO policy. The mask network policy has `action_shape=2` (binary), and the training uses the same PPO algorithm. The reward bonus is embedded in the environment wrapper, so the mask network is trained with the "Ours" explanation method.
+
+- `Refine_auto_drive/gen_retrain_traj.py`: This file is used during refinement to generate a trajectory and compute importance scores using the trained mask network. It loads the mask network checkpoint from `'/home/zck7060/DI-drive/masknet_True_0.0001/ckpt/iteration_10000.pth.tar'`. The importance score is the softmax probability of output 0 (not masking). This indicates that the mask network is the one trained with the reward bonus, i.e., the "Ours" explanation method.
+
+- `Refine_auto_drive/retrain_env.py`: The `CustomWrapper` reset method uses `gen_one_traj` to obtain the trajectory and importance scores, then selects the starting state (critical state) based on the mask network's probability. This is the core of the "Ours" refinement method, and it relies on the mask network trained with the "Ours" explanation.
+
+Thus, the code correctly implements the "Ours" explanation method and uses it in the autonomous driving refinement.
+
+# Score
+
+1
+
+The submission meets the criterion: the autonomous driving "Ours" refinement method uses the optimized StateMask explanation method (with reward bonus) as described in the paper.
+2026-09-03 11:09:27 [info     ] model response: # Expectations
+
+The paper proposes an optimized version of StateMask as the explanation method (referred to as "Ours" explanation). According to Section 3.3 and Algorithm 1, the key differences from the original StateMask are:
+
+- The objective function is reformulated to maximize the perturbed agent's total reward (since Theorem 3.3 guarantees it is upper bounded by the original policy's reward).
+- An extra reward bonus \( \alpha a_t^m \) is added to encourage masking, avoiding the trivial solution of never masking.
+- The mask network is trained using PPO with this modified reward.
+
+Thus, for the "Ours" refinement method in the autonomous driving environment, the explanation method used must be this optimized StateMask: the mask network that outputs importance scores should have been trained with the reward bonus, and the importance score corresponds to the probability of outputting 0 (not masking).
+
+In the submission, I need to verify:
+1. The mask network training code implements the reward bonus and the proper objective.
+2. The refinement code for autonomous driving uses a mask network trained in this way (i.e., loads the checkpoint from such training) to identify critical states for the mixed initial distribution.
+
+# Reality
+
+The submission contains the following relevant files for the autonomous driving environment:
+
+- `Refine_auto_drive/custom_masknet_env.py`: This defines the environment wrapper for training the mask network. The `DriveEnvWrapper` class blends the target agent's actions with random actions based on the mask network's output (0 or 1). Crucially, it adds a reward bonus:
+  ```python
+  self.lamb = 1e-4
+  ...
+  if not self.bonus_last:
+      rew += self.lamb * mask
+  ...
+  if done:
+      ...
+      if self.bonus_last:
+          rew += self.lamb * self.accu_mask
+  ```
+  This matches the paper's \( \alpha a_t^m \) bonus. The reward bonus is added when the mask network outputs 1 (mask). The mask network is trained with PPO on this modified reward (maximizing the total reward of the perturbed agent), consistent with the reformulated objective.
+
+- `Refine_auto_drive/train_masknet.py`: This script trains the mask network using the `DriveEnvWrapper` and PPO policy. The mask network policy has `action_shape=2` (binary), and the training uses the same PPO algorithm. The reward bonus is embedded in the environment wrapper, so the mask network is trained with the "Ours" explanation method.
+
+- `Refine_auto_drive/gen_retrain_traj.py`: This file is used during refinement to generate a trajectory and compute importance scores using the trained mask network. It loads the mask network checkpoint from `'/home/zck7060/DI-drive/masknet_True_0.0001/ckpt/iteration_10000.pth.tar'`. The importance score is the softmax probability of output 0 (not masking). This indicates that the mask network is the one trained with the reward bonus, i.e., the "Ours" explanation method.
+
+- `Refine_auto_drive/retrain_env.py`: The `CustomWrapper` reset method uses `gen_one_traj` to obtain the trajectory and importance scores, then selects the starting state (critical state) based on the mask network's probability. This is the core of the "Ours" refinement method, and it relies on the mask network trained with the "Ours" explanation.
+
+Thus, the code correctly implements the "Ours" explanation method and uses it in the autonomous driving refinement.
+
+# Score
+
+1
+
+The submission meets the criterion: the autonomous driving "Ours" refinement method uses the optimized StateMask explanation method (with reward bonus) as described in the paper.

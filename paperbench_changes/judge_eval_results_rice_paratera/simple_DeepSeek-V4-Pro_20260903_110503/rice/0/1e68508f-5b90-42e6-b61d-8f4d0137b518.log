@@ -1,0 +1,95 @@
+2026-09-03 11:05:04 [info     ] Grading leaf: For the autonomous driving environment, the explanation method implementation relies on a mask network that outputs "0" for critical steps and "1" otherwise
+2026-09-03 11:05:36 [info     ] Model file selection raw output:
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/retrain.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/readme.md
+Refine_mujoco/masknet/train.py
+2026-09-03 11:05:36 [info     ] Model file selection raw output:
+Refine_auto_drive/train_masknet.py
+Refine_auto_drive/custom_masknet_env.py
+Refine_auto_drive/retrain.py
+Refine_auto_drive/gen_retrain_traj.py
+Refine_auto_drive/retrain_env.py
+Refine_auto_drive/learner.py
+Refine_auto_drive/rnd_reward_model.py
+Refine_auto_drive/train_baseline.py
+Refine_auto_drive/readme.md
+Refine_mujoco/masknet/train.py
+2026-09-03 11:06:23 [info     ] model response: # Expectations
+
+The criterion is about the implementation of the explanation method for the autonomous driving environment. According to the paper (Section 3.3), the mask network outputs a binary action \(a_t^m\), where 
+- \(a_t^m = 0\) means the step is **critical** (the agent’s original action is kept), and 
+- \(a_t^m = 1\) means the step is **non‑critical** (the agent’s action is replaced by a random action).  
+Thus, the mask net should output 0 for critical steps and 1 otherwise. The code must actually implement this logic in the environment wrapper that applies the mask during the explanation training loop.
+
+I will look for the following in the submission:
+- A discrete action space for the mask network with two possible values (0 and 1).
+- The step function of the environment wrapper that, given the mask action, either uses the agent’s action (if mask=0) or a random action (if mask=1).
+- This wrapper must be used for training the mask network in the autonomous driving environment.
+
+# Reality
+
+The relevant files for the autonomous driving environment are `Refine_auto_drive/train_masknet.py` and `Refine_auto_drive/custom_masknet_env.py`.
+
+- In `train_masknet.py`, the mask network is defined as a PPOPolicy with `action_space='discrete'` and `action_shape=2` (line in the config: `action_shape=2` under `policy.model`). This gives a discrete action space with two possible actions, which will be 0 and 1.
+
+- The custom environment wrapper `DriveEnvWrapper` in `custom_masknet_env.py` implements the `step` method. It obtains the mask action from the input `action` (which is the output of the mask network, a single integer). The code does:
+  ```python
+  if action[i] == 1:
+      real_actions.append(np.random.choice(5))
+      mask = 1
+  else:
+      real_actions.append(agent_actions[i])
+      mask = 0
+  ```
+  So when the mask network outputs `1`, a random action is taken; when it outputs `0`, the agent’s original action is taken. This matches the paper’s description: `0` preserves the agent’s action (critical step), `1` replaces it (non‑critical step).
+
+- The mask training script (`train_masknet.py`) uses this wrapper (`DriveEnvWrapper`) for the environment, loads the pre‑trained agent policy, and trains the mask network. The mask network is thus trained to decide which steps to blind, with the interpretation that outputting 0 corresponds to keeping the original action (critical) and 1 to randomizing.
+
+Therefore, the implementation correctly relies on a mask network that outputs 0 for critical steps and 1 otherwise.
+
+# Score
+
+The criterion is met. The implementation in the autonomous driving environment uses a mask network that outputs 0 for critical steps and 1 for non‑critical steps, exactly as described in the paper. Score: **1**
+2026-09-03 11:06:23 [info     ] model response: # Expectations
+
+The criterion is about the implementation of the explanation method for the autonomous driving environment. According to the paper (Section 3.3), the mask network outputs a binary action \(a_t^m\), where 
+- \(a_t^m = 0\) means the step is **critical** (the agent’s original action is kept), and 
+- \(a_t^m = 1\) means the step is **non‑critical** (the agent’s action is replaced by a random action).  
+Thus, the mask net should output 0 for critical steps and 1 otherwise. The code must actually implement this logic in the environment wrapper that applies the mask during the explanation training loop.
+
+I will look for the following in the submission:
+- A discrete action space for the mask network with two possible values (0 and 1).
+- The step function of the environment wrapper that, given the mask action, either uses the agent’s action (if mask=0) or a random action (if mask=1).
+- This wrapper must be used for training the mask network in the autonomous driving environment.
+
+# Reality
+
+The relevant files for the autonomous driving environment are `Refine_auto_drive/train_masknet.py` and `Refine_auto_drive/custom_masknet_env.py`.
+
+- In `train_masknet.py`, the mask network is defined as a PPOPolicy with `action_space='discrete'` and `action_shape=2` (line in the config: `action_shape=2` under `policy.model`). This gives a discrete action space with two possible actions, which will be 0 and 1.
+
+- The custom environment wrapper `DriveEnvWrapper` in `custom_masknet_env.py` implements the `step` method. It obtains the mask action from the input `action` (which is the output of the mask network, a single integer). The code does:
+  ```python
+  if action[i] == 1:
+      real_actions.append(np.random.choice(5))
+      mask = 1
+  else:
+      real_actions.append(agent_actions[i])
+      mask = 0
+  ```
+  So when the mask network outputs `1`, a random action is taken; when it outputs `0`, the agent’s original action is taken. This matches the paper’s description: `0` preserves the agent’s action (critical step), `1` replaces it (non‑critical step).
+
+- The mask training script (`train_masknet.py`) uses this wrapper (`DriveEnvWrapper`) for the environment, loads the pre‑trained agent policy, and trains the mask network. The mask network is thus trained to decide which steps to blind, with the interpretation that outputting 0 corresponds to keeping the original action (critical) and 1 to randomizing.
+
+Therefore, the implementation correctly relies on a mask network that outputs 0 for critical steps and 1 otherwise.
+
+# Score
+
+The criterion is met. The implementation in the autonomous driving environment uses a mask network that outputs 0 for critical steps and 1 for non‑critical steps, exactly as described in the paper. Score: **1**

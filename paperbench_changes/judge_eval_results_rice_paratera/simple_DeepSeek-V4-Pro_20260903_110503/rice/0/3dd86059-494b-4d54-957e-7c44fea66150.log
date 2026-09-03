@@ -1,0 +1,87 @@
+2026-09-03 11:05:04 [info     ] Grading leaf: Code for pretraining a Soft Actor Critic (SAC) network agent on the dense MuJoCo Hopper environment has been implemented
+2026-09-03 11:05:43 [info     ] Model file selection raw output:
+Refine_mujoco/baseline/train.py
+Refine_mujoco/environment.py
+Refine_mujoco/models.py
+Refine_mujoco/base_class.py
+Refine_mujoco/PPO.py
+Refine_mujoco/OnPolicyAlgorithm.py
+Refine_mujoco/utils.py
+Refine_mujoco/callback.py
+Refine_mujoco/baseline/callback.py
+Refine_mujoco/baseline/readme.md
+2026-09-03 11:05:43 [info     ] Model file selection raw output:
+Refine_mujoco/baseline/train.py
+Refine_mujoco/environment.py
+Refine_mujoco/models.py
+Refine_mujoco/base_class.py
+Refine_mujoco/PPO.py
+Refine_mujoco/OnPolicyAlgorithm.py
+Refine_mujoco/utils.py
+Refine_mujoco/callback.py
+Refine_mujoco/baseline/callback.py
+Refine_mujoco/baseline/readme.md
+2026-09-03 11:07:07 [info     ] model response: # Expectations
+
+The paper's Experiment IV (Sections 4.2 and 4.3) describes refining a pre-trained SAC agent in the dense Hopper environment. Appendix C.1 states that the authors used Stable Baselines3's default `MlpPolicy` for SAC networks in MuJoCo tasks.
+
+For this criterion, I expect to see actual code that:
+
+- Uses an SAC implementation, e.g. `stable_baselines3.SAC`.
+- Instantiates the dense MuJoCo `Hopper-v3` environment.
+- Trains that SAC agent for a meaningful number of timesteps.
+- Saves the resulting pretrained SAC model or otherwise makes it available for downstream refining experiments.
+
+Mere text or comments saying SAC should be trained would not be sufficient.
+
+# Reality
+
+Looking through the provided files:
+
+- `Refine_mujoco/baseline/train.py` trains an agent on `Hopper-v3`, but it imports and uses `from stable_baselines3 import PPO` and creates `PPO("MlpPolicy", env, ...)`, then calls `model.learn(total_timesteps=1e6, ...)` and saves `"ppo_hopper"`. This is PPO pretraining, not SAC pretraining.
+
+- `Refine_mujoco/PPO.py` implements a custom PPO subclass based on `OnPolicyAlgorithm`. Again, this is PPO-specific code.
+
+- `Refine_mujoco/OnPolicyAlgorithm.py` implements the on-policy training loop and also only references PPO-style policy training.
+
+- `Refine_mujoco/base_class.py` is a modified Stable Baselines3 base class. It does not contain SAC implementation.
+
+- `Refine_mujoco/models.py`, `environment.py`, `utils.py`, and `callback.py` are all oriented around PPO, mask networks, trajectory generation, or RND bonuses. They do not implement SAC training.
+
+I do not find any import or instantiation of `stable_baselines3.SAC`, and there is no off-policy SAC algorithm implementation among the provided files. Therefore, the submission does not contain code for pretraining an SAC network agent on dense MuJoCo Hopper.
+
+# Score
+
+0
+2026-09-03 11:07:07 [info     ] model response: # Expectations
+
+The paper's Experiment IV (Sections 4.2 and 4.3) describes refining a pre-trained SAC agent in the dense Hopper environment. Appendix C.1 states that the authors used Stable Baselines3's default `MlpPolicy` for SAC networks in MuJoCo tasks.
+
+For this criterion, I expect to see actual code that:
+
+- Uses an SAC implementation, e.g. `stable_baselines3.SAC`.
+- Instantiates the dense MuJoCo `Hopper-v3` environment.
+- Trains that SAC agent for a meaningful number of timesteps.
+- Saves the resulting pretrained SAC model or otherwise makes it available for downstream refining experiments.
+
+Mere text or comments saying SAC should be trained would not be sufficient.
+
+# Reality
+
+Looking through the provided files:
+
+- `Refine_mujoco/baseline/train.py` trains an agent on `Hopper-v3`, but it imports and uses `from stable_baselines3 import PPO` and creates `PPO("MlpPolicy", env, ...)`, then calls `model.learn(total_timesteps=1e6, ...)` and saves `"ppo_hopper"`. This is PPO pretraining, not SAC pretraining.
+
+- `Refine_mujoco/PPO.py` implements a custom PPO subclass based on `OnPolicyAlgorithm`. Again, this is PPO-specific code.
+
+- `Refine_mujoco/OnPolicyAlgorithm.py` implements the on-policy training loop and also only references PPO-style policy training.
+
+- `Refine_mujoco/base_class.py` is a modified Stable Baselines3 base class. It does not contain SAC implementation.
+
+- `Refine_mujoco/models.py`, `environment.py`, `utils.py`, and `callback.py` are all oriented around PPO, mask networks, trajectory generation, or RND bonuses. They do not implement SAC training.
+
+I do not find any import or instantiation of `stable_baselines3.SAC`, and there is no off-policy SAC algorithm implementation among the provided files. Therefore, the submission does not contain code for pretraining an SAC network agent on dense MuJoCo Hopper.
+
+# Score
+
+0
