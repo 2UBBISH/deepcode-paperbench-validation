@@ -114,7 +114,10 @@ DeepCode 流水线里同一模式的四处静默降级 —— LLM 输出超限�
 ### 3.1 前置
 
 - Linux / WSL2,Python 3.11+,`uv`,`git`,`curl`,Docker(判分时起沙箱);不需要 git-lfs,论文资产由 `setup.sh` 从 GitHub 直链按固定 commit 下载
-- 两个 OpenAI 兼容 API key:一个给 DeepCode 底座,一个给裁判(可同一个)。我们用 SiliconFlow 与 Paratera 的 DeepSeek-V4-Pro
+- 一个 OpenAI 兼容 API key,底座与裁判共用。我们用 Paratera 的 DeepSeek-V4-Pro(历史数据里另有 SiliconFlow 的同名模型,见 §1.1)。
+  换 key 用 `bash deepcode_test/scripts/paratera_key.sh set <新key>` —— 它会先探活、再把 key 同步写进
+  `~/.deepcode/credentials.json`(底座)与 `frontier-evals/.../paperbench/.env`(裁判)两处,避免漏改一处后
+  「复现正常、判分全部 401」。另有 `check` / `add` / `list` / `next` 子命令(`next` 在当前 key 失效时自动切备用池)
 - 裸跑对照需要 Claude Code(或任何交互式编码 agent)+ 同一底座模型
 
 ### 3.2 三步
