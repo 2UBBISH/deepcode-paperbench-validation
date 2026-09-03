@@ -94,7 +94,7 @@ DeepCode 流水线里同一模式的四处静默降级 —— LLM 输出超限�
 ### 3.2 三步
 
 ```bash
-git clone <this repo> deepcode-paperbench-validation && cd deepcode-paperbench-validation
+git clone https://github.com/2UBBISH/deepcode-paperbench-validation.git && cd deepcode-paperbench-validation
 bash setup.sh          # 克隆 PaperBench@固定 commit 并打补丁、uv sync、写配置模板、设防作弊封锁
 ```
 
