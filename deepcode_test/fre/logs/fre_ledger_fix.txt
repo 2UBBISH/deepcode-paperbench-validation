@@ -23,3 +23,4 @@
 [09-03 10:57:56] 🏁 收尾链全部完成:fre 组=2026-09-02T23-45-29-GMT_run-group_direct_submission_solver rice 组=2026-09-03T01-29-00-GMT_run-group_direct_submission_solver
 [09-03 10:59:36] 🧹 判分池清空:重判副本删除(归档区有原件),rice/bare_kimi 移入 rice_graded。下次判分前需重新摆卷。
 [09-03 11:14:03] ⚖️ JudgeEval(Paratera 裁判,rice/0,178 叶)F1=0.719 vs SiliconFlow 0.685;通过率/偏向完全相同,叶级一致 84.3%(分歧 28:只SF对11/只PT对17/都错39)。差异在噪声内且样本不覆盖分歧区间 → 无法裁定 rice 翻转。结果目录 paperbench/judge_eval_results_rice_paratera/。
+[09-03 11:22:47] 📦 公开仓库已发布:https://github.com/2UBBISH/deepcode-paperbench-validation(public,4 提交,219MB,零密钥;干净克隆三轮测试:setup→fre/rice 预飞→判分 DRY 全通过)。汇报页同步更新为双裁判口径。
