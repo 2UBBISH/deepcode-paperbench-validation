@@ -241,6 +241,7 @@ PAPER=fre bash deepcode_test/scripts/run_grade.sh         # 真判,约 ¥38/份,
 | 文件 | 内容 |
 | --- | --- |
 | `deepcode_test/docs/DEEPCODE_INTERNALS.md` | **DeepCode 是怎么运转的**:11 个 Phase 的职责与产出、`task_dir` 文件合同、LLM 调用点与配置流、31 个归档 2,443 次工具调用的实证、怎么只跑前半段当前端 |
+| `deepcode_test/docs/ARCHITECTURE_v0.2_OPTIMAL.md` | **最优版架构(交接文档,自含全部事实与路径)**:度量体/复现体分离、建造顺序、每层验收、复用地图 |
 | `deepcode_test/docs/ARCHITECTURE_PROPOSAL_v0.1.md` | **下一步:自建论文复现 agent 的架构设计**(多 agent 工作流合成:AutoSOTA 研读 + 计划批评 + 3 提案 6 评审;含周末/下周计划) |
 | `deepcode_test/docs/CONCLUSIONS.md` | 总结论、可信度五项核验、逐份失分表、§⑦ 裁判依赖 |
 | `deepcode_test/docs/FINDING_judge_serving_dependence.md` | 双裁判对照与诊断(本项目最重要的发现) |
