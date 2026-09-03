@@ -157,6 +157,33 @@ PAPER=fre bash deepcode_test/scripts/run_grade.sh         # 真判,约 ¥38/份,
 
 ---
 
+## 3.6 上传了什么、没上传什么(以及为什么)
+
+本仓库**不整份分发 PaperBench**,而是「固定 commit + 补丁 + 我们自己的产物」。`setup.sh` 会按 `patches/UPSTREAM_BASE.txt` 里的 commit 稀疏检出上游并自动打补丁,复现性不受影响。
+
+**已上传**
+
+| 内容 | 位置 | 说明 |
+| --- | --- | --- |
+| 判分树 rubric | `paperbench_changes/rubrics/{fre,rice}.rubric.json` | 上游原样复制,fre 437 叶 / rice 361 叶,共约 750KB。**仅供事后核对失分分析,严禁进入复现流水线** —— 见该目录 README |
+| PaperBench 改动 | `patches/paperbench_local_changes.patch` + `paperbench_changes/modified_files/` | 3 个文件、+29/−6 行,可直接对读 |
+| 我们新增的文件 | `paperbench_changes/experiments/splits/`、`analyze_judge_eval_bias.py` | fre/rice 单篇 split、裁判偏差分析脚本 |
+| JudgeEval 完整结果 | `paperbench_changes/judge_eval_results_rice{,_paratera}/` | 两个 serving 的原始判分(F1 0.685 / 0.719) |
+| DeepCode 修改版全源码 | `DeepCode/` | 上游 `e0767d0` + 本地改动(不含 `.venv`、运行产物) |
+| 全部提交产物与判分 JSON | `deepcode_test/{fre,rice}/` | 含作废轮,文件名标注原因 |
+
+**未上传**
+
+| 内容 | 体积 | 原因 |
+| --- | --- | --- |
+| `data/papers/*/paper.md`、`paper.pdf`、`assets/` | 205MB / 23 篇 | **论文正文与插图,版权属原作者与出版方**,不是我们能再分发的;上游用 Git LFS 托管,`setup.sh` 按需拉取 fre/rice 两篇 |
+| `data/papers/rice/judge/` | 37MB | 被引论文(JSRL、StateMask)的 PDF 与插图,同样是第三方版权内容 |
+| `data/judge_eval/` | 62MB | 上游 JudgeEval 数据集,其 README 明说部分内容不能自动再分发,须用 `download_data.py` 自取 |
+| PaperBench 其余源码 | — | 未改动的上游代码,用 pin + patch 表达比复制一份更准确 |
+| `.venv/`、`runs/`、DeepCode `deepcode_lab/`、`task_archives/*/code_base` 与 `indexes/` | 约 8GB | 本地环境与运行中间物,可由脚本重建 |
+
+---
+
 ## 4. 对上游的改动
 
 ### 4.1 DeepCode(`patches/deepcode_local_changes.patch`,12 文件,+462/−46)
