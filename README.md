@@ -208,6 +208,7 @@ PAPER=fre bash deepcode_test/scripts/run_grade.sh         # 真判,约 ¥38/份,
 
 | 文件 | 内容 |
 | --- | --- |
+| `deepcode_test/docs/ARCHITECTURE_PROPOSAL_v0.1.md` | **下一步:自建论文复现 agent 的架构设计**(多 agent 工作流合成:AutoSOTA 研读 + 计划批评 + 3 提案 6 评审;含周末/下周计划) |
 | `deepcode_test/docs/CONCLUSIONS.md` | 总结论、可信度五项核验、逐份失分表、§⑦ 裁判依赖 |
 | `deepcode_test/docs/FINDING_judge_serving_dependence.md` | 双裁判对照与诊断(本项目最重要的发现) |
 | `deepcode_test/docs/FINDING_prefilter_silent_failure.md` | 四种静默降级的证据链 |
