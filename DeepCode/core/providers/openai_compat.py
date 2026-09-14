@@ -478,7 +478,7 @@ class OpenAICompatProvider(LLMProvider):
         # thinking off; without this the "DeepCode vs ours" comparison was also "thinking on vs off". Unset
         # leaves the request exactly as upstream builds it.
         if os.environ.get("DEEPCODE_THINKING", "").strip().lower() in {"off", "0", "false"}:
-            kwargs.setdefault("extra_body", {})["enable_thinking"] = False
+            kwargs.setdefault("extra_body", {}).update({"enable_thinking": False, "thinking": {"type": "disabled"}})
 
         if tools:
             kwargs["tools"] = tools

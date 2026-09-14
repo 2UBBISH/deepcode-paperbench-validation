@@ -12,10 +12,12 @@
 | 提交 | 配置 | 得分 | 规模 |
 | --- | --- | --- | --- |
 | **deepevol_s10** | DeepEvol 复现线，Stage 10 结束时的导出（写码 + 真环境 + 冒烟修复轮后） | **0.7729** | 25 py / 3,854 行 |
-| **deepcode_trial2** | DeepCode + V4-Pro（思考关，索引 max_tokens 16000） | **0.7280** | 35 py / 11,431 行 |
+| **deepcode_trial2** | DeepCode + V4-Pro（索引 max_tokens 16000） | **0.7280** | 35 py / 11,431 行 |
 | **deepevol_s9** | DeepEvol 复现线，Stage 9 结束时的导出（只写码 + judge，未经修复轮） | **0.6854** | 25 py / 3,817 行 |
 
-写码模型三份相同：DeepSeek-V4-Pro @ Paratera，思考关。
+写码模型三份相同：DeepSeek-V4-Pro @ Paratera。
+
+**更正（2026-09-15）：这三份都是思考开的分数。** Paratera 的 OpenAI 兼容路由不认 `enable_thinking: false`（逐一验证：默认有 reasoning，`enable_thinking:false` 仍有，只有 `thinking:{"type":"disabled"}` 才是 0）；我们 SNSE 49 次调用的回包里 reasoning_tokens 78.7 万 / completion 113 万（70%），DeepCode trial2 用的是同一个无效开关。此后三方都改发 `thinking:{type:disabled}`，我们的线每次回包核对 `reasoning_tokens`（`status` 显示、非零记 `thinking_not_disabled` 事件）。
 
 **论文里的分数**（对照口径）：PaperBench 论文 o1 Code-Dev 全集 43.4%；这篇论文在 PaperBench 全复现榜上 o1 IterativeAgent 均值 0.466。DeepCode 论文自报全集 73.5%，没有单独给这篇。
 
