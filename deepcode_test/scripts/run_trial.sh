@@ -30,6 +30,7 @@ SUB_ROOT="$HOME/pb_submissions/$PAPER"
 case "$PAPER" in
   fre)  TITLE_KEY="functional reward encoding"; BLOCK_REPO="kvfrans/fre" ;;
   rice) TITLE_KEY="rice";                        BLOCK_REPO="chengzelei" ;;
+  sequential-neural-score-estimation) TITLE_KEY="sequential neural"; BLOCK_REPO="jacksimons15327" ;;
   *)    echo "❌ 未知 PAPER=$PAPER,请先在本脚本登记标题关键词与封锁仓库"; exit 1 ;;
 esac
 
@@ -103,7 +104,7 @@ export STAGE_B_SLUG="$PAPER"
 # 论文 §4.1 声称"web browsing 期间强制执行源码黑名单",但开源代码里没有任何实现。
 # 这里把 PaperBench 自己的 blacklist.txt 喂给 MCP 层强制执行 —— 是补齐论文协议,
 # 不是额外加料。git insteadOf 只挡 git 协议,挡不住 HTTP 抓取(trial 1 实证)。
-DENY=$(grep -vE '^\s*(#|$)' "$PB/data/papers/$PAPER/blacklist.txt" | paste -sd,)
+DENY=$(grep -vE '^\s*(#|$)' "$PB/data/papers/$PAPER/blacklist.txt" | paste -s -d, -)
 export DEEPCODE_URL_DENYLIST="$DENY"
 echo "  🚫 URL 黑名单已注入: $DEEPCODE_URL_DENYLIST"
 
@@ -124,6 +125,14 @@ echo "  ♻️  抗限流: retry=$DEEPCODE_LLM_RETRY_MODE 退避=$DEEPCODE_CHAT_
 # 这是让论文声称的 CodeRAG 预筛真正生效,不是改变检索方法。
 export DEEPCODE_PREFILTER_MAX_TOKENS="${DEEPCODE_PREFILTER_MAX_TOKENS:-32000}"
 echo "  🔍 预筛 max_tokens=${DEEPCODE_PREFILTER_MAX_TOKENS}(官方默认 2000,大仓库必截断)"
+# 逐文件分析 / 关系抽取:上游写死 1000 / 1500,推理模型的思考就把额度吃光、正文为空
+# (2026-09-14 snse trial1,Paratera V4-Pro:51 文件 20 个分析失败、关系抽取 91 次 length 截断)。
+export DEEPCODE_ANALYSIS_MAX_TOKENS="${DEEPCODE_ANALYSIS_MAX_TOKENS:-16000}"
+export DEEPCODE_RELATIONSHIP_MAX_TOKENS="${DEEPCODE_RELATIONSHIP_MAX_TOKENS:-16000}"
+echo "  🧾 逐文件分析 max_tokens=${DEEPCODE_ANALYSIS_MAX_TOKENS} / 关系抽取=${DEEPCODE_RELATIONSHIP_MAX_TOKENS}(官方 1000/1500)"
+# 思考开关:不设 = 上游原样(Paratera 的 V4-Pro 默认开思考);DEEPCODE_THINKING=off 每次请求带 enable_thinking:false。
+# 和"不开思考"的对照方(复现线)比时必须设 off,否则比的同时也是"思考开 vs 关"。
+echo "  🧠 思考=${DEEPCODE_THINKING:-上游默认(开)}"
 
 # 规划单次调用限时:上游默认 180s,对 V4-Pro 的思考型输出是踩钢丝 ——
 # rice 08-30 三次尝试全灭(超时/截断/超时),随后上游 coerce_text_to_minimal_plan

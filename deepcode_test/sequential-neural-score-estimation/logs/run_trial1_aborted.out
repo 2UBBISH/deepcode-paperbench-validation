@@ -1,0 +1,1386 @@
+==== [0/3] 预飞自检 · paper=sequential-neural-score-estimation trial=trial1 2026-09-14 12:55:03 ====
+  ✅ 模型=全程 DeepSeek-V4-Pro(maxTokens≥32768);MCP 7 项齐全
+  ✅ sequential-neural-score-estimation git 封锁在位(jacksimons15327)
+  ✅ 裁判二级解析模型已配
+  ✅ sequential-neural-score-estimation 论文资产就绪
+  ✅ 无残留进程
+==== [1/3] 清场:归档全部旧任务目录 + 清本篇 stale 交接文件 ====
+  旧任务目录已归档 → /Users/apple/Documents/env/paperbench-judge/validation/deepcode_test/scripts/../sequential-neural-score-estimation/task_archives/archive_task_paper_b34f9f84_0914_1255
+  ✅ 干净起点
+==== [2/3] DeepCode 复现 sequential-neural-score-estimation(完整模式;14h 硬顶;日志: /Users/apple/Documents/env/paperbench-judge/validation/deepcode_test/scripts/../sequential-neural-score-estimation/logs/sequential-neural-score-estimation_trial1_deepcode_0914_1255.log)====
+  🚫 URL 黑名单已注入: https://github.com/jacksimons15327/snpse_icml
+  ♻️  抗限流: retry=persistent 退避=10,30,60,180,300 上限=900s 请求超时=600s
+  🔍 预筛 max_tokens=32000(官方默认 2000,大仓库必截断)
+  🧠 规划单次限时=600s(官方默认 180s,V4-Pro 思考不够用)
+  📚 挖掘报告 max_tokens=32768 / 下载 agent=16384(官方 8192/4096)
+  🐌 stall 阈值=7200s(上游默认 300s,fre 期我方 1800s,rice 体量再放宽)
+  ⏱️  写码墙钟=21600s(上游 2h,fre 期我方 4h,rice 白天再放宽到 6h)
+Info: docling is unavailable; built-in document converters remain enabled.
+2026-09-14 12:55:04.876 | DEBUG    | core.config:_load_raw:615 - deepcode_config.json not found at /Users/apple/Documents/env/paperbench-judge/validation/DeepCode/deepcode_config.json; skipping layer
+--- Logging error ---
+Traceback (most recent call last):
+  File "/Users/apple/.local/share/uv/python/cpython-3.11.16-macos-x86_64-none/lib/python3.11/logging/__init__.py", line 1110, in emit
+    msg = self.format(record)
+          ^^^^^^^^^^^^^^^^^^^
+  File "/Users/apple/.local/share/uv/python/cpython-3.11.16-macos-x86_64-none/lib/python3.11/logging/__init__.py", line 953, in format
+    return fmt.format(record)
+           ^^^^^^^^^^^^^^^^^^
+  File "/Users/apple/.local/share/uv/python/cpython-3.11.16-macos-x86_64-none/lib/python3.11/logging/__init__.py", line 687, in format
+    record.message = record.getMessage()
+                     ^^^^^^^^^^^^^^^^^^^
+  File "/Users/apple/.local/share/uv/python/cpython-3.11.16-macos-x86_64-none/lib/python3.11/logging/__init__.py", line 377, in getMessage
+    msg = msg % self.args
+          ~~~~^~~~~~~~~~~
+TypeError: not all arguments converted during string formatting
+Call stack:
+  File "/Users/apple/Documents/env/paperbench-judge/validation/deepcode_test/scripts/stage_b_driver.py", line 93, in <module>
+    asyncio.run(main())
+  File "/Users/apple/.local/share/uv/python/cpython-3.11.16-macos-x86_64-none/lib/python3.11/asyncio/runners.py", line 190, in run
+    return runner.run(main)
+  File "/Users/apple/.local/share/uv/python/cpython-3.11.16-macos-x86_64-none/lib/python3.11/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+  File "/Users/apple/.local/share/uv/python/cpython-3.11.16-macos-x86_64-none/lib/python3.11/asyncio/base_events.py", line 641, in run_until_complete
+    self.run_forever()
+  File "/Users/apple/.local/share/uv/python/cpython-3.11.16-macos-x86_64-none/lib/python3.11/asyncio/base_events.py", line 608, in run_forever
+    self._run_once()
+  File "/Users/apple/.local/share/uv/python/cpython-3.11.16-macos-x86_64-none/lib/python3.11/asyncio/base_events.py", line 1936, in _run_once
+    handle._run()
+  File "/Users/apple/.local/share/uv/python/cpython-3.11.16-macos-x86_64-none/lib/python3.11/asyncio/events.py", line 84, in _run
+    self._context.run(self._callback, *self._args)
+  File "/Users/apple/Documents/env/paperbench-judge/validation/deepcode_test/scripts/stage_b_driver.py", line 51, in main
+    result = await execute_multi_agent_research_pipeline(
+  File "/Users/apple/Documents/env/paperbench-judge/validation/DeepCode/workflows/agent_orchestration_engine.py", line 1993, in execute_multi_agent_research_pipeline
+    ctx = await prepare_workflow_environment(
+  File "/Users/apple/Documents/env/paperbench-judge/validation/DeepCode/workflows/environment.py", line 138, in prepare_workflow_environment
+    log.info(
+Message: '🗂️  Workspace={} task_kind={} task_dir={} kind={} resume={}'
+Arguments: (PosixPath('/Users/apple/Documents/env/paperbench-judge/validation/DeepCode/deepcode_lab'), 'paper2code', 'paper_edb56966', 'md', False)
+2026-09-14 12:55:04,903 INFO 📋 Paper ID: edb56966
+2026-09-14 12:55:04,903 INFO 📂 Paper directory: /Users/apple/Documents/env/paperbench-judge/validation/DeepCode/deepcode_lab/tasks/paper_edb56966
+2026-09-14 12:55:04,903 INFO 📥 Processing md: /Users/apple/Documents/env/paperbench-judge/validation/frontier-evals/project/paperbench/data/papers/sequential-neural-score-estimation/paper.md
+2026-09-14 12:55:04,909 INFO ✅ Input acquired:
+[INFO] Copying file (original preserved):
+   Source: /Users/apple/Documents/env/paperbench-judge/validation/frontier-evals/project/paperbench/data/papers/sequential-neural-score-estimation/paper.md
+   Target: /Users/apple/Documents/env/paperbench-judge/validation/DeepCode/deepcode_lab/tasks/paper_edb56966/paper.md
+   Size: 0.18 MB
+
+[SUCCESS] File copied successfully (original preserved)!
+   From: /Users/apple/Documents/env/paperbench-judge/validation/frontier-evals/project/paperbench/data/papers/sequential-neural-score-estimation/paper.md
+   To: /Users/apple/Documents/env/paperbench-judge/validation/DeepCode/deepcode_lab/tasks/paper_edb56966/paper.md
+   Duration: 0.00 seconds
+   [INFO] Document converted to Markdown (built-in)
+   Markdown file: /Users/apple/Documents/env/paperbench-judge/validation/DeepCode/deepcode_lab/tasks/paper_edb56966/paper.md
+   Source format: markdown
+   Conversion time: 0.00 seconds
+   Characters extracted: 190144
+2026-09-14 12:55:04,910 INFO Preparing document segments for: /Users/apple/Documents/env/paperbench-judge/validation/DeepCode/deepcode_lab/tasks/paper_edb56966
+2026-09-14 12:55:05.431 | DEBUG    | core.agent_runtime.tools.mcp:connect_single_server:621 - MCP: registered tool 'mcp_document_segmentation_analyze_and_segment_document' from server 'document-segmentation'
+2026-09-14 12:55:05.431 | DEBUG    | core.agent_runtime.tools.mcp:connect_single_server:621 - MCP: registered tool 'mcp_document_segmentation_read_document_segments' from server 'document-segmentation'
+2026-09-14 12:55:05.431 | DEBUG    | core.agent_runtime.tools.mcp:connect_single_server:621 - MCP: registered tool 'mcp_document_segmentation_get_document_overview' from server 'document-segmentation'
+2026-09-14 12:55:05.434 | INFO     | core.agent_runtime.tools.mcp:connect_single_server:679 - MCP server 'document-segmentation': connected, 3 capabilities registered
+2026-09-14 12:55:05.434 | DEBUG    | core.compat.agent:_connect_servers:520 - Agent 'DocumentSegmentationCoordinator': 1 MCP servers connected, 3 tools registered total
+2026-09-14 12:55:06.664 | INFO     | core.llm_runtime:attach_workflow_llm:125 - Attached workflow LLM: agent=DocumentSegmentationCoordinator phase=planning provider=custom model=DeepSeek-V4-Pro reasoning_effort=None
+2026-09-14 12:55:06,665 INFO DocumentSegmentationAgent initialized successfully
+2026-09-14 12:55:06,665 INFO Starting document analysis for: /Users/apple/Documents/env/paperbench-judge/validation/DeepCode/deepcode_lab/tasks/paper_edb56966
+2026-09-14 12:55:11,250 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 12:55:13,599 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 12:55:20,963 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 12:55:33,908 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 12:56:08,411 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 12:56:08,414 INFO Document analysis completed successfully
+2026-09-14 12:56:08.414 | DEBUG    | core.agent_runtime.tools.registry:aclose:186 - ToolRegistry.aclose: benign anyio teardown noise: Cancelled via cancel scope 106012170 by <Task pending name='Task-15' coro=<AsyncExitStack.aclose() running at /Users/apple/.local/share/uv/python/cpython-3.11.16-macos-x86_64-none/lib/python3.11/contextlib.py:687> cb=[_release_waiter(<Future pendi...ask_wakeup()]>)() at /Users/apple/.local/share/uv/python/cpython-3.11.16-macos-x86_64-none/lib/python3.11/asyncio/tasks.py:431]>
+2026-09-14 12:56:08,415 INFO Document segments prepared successfully
+2026-09-14 12:56:08,416 INFO Loaded paper markdown for planning: /Users/apple/Documents/env/paperbench-judge/validation/DeepCode/deepcode_lab/tasks/paper_edb56966/paper.md (190143 chars)
+2026-09-14 12:56:08,416 INFO Planning source markdown: /Users/apple/Documents/env/paperbench-judge/validation/DeepCode/deepcode_lab/tasks/paper_edb56966/paper.md
+2026-09-14 12:56:08,421 INFO Using segmented planner context derived from document_index.json
+2026-09-14 12:56:08,424 INFO Using single planner path (segmentation=True, segmented_context=True)
+2026-09-14 12:56:08,424 INFO Code planning attempt 1/3 started (timeout=600s, segmentation=True, paper_content_loaded=True)
+2026-09-14 12:56:08.426 | INFO     | core.llm_runtime:attach_workflow_llm:125 - Attached workflow LLM: agent=CodePlannerAgent phase=planning provider=custom model=DeepSeek-V4-Pro reasoning_effort=None
+2026-09-14 12:56:08,426 INFO Single-agent planning started (timeout=600s, agent=CodePlannerAgent)
+2026-09-14 12:57:53,474 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+输入论文: /Users/apple/Documents/env/paperbench-judge/validation/frontier-evals/project/paperbench/data/papers/sequential-neural-score-estimation/paper.md
+模式: 完整(含参考挖掘+索引)
+🚀 Initializing intelligent multi-agent research orchestration system
+🧠 Advanced intelligence analysis enabled - comprehensive workflow
+📁 Workspace : /Users/apple/Documents/env/paperbench-judge/validation/DeepCode/deepcode_lab
+📂 Task dir  : /Users/apple/Documents/env/paperbench-judge/validation/DeepCode/deepcode_lab/tasks/paper_edb56966
+🔖 Task ID   : edb56966
+📊 Progress: 25% - Input Acquisition
+📊 Progress: 40% - Workspace Setup
+🏗️ Intelligent workspace infrastructure synthesized:
+   Workspace root : /Users/apple/Documents/env/paperbench-judge/validation/DeepCode/deepcode_lab
+   Task directory : /Users/apple/Documents/env/paperbench-judge/validation/DeepCode/deepcode_lab/tasks/paper_edb56966
+   Markdown source: /Users/apple/Documents/env/paperbench-judge/validation/DeepCode/deepcode_lab/tasks/paper_edb56966/paper.md
+📊 Progress: 50% - Document Preprocessing
+🔍 Starting adaptive document preprocessing...
+   Paper directory: /Users/apple/Documents/env/paperbench-judge/validation/DeepCode/deepcode_lab/tasks/paper_edb56966
+📊 Segmentation decision: True
+   Reason: Document size (190,143 chars) exceeds threshold (50,000 chars)
+🔧 Using intelligent document segmentation workflow...
+✅ Document segmentation completed successfully!
+   Segments directory: /Users/apple/Documents/env/paperbench-judge/validation/DeepCode/deepcode_lab/tasks/paper_edb56966/document_segments
+   🧠 Intelligent segments ready for planning agents
+✅ Document preprocessing completed successfully!
+   📊 Using segmentation: True
+   📁 Segments directory: /Users/apple/Documents/env/paperbench-judge/validation/DeepCode/deepcode_lab/tasks/paper_edb56966/document_segments
+📊 Progress: 65% - Code Planning
+📊 Planning mode: Segmented
+📄 Found markdown file for analysis: paper.md
+?? Code analysis mode: Segmented
+   ?? Planner architecture: single authoritative planner
+?? Attempting code analysis (attempt 1/3)
+?? Code analysis result:
+```yaml
+complete_reproduction_plan:
+  paper_info:
+    title: "Neural Posterior Score Estimation for Simulation-Based Inference"
+    core_contribution: >
+      Reproduce NPSE and sequential TSNPSE, score-based diffusion models that learn
+      the score of the perturbed posterior directly by denoising score matching, and
+      use probability-flow ODE sampling for likelihood-free Bayesian inference.
+
+  file_structure: |
+    project_root/
+      README.md                              # LAST: usage, results, limitations
+      requirements.txt                       # LAST: exact dependencies
+      configs/
+        defaults.yaml                        # SDE, architecture, training, budgets
+      src/
+        __init__.py
+        sde.py                               # VE SDE, VP SDE, marginals, score of p_t|0
+        score_networks.py                    # theta/x embeddings, time embedding, score net
+        losses.py                            # DSM objectives for NPSE, SNPSE-A/B/C, NLSE, prior score
+        probability_flow.py                  # ODE sampling and log-density via change of variables
+        density.py                           # density evaluation helpers, Hutchinson trace estimator
+        truncation.py                        # HPR_epsilon estimation and truncated proposal sampling
+        training.py                          # train loops, early stopping, standardisation
+        algorithms/
+          __init__.py
+          npse.py                            # Non-sequential NPSE
+          tsnpse.py                          # Main sequential TSNPSE
+          snpse_a.py                         # SNPSE-A with SIR correction
+          snpse_b.py                         # SNPSE-B with weighted DSM
+          snpse_c.py                         # SNPSE-C with proposal-prior score correction
+          nlse.py                            # Neural Likelihood Score Estimation
+          prior_score.py                     # Prior score estimation / closed-form prior score
+        utils/
+          __init__.py
+          metrics.py                         # C2ST, MMD, posterior predictive checks
+          sbibm_utils.py                     # wrap sbibm tasks and baselines
+      tasks/
+        __init__.py
+        base.py                              # task API: prior.sample/log_prob, simulator
+        gaussian_linear.py
+        gaussian_mixture.py
+        two_moons.py
+        gaussian_linear_uniform.py
+        bernoulli_glm.py
+        slcp.py
+        sir.py
+        lotka_volterra.py
+        pyloric.py                           # optional real-world simulator wrapper
+      experiments/
+        run_npse_benchmarks.py
+        run_tsnpse_benchmarks.py
+        run_sequential_variants.py
+        run_nlse_comparison.py
+        run_pyloric.py
+        evaluate_benchmarks.py
+        plot_results.py
+      tests/
+        test_sde.py
+        test_score_training.py
+        test_probability_flow.py
+        test_truncation.py
+        test_tasks.py
+
+  implementation_components: |
+    1. SDE MODULE (`src/sde.py`)
+       Implement abstract SDE with:
+       - drift f(theta, t)
+       - diffusion g(t)
+       - marginal transition p_{t|0}(theta_t | theta_0)
+       - grad_{theta_t} log p_{t|0}(theta_t | theta_0)
+       VE SDE:
+         f=0
+         g(t)=sigma_min*(sigma_max/sigma_min)^t*sqrt(2*log(sigma_max/sigma_min))
+         p_t|0 = N(theta_t | theta_0, sigma_min^2*(sigma_max/sigma_min)^{2t} I)
+         score = -(theta_t - theta_0) / var
+         sigma_min = 0.01 for 2D tasks/SIR/Two Moons, 0.05 otherwise.
+         sigma_max via Technique 1 of Song & Ermon 2020.
+       VP SDE:
+         beta_t = beta_min + t*(beta_max-beta_min)
+         f(theta,t) = -0.5*beta_t*theta
+         g(t) = sqrt(beta_t)
+         beta_min=0.1, beta_max=11.0
+         mean = theta_0*exp(-0.5*integral_0^t beta_s ds)
+         var = 1 - exp(-integral_0^t beta_s ds)
+         score = -(theta_t - mean) / var
+       Also implement integral beta_t closed-form: ∫_0^t beta_s ds = 0.1t + 5.45t^2.
+
+    2. SCORE NETWORK (`src/score_networks.py`)
+       Architecture exactly as in Appendix E.3.2:
+       - theta embedding: 3-layer FC MLP, 256 hidden units/layer, input d,
+         output max(30, 4*d).
+       - x embedding: 3-layer FC MLP, 256 hidden units/layer, input p,
+         output max(30, 4*p).
+       - time embedding: 64-dimensional sinusoidal embedding:
+         for i<=32: sin(t / 10000^((i-1)/31))
+         else: cos(t / 10000^(((i-32)-1)/31))
+       - concatenate [theta_emb, x_emb, t_emb]
+         feed to 3-layer FC MLP, 256 hidden units/layer, output dimension d.
+       - SiLU activation between all layers.
+       - standardise theta_t and x before network using dataset mean/std.
+
+    3. LOSSES (`src/losses.py`)
+       Core NPSE/TSNPSE DSM loss, Eq. (7):
+         Loss(psi) = 1/2 E[
+           lambda_t || s_psi(theta_t, x, t) - grad_{theta_t} log p_{t|0}(theta_t|theta_0) ||^2 ]
+       where theta_0,x ~ p(theta,x)=p(theta)p(x|theta), t~U(0,T), theta_t ~ p_t|0.
+       Implement configurable lambda_t. Paper does not specify exact lambda_t in excerpt;
+       default recommended:
+         VE: lambda_t = 1/g(t)^2
+         VP: lambda_t = 1
+       with override in configs/defaults.yaml.
+       SNPSE-B weighted loss:
+         Loss = E[ w(theta_0) || s_psi(theta_t,x,t) - grad log p_t|0 ||^2 ],
+         w(theta_0)=p(theta_0)/tilde_p^r(theta_0).
+       SNPSE-A/C use same unweighted DSM as NPSE but on proposal data:
+         tilde_p^r(theta_0)=1/r sum_{s=0}^{r-1} p_psi^s(theta_0|x_obs),
+         p_psi^0(...) = prior.
+       NLSE likelihood-score loss, Eq. (57):
+         Loss_lik = E[ || s_psi_lik(theta_t,x,t)
+           + grad_theta log p_t(theta_t)
+           - grad_theta log p_t|0(theta_t|theta_0) ||^2 ].
+       Prior score estimation loss, Eq. (64):
+         Loss_pri = E[ || s_psi_pri(theta_t,t) - grad_theta log p_t|0(theta_t|theta_0) ||^2 ].
+
+    4. PROBABILITY FLOW ODE SAMPLING (`src/probability_flow.py`)
+       Reverse-time probability flow ODE:
+         dtheta_t/dt = f(theta_t,t) - 0.5*g(t)^2 * s_psi(theta_t, x_obs, t)
+       Integrate from noise at t=T to posterior sample at t=0.
+       Use RK45 (`scipy.integrate.solve_ivp` or `torchdiffeq`) as paper uses RK45.
+       For density evaluation, use instantaneous change-of-variables formula (Eq. 5):
+         log p_0(theta_0) = log p_T(theta_T) + ∫_0^T tr(∂v_psi/∂theta) dt
+       where v_psi(theta,t) = f(theta,t) - 0.5*g(t)^2*s_psi(theta,x_obs,t).
+       Implement exact trace via `torch.autograd.grad` and optional
+       Hutchinson-Skilling trace estimator for speed.
+
+    5. TRUNCATED PROPOSAL / HPR_EPSILON (`src/truncation.py`)
+       After each TSNPSE round:
+       - sample 20000 theta from current approximate posterior via probability-flow ODE.
+       - compute approximate posterior log-density for each theta via change-of-variables.
+       - threshold κ = epsilon-quantile of log densities, epsilon=5e-4.
+       - proposal = prior restricted to {theta : log p_approx(theta|x_obs) > κ}.
+       - sample proposal by rejection:
+         a) cheap screening: accept only prior samples inside empirical hypercube
+            of approximate posterior samples.
+         b) compute log-density by ODE and accept only if > κ.
+       This exactly follows Appendix E.3.3 and Deistler et al. 2022a Section 6.3.
+
+    6. ALGORITHMS (`src/algorithms/`)
+       NPSE (`npse.py`):
+         - Sample theta_i ~ prior, x_i ~ simulator.
+         - Add time t_i ~ U(0,T), theta_ti ~ p_t|0.
+         - Train score network with DSM loss until early stopping.
+         - Return sampler by solving probability-flow ODE at x_obs.
+
+       TSNPSE (`tsnpse.py`), main algorithm:
+         Inputs: x_obs, prior, simulator, budget N, rounds R=10, M=N/R.
+         Dataset D = {}.
+         For r=1..R:
+           If r==1: theta_i ~ prior
+           Else: theta_i ~ truncated proposal from HPR_epsilon of
+                 previous approximate posterior.
+           Simulate x_i ~ p(x|theta_i), add (theta_i,x_i) to D.
+           Draw t_i ~ U(0,T), theta_ti ~ p_t|0(.|theta_i).
+           Train tilt s_psi^r to approximate proposal posterior score:
+             Loss = mean over D || s_psi^r(theta_t,x,t)
+                    - grad log p_t|0(theta_t|theta_0) ||^2.
+           Generate approximate posterior samples by solving probability-flow
+             ODE with s_psi^r(theta_t,x_obs,t).
+           Estimate HPR_epsilon for next round.
+         Return final posterior sampler.
+
+       SNPSE-A (`snpse_a.py`), Appendix C.2 / Algorithm 3:
+         - Train proposal-posterior score on accumulated proposal data.
+         - Sample M' >= M from proposal posterior.
+         - SIR correction weights: h_i = p(theta_i) / tilde_p^r(theta_i).
+         - Exact density-based weights only available for r=1,2 without extra
+           proposal-prior approximation; implement exact first two rounds and optional
+           KDE/flow proposal-prior approximation for later rounds.
+
+       SNPSE-B (`snpse_b.py`), Appendix C.3 / Algorithm 4:
+         - Train true posterior score directly using importance-weighted loss:
+             w(theta_0) = p(theta_0)/tilde_p^r(theta_0).
+         - No post-sampling correction needed.
+
+       SNPSE-C (`snpse_c.py`), Appendix C.4 / Algorithm 5:
+         - For r=1, tilde_s_psi^r = s_psi.
+         - For r>1, train proposal-prior score network s_phi^r(theta_t,t),
+           then define:
+             tilde_s_psi^r(theta_t,x,t) =
+               s_psi(theta_t,x,t)
+               + s_phi^r(theta_t,t)
+               - grad_theta log p_t(theta_t).
+         - Train tilde_s_psi^r with DSM on proposal data.
+         - Use recovered s_psi as approximation to true posterior score.
+
+       NLSE (`nlse.py`), Appendix B:
+         - Train likelihood score s_psi_lik with Eq. (57).
+         - If perturbed prior score is closed form under VE SDE (uniform/Gaussian
+           mixture priors), use automatic differentiation.
+         - Else train prior score network with Algorithm 2.
+         - Posterior score = likelihood score + perturbed prior score.
+
+       Prior score closed forms, Appendix B.2.1:
+         Under VE SDE with p_t|0 = N(theta_t|theta_0, tau_t^2 I):
+           Uniform prior: product of Gaussian CDF differences.
+           Gaussian mixture: mixture with inflated variances Sigma_i + tau_t^2 I.
+         Use torch.autograd.grad to obtain scores.
+
+    7. TASKS (`src/tasks/`)
+       Implement benchmark simulators/priors as in Appendix E.1:
+       - Gaussian Linear: p(theta)=N(0,0.1I), p(x|theta)=N(theta,0.1I), d=10.
+       - Gaussian Mixture: theta~U(-10,10)^2,
+         p(x|theta)=0.5 N(theta,I)+0.5 N(theta,0.01I).
+       - Two Moons: prior U(-1,1)^2; likelihood from rotated crescent equations.
+       - Gaussian Linear Uniform: theta~U(-1,1)^10, p(x|theta)=N(theta,0.1I).
+       - Bernoulli GLM: 10D theta = (beta,f), beta~N(0,2),
+         f~N(0, (F^T F)^(-1)), data are 10D sufficient statistics.
+       - SLCP: theta~U(-3,3)^5, 8D Gaussian likelihood with nonlinear mean/cov.
+       - SIR: theta=(beta,gamma), beta~LogNormal(log(0.4),0.5),
+         gamma~LogNormal(log(0.8),0.2); simulator follows SIR ODE and
+         Bin(1000, I/N) observations.
+       - Lotka-Volterra: theta=(alpha,beta,gamma,delta), alpha,gamma~LogNormal(-0.125,0.5),
+         beta,delta~LogNormal(-3,0.5); observations are 10 evenly spaced
+         predator/prey counts.
+       Prefer wrapping `sbibm` tasks where available for exact reference behavior;
+       custom implementations should match sbibm outputs.
+       Pyloric task (`tasks/pyloric.py`): 31 parameters, 18 summary statistics,
+       uniform prior ranges from Prinz et al. 2004. Replace invalid summary stats
+       with value two standard deviations below prior-predictive mean.
+
+    8. TRAINING AND STANDARDISATION (`src/training.py`)
+       Adam lr=1e-4.
+       15% validation split; early stop if validation loss does not improve for 1000 steps;
+       max 3000 training iterations.
+       Batch sizes:
+         simulation budget 1000 or 10000:
+           non-sequential 50, sequential 200.
+         simulation budget 100000:
+           both 500.
+       Standardise theta_t and x using per-dimension estimated mean/std.
+
+  validation_approach: |
+    1. UNIT TESTS
+       - SDE transitions: empirical mean/covariance of VE/VP p_t|0 match closed forms.
+       - Gradient scores: numerical gradient of log p_t|0 matches analytic score.
+       - Probability-flow density: for a Gaussian toy posterior, sampled theta
+         have empirical moments matching analytic posterior and density
+         evaluation returns consistent log-likelihood values.
+       - Truncation: HPR_epsilon threshold selects expected fraction 1-epsilon of
+         approximate posterior samples.
+
+    2. BENCHMARK EVALUATION
+       - Use eight sbibm benchmark tasks and reference posteriors.
+       - Simulation budgets: 1000, 10000, 100000.
+       - Non-sequential NPSE: run 10 rounds? Actually NPSE is one round; train once per budget.
+       - Sequential TSNPSE: R=10, M=N/R per round.
+       - Compute C2ST between approximate posterior samples and reference posterior
+         samples from sbibm. Also compute MMD and mean/var error if available.
+       - Compare NPSE with NPE and TSNPSE with SNPE-C/TSNPE using sbibm baselines.
+       - Expected results:
+         - SLCP and Lotka-Volterra: TSNPSE/NPSE should outperform baselines,
+           showing best accuracy or lower C2ST.
+         - Remaining tasks: mixed ranking depending on task and simulation budget.
+         - Both VE and VP SDEs should be evaluated; recommend VE for low-dimensional
+           tasks and VP for high-dimensional tasks.
+
+    3. SEQUENTIAL VARIANT CHECKS
+       - Run TSNPSE, SNPSE-A, SNPSE-B, and SNPSE-C on SLCP and GLU.
+       - Verify TSNPSE significantly outperforms SNPSE-A and SNPSE-B.
+       - SNPSE-C often fails with C2ST near 1 due to proposal-prior score approximation;
+         reproduce this behavior rather than expecting strong performance.
+
+    4. NLSE COMPARISON
+       - On four benchmarks (e.g., Gaussian Linear, Gaussian Mixture, Two Moons, GLM)
+         compare NPSE and NLSE with VE SDE.
+       - Expected: little difference when perturbed prior score is analytic,
+         but NPSE outperforms NLSE when prior score must be estimated.
+
+    5. REAL-WORLD PYLORIC EXPERIMENT
+       - Apply TSNPSE with VP SDE, 9 rounds, 30000 initial simulations,
+         20000 added simulations per round.
+       - Replace invalid summary statistics as described.
+       - Expected final round valid summary statistic percentage about 81%.
+       - Posterior predictive samples should match observed voltage-trace summaries.
+       - Pairwise marginals should be similar to those reported in the literature.
+       - Compute simulation-based coverage calibration (SBCC); expected approximate
+         coverage for mid-low confidence levels is below nominal confidence,
+         with better calibration at high confidence levels.
+
+    6. FIGURES
+       - Reproduce analogues of Figures 2-4:
+         benchmark C2ST tables/plots for non-sequential and sequential methods,
+         posterior predictive check for pyloric, valid summary rate vs simulations.
+
+  environment_setup: |
+    - Python 3.9 or 3.10.
+    - PyTorch >= 2.0.
+    - `sbibm` for benchmark tasks, reference posteriors, and baseline algorithms.
+    - `scipy` for RK45/ODE integration, `torchdiffeq` optional for GPU ODE solving.
+    - `numpy`, `pandas`, `matplotlib`, `scikit-learn` for metrics/plots.
+    - `tqdm` for progress bars, `PyYAML` for configs, `pytest` for tests.
+    - GPU strongly recommended for benchmark and pyloric experiments.
+    - Pyloric real-world experiment requires access to the stomatogastric simulator
+      and observed data, e.g., as used in Prinz et al. 2004 / Gonçalves et al. 2020
+      or the corresponding sbibm task if available.
+    - Exact package list should be fixed in `requirements.txt` only after core code
+      is implemented and tested.
+
+  implementation_strategy: |
+    Phase 1: Core SDE and score network
+      - Implement `src/sde.py` with VE/VP transitions and analytic scores.
+      - Implement `src/score_networks.py` with the exact embedding/score architecture.
+      - Write tests for SDE marginal statistics and gradient correctness.
+
+    Phase 2: Non-sequential NPSE
+      - Implement `src/losses.py` with NPSE DSM loss.
+      - Implement `src/training.py` with Adam, validation split, early stopping,
+        standardisation, and batching rules.
+      - Implement `src/algorithms/npse.py`.
+      - Validate on Gaussian Linear and Two Moons against analytic/reference posterior.
+
+    Phase 3: Probability-flow sampling and density evaluation
+      - Implement `src/probability_flow.py` for reverse ODE sampling and
+        exact/estimated log-density via change-of-variables.
+      - Test density on a simple Gaussian posterior and compare with analytic log-prob.
+
+    Phase 4: TSNPSE with truncated proposals
+      - Implement `src/truncation.py` with HPR_epsilon and rejection sampling.
+      - Implement `src/algorithms/tsnpse.py`.
+      - Test on Two Moons and SLCP. Confirm iterative narrowing of posterior and
+        improved C2ST with rounds.
+
+    Phase 5: Sequential variants and NLSE
+      - Implement `src/algorithms/snpse_a.py`, `snpse_b.py`, `snpse_c.py`.
+      - Implement `src/algorithms/prior_score.py` and `src/algorithms/nlse.py`.
+      - Run SLCP/GLU comparisons for variant sanity checks.
+
+    Phase 6: Benchmark suite integration
+      - Implement or wrap all eight `src/tasks/` benchmark environments.
+      - Run NPSE and TSNPSE for budgets [1000, 10000, 100000].
+      - Use `src/utils/metrics.py` to compute C2ST/MMD and compare with sbibm baselines.
+      - Generate benchmark figures.
+
+    Phase 7: Pyloric experiment
+      - Implement `src/tasks/pyloric.py` and invalid summary replacement.
+      - Run TSNPSE with 9 rounds/initial 30000/20000 per round using VP SDE.
+      - Compute valid summary rate, posterior predictive quality, SBCC coverage,
+        and pairwise marginal plots.
+
+    Phase 8: Documentation and finalization
+      - Add `README.md` with reproduction instructions and expected results.
+      - Pin dependencies in `requirements.txt`.
+      - Run full test suite and smoke-test all entry points.
+
+    Missing-detail defaults:
+      - lambda_t weighting is not explicitly specified in the available text; expose
+        `loss_weighting` in config and default to VE=1/g(t)^2, VP=1.
+      - If exact pyloric simulator is unavailable, mark as optional and focus benchmark
+        reproduction first.
+      - For SNPSE-A beyond two rounds, use a KDE/normalising-flow proposal-prior density
+        or restrict experiments to the first two rounds as per the paper's exact computation.
+```2026-09-14 12:57:55,551 ERROR Task exception was never retrieved
+future: <Task finished name='Task-15' coro=<AsyncExitStack.aclose() done, defined at /Users/apple/.local/share/uv/python/cpython-3.11.16-macos-x86_64-none/lib/python3.11/contextlib.py:685> exception=RuntimeError('Attempted to exit cancel scope in a different task than it was entered in')>
+  + Exception Group Traceback (most recent call last):
+  |   File "/Users/apple/Documents/env/paperbench-judge/validation/DeepCode/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 847, in __aexit__
+  |     raise BaseExceptionGroup(
+  | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+  +-+---------------- 1 ----------------
+    | Traceback (most recent call last):
+    |   File "/Users/apple/Documents/env/paperbench-judge/validation/DeepCode/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 851, in __aexit__
+    |     raise exc_val
+    |   File "/Users/apple/Documents/env/paperbench-judge/validation/DeepCode/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 820, in __aexit__
+    |     await self._on_completed_fut
+    | asyncio.exceptions.CancelledError
+    | 
+    | During handling of the above exception, another exception occurred:
+    | 
+    | Traceback (most recent call last):
+    |   File "/Users/apple/Documents/env/paperbench-judge/validation/DeepCode/.venv/lib/python3.11/site-packages/mcp/client/stdio/__init__.py", line 189, in stdio_client
+    |     yield read_stream, write_stream
+    |   File "/Users/apple/.local/share/uv/python/cpython-3.11.16-macos-x86_64-none/lib/python3.11/contextlib.py", line 728, in __aexit__
+    |     cb_suppress = await cb(*exc_details)
+    |                   ^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/Users/apple/Documents/env/paperbench-judge/validation/DeepCode/.venv/lib/python3.11/site-packages/mcp/shared/session.py", line 238, in __aexit__
+    |     return await self._task_group.__aexit__(exc_type, exc_val, exc_tb)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/Users/apple/Documents/env/paperbench-judge/validation/DeepCode/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 853, in __aexit__
+    |     if self.cancel_scope.__exit__(type(exc), exc, exc.__traceback__):
+    |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/Users/apple/Documents/env/paperbench-judge/validation/DeepCode/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 464, in __exit__
+    |     raise RuntimeError(
+    | RuntimeError: Attempted to exit cancel scope in a different task than it was entered in
+    +------------------------------------
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/apple/.local/share/uv/python/cpython-3.11.16-macos-x86_64-none/lib/python3.11/contextlib.py", line 687, in aclose
+    await self.__aexit__(None, None, None)
+  File "/Users/apple/.local/share/uv/python/cpython-3.11.16-macos-x86_64-none/lib/python3.11/contextlib.py", line 745, in __aexit__
+    raise exc_details[1]
+  File "/Users/apple/.local/share/uv/python/cpython-3.11.16-macos-x86_64-none/lib/python3.11/contextlib.py", line 728, in __aexit__
+    cb_suppress = await cb(*exc_details)
+                  ^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/apple/.local/share/uv/python/cpython-3.11.16-macos-x86_64-none/lib/python3.11/contextlib.py", line 231, in __aexit__
+    await self.gen.athrow(typ, value, traceback)
+  File "/Users/apple/Documents/env/paperbench-judge/validation/DeepCode/.venv/lib/python3.11/site-packages/mcp/client/stdio/__init__.py", line 182, in stdio_client
+    async with (
+  File "/Users/apple/Documents/env/paperbench-judge/validation/DeepCode/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 853, in __aexit__
+    if self.cancel_scope.__exit__(type(exc), exc, exc.__traceback__):
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/apple/Documents/env/paperbench-judge/validation/DeepCode/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 464, in __exit__
+    raise RuntimeError(
+RuntimeError: Attempted to exit cancel scope in a different task than it was entered in
+2026-09-14 12:57:55.560 | DEBUG    | core.agent_runtime.tools.mcp:connect_single_server:621 - MCP: registered tool 'mcp_filesystem_read_file' from server 'filesystem'
+2026-09-14 12:57:55.560 | DEBUG    | core.agent_runtime.tools.mcp:connect_single_server:621 - MCP: registered tool 'mcp_filesystem_read_text_file' from server 'filesystem'
+2026-09-14 12:57:55.560 | DEBUG    | core.agent_runtime.tools.mcp:connect_single_server:621 - MCP: registered tool 'mcp_filesystem_read_media_file' from server 'filesystem'
+2026-09-14 12:57:55.560 | DEBUG    | core.agent_runtime.tools.mcp:connect_single_server:621 - MCP: registered tool 'mcp_filesystem_read_multiple_files' from server 'filesystem'
+2026-09-14 12:57:55.560 | DEBUG    | core.agent_runtime.tools.mcp:connect_single_server:621 - MCP: registered tool 'mcp_filesystem_write_file' from server 'filesystem'
+2026-09-14 12:57:55.560 | DEBUG    | core.agent_runtime.tools.mcp:connect_single_server:621 - MCP: registered tool 'mcp_filesystem_edit_file' from server 'filesystem'
+2026-09-14 12:57:55.560 | DEBUG    | core.agent_runtime.tools.mcp:connect_single_server:621 - MCP: registered tool 'mcp_filesystem_create_directory' from server 'filesystem'
+2026-09-14 12:57:55.560 | DEBUG    | core.agent_runtime.tools.mcp:connect_single_server:621 - MCP: registered tool 'mcp_filesystem_list_directory' from server 'filesystem'
+2026-09-14 12:57:55.560 | DEBUG    | core.agent_runtime.tools.mcp:connect_single_server:621 - MCP: registered tool 'mcp_filesystem_list_directory_with_sizes' from server 'filesystem'
+2026-09-14 12:57:55.560 | DEBUG    | core.agent_runtime.tools.mcp:connect_single_server:621 - MCP: registered tool 'mcp_filesystem_directory_tree' from server 'filesystem'
+2026-09-14 12:57:55.561 | DEBUG    | core.agent_runtime.tools.mcp:connect_single_server:621 - MCP: registered tool 'mcp_filesystem_move_file' from server 'filesystem'
+2026-09-14 12:57:55.561 | DEBUG    | core.agent_runtime.tools.mcp:connect_single_server:621 - MCP: registered tool 'mcp_filesystem_search_files' from server 'filesystem'
+2026-09-14 12:57:55.561 | DEBUG    | core.agent_runtime.tools.mcp:connect_single_server:621 - MCP: registered tool 'mcp_filesystem_get_file_info' from server 'filesystem'
+2026-09-14 12:57:55.561 | DEBUG    | core.agent_runtime.tools.mcp:connect_single_server:621 - MCP: registered tool 'mcp_filesystem_list_allowed_directories' from server 'filesystem'
+2026-09-14 12:57:55.562 | DEBUG    | core.agent_runtime.tools.mcp:connect_single_server:657 - MCP server 'filesystem': resources not supported or failed: Method not found
+2026-09-14 12:57:55.563 | DEBUG    | core.agent_runtime.tools.mcp:connect_single_server:675 - MCP server 'filesystem': prompts not supported or failed: Method not found
+2026-09-14 12:57:55.563 | INFO     | core.agent_runtime.tools.mcp:connect_single_server:679 - MCP server 'filesystem': connected, 14 capabilities registered
+2026-09-14 12:57:56.212 | DEBUG    | core.agent_runtime.tools.mcp:connect_single_server:621 - MCP: registered tool 'mcp_fetch_fetch' from server 'fetch'
+2026-09-14 12:57:56.214 | DEBUG    | core.agent_runtime.tools.mcp:connect_single_server:657 - MCP server 'fetch': resources not supported or failed: Method not found
+2026-09-14 12:57:56.216 | DEBUG    | core.agent_runtime.tools.mcp:connect_single_server:669 - MCP: registered prompt 'mcp_fetch_prompt_fetch' from server 'fetch'
+2026-09-14 12:57:56.216 | INFO     | core.agent_runtime.tools.mcp:connect_single_server:679 - MCP server 'fetch': connected, 2 capabilities registered
+2026-09-14 12:57:56.216 | DEBUG    | core.compat.agent:_connect_servers:520 - Agent 'ReferenceAnalysisAgent': 2 MCP servers connected, 16 tools registered total
+2026-09-14 12:57:56.218 | INFO     | core.llm_runtime:attach_workflow_llm:125 - Attached workflow LLM: agent=ReferenceAnalysisAgent phase=planning provider=custom model=DeepSeek-V4-Pro reasoning_effort=None
+2026-09-14 12:57:58,312 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 12:58:00,504 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 12:58:21,763 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 12:58:28,155 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 12:59:08,728 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 12:59:24,589 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 12:59:35,960 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 12:59:49,558 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:00:01,476 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:00:11,877 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:00:20,858 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:00:27,215 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:00:38,359 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:00:45,409 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:00:57,133 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:03:19,445 ERROR Failed to parse JSONRPC message from server
+Traceback (most recent call last):
+  File "/Users/apple/Documents/env/paperbench-judge/validation/DeepCode/.venv/lib/python3.11/site-packages/mcp/client/stdio/__init__.py", line 155, in stdout_reader
+    message = types.JSONRPCMessage.model_validate_json(line)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/apple/Documents/env/paperbench-judge/validation/DeepCode/.venv/lib/python3.11/site-packages/pydantic/main.py", line 782, in model_validate_json
+    return cls.__pydantic_validator__.validate_json(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+pydantic_core._pydantic_core.ValidationError: 1 validation error for JSONRPCMessage
+  Invalid JSON: EOF while parsing a value at line 1 column 0 [type=json_invalid, input_value='', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/json_invalid
+2026-09-14 13:03:19,448 ERROR Failed to parse JSONRPC message from server
+Traceback (most recent call last):
+  File "/Users/apple/Documents/env/paperbench-judge/validation/DeepCode/.venv/lib/python3.11/site-packages/mcp/client/stdio/__init__.py", line 155, in stdout_reader
+    message = types.JSONRPCMessage.model_validate_json(line)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/apple/Documents/env/paperbench-judge/validation/DeepCode/.venv/lib/python3.11/site-packages/pydantic/main.py", line 782, in model_validate_json
+    return cls.__pydantic_validator__.validate_json(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+pydantic_core._pydantic_core.ValidationError: 1 validation error for JSONRPCMessage
+  Invalid JSON: expected value at line 1 column 1 [type=json_invalid, input_value='added 40 packages, and audited 41 packages in 2m', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/json_invalid
+2026-09-14 13:03:19,449 ERROR Failed to parse JSONRPC message from server
+Traceback (most recent call last):
+  File "/Users/apple/Documents/env/paperbench-judge/validation/DeepCode/.venv/lib/python3.11/site-packages/mcp/client/stdio/__init__.py", line 155, in stdout_reader
+    message = types.JSONRPCMessage.model_validate_json(line)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/apple/Documents/env/paperbench-judge/validation/DeepCode/.venv/lib/python3.11/site-packages/pydantic/main.py", line 782, in model_validate_json
+    return cls.__pydantic_validator__.validate_json(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+pydantic_core._pydantic_core.ValidationError: 1 validation error for JSONRPCMessage
+  Invalid JSON: EOF while parsing a value at line 1 column 0 [type=json_invalid, input_value='', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/json_invalid
+2026-09-14 13:03:19,449 ERROR Failed to parse JSONRPC message from server
+Traceback (most recent call last):
+  File "/Users/apple/Documents/env/paperbench-judge/validation/DeepCode/.venv/lib/python3.11/site-packages/mcp/client/stdio/__init__.py", line 155, in stdout_reader
+    message = types.JSONRPCMessage.model_validate_json(line)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/apple/Documents/env/paperbench-judge/validation/DeepCode/.venv/lib/python3.11/site-packages/pydantic/main.py", line 782, in model_validate_json
+    return cls.__pydantic_validator__.validate_json(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+pydantic_core._pydantic_core.ValidationError: 1 validation error for JSONRPCMessage
+  Invalid JSON: trailing characters at line 1 column 3 [type=json_invalid, input_value='9 packages are looking for funding', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/json_invalid
+2026-09-14 13:03:19,449 ERROR Failed to parse JSONRPC message from server
+Traceback (most recent call last):
+  File "/Users/apple/Documents/env/paperbench-judge/validation/DeepCode/.venv/lib/python3.11/site-packages/mcp/client/stdio/__init__.py", line 155, in stdout_reader
+    message = types.JSONRPCMessage.model_validate_json(line)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/apple/Documents/env/paperbench-judge/validation/DeepCode/.venv/lib/python3.11/site-packages/pydantic/main.py", line 782, in model_validate_json
+    return cls.__pydantic_validator__.validate_json(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+pydantic_core._pydantic_core.ValidationError: 1 validation error for JSONRPCMessage
+  Invalid JSON: expected value at line 1 column 3 [type=json_invalid, input_value='  run `npm fund` for details', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/json_invalid
+2026-09-14 13:03:19,450 ERROR Failed to parse JSONRPC message from server
+Traceback (most recent call last):
+  File "/Users/apple/Documents/env/paperbench-judge/validation/DeepCode/.venv/lib/python3.11/site-packages/mcp/client/stdio/__init__.py", line 155, in stdout_reader
+    message = types.JSONRPCMessage.model_validate_json(line)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/apple/Documents/env/paperbench-judge/validation/DeepCode/.venv/lib/python3.11/site-packages/pydantic/main.py", line 782, in model_validate_json
+    return cls.__pydantic_validator__.validate_json(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+pydantic_core._pydantic_core.ValidationError: 1 validation error for JSONRPCMessage
+  Invalid JSON: EOF while parsing a value at line 1 column 0 [type=json_invalid, input_value='', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/json_invalid
+2026-09-14 13:03:19,450 ERROR Failed to parse JSONRPC message from server
+Traceback (most recent call last):
+  File "/Users/apple/Documents/env/paperbench-judge/validation/DeepCode/.venv/lib/python3.11/site-packages/mcp/client/stdio/__init__.py", line 155, in stdout_reader
+    message = types.JSONRPCMessage.model_validate_json(line)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/apple/Documents/env/paperbench-judge/validation/DeepCode/.venv/lib/python3.11/site-packages/pydantic/main.py", line 782, in model_validate_json
+    return cls.__pydantic_validator__.validate_json(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+pydantic_core._pydantic_core.ValidationError: 1 validation error for JSONRPCMessage
+  Invalid JSON: expected ident at line 1 column 2 [type=json_invalid, input_value='found 0 vulnerabilities', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/json_invalid
+2026-09-14 13:03:24,461 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:03:40,478 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:03:47,912 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:03:57,406 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:04:09,606 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:04:33,408 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:04:42,008 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:04:52,908 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:05:12,565 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:05:45,290 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:05:57,010 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:07:11,534 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:07:11.546 | DEBUG    | core.agent_runtime.tools.registry:aclose:186 - ToolRegistry.aclose: benign anyio teardown noise: Cancelled via cancel scope 108c84820 by <Task pending name='Task-116' coro=<AsyncExitStack.aclose() running at /Users/apple/.local/share/uv/python/cpython-3.11.16-macos-x86_64-none/lib/python3.11/contextlib.py:687> cb=[_release_waiter(<Future pendi...ask_wakeup()]>)() at /Users/apple/.local/share/uv/python/cpython-3.11.16-macos-x86_64-none/lib/python3.11/asyncio/tasks.py:431]>
+2026-09-14 13:07:11.546 | DEBUG    | core.agent_runtime.tools.registry:aclose:186 - ToolRegistry.aclose: benign anyio teardown noise: Cancelled via cancel scope 108d28700 by <Task pending name='Task-117' coro=<AsyncExitStack.aclose() running at /Users/apple/.local/share/uv/python/cpython-3.11.16-macos-x86_64-none/lib/python3.11/contextlib.py:687> cb=[_release_waiter(<Future cancelled>)() at /Users/apple/.local/share/uv/python/cpython-3.11.16-macos-x86_64-none/lib/python3.11/asyncio/tasks.py:431]>
+2026-09-14 13:07:17.068 | DEBUG    | core.agent_runtime.tools.mcp:connect_single_server:621 - MCP: registered tool 'mcp_github_downloader_download_github_repo' from server 'github-downloader'
+2026-09-14 13:07:17.069 | DEBUG    | core.agent_runtime.tools.mcp:connect_single_server:621 - MCP: registered tool 'mcp_github_downloader_parse_github_urls' from server 'github-downloader'
+2026-09-14 13:07:17.069 | DEBUG    | core.agent_runtime.tools.mcp:connect_single_server:621 - MCP: registered tool 'mcp_github_downloader_git_clone' from server 'github-downloader'
+2026-09-14 13:07:17.075 | INFO     | core.agent_runtime.tools.mcp:connect_single_server:679 - MCP server 'github-downloader': connected, 3 capabilities registered
+2026-09-14 13:07:17.075 | DEBUG    | core.compat.agent:_connect_servers:520 - Agent 'GithubDownloadAgent': 1 MCP servers connected, 3 tools registered total
+2026-09-14 13:07:17.076 | INFO     | core.llm_runtime:attach_workflow_llm:125 - Attached workflow LLM: agent=GithubDownloadAgent phase=planning provider=custom model=DeepSeek-V4-Pro reasoning_effort=None
+2026-09-14 13:07:22,988 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:11:45,685 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:11:45.687 | DEBUG    | core.agent_runtime.tools.registry:aclose:186 - ToolRegistry.aclose: benign anyio teardown noise: Cancelled via cancel scope 108d28820 by <Task pending name='Task-127' coro=<AsyncExitStack.aclose() running at /Users/apple/.local/share/uv/python/cpython-3.11.16-macos-x86_64-none/lib/python3.11/contextlib.py:687> cb=[_release_waiter(<Future pendi...ask_wakeup()]>)() at /Users/apple/.local/share/uv/python/cpython-3.11.16-macos-x86_64-none/lib/python3.11/asyncio/tasks.py:431]>
+2026-09-14 13:11:47,705 ERROR Task exception was never retrieved
+future: <Task finished name='Task-116' coro=<AsyncExitStack.aclose() done, defined at /Users/apple/.local/share/uv/python/cpython-3.11.16-macos-x86_64-none/lib/python3.11/contextlib.py:685> exception=RuntimeError('Attempted to exit cancel scope in a different task than it was entered in')>
+  + Exception Group Traceback (most recent call last):
+  |   File "/Users/apple/Documents/env/paperbench-judge/validation/DeepCode/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 847, in __aexit__
+  |     raise BaseExceptionGroup(
+  | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+  +-+---------------- 1 ----------------
+    | Traceback (most recent call last):
+    |   File "/Users/apple/Documents/env/paperbench-judge/validation/DeepCode/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 851, in __aexit__
+    |     raise exc_val
+    |   File "/Users/apple/Documents/env/paperbench-judge/validation/DeepCode/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 820, in __aexit__
+    |     await self._on_completed_fut
+    | asyncio.exceptions.CancelledError
+    | 
+    | During handling of the above exception, another exception occurred:
+    | 
+    | Traceback (most recent call last):
+    |   File "/Users/apple/Documents/env/paperbench-judge/validation/DeepCode/.venv/lib/python3.11/site-packages/mcp/client/stdio/__init__.py", line 189, in stdio_client
+    |     yield read_stream, write_stream
+    |   File "/Users/apple/.local/share/uv/python/cpython-3.11.16-macos-x86_64-none/lib/python3.11/contextlib.py", line 728, in __aexit__
+    |     cb_suppress = await cb(*exc_details)
+    |                   ^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/Users/apple/Documents/env/paperbench-judge/validation/DeepCode/.venv/lib/python3.11/site-packages/mcp/shared/session.py", line 238, in __aexit__
+    |     return await self._task_group.__aexit__(exc_type, exc_val, exc_tb)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/Users/apple/Documents/env/paperbench-judge/validation/DeepCode/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 853, in __aexit__
+    |     if self.cancel_scope.__exit__(type(exc), exc, exc.__traceback__):
+    |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/Users/apple/Documents/env/paperbench-judge/validation/DeepCode/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 464, in __exit__
+    |     raise RuntimeError(
+    | RuntimeError: Attempted to exit cancel scope in a different task than it was entered in
+    +------------------------------------
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/apple/.local/share/uv/python/cpython-3.11.16-macos-x86_64-none/lib/python3.11/contextlib.py", line 687, in aclose
+    await self.__aexit__(None, None, None)
+  File "/Users/apple/.local/share/uv/python/cpython-3.11.16-macos-x86_64-none/lib/python3.11/contextlib.py", line 745, in __aexit__
+    raise exc_details[1]
+  File "/Users/apple/.local/share/uv/python/cpython-3.11.16-macos-x86_64-none/lib/python3.11/contextlib.py", line 728, in __aexit__
+    cb_suppress = await cb(*exc_details)
+                  ^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/apple/.local/share/uv/python/cpython-3.11.16-macos-x86_64-none/lib/python3.11/contextlib.py", line 231, in __aexit__
+    await self.gen.athrow(typ, value, traceback)
+  File "/Users/apple/Documents/env/paperbench-judge/validation/DeepCode/.venv/lib/python3.11/site-packages/mcp/client/stdio/__init__.py", line 182, in stdio_client
+    async with (
+  File "/Users/apple/Documents/env/paperbench-judge/validation/DeepCode/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 853, in __aexit__
+    if self.cancel_scope.__exit__(type(exc), exc, exc.__traceback__):
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/apple/Documents/env/paperbench-judge/validation/DeepCode/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 464, in __exit__
+    raise RuntimeError(
+RuntimeError: Attempted to exit cancel scope in a different task than it was entered in
+2026-09-14 13:11:47,706 ERROR Task exception was never retrieved
+future: <Task finished name='Task-117' coro=<AsyncExitStack.aclose() done, defined at /Users/apple/.local/share/uv/python/cpython-3.11.16-macos-x86_64-none/lib/python3.11/contextlib.py:685> exception=RuntimeError('Attempted to exit cancel scope in a different task than it was entered in')>
+  + Exception Group Traceback (most recent call last):
+  |   File "/Users/apple/Documents/env/paperbench-judge/validation/DeepCode/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 847, in __aexit__
+  |     raise BaseExceptionGroup(
+  | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+  +-+---------------- 1 ----------------
+    | Traceback (most recent call last):
+    |   File "/Users/apple/Documents/env/paperbench-judge/validation/DeepCode/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 840, in __aexit__
+    |     await AsyncIOBackend.cancel_shielded_checkpoint()
+    |   File "/Users/apple/Documents/env/paperbench-judge/validation/DeepCode/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 2588, in cancel_shielded_checkpoint
+    |     await sleep(0)
+    |   File "/Users/apple/.local/share/uv/python/cpython-3.11.16-macos-x86_64-none/lib/python3.11/asyncio/tasks.py", line 640, in sleep
+    |     await __sleep0()
+    |   File "/Users/apple/.local/share/uv/python/cpython-3.11.16-macos-x86_64-none/lib/python3.11/asyncio/tasks.py", line 634, in __sleep0
+    |     yield
+    | asyncio.exceptions.CancelledError
+    | 
+    | During handling of the above exception, another exception occurred:
+    | 
+    | Traceback (most recent call last):
+    |   File "/Users/apple/Documents/env/paperbench-judge/validation/DeepCode/.venv/lib/python3.11/site-packages/mcp/client/stdio/__init__.py", line 189, in stdio_client
+    |     yield read_stream, write_stream
+    |   File "/Users/apple/.local/share/uv/python/cpython-3.11.16-macos-x86_64-none/lib/python3.11/contextlib.py", line 728, in __aexit__
+    |     cb_suppress = await cb(*exc_details)
+    |                   ^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/Users/apple/Documents/env/paperbench-judge/validation/DeepCode/.venv/lib/python3.11/site-packages/mcp/shared/session.py", line 238, in __aexit__
+    |     return await self._task_group.__aexit__(exc_type, exc_val, exc_tb)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/Users/apple/Documents/env/paperbench-judge/validation/DeepCode/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 853, in __aexit__
+    |     if self.cancel_scope.__exit__(type(exc), exc, exc.__traceback__):
+    |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/Users/apple/Documents/env/paperbench-judge/validation/DeepCode/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 464, in __exit__
+    |     raise RuntimeError(
+    | RuntimeError: Attempted to exit cancel scope in a different task than it was entered in
+    +------------------------------------
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/apple/.local/share/uv/python/cpython-3.11.16-macos-x86_64-none/lib/python3.11/contextlib.py", line 687, in aclose
+    await self.__aexit__(None, None, None)
+  File "/Users/apple/.local/share/uv/python/cpython-3.11.16-macos-x86_64-none/lib/python3.11/contextlib.py", line 745, in __aexit__
+    raise exc_details[1]
+  File "/Users/apple/.local/share/uv/python/cpython-3.11.16-macos-x86_64-none/lib/python3.11/contextlib.py", line 728, in __aexit__
+    cb_suppress = await cb(*exc_details)
+                  ^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/apple/.local/share/uv/python/cpython-3.11.16-macos-x86_64-none/lib/python3.11/contextlib.py", line 231, in __aexit__
+    await self.gen.athrow(typ, value, traceback)
+  File "/Users/apple/Documents/env/paperbench-judge/validation/DeepCode/.venv/lib/python3.11/site-packages/mcp/client/stdio/__init__.py", line 182, in stdio_client
+    async with (
+  File "/Users/apple/Documents/env/paperbench-judge/validation/DeepCode/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 853, in __aexit__
+    if self.cancel_scope.__exit__(type(exc), exc, exc.__traceback__):
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/apple/Documents/env/paperbench-judge/validation/DeepCode/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 464, in __exit__
+    raise RuntimeError(
+RuntimeError: Attempted to exit cancel scope in a different task than it was entered in
+2026-09-14 13:11:47,709 ERROR Task exception was never retrieved
+future: <Task finished name='Task-127' coro=<AsyncExitStack.aclose() done, defined at /Users/apple/.local/share/uv/python/cpython-3.11.16-macos-x86_64-none/lib/python3.11/contextlib.py:685> exception=RuntimeError('Attempted to exit cancel scope in a different task than it was entered in')>
+  + Exception Group Traceback (most recent call last):
+  |   File "/Users/apple/Documents/env/paperbench-judge/validation/DeepCode/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 847, in __aexit__
+  |     raise BaseExceptionGroup(
+  | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+  +-+---------------- 1 ----------------
+    | Traceback (most recent call last):
+    |   File "/Users/apple/Documents/env/paperbench-judge/validation/DeepCode/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 851, in __aexit__
+    |     raise exc_val
+    |   File "/Users/apple/Documents/env/paperbench-judge/validation/DeepCode/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 820, in __aexit__
+    |     await self._on_completed_fut
+    | asyncio.exceptions.CancelledError
+    | 
+    | During handling of the above exception, another exception occurred:
+    | 
+    | Traceback (most recent call last):
+    |   File "/Users/apple/Documents/env/paperbench-judge/validation/DeepCode/.venv/lib/python3.11/site-packages/mcp/client/stdio/__init__.py", line 189, in stdio_client
+    |     yield read_stream, write_stream
+    |   File "/Users/apple/.local/share/uv/python/cpython-3.11.16-macos-x86_64-none/lib/python3.11/contextlib.py", line 728, in __aexit__
+    |     cb_suppress = await cb(*exc_details)
+    |                   ^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/Users/apple/Documents/env/paperbench-judge/validation/DeepCode/.venv/lib/python3.11/site-packages/mcp/shared/session.py", line 238, in __aexit__
+    |     return await self._task_group.__aexit__(exc_type, exc_val, exc_tb)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/Users/apple/Documents/env/paperbench-judge/validation/DeepCode/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 853, in __aexit__
+    |     if self.cancel_scope.__exit__(type(exc), exc, exc.__traceback__):
+    |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/Users/apple/Documents/env/paperbench-judge/validation/DeepCode/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 464, in __exit__
+    |     raise RuntimeError(
+    | RuntimeError: Attempted to exit cancel scope in a different task than it was entered in
+    +------------------------------------
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/apple/.local/share/uv/python/cpython-3.11.16-macos-x86_64-none/lib/python3.11/contextlib.py", line 687, in aclose
+    await self.__aexit__(None, None, None)
+  File "/Users/apple/.local/share/uv/python/cpython-3.11.16-macos-x86_64-none/lib/python3.11/contextlib.py", line 745, in __aexit__
+    raise exc_details[1]
+  File "/Users/apple/.local/share/uv/python/cpython-3.11.16-macos-x86_64-none/lib/python3.11/contextlib.py", line 728, in __aexit__
+    cb_suppress = await cb(*exc_details)
+                  ^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/apple/.local/share/uv/python/cpython-3.11.16-macos-x86_64-none/lib/python3.11/contextlib.py", line 231, in __aexit__
+    await self.gen.athrow(typ, value, traceback)
+  File "/Users/apple/Documents/env/paperbench-judge/validation/DeepCode/.venv/lib/python3.11/site-packages/mcp/client/stdio/__init__.py", line 182, in stdio_client
+    async with (
+  File "/Users/apple/Documents/env/paperbench-judge/validation/DeepCode/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 853, in __aexit__
+    if self.cancel_scope.__exit__(type(exc), exc, exc.__traceback__):
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/apple/Documents/env/paperbench-judge/validation/DeepCode/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 464, in __exit__
+    raise RuntimeError(
+RuntimeError: Attempted to exit cancel scope in a different task than it was entered in
+2026-09-14 13:11:47,713 INFO 🚀 Starting codebase index workflow...
+2026-09-14 13:11:47,713 INFO 📐 Loading target structure from /Users/apple/Documents/env/paperbench-judge/validation/DeepCode/deepcode_lab/tasks/paper_edb56966/initial_plan.txt
+2026-09-14 13:11:47,714 INFO 📄 Loaded initial plan (18773 characters)
+2026-09-14 13:11:47,715 WARNING ⚠️ No standard file tree found, trying to extract from file mentions...
+2026-09-14 13:11:47,715 INFO 📊 Generated file tree from file mentions (38 lines)
+2026-09-14 13:11:47,715 INFO ✅ Successfully extracted file tree from initial plan
+2026-09-14 13:11:47,715 INFO 📋 Extracted structure preview:
+2026-09-14 13:11:47,715 INFO    src/
+2026-09-14 13:11:47,715 INFO    ├── src/
+2026-09-14 13:11:47,715 INFO    │   ├── losses.py
+2026-09-14 13:11:47,715 INFO    │   ├── losses.py
+2026-09-14 13:11:47,715 INFO    │   ├── probability_flow.py
+2026-09-14 13:11:47,715 INFO    │   ├── probability_flow.py
+2026-09-14 13:11:47,715 INFO    │   ├── score_networks.py
+2026-09-14 13:11:47,715 INFO    │   ├── score_networks.py
+2026-09-14 13:11:47,715 INFO    ... 95 more lines
+2026-09-14 13:11:47,721 INFO Loaded configuration file: /Users/apple/Documents/env/paperbench-judge/validation/DeepCode/tools/indexer_config.yaml
+2026-09-14 13:11:47,721 INFO 📁 Codebase path: /Users/apple/Documents/env/paperbench-judge/validation/DeepCode/deepcode_lab/tasks/paper_edb56966/code_base
+2026-09-14 13:11:47,721 INFO 📤 Output directory: /Users/apple/Documents/env/paperbench-judge/validation/DeepCode/deepcode_lab/tasks/paper_edb56966/indexes
+2026-09-14 13:11:47,722 INFO 🔧 Indexer configuration completed
+2026-09-14 13:11:47,722 INFO 🤖 Model provider: openai
+2026-09-14 13:11:47,722 INFO ⚡ Concurrent analysis: Disabled
+2026-09-14 13:11:47,722 INFO 🗄️ Content caching: Disabled
+2026-09-14 13:11:47,722 INFO 🔍 Pre-filtering: Enabled
+2026-09-14 13:11:47,722 INFO ============================================================
+2026-09-14 13:11:47,722 INFO 🚀 Starting code indexing process...
+2026-09-14 13:11:47,722 - CodeIndexer - INFO - Found 5 repositories to process
+2026-09-14 13:11:47,722 INFO Found 5 repositories to process
+2026-09-14 13:11:47,722 - CodeIndexer - INFO - Processing repository: score_sde_pytorch
+2026-09-14 13:11:47,722 INFO Processing repository: score_sde_pytorch
+2026-09-14 13:11:47,722 - CodeIndexer - INFO - Generating file tree structure...
+2026-09-14 13:11:47,722 INFO Generating file tree structure...
+2026-09-14 13:11:47,726 - CodeIndexer - INFO - Found 68 files in score_sde_pytorch
+2026-09-14 13:11:47,726 INFO Found 68 files in score_sde_pytorch
+2026-09-14 13:11:47,726 - CodeIndexer - INFO - Using LLM for file pre-filtering...
+2026-09-14 13:11:47,726 INFO Using LLM for file pre-filtering...
+2026-09-14 13:11:47,726 - CodeIndexer - INFO - Starting LLM pre-filtering of files...
+2026-09-14 13:11:47,726 INFO Starting LLM pre-filtering of files...
+2026-09-14 13:11:47.727 | INFO     | core.llm_runtime:get_workflow_provider:99 - Resolved workflow LLM: phase=default provider=custom model=DeepSeek-V4-Pro reasoning_effort=None max_tokens=8192
+2026-09-14 13:11:47,727 - CodeIndexer - INFO - Using DeepCode provider runtime for indexing: provider=custom model=DeepSeek-V4-Pro
+2026-09-14 13:11:47,727 INFO Using DeepCode provider runtime for indexing: provider=custom model=DeepSeek-V4-Pro
+2026-09-14 13:12:50,524 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:12:50,531 - CodeIndexer - INFO - LLM filtering completed: 20 relevant files selected
+2026-09-14 13:12:50,531 INFO LLM filtering completed: 20 relevant files selected
+2026-09-14 13:12:50,531 - CodeIndexer - INFO - Filtering strategy: Included generic diffusion-model core components directly useful for implementing posterior score estimation: SDE definitions, score matching losses, probability-flow ODE/likelihood routines, samplers, training loops, score-network building blocks, and example SDE configurations. Excluded image-specific datasets, CUDA fused ops, image-generation demos, and image-quality evaluation metrics as they are not relevant to simulation-based inference tasks.
+2026-09-14 13:12:50,531 INFO Filtering strategy: Included generic diffusion-model core components directly useful for implementing posterior score estimation: SDE definitions, score matching losses, probability-flow ODE/likelihood routines, samplers, training loops, score-network building blocks, and example SDE configurations. Excluded image-specific datasets, CUDA fused ops, image-generation demos, and image-quality evaluation metrics as they are not relevant to simulation-based inference tasks.
+2026-09-14 13:12:50,532 - CodeIndexer - INFO - After LLM filtering, will analyze 19 relevant files (from 68 total)
+2026-09-14 13:12:50,532 INFO After LLM filtering, will analyze 19 relevant files (from 68 total)
+2026-09-14 13:12:50,532 - CodeIndexer - INFO - Using sequential file analysis
+2026-09-14 13:12:50,532 INFO Using sequential file analysis
+2026-09-14 13:12:50,533 - CodeIndexer - INFO - Analyzing file 1/19: run_lib.py
+2026-09-14 13:12:50,533 INFO Analyzing file 1/19: run_lib.py
+2026-09-14 13:13:04,205 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:13:04,206 - CodeIndexer - ERROR - Error analyzing file /Users/apple/Documents/env/paperbench-judge/validation/DeepCode/deepcode_lab/tasks/paper_edb56966/code_base/score_sde_pytorch/run_lib.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:13:04,206 ERROR Error analyzing file /Users/apple/Documents/env/paperbench-judge/validation/DeepCode/deepcode_lab/tasks/paper_edb56966/code_base/score_sde_pytorch/run_lib.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:13:25,073 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:13:25,075 - CodeIndexer - ERROR - Error finding relationships for score_sde_pytorch/run_lib.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:13:25,075 ERROR Error finding relationships for score_sde_pytorch/run_lib.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:13:25,576 - CodeIndexer - INFO - Analyzing file 2/19: sde_lib.py
+2026-09-14 13:13:25,576 INFO Analyzing file 2/19: sde_lib.py
+2026-09-14 13:13:38,225 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:13:57,175 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:13:57,177 - CodeIndexer - ERROR - Error finding relationships for score_sde_pytorch/sde_lib.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:13:57,177 ERROR Error finding relationships for score_sde_pytorch/sde_lib.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:13:57,678 - CodeIndexer - INFO - Analyzing file 3/19: utils.py
+2026-09-14 13:13:57,678 INFO Analyzing file 3/19: utils.py
+2026-09-14 13:14:03,825 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:14:24,235 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:14:24,236 - CodeIndexer - ERROR - Error finding relationships for score_sde_pytorch/utils.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:14:24,236 ERROR Error finding relationships for score_sde_pytorch/utils.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:14:24,738 - CodeIndexer - INFO - Analyzing file 4/19: sampling.py
+2026-09-14 13:14:24,738 INFO Analyzing file 4/19: sampling.py
+2026-09-14 13:14:31,528 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:14:49,526 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:14:49,528 - CodeIndexer - ERROR - Error finding relationships for score_sde_pytorch/sampling.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:14:49,528 ERROR Error finding relationships for score_sde_pytorch/sampling.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:14:50,029 - CodeIndexer - INFO - Analyzing file 5/19: losses.py
+2026-09-14 13:14:50,029 INFO Analyzing file 5/19: losses.py
+2026-09-14 13:14:57,076 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:15:14,526 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:15:14,528 - CodeIndexer - ERROR - Error finding relationships for score_sde_pytorch/losses.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:15:14,528 ERROR Error finding relationships for score_sde_pytorch/losses.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:15:15,029 - CodeIndexer - INFO - Analyzing file 6/19: likelihood.py
+2026-09-14 13:15:15,029 INFO Analyzing file 6/19: likelihood.py
+2026-09-14 13:15:28,406 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:15:28,408 - CodeIndexer - ERROR - Error analyzing file /Users/apple/Documents/env/paperbench-judge/validation/DeepCode/deepcode_lab/tasks/paper_edb56966/code_base/score_sde_pytorch/likelihood.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:15:28,408 ERROR Error analyzing file /Users/apple/Documents/env/paperbench-judge/validation/DeepCode/deepcode_lab/tasks/paper_edb56966/code_base/score_sde_pytorch/likelihood.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:15:49,052 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:15:49,053 - CodeIndexer - ERROR - Error finding relationships for score_sde_pytorch/likelihood.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:15:49,053 ERROR Error finding relationships for score_sde_pytorch/likelihood.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:15:49,554 - CodeIndexer - INFO - Analyzing file 7/19: main.py
+2026-09-14 13:15:49,554 INFO Analyzing file 7/19: main.py
+2026-09-14 13:15:55,728 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:16:15,228 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:16:15,229 - CodeIndexer - ERROR - Error finding relationships for score_sde_pytorch/main.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:16:15,229 ERROR Error finding relationships for score_sde_pytorch/main.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:16:15,731 - CodeIndexer - INFO - Analyzing file 8/19: ncsnv2.py
+2026-09-14 13:16:15,731 INFO Analyzing file 8/19: ncsnv2.py
+2026-09-14 13:16:26,579 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:16:26,581 - CodeIndexer - ERROR - Error analyzing file /Users/apple/Documents/env/paperbench-judge/validation/DeepCode/deepcode_lab/tasks/paper_edb56966/code_base/score_sde_pytorch/models/ncsnv2.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:16:26,581 ERROR Error analyzing file /Users/apple/Documents/env/paperbench-judge/validation/DeepCode/deepcode_lab/tasks/paper_edb56966/code_base/score_sde_pytorch/models/ncsnv2.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:16:47,060 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:16:47,061 - CodeIndexer - ERROR - Error finding relationships for score_sde_pytorch/models/ncsnv2.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:16:47,061 ERROR Error finding relationships for score_sde_pytorch/models/ncsnv2.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:16:47,562 - CodeIndexer - INFO - Analyzing file 9/19: layerspp.py
+2026-09-14 13:16:47,562 INFO Analyzing file 9/19: layerspp.py
+2026-09-14 13:16:56,054 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:17:17,380 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:17:17,382 - CodeIndexer - ERROR - Error finding relationships for score_sde_pytorch/models/layerspp.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:17:17,382 ERROR Error finding relationships for score_sde_pytorch/models/layerspp.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:17:17,883 - CodeIndexer - INFO - Analyzing file 10/19: ema.py
+2026-09-14 13:17:17,883 INFO Analyzing file 10/19: ema.py
+2026-09-14 13:17:26,062 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:17:45,381 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:17:45,382 - CodeIndexer - ERROR - Error finding relationships for score_sde_pytorch/models/ema.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:17:45,382 ERROR Error finding relationships for score_sde_pytorch/models/ema.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:17:45,883 - CodeIndexer - INFO - Analyzing file 11/19: utils.py
+2026-09-14 13:17:45,883 INFO Analyzing file 11/19: utils.py
+2026-09-14 13:17:54,592 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:18:12,964 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:18:12,966 - CodeIndexer - ERROR - Error finding relationships for score_sde_pytorch/models/utils.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:18:12,966 ERROR Error finding relationships for score_sde_pytorch/models/utils.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:18:13,467 - CodeIndexer - INFO - Analyzing file 12/19: up_or_down_sampling.py
+2026-09-14 13:18:13,467 INFO Analyzing file 12/19: up_or_down_sampling.py
+2026-09-14 13:18:25,661 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:18:25,663 - CodeIndexer - ERROR - Error analyzing file /Users/apple/Documents/env/paperbench-judge/validation/DeepCode/deepcode_lab/tasks/paper_edb56966/code_base/score_sde_pytorch/models/up_or_down_sampling.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:18:25,663 ERROR Error analyzing file /Users/apple/Documents/env/paperbench-judge/validation/DeepCode/deepcode_lab/tasks/paper_edb56966/code_base/score_sde_pytorch/models/up_or_down_sampling.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:18:48,511 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:18:48,513 - CodeIndexer - ERROR - Error finding relationships for score_sde_pytorch/models/up_or_down_sampling.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:18:48,513 ERROR Error finding relationships for score_sde_pytorch/models/up_or_down_sampling.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:18:49,013 - CodeIndexer - INFO - Analyzing file 13/19: layers.py
+2026-09-14 13:18:49,013 INFO Analyzing file 13/19: layers.py
+2026-09-14 13:19:01,321 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:19:01,323 - CodeIndexer - ERROR - Error analyzing file /Users/apple/Documents/env/paperbench-judge/validation/DeepCode/deepcode_lab/tasks/paper_edb56966/code_base/score_sde_pytorch/models/layers.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:19:01,323 ERROR Error analyzing file /Users/apple/Documents/env/paperbench-judge/validation/DeepCode/deepcode_lab/tasks/paper_edb56966/code_base/score_sde_pytorch/models/layers.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:19:21,727 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:19:21,728 - CodeIndexer - ERROR - Error finding relationships for score_sde_pytorch/models/layers.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:19:21,728 ERROR Error finding relationships for score_sde_pytorch/models/layers.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:19:22,229 - CodeIndexer - INFO - Analyzing file 14/19: normalization.py
+2026-09-14 13:19:22,229 INFO Analyzing file 14/19: normalization.py
+2026-09-14 13:19:35,374 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:19:35,376 - CodeIndexer - ERROR - Error analyzing file /Users/apple/Documents/env/paperbench-judge/validation/DeepCode/deepcode_lab/tasks/paper_edb56966/code_base/score_sde_pytorch/models/normalization.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:19:35,376 ERROR Error analyzing file /Users/apple/Documents/env/paperbench-judge/validation/DeepCode/deepcode_lab/tasks/paper_edb56966/code_base/score_sde_pytorch/models/normalization.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:19:57,838 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:19:57,840 - CodeIndexer - ERROR - Error finding relationships for score_sde_pytorch/models/normalization.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:19:57,840 ERROR Error finding relationships for score_sde_pytorch/models/normalization.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:19:58,340 - CodeIndexer - INFO - Analyzing file 15/19: ncsnpp.py
+2026-09-14 13:19:58,340 INFO Analyzing file 15/19: ncsnpp.py
+2026-09-14 13:20:12,236 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:20:12,238 - CodeIndexer - ERROR - Error analyzing file /Users/apple/Documents/env/paperbench-judge/validation/DeepCode/deepcode_lab/tasks/paper_edb56966/code_base/score_sde_pytorch/models/ncsnpp.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:20:12,238 ERROR Error analyzing file /Users/apple/Documents/env/paperbench-judge/validation/DeepCode/deepcode_lab/tasks/paper_edb56966/code_base/score_sde_pytorch/models/ncsnpp.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:20:34,564 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:20:34,565 - CodeIndexer - ERROR - Error finding relationships for score_sde_pytorch/models/ncsnpp.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:20:34,565 ERROR Error finding relationships for score_sde_pytorch/models/ncsnpp.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:20:35,066 - CodeIndexer - INFO - Analyzing file 16/19: ddpm.py
+2026-09-14 13:20:35,066 INFO Analyzing file 16/19: ddpm.py
+2026-09-14 13:20:46,268 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:21:08,464 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:21:08,466 - CodeIndexer - ERROR - Error finding relationships for score_sde_pytorch/models/ddpm.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:21:08,466 ERROR Error finding relationships for score_sde_pytorch/models/ddpm.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:21:08,967 - CodeIndexer - INFO - Analyzing file 17/19: default_cifar10_configs.py
+2026-09-14 13:21:08,967 INFO Analyzing file 17/19: default_cifar10_configs.py
+2026-09-14 13:21:15,788 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:21:37,565 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:21:37,567 - CodeIndexer - ERROR - Error finding relationships for score_sde_pytorch/configs/default_cifar10_configs.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:21:37,567 ERROR Error finding relationships for score_sde_pytorch/configs/default_cifar10_configs.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:21:38,068 - CodeIndexer - INFO - Analyzing file 18/19: cifar10_ncsnpp_continuous.py
+2026-09-14 13:21:38,068 INFO Analyzing file 18/19: cifar10_ncsnpp_continuous.py
+2026-09-14 13:21:46,781 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:22:09,237 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:22:09,238 - CodeIndexer - ERROR - Error finding relationships for score_sde_pytorch/configs/ve/cifar10_ncsnpp_continuous.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:22:09,238 ERROR Error finding relationships for score_sde_pytorch/configs/ve/cifar10_ncsnpp_continuous.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:22:09,739 - CodeIndexer - INFO - Analyzing file 19/19: cifar10_ddpmpp_continuous.py
+2026-09-14 13:22:09,739 INFO Analyzing file 19/19: cifar10_ddpmpp_continuous.py
+2026-09-14 13:22:15,935 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:22:36,067 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:22:36,069 - CodeIndexer - ERROR - Error finding relationships for score_sde_pytorch/configs/vp/cifar10_ddpmpp_continuous.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:22:36,069 ERROR Error finding relationships for score_sde_pytorch/configs/vp/cifar10_ddpmpp_continuous.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:22:36,572 - CodeIndexer - INFO - Saved index for score_sde_pytorch to /Users/apple/Documents/env/paperbench-judge/validation/DeepCode/deepcode_lab/tasks/paper_edb56966/indexes/score_sde_pytorch_index.json
+2026-09-14 13:22:36,572 INFO Saved index for score_sde_pytorch to /Users/apple/Documents/env/paperbench-judge/validation/DeepCode/deepcode_lab/tasks/paper_edb56966/indexes/score_sde_pytorch_index.json
+2026-09-14 13:22:36,572 - CodeIndexer - INFO - Processing repository: tsnpe_neurips
+2026-09-14 13:22:36,572 INFO Processing repository: tsnpe_neurips
+2026-09-14 13:22:36,572 - CodeIndexer - INFO - Generating file tree structure...
+2026-09-14 13:22:36,572 INFO Generating file tree structure...
+2026-09-14 13:22:36,670 - CodeIndexer - INFO - Found 215 files in tsnpe_neurips
+2026-09-14 13:22:36,670 INFO Found 215 files in tsnpe_neurips
+2026-09-14 13:22:36,670 - CodeIndexer - INFO - Using LLM for file pre-filtering...
+2026-09-14 13:22:36,670 INFO Using LLM for file pre-filtering...
+2026-09-14 13:22:36,670 - CodeIndexer - INFO - Starting LLM pre-filtering of files...
+2026-09-14 13:22:36,670 INFO Starting LLM pre-filtering of files...
+2026-09-14 13:24:15,570 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:24:15,579 - CodeIndexer - INFO - LLM filtering completed: 58 relevant files selected
+2026-09-14 13:24:15,579 INFO LLM filtering completed: 58 relevant files selected
+2026-09-14 13:24:15,579 - CodeIndexer - INFO - Filtering strategy: Selected files that define algorithm execution, benchmark configurations, simulator/task wrappers, posterior training/evaluation utilities, and SBI baseline implementations. Excluded figure assets, compiled NEURON mechanism files, notebook logs, poster graphics, and unrelated docs. Focused on code/config files likely supporting NPSE/TSNPSE reproduction with diffusion-score SBI.
+2026-09-14 13:24:15,579 INFO Filtering strategy: Selected files that define algorithm execution, benchmark configurations, simulator/task wrappers, posterior training/evaluation utilities, and SBI baseline implementations. Excluded figure assets, compiled NEURON mechanism files, notebook logs, poster graphics, and unrelated docs. Focused on code/config files likely supporting NPSE/TSNPSE reproduction with diffusion-score SBI.
+2026-09-14 13:24:15,583 - CodeIndexer - INFO - After LLM filtering, will analyze 51 relevant files (from 215 total)
+2026-09-14 13:24:15,583 INFO After LLM filtering, will analyze 51 relevant files (from 215 total)
+2026-09-14 13:24:15,583 - CodeIndexer - INFO - Using sequential file analysis
+2026-09-14 13:24:15,583 INFO Using sequential file analysis
+2026-09-14 13:24:15,583 - CodeIndexer - INFO - Analyzing file 1/51: environment_vm.yml
+2026-09-14 13:24:15,583 INFO Analyzing file 1/51: environment_vm.yml
+2026-09-14 13:24:37,721 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:24:37,723 - CodeIndexer - ERROR - Error analyzing file /Users/apple/Documents/env/paperbench-judge/validation/DeepCode/deepcode_lab/tasks/paper_edb56966/code_base/tsnpe_neurips/environment_vm.yml: 'NoneType' object has no attribute 'group'
+2026-09-14 13:24:37,723 ERROR Error analyzing file /Users/apple/Documents/env/paperbench-judge/validation/DeepCode/deepcode_lab/tasks/paper_edb56966/code_base/tsnpe_neurips/environment_vm.yml: 'NoneType' object has no attribute 'group'
+2026-09-14 13:24:57,252 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:24:57,253 - CodeIndexer - ERROR - Error finding relationships for tsnpe_neurips/environment_vm.yml: 'NoneType' object has no attribute 'group'
+2026-09-14 13:24:57,253 ERROR Error finding relationships for tsnpe_neurips/environment_vm.yml: 'NoneType' object has no attribute 'group'
+2026-09-14 13:24:57,754 - CodeIndexer - INFO - Analyzing file 2/51: environment_workstation.yml
+2026-09-14 13:24:57,754 INFO Analyzing file 2/51: environment_workstation.yml
+2026-09-14 13:25:09,072 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:25:29,893 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:25:29,894 - CodeIndexer - ERROR - Error finding relationships for tsnpe_neurips/environment_workstation.yml: 'NoneType' object has no attribute 'group'
+2026-09-14 13:25:29,894 ERROR Error finding relationships for tsnpe_neurips/environment_workstation.yml: 'NoneType' object has no attribute 'group'
+2026-09-14 13:25:30,395 - CodeIndexer - INFO - Analyzing file 3/51: run.py
+2026-09-14 13:25:30,395 INFO Analyzing file 3/51: run.py
+2026-09-14 13:25:43,390 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:25:43,391 - CodeIndexer - ERROR - Error analyzing file /Users/apple/Documents/env/paperbench-judge/validation/DeepCode/deepcode_lab/tasks/paper_edb56966/code_base/tsnpe_neurips/benchmark/benchmark/run.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:25:43,391 ERROR Error analyzing file /Users/apple/Documents/env/paperbench-judge/validation/DeepCode/deepcode_lab/tasks/paper_edb56966/code_base/tsnpe_neurips/benchmark/benchmark/run.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:26:01,204 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:26:01,206 - CodeIndexer - ERROR - Error finding relationships for tsnpe_neurips/benchmark/benchmark/run.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:26:01,206 ERROR Error finding relationships for tsnpe_neurips/benchmark/benchmark/run.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:26:01,706 - CodeIndexer - INFO - Analyzing file 4/51: run_tsnpe.py
+2026-09-14 13:26:01,706 INFO Analyzing file 4/51: run_tsnpe.py
+2026-09-14 13:26:11,627 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:26:33,286 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:26:33,288 - CodeIndexer - ERROR - Error finding relationships for tsnpe_neurips/benchmark/benchmark/run_tsnpe.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:26:33,288 ERROR Error finding relationships for tsnpe_neurips/benchmark/benchmark/run_tsnpe.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:26:33,789 - CodeIndexer - INFO - Analyzing file 5/51: utils.py
+2026-09-14 13:26:33,789 INFO Analyzing file 5/51: utils.py
+2026-09-14 13:26:47,875 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:26:47,877 - CodeIndexer - ERROR - Error analyzing file /Users/apple/Documents/env/paperbench-judge/validation/DeepCode/deepcode_lab/tasks/paper_edb56966/code_base/tsnpe_neurips/benchmark/benchmark/utils.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:26:47,877 ERROR Error analyzing file /Users/apple/Documents/env/paperbench-judge/validation/DeepCode/deepcode_lab/tasks/paper_edb56966/code_base/tsnpe_neurips/benchmark/benchmark/utils.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:27:09,991 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:27:09,992 - CodeIndexer - ERROR - Error finding relationships for tsnpe_neurips/benchmark/benchmark/utils.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:27:09,992 ERROR Error finding relationships for tsnpe_neurips/benchmark/benchmark/utils.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:27:10,493 - CodeIndexer - INFO - Analyzing file 6/51: config.yaml
+2026-09-14 13:27:10,493 INFO Analyzing file 6/51: config.yaml
+2026-09-14 13:27:16,525 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:27:33,347 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:27:33,349 - CodeIndexer - ERROR - Error finding relationships for tsnpe_neurips/benchmark/benchmark/config/config.yaml: 'NoneType' object has no attribute 'group'
+2026-09-14 13:27:33,349 ERROR Error finding relationships for tsnpe_neurips/benchmark/benchmark/config/config.yaml: 'NoneType' object has no attribute 'group'
+2026-09-14 13:27:33,850 - CodeIndexer - INFO - Analyzing file 7/51: tsnpe.yaml
+2026-09-14 13:27:33,850 INFO Analyzing file 7/51: tsnpe.yaml
+2026-09-14 13:27:47,547 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:27:47,548 - CodeIndexer - ERROR - Error analyzing file /Users/apple/Documents/env/paperbench-judge/validation/DeepCode/deepcode_lab/tasks/paper_edb56966/code_base/tsnpe_neurips/benchmark/benchmark/config/algorithm/tsnpe.yaml: 'NoneType' object has no attribute 'group'
+2026-09-14 13:27:47,548 ERROR Error analyzing file /Users/apple/Documents/env/paperbench-judge/validation/DeepCode/deepcode_lab/tasks/paper_edb56966/code_base/tsnpe_neurips/benchmark/benchmark/config/algorithm/tsnpe.yaml: 'NoneType' object has no attribute 'group'
+2026-09-14 13:28:09,127 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:28:09,129 - CodeIndexer - ERROR - Error finding relationships for tsnpe_neurips/benchmark/benchmark/config/algorithm/tsnpe.yaml: 'NoneType' object has no attribute 'group'
+2026-09-14 13:28:09,129 ERROR Error finding relationships for tsnpe_neurips/benchmark/benchmark/config/algorithm/tsnpe.yaml: 'NoneType' object has no attribute 'group'
+2026-09-14 13:28:09,630 - CodeIndexer - INFO - Analyzing file 8/51: gaussian_linear_uniform.yaml
+2026-09-14 13:28:09,630 INFO Analyzing file 8/51: gaussian_linear_uniform.yaml
+2026-09-14 13:28:16,632 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:28:36,792 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:28:36,794 - CodeIndexer - ERROR - Error finding relationships for tsnpe_neurips/benchmark/benchmark/config/task/gaussian_linear_uniform.yaml: 'NoneType' object has no attribute 'group'
+2026-09-14 13:28:36,794 ERROR Error finding relationships for tsnpe_neurips/benchmark/benchmark/config/task/gaussian_linear_uniform.yaml: 'NoneType' object has no attribute 'group'
+2026-09-14 13:28:37,295 - CodeIndexer - INFO - Analyzing file 9/51: bernoulli_glm.yaml
+2026-09-14 13:28:37,295 INFO Analyzing file 9/51: bernoulli_glm.yaml
+2026-09-14 13:28:42,542 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:28:59,747 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:28:59,748 - CodeIndexer - ERROR - Error finding relationships for tsnpe_neurips/benchmark/benchmark/config/task/bernoulli_glm.yaml: 'NoneType' object has no attribute 'group'
+2026-09-14 13:28:59,748 ERROR Error finding relationships for tsnpe_neurips/benchmark/benchmark/config/task/bernoulli_glm.yaml: 'NoneType' object has no attribute 'group'
+2026-09-14 13:29:00,249 - CodeIndexer - INFO - Analyzing file 10/51: gaussian_linear.yaml
+2026-09-14 13:29:00,249 INFO Analyzing file 10/51: gaussian_linear.yaml
+2026-09-14 13:29:03,550 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:29:23,833 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:29:23,835 - CodeIndexer - ERROR - Error finding relationships for tsnpe_neurips/benchmark/benchmark/config/task/gaussian_linear.yaml: 'NoneType' object has no attribute 'group'
+2026-09-14 13:29:23,835 ERROR Error finding relationships for tsnpe_neurips/benchmark/benchmark/config/task/gaussian_linear.yaml: 'NoneType' object has no attribute 'group'
+2026-09-14 13:29:24,336 - CodeIndexer - INFO - Analyzing file 11/51: gaussian_mixture.yaml
+2026-09-14 13:29:24,336 INFO Analyzing file 11/51: gaussian_mixture.yaml
+2026-09-14 13:29:30,379 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:29:50,783 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:29:50,784 - CodeIndexer - ERROR - Error finding relationships for tsnpe_neurips/benchmark/benchmark/config/task/gaussian_mixture.yaml: 'NoneType' object has no attribute 'group'
+2026-09-14 13:29:50,784 ERROR Error finding relationships for tsnpe_neurips/benchmark/benchmark/config/task/gaussian_mixture.yaml: 'NoneType' object has no attribute 'group'
+2026-09-14 13:29:51,285 - CodeIndexer - INFO - Analyzing file 12/51: slcp.yaml
+2026-09-14 13:29:51,285 INFO Analyzing file 12/51: slcp.yaml
+2026-09-14 13:29:58,030 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:30:18,564 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:30:18,565 - CodeIndexer - ERROR - Error finding relationships for tsnpe_neurips/benchmark/benchmark/config/task/slcp.yaml: 'NoneType' object has no attribute 'group'
+2026-09-14 13:30:18,565 ERROR Error finding relationships for tsnpe_neurips/benchmark/benchmark/config/task/slcp.yaml: 'NoneType' object has no attribute 'group'
+2026-09-14 13:30:19,066 - CodeIndexer - INFO - Analyzing file 13/51: two_moons.yaml
+2026-09-14 13:30:19,066 INFO Analyzing file 13/51: two_moons.yaml
+2026-09-14 13:30:22,556 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:30:43,132 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:30:43,134 - CodeIndexer - ERROR - Error finding relationships for tsnpe_neurips/benchmark/benchmark/config/task/two_moons.yaml: 'NoneType' object has no attribute 'group'
+2026-09-14 13:30:43,134 ERROR Error finding relationships for tsnpe_neurips/benchmark/benchmark/config/task/two_moons.yaml: 'NoneType' object has no attribute 'group'
+2026-09-14 13:30:43,634 - CodeIndexer - INFO - Analyzing file 14/51: sir.yaml
+2026-09-14 13:30:43,634 INFO Analyzing file 14/51: sir.yaml
+2026-09-14 13:30:49,844 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:31:11,396 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:31:11,398 - CodeIndexer - ERROR - Error finding relationships for tsnpe_neurips/benchmark/benchmark/config/task/sir.yaml: 'NoneType' object has no attribute 'group'
+2026-09-14 13:31:11,398 ERROR Error finding relationships for tsnpe_neurips/benchmark/benchmark/config/task/sir.yaml: 'NoneType' object has no attribute 'group'
+2026-09-14 13:31:11,898 - CodeIndexer - INFO - Analyzing file 15/51: bernoulli_glm_raw.yaml
+2026-09-14 13:31:11,898 INFO Analyzing file 15/51: bernoulli_glm_raw.yaml
+2026-09-14 13:31:16,113 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:31:37,050 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:31:37,052 - CodeIndexer - ERROR - Error finding relationships for tsnpe_neurips/benchmark/benchmark/config/task/bernoulli_glm_raw.yaml: 'NoneType' object has no attribute 'group'
+2026-09-14 13:31:37,052 ERROR Error finding relationships for tsnpe_neurips/benchmark/benchmark/config/task/bernoulli_glm_raw.yaml: 'NoneType' object has no attribute 'group'
+2026-09-14 13:31:37,553 - CodeIndexer - INFO - Analyzing file 16/51: lotka_volterra.yaml
+2026-09-14 13:31:37,553 INFO Analyzing file 16/51: lotka_volterra.yaml
+2026-09-14 13:31:42,001 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:32:02,784 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:32:02,786 - CodeIndexer - ERROR - Error finding relationships for tsnpe_neurips/benchmark/benchmark/config/task/lotka_volterra.yaml: 'NoneType' object has no attribute 'group'
+2026-09-14 13:32:02,786 ERROR Error finding relationships for tsnpe_neurips/benchmark/benchmark/config/task/lotka_volterra.yaml: 'NoneType' object has no attribute 'group'
+2026-09-14 13:32:03,287 - CodeIndexer - INFO - Analyzing file 17/51: slcp_distractors.yaml
+2026-09-14 13:32:03,287 INFO Analyzing file 17/51: slcp_distractors.yaml
+2026-09-14 13:32:08,116 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:32:34,301 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:32:34,303 - CodeIndexer - ERROR - Error finding relationships for tsnpe_neurips/benchmark/benchmark/config/task/slcp_distractors.yaml: 'NoneType' object has no attribute 'group'
+2026-09-14 13:32:34,303 ERROR Error finding relationships for tsnpe_neurips/benchmark/benchmark/config/task/slcp_distractors.yaml: 'NoneType' object has no attribute 'group'
+2026-09-14 13:32:34,804 - CodeIndexer - INFO - Analyzing file 18/51: tasks.py
+2026-09-14 13:32:34,804 INFO Analyzing file 18/51: tasks.py
+2026-09-14 13:32:48,251 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:33:06,771 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:33:06,773 - CodeIndexer - ERROR - Error finding relationships for tsnpe_neurips/paper/tasks.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:33:06,773 ERROR Error finding relationships for tsnpe_neurips/paper/tasks.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:33:07,274 - CodeIndexer - INFO - Analyzing file 19/51: utils.py
+2026-09-14 13:33:07,274 INFO Analyzing file 19/51: utils.py
+2026-09-14 13:33:16,417 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:33:16,419 - CodeIndexer - ERROR - Error analyzing file /Users/apple/Documents/env/paperbench-judge/validation/DeepCode/deepcode_lab/tasks/paper_edb56966/code_base/tsnpe_neurips/paper/paper/utils.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:33:16,419 ERROR Error analyzing file /Users/apple/Documents/env/paperbench-judge/validation/DeepCode/deepcode_lab/tasks/paper_edb56966/code_base/tsnpe_neurips/paper/paper/utils.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:33:37,765 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:33:37,767 - CodeIndexer - ERROR - Error finding relationships for tsnpe_neurips/paper/paper/utils.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:33:37,767 ERROR Error finding relationships for tsnpe_neurips/paper/paper/utils.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:33:38,267 - CodeIndexer - INFO - Analyzing file 20/51: train_from_disk.py
+2026-09-14 13:33:38,267 INFO Analyzing file 20/51: train_from_disk.py
+2026-09-14 13:33:52,482 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:33:52,484 - CodeIndexer - ERROR - Error analyzing file /Users/apple/Documents/env/paperbench-judge/validation/DeepCode/deepcode_lab/tasks/paper_edb56966/code_base/tsnpe_neurips/l5pc/l5pc/train_from_disk.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:33:52,484 ERROR Error analyzing file /Users/apple/Documents/env/paperbench-judge/validation/DeepCode/deepcode_lab/tasks/paper_edb56966/code_base/tsnpe_neurips/l5pc/l5pc/train_from_disk.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:34:14,036 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:34:14,037 - CodeIndexer - ERROR - Error finding relationships for tsnpe_neurips/l5pc/l5pc/train_from_disk.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:34:14,037 ERROR Error finding relationships for tsnpe_neurips/l5pc/l5pc/train_from_disk.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:34:14,537 - CodeIndexer - INFO - Analyzing file 21/51: multiround_pyloric.py
+2026-09-14 13:34:14,537 INFO Analyzing file 21/51: multiround_pyloric.py
+2026-09-14 13:34:28,076 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:34:28,077 - CodeIndexer - ERROR - Error analyzing file /Users/apple/Documents/env/paperbench-judge/validation/DeepCode/deepcode_lab/tasks/paper_edb56966/code_base/tsnpe_neurips/l5pc/l5pc/multiround_pyloric.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:34:28,077 ERROR Error analyzing file /Users/apple/Documents/env/paperbench-judge/validation/DeepCode/deepcode_lab/tasks/paper_edb56966/code_base/tsnpe_neurips/l5pc/l5pc/multiround_pyloric.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:34:49,066 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:34:49,067 - CodeIndexer - ERROR - Error finding relationships for tsnpe_neurips/l5pc/l5pc/multiround_pyloric.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:34:49,067 ERROR Error finding relationships for tsnpe_neurips/l5pc/l5pc/multiround_pyloric.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:34:49,568 - CodeIndexer - INFO - Analyzing file 22/51: train.py
+2026-09-14 13:34:49,568 INFO Analyzing file 22/51: train.py
+2026-09-14 13:35:02,966 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:35:02,968 - CodeIndexer - ERROR - Error analyzing file /Users/apple/Documents/env/paperbench-judge/validation/DeepCode/deepcode_lab/tasks/paper_edb56966/code_base/tsnpe_neurips/l5pc/l5pc/train.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:35:02,968 ERROR Error analyzing file /Users/apple/Documents/env/paperbench-judge/validation/DeepCode/deepcode_lab/tasks/paper_edb56966/code_base/tsnpe_neurips/l5pc/l5pc/train.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:35:23,840 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:35:23,841 - CodeIndexer - ERROR - Error finding relationships for tsnpe_neurips/l5pc/l5pc/train.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:35:23,841 ERROR Error finding relationships for tsnpe_neurips/l5pc/l5pc/train.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:35:24,342 - CodeIndexer - INFO - Analyzing file 23/51: evaluate.py
+2026-09-14 13:35:24,342 INFO Analyzing file 23/51: evaluate.py
+2026-09-14 13:35:31,630 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:35:51,018 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:35:51,019 - CodeIndexer - ERROR - Error finding relationships for tsnpe_neurips/l5pc/l5pc/evaluate.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:35:51,019 ERROR Error finding relationships for tsnpe_neurips/l5pc/l5pc/evaluate.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:35:51,520 - CodeIndexer - INFO - Analyzing file 24/51: sim_model.yaml
+2026-09-14 13:35:51,520 INFO Analyzing file 24/51: sim_model.yaml
+2026-09-14 13:36:06,392 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:36:06,394 - CodeIndexer - ERROR - Error analyzing file /Users/apple/Documents/env/paperbench-judge/validation/DeepCode/deepcode_lab/tasks/paper_edb56966/code_base/tsnpe_neurips/l5pc/l5pc/config/sim_model.yaml: 'NoneType' object has no attribute 'group'
+2026-09-14 13:36:06,394 ERROR Error analyzing file /Users/apple/Documents/env/paperbench-judge/validation/DeepCode/deepcode_lab/tasks/paper_edb56966/code_base/tsnpe_neurips/l5pc/l5pc/config/sim_model.yaml: 'NoneType' object has no attribute 'group'
+2026-09-14 13:36:27,391 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:36:27,393 - CodeIndexer - ERROR - Error finding relationships for tsnpe_neurips/l5pc/l5pc/config/sim_model.yaml: 'NoneType' object has no attribute 'group'
+2026-09-14 13:36:27,393 ERROR Error finding relationships for tsnpe_neurips/l5pc/l5pc/config/sim_model.yaml: 'NoneType' object has no attribute 'group'
+2026-09-14 13:36:27,893 - CodeIndexer - INFO - Analyzing file 25/51: train.yaml
+2026-09-14 13:36:27,893 INFO Analyzing file 25/51: train.yaml
+2026-09-14 13:36:35,069 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:36:57,627 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:36:57,628 - CodeIndexer - ERROR - Error finding relationships for tsnpe_neurips/l5pc/l5pc/config/train.yaml: 'NoneType' object has no attribute 'group'
+2026-09-14 13:36:57,628 ERROR Error finding relationships for tsnpe_neurips/l5pc/l5pc/config/train.yaml: 'NoneType' object has no attribute 'group'
+2026-09-14 13:36:58,129 - CodeIndexer - INFO - Analyzing file 26/51: evaluation.yaml
+2026-09-14 13:36:58,129 INFO Analyzing file 26/51: evaluation.yaml
+2026-09-14 13:37:04,643 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:37:25,081 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:37:25,082 - CodeIndexer - ERROR - Error finding relationships for tsnpe_neurips/l5pc/l5pc/config/evaluation.yaml: 'NoneType' object has no attribute 'group'
+2026-09-14 13:37:25,082 ERROR Error finding relationships for tsnpe_neurips/l5pc/l5pc/config/evaluation.yaml: 'NoneType' object has no attribute 'group'
+2026-09-14 13:37:25,583 - CodeIndexer - INFO - Analyzing file 27/51: multiround.yaml
+2026-09-14 13:37:25,583 INFO Analyzing file 27/51: multiround.yaml
+2026-09-14 13:37:35,585 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:37:58,321 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:37:58,322 - CodeIndexer - ERROR - Error finding relationships for tsnpe_neurips/l5pc/l5pc/config/multiround.yaml: 'NoneType' object has no attribute 'group'
+2026-09-14 13:37:58,322 ERROR Error finding relationships for tsnpe_neurips/l5pc/l5pc/config/multiround.yaml: 'NoneType' object has no attribute 'group'
+2026-09-14 13:37:58,823 - CodeIndexer - INFO - Analyzing file 28/51: snpe.yaml
+2026-09-14 13:37:58,823 INFO Analyzing file 28/51: snpe.yaml
+2026-09-14 13:38:05,047 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:38:27,242 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:38:27,244 - CodeIndexer - ERROR - Error finding relationships for tsnpe_neurips/l5pc/l5pc/config/algorithm/snpe.yaml: 'NoneType' object has no attribute 'group'
+2026-09-14 13:38:27,244 ERROR Error finding relationships for tsnpe_neurips/l5pc/l5pc/config/algorithm/snpe.yaml: 'NoneType' object has no attribute 'group'
+2026-09-14 13:38:27,745 - CodeIndexer - INFO - Analyzing file 29/51: model_utils.py
+2026-09-14 13:38:27,745 INFO Analyzing file 29/51: model_utils.py
+2026-09-14 13:38:41,936 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:38:41,937 - CodeIndexer - ERROR - Error analyzing file /Users/apple/Documents/env/paperbench-judge/validation/DeepCode/deepcode_lab/tasks/paper_edb56966/code_base/tsnpe_neurips/l5pc/l5pc/utils/model_utils.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:38:41,937 ERROR Error analyzing file /Users/apple/Documents/env/paperbench-judge/validation/DeepCode/deepcode_lab/tasks/paper_edb56966/code_base/tsnpe_neurips/l5pc/l5pc/utils/model_utils.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:39:03,724 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:39:03,726 - CodeIndexer - ERROR - Error finding relationships for tsnpe_neurips/l5pc/l5pc/utils/model_utils.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:39:03,726 ERROR Error finding relationships for tsnpe_neurips/l5pc/l5pc/utils/model_utils.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:39:04,227 - CodeIndexer - INFO - Analyzing file 30/51: evaluation_utils.py
+2026-09-14 13:39:04,227 INFO Analyzing file 30/51: evaluation_utils.py
+2026-09-14 13:39:12,542 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:39:34,275 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:39:34,277 - CodeIndexer - ERROR - Error finding relationships for tsnpe_neurips/l5pc/l5pc/utils/evaluation_utils.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:39:34,277 ERROR Error finding relationships for tsnpe_neurips/l5pc/l5pc/utils/evaluation_utils.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:39:34,777 - CodeIndexer - INFO - Analyzing file 31/51: simulation_utils.py
+2026-09-14 13:39:34,777 INFO Analyzing file 31/51: simulation_utils.py
+2026-09-14 13:39:45,525 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:39:45,527 - CodeIndexer - ERROR - Error analyzing file /Users/apple/Documents/env/paperbench-judge/validation/DeepCode/deepcode_lab/tasks/paper_edb56966/code_base/tsnpe_neurips/l5pc/l5pc/utils/simulation_utils.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:39:45,527 ERROR Error analyzing file /Users/apple/Documents/env/paperbench-judge/validation/DeepCode/deepcode_lab/tasks/paper_edb56966/code_base/tsnpe_neurips/l5pc/l5pc/utils/simulation_utils.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:40:05,727 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:40:05,729 - CodeIndexer - ERROR - Error finding relationships for tsnpe_neurips/l5pc/l5pc/utils/simulation_utils.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:40:05,729 ERROR Error finding relationships for tsnpe_neurips/l5pc/l5pc/utils/simulation_utils.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:40:06,231 - CodeIndexer - INFO - Analyzing file 32/51: common_utils.py
+2026-09-14 13:40:06,231 INFO Analyzing file 32/51: common_utils.py
+2026-09-14 13:40:18,026 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:40:18,028 - CodeIndexer - ERROR - Error analyzing file /Users/apple/Documents/env/paperbench-judge/validation/DeepCode/deepcode_lab/tasks/paper_edb56966/code_base/tsnpe_neurips/l5pc/l5pc/utils/common_utils.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:40:18,028 ERROR Error analyzing file /Users/apple/Documents/env/paperbench-judge/validation/DeepCode/deepcode_lab/tasks/paper_edb56966/code_base/tsnpe_neurips/l5pc/l5pc/utils/common_utils.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:40:38,835 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:40:38,836 - CodeIndexer - ERROR - Error finding relationships for tsnpe_neurips/l5pc/l5pc/utils/common_utils.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:40:38,836 ERROR Error finding relationships for tsnpe_neurips/l5pc/l5pc/utils/common_utils.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:40:39,337 - CodeIndexer - INFO - Analyzing file 33/51: metrics_test.py
+2026-09-14 13:40:39,337 INFO Analyzing file 33/51: metrics_test.py
+2026-09-14 13:40:47,976 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:41:10,386 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:41:10,387 - CodeIndexer - ERROR - Error finding relationships for tsnpe_neurips/sbi/tests/metrics_test.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:41:10,387 ERROR Error finding relationships for tsnpe_neurips/sbi/tests/metrics_test.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:41:10,888 - CodeIndexer - INFO - Analyzing file 34/51: linearGaussian_snpe_test.py
+2026-09-14 13:41:10,888 INFO Analyzing file 34/51: linearGaussian_snpe_test.py
+2026-09-14 13:41:24,479 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:41:24,481 - CodeIndexer - ERROR - Error analyzing file /Users/apple/Documents/env/paperbench-judge/validation/DeepCode/deepcode_lab/tasks/paper_edb56966/code_base/tsnpe_neurips/sbi/tests/linearGaussian_snpe_test.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:41:24,481 ERROR Error analyzing file /Users/apple/Documents/env/paperbench-judge/validation/DeepCode/deepcode_lab/tasks/paper_edb56966/code_base/tsnpe_neurips/sbi/tests/linearGaussian_snpe_test.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:41:47,446 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:41:47,448 - CodeIndexer - ERROR - Error finding relationships for tsnpe_neurips/sbi/tests/linearGaussian_snpe_test.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:41:47,448 ERROR Error finding relationships for tsnpe_neurips/sbi/tests/linearGaussian_snpe_test.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:41:47,949 - CodeIndexer - INFO - Analyzing file 35/51: flow.py
+2026-09-14 13:41:47,949 INFO Analyzing file 35/51: flow.py
+2026-09-14 13:41:55,557 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:42:20,079 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:42:20,081 - CodeIndexer - ERROR - Error finding relationships for tsnpe_neurips/sbi/sbi/neural_nets/flow.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:42:20,081 ERROR Error finding relationships for tsnpe_neurips/sbi/sbi/neural_nets/flow.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:42:20,582 - CodeIndexer - INFO - Analyzing file 36/51: mdn.py
+2026-09-14 13:42:20,582 INFO Analyzing file 36/51: mdn.py
+2026-09-14 13:42:29,246 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:42:52,885 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:42:52,887 - CodeIndexer - ERROR - Error finding relationships for tsnpe_neurips/sbi/sbi/neural_nets/mdn.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:42:52,887 ERROR Error finding relationships for tsnpe_neurips/sbi/sbi/neural_nets/mdn.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:42:53,387 - CodeIndexer - INFO - Analyzing file 37/51: embedding_nets.py
+2026-09-14 13:42:53,387 INFO Analyzing file 37/51: embedding_nets.py
+2026-09-14 13:43:02,257 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:43:24,382 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:43:24,383 - CodeIndexer - ERROR - Error finding relationships for tsnpe_neurips/sbi/sbi/neural_nets/embedding_nets.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:43:24,383 ERROR Error finding relationships for tsnpe_neurips/sbi/sbi/neural_nets/embedding_nets.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:43:24,884 - CodeIndexer - INFO - Analyzing file 38/51: linear_gaussian.py
+2026-09-14 13:43:24,884 INFO Analyzing file 38/51: linear_gaussian.py
+2026-09-14 13:43:34,332 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:43:58,433 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:43:58,435 - CodeIndexer - ERROR - Error finding relationships for tsnpe_neurips/sbi/sbi/simulators/linear_gaussian.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:43:58,435 ERROR Error finding relationships for tsnpe_neurips/sbi/sbi/simulators/linear_gaussian.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:43:58,935 - CodeIndexer - INFO - Analyzing file 39/51: metrics.py
+2026-09-14 13:43:58,935 INFO Analyzing file 39/51: metrics.py
+2026-09-14 13:44:07,239 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:44:27,747 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:44:27,748 - CodeIndexer - ERROR - Error finding relationships for tsnpe_neurips/sbi/sbi/utils/metrics.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:44:27,748 ERROR Error finding relationships for tsnpe_neurips/sbi/sbi/utils/metrics.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:44:28,249 - CodeIndexer - INFO - Analyzing file 40/51: torchutils.py
+2026-09-14 13:44:28,249 INFO Analyzing file 40/51: torchutils.py
+2026-09-14 13:44:35,234 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:44:58,685 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:44:58,687 - CodeIndexer - ERROR - Error finding relationships for tsnpe_neurips/sbi/sbi/utils/torchutils.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:44:58,687 ERROR Error finding relationships for tsnpe_neurips/sbi/sbi/utils/torchutils.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:44:59,188 - CodeIndexer - INFO - Analyzing file 41/51: kde.py
+2026-09-14 13:44:59,188 INFO Analyzing file 41/51: kde.py
+2026-09-14 13:45:08,193 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:45:29,385 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:45:29,387 - CodeIndexer - ERROR - Error finding relationships for tsnpe_neurips/sbi/sbi/utils/kde.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:45:29,387 ERROR Error finding relationships for tsnpe_neurips/sbi/sbi/utils/kde.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:45:29,888 - CodeIndexer - INFO - Analyzing file 42/51: conditional_density_utils.py
+2026-09-14 13:45:29,888 INFO Analyzing file 42/51: conditional_density_utils.py
+2026-09-14 13:45:43,736 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:45:43,738 - CodeIndexer - ERROR - Error analyzing file /Users/apple/Documents/env/paperbench-judge/validation/DeepCode/deepcode_lab/tasks/paper_edb56966/code_base/tsnpe_neurips/sbi/sbi/utils/conditional_density_utils.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:45:43,738 ERROR Error analyzing file /Users/apple/Documents/env/paperbench-judge/validation/DeepCode/deepcode_lab/tasks/paper_edb56966/code_base/tsnpe_neurips/sbi/sbi/utils/conditional_density_utils.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:46:06,261 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:46:06,262 - CodeIndexer - ERROR - Error finding relationships for tsnpe_neurips/sbi/sbi/utils/conditional_density_utils.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:46:06,262 ERROR Error finding relationships for tsnpe_neurips/sbi/sbi/utils/conditional_density_utils.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:46:06,763 - CodeIndexer - INFO - Analyzing file 43/51: restriction_estimator.py
+2026-09-14 13:46:06,763 INFO Analyzing file 43/51: restriction_estimator.py
+2026-09-14 13:46:21,411 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:46:21,412 - CodeIndexer - ERROR - Error analyzing file /Users/apple/Documents/env/paperbench-judge/validation/DeepCode/deepcode_lab/tasks/paper_edb56966/code_base/tsnpe_neurips/sbi/sbi/utils/restriction_estimator.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:46:21,412 ERROR Error analyzing file /Users/apple/Documents/env/paperbench-judge/validation/DeepCode/deepcode_lab/tasks/paper_edb56966/code_base/tsnpe_neurips/sbi/sbi/utils/restriction_estimator.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:46:40,488 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:46:40,489 - CodeIndexer - ERROR - Error finding relationships for tsnpe_neurips/sbi/sbi/utils/restriction_estimator.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:46:40,489 ERROR Error finding relationships for tsnpe_neurips/sbi/sbi/utils/restriction_estimator.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:46:40,990 - CodeIndexer - INFO - Analyzing file 44/51: sbiutils.py
+2026-09-14 13:46:40,990 INFO Analyzing file 44/51: sbiutils.py
+2026-09-14 13:46:55,205 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:46:55,207 - CodeIndexer - ERROR - Error analyzing file /Users/apple/Documents/env/paperbench-judge/validation/DeepCode/deepcode_lab/tasks/paper_edb56966/code_base/tsnpe_neurips/sbi/sbi/utils/sbiutils.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:46:55,207 ERROR Error analyzing file /Users/apple/Documents/env/paperbench-judge/validation/DeepCode/deepcode_lab/tasks/paper_edb56966/code_base/tsnpe_neurips/sbi/sbi/utils/sbiutils.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:47:19,216 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:47:19,217 - CodeIndexer - ERROR - Error finding relationships for tsnpe_neurips/sbi/sbi/utils/sbiutils.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:47:19,217 ERROR Error finding relationships for tsnpe_neurips/sbi/sbi/utils/sbiutils.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:47:19,720 - CodeIndexer - INFO - Analyzing file 45/51: slice.py
+2026-09-14 13:47:19,720 INFO Analyzing file 45/51: slice.py
+2026-09-14 13:47:29,945 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:47:54,887 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:47:54,889 - CodeIndexer - ERROR - Error finding relationships for tsnpe_neurips/sbi/sbi/samplers/mcmc/slice.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:47:54,889 ERROR Error finding relationships for tsnpe_neurips/sbi/sbi/samplers/mcmc/slice.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:47:55,389 - CodeIndexer - INFO - Analyzing file 46/51: mcmc.py
+2026-09-14 13:47:55,389 INFO Analyzing file 46/51: mcmc.py
+2026-09-14 13:48:01,882 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:48:28,120 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:48:28,122 - CodeIndexer - ERROR - Error finding relationships for tsnpe_neurips/sbi/sbi/samplers/mcmc/mcmc.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:48:28,122 ERROR Error finding relationships for tsnpe_neurips/sbi/sbi/samplers/mcmc/mcmc.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:48:28,622 - CodeIndexer - INFO - Analyzing file 47/51: rejection.py
+2026-09-14 13:48:28,622 INFO Analyzing file 47/51: rejection.py
+2026-09-14 13:48:37,196 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:48:59,620 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:48:59,621 - CodeIndexer - ERROR - Error finding relationships for tsnpe_neurips/sbi/sbi/samplers/rejection/rejection.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:48:59,621 ERROR Error finding relationships for tsnpe_neurips/sbi/sbi/samplers/rejection/rejection.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:49:00,122 - CodeIndexer - INFO - Analyzing file 48/51: base.py
+2026-09-14 13:49:00,122 INFO Analyzing file 48/51: base.py
+2026-09-14 13:49:15,920 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:49:15,922 - CodeIndexer - ERROR - Error analyzing file /Users/apple/Documents/env/paperbench-judge/validation/DeepCode/deepcode_lab/tasks/paper_edb56966/code_base/tsnpe_neurips/sbi/sbi/inference/base.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:49:15,922 ERROR Error analyzing file /Users/apple/Documents/env/paperbench-judge/validation/DeepCode/deepcode_lab/tasks/paper_edb56966/code_base/tsnpe_neurips/sbi/sbi/inference/base.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:49:39,624 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:49:39,625 - CodeIndexer - ERROR - Error finding relationships for tsnpe_neurips/sbi/sbi/inference/base.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:49:39,625 ERROR Error finding relationships for tsnpe_neurips/sbi/sbi/inference/base.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:49:40,126 - CodeIndexer - INFO - Analyzing file 49/51: snpe_c.py
+2026-09-14 13:49:40,126 INFO Analyzing file 49/51: snpe_c.py
+2026-09-14 13:49:49,221 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:50:13,094 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:50:13,096 - CodeIndexer - ERROR - Error finding relationships for tsnpe_neurips/sbi/sbi/inference/snpe/snpe_c.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:50:13,096 ERROR Error finding relationships for tsnpe_neurips/sbi/sbi/inference/snpe/snpe_c.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:50:13,596 - CodeIndexer - INFO - Analyzing file 50/51: snpe_base.py
+2026-09-14 13:50:13,596 INFO Analyzing file 50/51: snpe_base.py
+2026-09-14 13:50:27,580 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:50:51,034 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:50:51,036 - CodeIndexer - ERROR - Error finding relationships for tsnpe_neurips/sbi/sbi/inference/snpe/snpe_base.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:50:51,036 ERROR Error finding relationships for tsnpe_neurips/sbi/sbi/inference/snpe/snpe_base.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:50:51,536 - CodeIndexer - INFO - Analyzing file 51/51: snle_base.py
+2026-09-14 13:50:51,536 INFO Analyzing file 51/51: snle_base.py
+2026-09-14 13:51:06,636 INFO HTTP Request: POST https://llmapi.paratera.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-09-14 13:51:06,638 - CodeIndexer - ERROR - Error analyzing file /Users/apple/Documents/env/paperbench-judge/validation/DeepCode/deepcode_lab/tasks/paper_edb56966/code_base/tsnpe_neurips/sbi/sbi/inference/snle/snle_base.py: 'NoneType' object has no attribute 'group'
+2026-09-14 13:51:06,638 ERROR Error analyzing file /Users/apple/Documents/env/paperbench-judge/validation/DeepCode/deepcode_lab/tasks/paper_edb56966/code_base/tsnpe_neurips/sbi/sbi/inference/snle/snle_base.py: 'NoneType' object has no attribute 'group'

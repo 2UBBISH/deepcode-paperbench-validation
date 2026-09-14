@@ -473,6 +473,13 @@ class OpenAICompatProvider(LLMProvider):
         if compat.thinking_extra_body:
             kwargs.setdefault("extra_body", {}).update(compat.thinking_extra_body)
 
+        # [local compat] DEEPCODE_THINKING=off sends `enable_thinking: false` on every request (the switch
+        # Paratera/SiliconFlow honour for DeepSeek-V4-Pro). The reproduction line under comparison runs with
+        # thinking off; without this the "DeepCode vs ours" comparison was also "thinking on vs off". Unset
+        # leaves the request exactly as upstream builds it.
+        if os.environ.get("DEEPCODE_THINKING", "").strip().lower() in {"off", "0", "false"}:
+            kwargs.setdefault("extra_body", {})["enable_thinking"] = False
+
         if tools:
             kwargs["tools"] = tools
             kwargs["tool_choice"] = tool_choice or "auto"

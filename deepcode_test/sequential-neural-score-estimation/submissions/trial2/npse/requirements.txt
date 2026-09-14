@@ -1,0 +1,25 @@
+# NPSE: Neural Posterior Score Estimation for Simulation-Based Inference
+# Python 3.9 or 3.10 recommended.
+
+# Core deep-learning and automatic-differentiation dependencies
+torch>=1.13
+torchdiffeq>=0.2.3
+
+# Simulation-based inference reference package (benchmarks, reference posteriors, baselines)
+sbibm>=1.0.0
+
+# Numerical and scientific computing
+numpy>=1.23
+scipy>=1.9
+
+# Evaluation metrics
+scikit-learn>=1.1
+
+# Experiment support
+matplotlib>=3.6
+pandas>=1.5
+pyyaml>=6.0
+tqdm>=4.64
+
+# Testing
+pytest>=7.0

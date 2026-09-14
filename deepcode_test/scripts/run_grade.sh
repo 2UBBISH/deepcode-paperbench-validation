@@ -65,6 +65,8 @@ echo ""
 echo "==== [3/4] 判分(code_only · DeepSeek-V4-Pro 裁判恒定)$(date +%F\ %T) ===="
 cd "$PB"
 export PATH="$HOME/.local/bin:$PATH"
+# macOS Docker Desktop serves ~/.docker/run/docker.sock, not /var/run/docker.sock: tell docker-py and the sandbox.
+export DOCKER_HOST="${DOCKER_HOST:-unix://$HOME/.docker/run/docker.sock}"
 uv run python -m paperbench.nano.entrypoint \
     paperbench.paper_split=$PAPER \
     paperbench.n_tries=$N \
@@ -73,6 +75,7 @@ uv run python -m paperbench.nano.entrypoint \
     paperbench.solver.computer_runtime=nanoeval_alcatraz.alcatraz_computer_interface:AlcatrazComputerRuntime \
     paperbench.solver.computer_runtime.env=alcatraz.clusters.local:LocalConfig \
     paperbench.solver.computer_runtime.env.pull_from_registry=false \
+    paperbench.solver.computer_runtime.env.docker_host=$DOCKER_HOST \
     paperbench.judge.completer_config=preparedness_turn_completer.oai_completions_turn_completer:OpenAICompletionsTurnCompleter.Config \
     paperbench.judge.completer_config.model="${PB_JUDGE_MODEL:-DeepSeek-V4-Pro}" \
     paperbench.judge.code_only=True \
