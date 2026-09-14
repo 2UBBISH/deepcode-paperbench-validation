@@ -13,3 +13,7 @@ frontier-evals/
 run.log
 # DeepCode task directory archives (hundreds of MB; the index and logs live in logs/ and grades/)
 deepcode_test/*/task_archives/
+# bare-run workspaces hold the paper and the provided repository snapshots (60 MB); the brief and the
+# graded submission copy are committed elsewhere
+deepcode_test/*/workspaces/*/paper/
+deepcode_test/*/workspaces/*/submission/
