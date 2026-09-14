@@ -1,0 +1,41 @@
+==== [0/4] 前置检查 ====
+  ✅ Docker 在跑
+  ✅ 提交根目录只含合法 paper id
+==== [1/4] 提交清点与非空校验 ====
+  trial2         文件       39 python       35  ✅
+
+==== [2/4] 预估与闸门 ====
+  论文     : sequential-neural-score-estimation
+  提交份数 : 1  → paperbench.n_tries=1(不设则只判 1 份!)
+  成本预估 : 实测约 ¥38/份 → 本次约 ¥38(脚本报价上限 ¥60)
+  闸门     : 本计划总预算 ¥600(2026-08-28 由 ¥500 上调)
+  ⚠️ 已判过的提交请先移出 /Users/apple/pb_submissions/sequential-neural-score-estimation,否则会重判、白花钱
+
+==== [3/4] 判分(code_only · DeepSeek-V4-Pro 裁判恒定)2026-09-14 18:50:13 ====
+ 'other_stats': {'n_is_valid_git_repo': 0,
+                 'n_nontrivial_git_log': 0,
+                 'n_repro_script_exists': 0,
+                 'repro_mean_time': nan},
+ 'params': {'agent': 'direct_submission_solver',
+            'code_only': True,
+            'n_samples': 1,
+            'n_tries': 1,
+            'paper_split': 'sequential-neural-score-estimation',
+            'resources_provided': False,
+            'skip_reproduction': False},
+ 'run_group_id': '2026-09-14T10-50-17-UTC_run-group_direct_submission_solver',
+ 'run_health': {'n_gradings_failed': 0,
+                'n_reproductions_failed': 1,
+                'n_rollouts_failed': 0}}
+Evaluated 1 tasks with PaperBench-direct_submission_solver[0m [36mcomponent[0m=[35mnanoeval.evaluation[0m
+[2m2026-09-14T10:53:49.588838Z[0m [[32m[1minfo     [0m] [1m[36m[1mEvalboard Summary: unknown, add in pr?[0m[0m [36mcomponent[0m=[35mnanoeval.evaluation[0m
+ubmission_solver (r_id=260914105024TYE64O3D, m=nanoeval): 100%|██████████| 1/1 [03:25<00:00, 205.33s/it, corr=0, errs=0, fail=1]
+[2m2026-09-14T10:53:49.589248Z[0m [[33m[1mwarning  [0m] [1mUnable to find model name, using fallback name='nanoeval'[0m [36mcomponent[0m=[35mnanoeval.eval[0m
+[2m2026-09-14T10:53:49.589746Z[0m [[33m[1mwarning  [0m] [1mNo slack integration configured, so not sending user notification[0m [36mcomponent[0m=[35mnanoeval.library_config[0m
+
+==== [4/4] 结果与有效性核验 2026-09-14 18:53:50 ====
+  sequential-neural-sc  score=0.7280  叶=67  无效叶=0  OK
+
+  判分结果已复制到 /Users/apple/Documents/env/paperbench-judge/validation/deepcode_test/scripts/../sequential-neural-score-estimation/grades
+==== 记得回填 docs/HANDOFF_FRE.md ====
+GRADE EXIT 0

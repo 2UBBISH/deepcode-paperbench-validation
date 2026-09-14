@@ -64,6 +64,8 @@
 
 论文声称:fre 1.34×、rice 1.95×。
 
+**sequential-neural-score-estimation(67 叶,2026-09-14,Paratera 裁判)**:DeepCode + V4-Pro(思考关)0.7280 对 DeepEvol 复现线(同模型)0.7729 / 0.6854 ——详见 [`deepcode_test/sequential-neural-score-estimation/RESULTS.md`](deepcode_test/sequential-neural-score-estimation/RESULTS.md)。
+
 ### 1.2 结论总结
 
 **能站住的**

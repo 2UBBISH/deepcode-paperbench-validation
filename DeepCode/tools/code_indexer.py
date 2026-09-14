@@ -727,7 +727,13 @@ class CodeIndexer:
             """
 
             # Get LLM analysis with configured parameters
-            llm_response = await self._call_llm(analysis_prompt, max_tokens=1000)
+            # [local compat] 1000 tokens is the whole budget for a reasoning model's thinking plus the JSON
+            # answer: on Paratera-served DeepSeek-V4-Pro (2026-09-14 snse trial1) 20/51 files came back
+            # empty with finish_reason=length, the regex below found no JSON and the file was dropped from
+            # the index. Default stays upstream's; override with the environment variable.
+            llm_response = await self._call_llm(
+                analysis_prompt, max_tokens=int(os.environ.get("DEEPCODE_ANALYSIS_MAX_TOKENS", "1000"))
+            )
 
             try:
                 # Try to parse JSON response
@@ -819,7 +825,10 @@ class CodeIndexer:
         """
 
         try:
-            llm_response = await self._call_llm(relationship_prompt, max_tokens=1500)
+            # [local compat] same truncation as the per-file analysis above (1500 tokens, empty answers).
+            llm_response = await self._call_llm(
+                relationship_prompt, max_tokens=int(os.environ.get("DEEPCODE_RELATIONSHIP_MAX_TOKENS", "1500"))
+            )
 
             match = re.search(r"\{.*\}", llm_response, re.DOTALL)
             relationship_data = json.loads(match.group(0))

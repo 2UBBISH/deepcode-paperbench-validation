@@ -11,3 +11,5 @@ deepcode_lab/
 # PaperBench is cloned by setup.sh at a pinned commit (see patches/UPSTREAM_BASE.txt)
 frontier-evals/
 run.log
+# DeepCode task directory archives (hundreds of MB; the index and logs live in logs/ and grades/)
+deepcode_test/*/task_archives/
