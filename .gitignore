@@ -17,3 +17,4 @@ deepcode_test/*/task_archives/
 # graded submission copy are committed elsewhere
 deepcode_test/*/workspaces/*/paper/
 deepcode_test/*/workspaces/*/submission/
+deepcode_test/*/workspaces/*/proxy_requests.log
