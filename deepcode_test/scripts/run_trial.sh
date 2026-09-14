@@ -99,7 +99,18 @@ rm -f "$CODE_DIR_FILE" "$STATUS_FILE"
 echo "  ✅ 干净起点"
 
 echo "==== [2/3] DeepCode 复现 $PAPER(完整模式;14h 硬顶;日志: $LOG)===="
-export STAGE_B_INPUT="$PB/data/papers/$PAPER/paper.md"
+# 输入按数据集来:PaperBench 给 agent 的是 paper.md + addendum.md(基准作者的澄清:哪个基线用哪个库、什么不在范围内)。
+# DeepCode 的提示词本来就写着"读 paper 和 addendum.md",但它只吃一个 markdown 文件,所以把 addendum 作为末尾一节
+# 附在论文后面(标题 "Addendum"),和 PaperBench 给裸跑 agent 的信息一致。DEEPCODE_INPUT_ADDENDUM=0 可关(旧口径)。
+INPUT_DIR="$OUT/inputs"; mkdir -p "$INPUT_DIR"
+if [ "${DEEPCODE_INPUT_ADDENDUM:-1}" = "1" ] && [ -s "$PB/data/papers/$PAPER/addendum.md" ]; then
+  { cat "$PB/data/papers/$PAPER/paper.md"; printf '\n\n# Addendum\n\nClarifications provided with the paper by the benchmark authors (in scope; follow them):\n\n'; cat "$PB/data/papers/$PAPER/addendum.md"; } > "$INPUT_DIR/paper.md"
+  export STAGE_B_INPUT="$INPUT_DIR/paper.md"
+  echo "  📎 输入 = paper.md + addendum.md(按数据集口径;sha256 $(shasum -a 256 "$STAGE_B_INPUT" | cut -c1-12))"
+else
+  export STAGE_B_INPUT="$PB/data/papers/$PAPER/paper.md"
+  echo "  📎 输入 = 仅 paper.md(DEEPCODE_INPUT_ADDENDUM=0 或无 addendum)"
+fi
 export STAGE_B_SLUG="$PAPER"
 # 论文 §4.1 声称"web browsing 期间强制执行源码黑名单",但开源代码里没有任何实现。
 # 这里把 PaperBench 自己的 blacklist.txt 喂给 MCP 层强制执行 —— 是补齐论文协议,
