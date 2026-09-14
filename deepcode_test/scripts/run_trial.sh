@@ -31,6 +31,7 @@ case "$PAPER" in
   fre)  TITLE_KEY="functional reward encoding"; BLOCK_REPO="kvfrans/fre" ;;
   rice) TITLE_KEY="rice";                        BLOCK_REPO="chengzelei" ;;
   sequential-neural-score-estimation) TITLE_KEY="sequential neural"; BLOCK_REPO="jacksimons15327" ;;
+  bam)  TITLE_KEY="batch and match";            BLOCK_REPO="modichirag/GSM-VI" ;;
   *)    echo "❌ 未知 PAPER=$PAPER,请先在本脚本登记标题关键词与封锁仓库"; exit 1 ;;
 esac
 
