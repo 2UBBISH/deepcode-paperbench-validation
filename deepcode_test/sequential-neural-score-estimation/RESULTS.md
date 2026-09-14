@@ -58,3 +58,13 @@
 - `submissions/deepevol_s10`、`submissions/deepevol_s9`、`submissions/trial2`：三份提交原样。
 - `logs/`：DeepCode 两次作废与有效 trial2 的完整日志、两次判分日志。
 - `task_archives/`（不入库，913 MB）：DeepCode 的 task 目录归档，含索引产物。
+
+## 输入口径（2026-09-14 晚，先于任何三方结论）
+
+三方此前**输入不对标**：DeepCode trial2 只拿到 paper.md（提示词写着读 addendum.md，但任务目录里没有）；我们的线只拿到
+paper.pdf（addendum 由 owner 读后手工上传两个仓库代替）；裸跑拿到了 addendum 但用了带 Code-Dev 倾斜的提示。addendum
+对这篇是要害（指定 sbibm 做 NPE/SNPE/C2ST、`mackelab/tsnpe_neurips` 做 TSNPE 与 pyloric、5.3 的 TSNPE/SNVI 不用复现）。
+
+从此按 PaperBench 的口径统一：`paper.pdf + paper.md + addendum.md + blacklist.txt (+ assets)`，不给 rubric；裸跑用官方
+`code_only_instructions.txt` 逐字；DeepCode 的 paper.md 末尾附 addendum（`run_trial.sh`，`DEEPCODE_INPUT_ADDENDUM=1` 默认）；
+我们的线 `init --paper-dir`（论文包，迁移 0055）。上面的三个分数（0.7729 / 0.7280 / 0.6854）是对标前的数，三方各重跑一次后再比。
