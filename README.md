@@ -1,14 +1,52 @@
 # DeepCode × PaperBench 独立复现验证
 
-> 验证 DeepCode(arXiv:2512.07921,HKUDS/DeepCode)"自动论文复现比商业编码工具高 1.34×(fre)/ 1.95×(rice)"的声称。
-> 口径:PaperBench Code-Dev(只看代码不执行),同一底座模型双切(裸跑 vs DeepCode),裁判固定。
-> 本仓库包含:修改版 DeepCode 源码、PaperBench 补丁、全部脚本、全部提交产物与判分 JSON、分析文档。**clone 后跑 `setup.sh` 即可复现整个流程。**
+> **状态（2026-09-14）**：09-03 之前的全部对比结果**作废**——裸跑提示词有偏、DeepCode 臂没拿到 addendum、"思考关"从未成立（见附录 A 开头的说明）。当前只认一套输入标准（§0），正在 PaperBench `bam` 上跑三方对照：**DeepEvol 复现线 / DeepCode 脚手架 / Codex 裸跑**，同底座 DeepSeek-V4-Pro @ Paratera，思考开，裁判恒定。
+> 本仓库包含：修改版 DeepCode 源码、PaperBench 补丁、全部脚本、历史提交产物与判分 JSON、分析文档。**clone 后跑 `setup.sh` 即可复现整个流程。**
 
-**English summary.** An independent replication of the DeepCode paper's claim that its paper-to-code scaffold beats bare coding agents on PaperBench Code-Dev. Same base model (DeepSeek-V4-Pro, plus a Kimi-K2.7 line) on both arms, fixed judge. Headline: on `fre` the scaffold shows no gain under either of two judge servings (0.98× / 0.81×); on `rice` the verdict **flips with the judge serving** (1.05× under SiliconFlow-served DeepSeek-V4-Pro vs 2.58× under Paratera-served DeepSeek-V4-Pro), because the two servings disagree on whether "generic, configurable" implementations count. PaperBench JudgeEval (human-graded ground truth, rice/0) rates both servings as equally accurate (macro F1 0.685 vs 0.719, identical pass rate and bias) while they disagree on 16% of leaves — so the ground truth cannot arbitrate the flip, and that disagreement is the judge-noise floor of Code-Dev scoring with these models. We also document four silent-degradation defects in the DeepCode pipeline and a full audit of our own modifications.
+**English summary.** This repository started (Aug 25 – Sep 3) as an independent replication of the DeepCode paper's claim that its paper-to-code scaffold beats bare coding agents on PaperBench Code-Dev. **Those results are withdrawn**: the bare arm's prompt carried extra guidance the official PaperBench instructions do not (reading order, the blacklist URL, "don't stop / don't ask", "prioritise implementation over runnability"), the DeepCode arm did not receive the benchmark's `addendum.md`, and "thinking off" was never in effect (the provider ignores `enable_thinking:false`; we later concluded thinking cannot be switched off at all on this route). Two findings survive because they do not depend on inputs: the judge-serving dependence of Code-Dev scores (same model, two servings, 16% leaf-level disagreement, JudgeEval cannot arbitrate) and four silent-degradation defects in the DeepCode pipeline. From Sep 14 the comparison is re-run under one input standard (§0): the materials PaperBench hands an agent (paper.pdf/md, addendum, blacklist, assets — no rubric), the official `code_only_instructions.txt` verbatim for the bare arm (Codex) plus a frozen two-line suffix, thinking on for every arm, a fixed judge. First paper: `bam`.
 
 ---
 
-## 0. 如果你是来造自己的复现 agent 的(先读这一节)
+## 0. 当前口径：三方对照的输入标准（2026-09-14 起）
+
+完整文本：[`deepcode_test/bam/INPUT_STANDARD.md`](deepcode_test/bam/INPUT_STANDARD.md)（工作副本在 `~/Documents/env/bam-threeway/`，三条线的产物按同一套子目录放在那里）。
+
+### 0.1 为什么之前的结果作废
+
+| # | 问题 | 影响的轮次 |
+| --- | --- | --- |
+| 1 | **裸跑提示词有偏**：`docs/CC_FRE_PROMPT.txt` 及 rice/snse 同款在 PaperBench 官方指令之外多给了六类东西——点名先读 addendum、把黑名单 URL 抄进提示、"不要问我/不要停/必须全自主"、"不要钉版本"、"代码不执行所以优先实现而非可跑"、结束时报文件数/行数 | fre / rice / snse 全部裸跑臂（bare_v4、anchor、bare_kimi、snse tilted） |
+| 2 | **DeepCode 臂缺 addendum**：`run_trial.sh` 09-14 之前只喂 `paper.md`，而基准给 agent 的还有 `addendum.md`（作者澄清、范围说明、VAE 结构等） | fre / rice 全部 DeepCode 轮，snse trial2 |
+| 3 | **"思考关"从未成立**：Paratera 的 OpenAI 兼容路由忽略 `enable_thinking:false`，SNSE 里 70% 的输出 token 是思考；改发 `thinking:{type:disabled}` 之后 owner 判定运行层无法可靠关闭，标准改为**三方全开** | 所有标注"思考关"的轮次 |
+| 4 | **裸跑壳不一致**：论文 Table 1 里 bam 差距最大的是 Codex 行（0.1937），我们之前用 Claude Code 壳 | 全部裸跑臂 |
+
+仍然成立的（与输入无关）：§附录 A.3 工程发现（四处静默降级、写码从不执行）、A.1/A.4 的裁判 serving 依赖与 JudgeEval 校准。
+
+### 0.2 标准（摘要）
+
+依据只有两处，都不是我们定的：PaperBench 给 agent 的目录（`paperbench/nano/task.py:108-128`：`paper.pdf` `paper.md` `addendum.md` `blacklist.txt` `assets/`，**不给 rubric.json / config.yaml**）和 Code-Dev 官方指令 `code_only_instructions.txt`。DeepCode 论文 §4.1 对基线用了什么提示词一字未提。
+
+| 层 | 规则 | DeepEvol | DeepCode | 裸跑（Codex） |
+| --- | --- | --- | --- | --- |
+| 材料 | 五样字节级相同，谁的目录里出现 rubric/config 即作废 | 论文包（addendum 每阶段可见，黑名单 Stage 4/6 拒绝） | `paper.md` + `# Addendum` 并稿；`DEEPCODE_URL_DENYLIST` | 目录原样（唯一不对称：只有它能看 assets 图，偏帮裸跑，记录不改） |
+| 指令 | 裸跑 = 官方原文 + 冻结的两句后缀（`bare_prompt_suffix.txt`：不要停下来问/等；产物只放 submission/），只换两个路径；另两方用各自内建提示，不加 bam 专项内容 | 自带阶段提示 | 自带提示 | `PROMPT.txt` 由 `官方 + 后缀 + sed 路径` 生成，diff 校验 |
+| 运行 | 同底座 `DeepSeek-V4-Pro`（不是 `-0813`）、**思考开**（回包 `reasoning_tokens>0` 为证）、上网允许、黑名单 `modichirag/GSM-VI`（论文两处点名的官方实现）、零信息量人工输入、裁判恒定 | `init --thinking`，`run` 不带 `--ask` | 不设 `DEEPCODE_THINKING` | 走 `paratera_proxy.py` 直通记录；停下来问只回 `Continue; no further input will be provided.` 并记 `interactions.log` |
+
+后缀那两句是补 harness 条件（另两条线自己会跑到底、Codex 桌面版没有 harness 续跑；PaperBench 的 IterativeAgent 也这么做），不含论文或判分信息。
+
+### 0.3 bam 三方进度
+
+| 臂 | 系统 | 状态 | 总分 |
+| --- | --- | --- | --- |
+| 01_deepevol | DeepEvol 复现线 | 待起（阿里云） | |
+| 02_deepcode | DeepCode（e0767d0 + patch，`PAPER=bam TRIAL=trial1`） | 待起（本机） | |
+| 03_bare | Codex 桌面版 + V4-Pro | 起跑中（2026-09-14 晚） | |
+
+论文 Table 1 bam 列（Sonnet 4.5-think）：Codex 0.1937 / Claude Code 0.3829 / Cursor 0.3779 / DeepCode 0.8530。裁判不同（我们 DeepSeek-V4-Pro，论文 o3-mini），只看相对关系。
+
+---
+
+## 1. 如果你是来造自己的复现 agent 的（先读这一节）
 
 **这个仓库对你的意义**:它不是一个可以直接用的复现 agent,而是三样东西——(a) 上游 **DeepCode**(HKUDS,`e0767d0`)的修改版源码与全部改动记录,是目前唯一有成果可参照的同类开源实现;(b) 对它做的两周独立验证的**全部证据**(11 份提交 × 两个裁判 serving、维度级失分分析、JudgeEval 校准);(c) 从证据推出的**自建 agent 架构设计与踩坑总表**。用户在从 0 到 1 自建论文复现 agent(不能接 Claude Code 壳,模型只走 Paratera 的 OpenAI 兼容端点),本仓库是它的参考基线。
 
@@ -25,172 +63,13 @@
 
 **阅读顺序(约 1 小时)**
 
-1. 本 README §1(结论)与 §1.3(工程发现)—— 5 分钟
+1. 本 README §0(当前口径)与附录 A.3(工程发现)—— 5 分钟
 2. `deepcode_test/docs/PROJECT_CHRONICLE.md` —— **前因后果全纪事**:从 08-25 装环境到 09-03 转向自建,每一步做了什么、得到什么数字、用户在对话里问了什么、我们因此改了什么;配套 `RESULTS_MASTER.md`(全部结果总表,含作废轮与试点)与 `DECISIONS.md`(22 条决策记录)—— 20 分钟
 3. `deepcode_test/docs/PITFALLS.md` —— **踩坑总表,60 余条,分 PaperBench / DeepCode 配置 / DeepCode 源码 / 供应商 / 方法学 / 运维**,大多数会在新系统里原样重现 —— 15 分钟
 4. `deepcode_test/docs/ARCHITECTURE_v0.2_OPTIMAL.md` —— 自建 agent 的目标架构、建造顺序、每层验收、复用地图、给下一个对话的操作指引 —— 15 分钟
 5. 需要细节时:`docs/CONCLUSIONS.md`(失分机制)、`docs/FINDING_judge_serving_dependence.md`(为什么裁判分不能做目标)、`docs/FINDING_prefilter_silent_failure.md`(四种静默降级)、`docs/REVIEW_local_changes_2026-09-03.md`(我们自己的改动哪些没守住纪律)、`docs/ARCHITECTURE_PROPOSAL_v0.1.md`(周末降配版与 AutoSOTA 逐条)
 
 **五条不要做的事**(每条都有真金白银的教训):不用 LLM 裁判分做目标函数;不让任何评分表信息进入流水线或提示词;不在没有执行验证的循环里写码;不让 LLM→程序的任何接缝静默降级;每组 <5 轮不下结论。
-
-## 1. 结论(先看这个)
-
-> 要和别人同步完整测试情况,直接看 §1.4(11 份有效提交 × 两裁判、作废轮、裁判校准、时间线与成本)。
-
-### 1.1 双裁判对照
-
-所有提交、rubric、PaperBench 版本完全相同;只换裁判的服务商(模型名都是 DeepSeek-V4-Pro)。
-
-**fre(306 叶)**
-
-| 提交 | SiliconFlow 裁判 | Paratera 裁判 |
-| --- | --- | --- |
-| bare_v4 —— Claude Code 壳 + V4-Pro 裸跑 | 0.4817 | 0.4807 |
-| anchor —— Claude Code + Sonnet 4.5 裸跑 | 0.4839 | 0.5044 |
-| trial1 —— DeepCode + V4-Pro | 0.5184 | 0.4682 |
-| trial5 —— DeepCode + V4-Pro | 0.4246 | 0.3101 |
-| **DeepCode / 裸跑** | **0.98×** | **0.81×** |
-
-**rice(178 叶)**
-
-| 提交 | SiliconFlow 裁判 | Paratera 裁判 |
-| --- | --- | --- |
-| bare_v4 —— 裸跑 V4-Pro | 0.4680 | **0.1452** |
-| trial2 / trial3 —— DeepCode + V4-Pro | 0.5447 / 0.4374 | 0.4033 / 0.3446 |
-| **DeepCode / 裸跑** | **1.05×** | **2.58×** |
-| bare_kimi —— 裸跑 Kimi-K2.7-Code | 0.4633 | **0.1865** |
-| trial_k1 / trial_k2 —— DeepCode + Kimi | 0.2815 / 0.4760 | 0.2403 / 0.3754 |
-| **DeepCode / 裸跑** | **0.82×** | **1.65×** |
-
-论文声称:fre 1.34×、rice 1.95×。
-
-**sequential-neural-score-estimation(67 叶,2026-09-14,Paratera 裁判)**:DeepCode + V4-Pro(思考关)0.7280 对 DeepEvol 复现线(同模型)0.7729 / 0.6854 ——详见 [`deepcode_test/sequential-neural-score-estimation/RESULTS.md`](deepcode_test/sequential-neural-score-estimation/RESULTS.md)。
-
-### 1.2 结论总结
-
-**能站住的**
-
-| # | 结论 | 证据 |
-| --- | --- | --- |
-| 1 | **fre 上没有增益** | 两个裁判一致(0.98× / 0.81×);失分位置一致(规划器漏掉 GC-IQL / GC-BC / OPAL 全部基线);"补上基线即可到 1.35×"的反事实被修复轮推翻(基线有分、主方法下滑) |
-| 2 | **Code-Dev 分数的精度不足以支撑论文声称的量级** | 同名裁判换一家 serving,同一份代码 16% 叶级分歧;人工标注上两裁判同等准确(F1 0.685 / 0.719,通过率与偏向完全相同);这个噪声底与论文的效应量同量级,而论文只用一个裁判、未报告此方差 |
-| 3 | **开源版有系统性静默降级** | 检索 / 挖掘 / 判分三侧四种"输出超限或为空 → 当正常继续"的缺陷,均有 A/B 实证(§1.3) |
-| 4 | **本项目自身口径有瑕疵** | 15 处未门控改动(相对比较仍公平);修复轮因评分知识泄漏作废(§4.1) |
-
-**两边都站不住的**
-
-- rice 有没有增益:1.05× 或 2.58×,取决于裁判,人工标注裁不了。
-- 论文夸大了:不能这么说,论文的数字可以由一个合法的 setup 产生。
-- "相对效果在某些裁判下确实有这么大":也不能这么说,见下。
-
-**2.58× 是怎么来的:不是 DeepCode 涨了,是裸跑塌了**
-
-| rice | SiliconFlow | Paratera |
-| --- | --- | --- |
-| 裸跑 | 0.468 | **0.145**(−0.32) |
-| DeepCode | 0.545 / 0.437 | 0.403 / 0.345(−0.14 / −0.09) |
-
-严格裁判专门惩罚"抽象类 + 可配置参数"的写法;裸跑代码恰好是这种风格,DeepCode 按环境铺具体文件所以扛得住。2.58× 衡量的是**"写得具体 vs 写得抽象"在严格裁判眼里的差距**,不是"复现得更忠实";而且严格裁判在人工标注上并没有更准。即使论文的 o3-mini 裁判恰好是严格型、1.95× 是真实测得的,它证明的也只是 DeepCode 的输出风格更合裁判胃口。
-
-**一句话**:论文的倍数在本项目的精度内不可判定,但它声称的精度本身站不住;fre 上的增益在任何裁判下都没出现。
-
-**对"要不要用 DeepCode"的含义**:fre 上它没帮上忙;rice 上它的产物在严格裁判下更耐看,但那是"具体"而非"正确"的证据;它的工程状态有系统性盲区,本项目 30 轮里 7 轮因流水线自身问题作废。这个决策不应建立在"某些裁判下有 2.58×"上。它可验证的长处只有一个:**覆盖面**(环境 / 数据集维度普遍占优),这更适合作为"规划 + 语料"前端接给一个会执行验证的 agent,而不是整条流水线。
-
-### 1.3 工程发现(独立于分数,可单独引用)
-
-DeepCode 流水线里同一模式的四处静默降级 —— LLM 输出超限或为空后,下游当正常继续、只留 INFO 日志:
-
-| 位置 | 现象 | 后果 |
-| --- | --- | --- |
-| CodeRAG 预筛(`tools/code_indexer.py`,`max_tokens=2000`) | 大仓库 JSON 截断 | 静默回退全量索引,论文声称的检索从未生效 |
-| 参考挖掘报告(`maxTokens=4096`) | 报告截断,续写只留尾段 | 下载侧只看见 1/5 仓库,整轮语料贫瘠 |
-| 预筛返回合法空列表 | 与"调用失败"共用分支 | 同样回退全量 |
-| 判分侧文件选择返回空 | `<files>` 为空 | 叶子静默得 0,`valid_score` 仍为 True |
-
-另一条与上表同源的观察:**写码阶段从不验证自己的产物**。命令执行器可用且被调用过 50 次,但全部是 `mkdir`/`touch` 建骨架与 `find`/`ls`/`cat` 查看目录;跨 31 个归档、2,443 次工具调用,**没有一次运行生成的代码**(无 python / pytest / import / pip install)。索引模式下工具面只有 `write_file` 与 `search_code_references`(`code_implementation_workflow.py:78`),执行类工具根本不在写码 agent 的可见范围内。
-
-详见 `deepcode_test/docs/FINDING_prefilter_silent_failure.md`、`FINDING_judge_serving_dependence.md`。
-
-### 1.4 测试情况全览(可直接用来同步)
-
-**测试设计**:同一篇论文、同一个底座模型,唯一变量是有没有 DeepCode 脚手架。
-裸跑臂 = Claude Code 壳 + 同底座模型;脚手架臂 = DeepCode + 同底座模型。
-评测口径 PaperBench Code-Dev(`code_only=True`,只看代码不执行),裁判 DeepSeek-V4-Pro,
-全部 11 份有效提交在**两家 serving** 上各判一遍(SF = SiliconFlow,PT = Paratera),无效叶全部为 0。
-
-#### 有效提交(11 份)
-
-**fre(306 叶)**
-
-| 提交 | 臂 | 规模 | 耗时 | SF | PT | 失分要点(SF 口径) |
-| --- | --- | --- | --- | --- | --- | --- |
-| anchor | Claude Code + Sonnet 4.5 裸跑 | 15 py / 2,657 行 | ~1h | 0.4839 | 0.5044 | 数据集/环境 0.333 弱;GC-IQL/GC-BC 满分、OPAL 0 |
-| bare_v4 | Claude Code + V4-Pro 裸跑 | 15 py / 3,070 行 | ~5h | 0.4817 | 0.4807 | 主方法 0.815、三基线 0.67/0.80/0.94;数据集/环境 0.417 |
-| trial1 | DeepCode + V4-Pro | 21 py / 6,751 行 | ~4h | 0.5184 | 0.4682 | 数据集/环境 0.833 最高;**三基线全 0(文件不存在)** |
-| trial5 | DeepCode + V4-Pro | 28 py / 8,438 行 | ~5h | 0.4246 | 0.3101 | 写得最多分最低;三基线全 0;主方法 0.685 |
-| **DeepCode / 裸跑** | | | | **0.98×** | **0.81×** | 两裁判一致:无增益 |
-
-**rice(178 叶)**
-
-| 提交 | 臂 | 规模 | 耗时 | SF | PT | 失分要点(SF 口径) |
-| --- | --- | --- | --- | --- | --- | --- |
-| bare_v4 | Claude Code + V4-Pro 裸跑 | 11 py / 4,173 行 | 单次 | 0.4680 | **0.1452** | 环境搭建 0.000(9 个环境一个没写);实验 II(w4)0.750 全场最高 |
-| trial2 | DeepCode + V4-Pro | 22 py / 12,583 行 | 5h21m,¥31 | 0.5447 | 0.4033 | 环境 0.389、解释方法 0.821、实验 III 0.833 |
-| trial3 | DeepCode + V4-Pro | 39 py / 25,630 行 | 6h46m,¥45 | 0.4374 | 0.3446 | 环境 0.575、策略网络 0.875;实验 II 仅 0.396(其中 7 叶是判分侧"空文件"零分) |
-| **DeepCode / 裸跑(V4-Pro)** | | | | **1.05×** | **2.58×** | **结论随裁判翻转** |
-| bare_kimi | Claude Code + Kimi-K2.7 裸跑 | 18 py / 2,463 行 | 22 分钟 | 0.4633 | 0.1865 | 与裸跑 V4-Pro 几乎重合 |
-| trial_k1 | DeepCode + Kimi | 36 py / 12,056 行 | 3h02m | 0.2815 | 0.2403 | 实验逻辑还原不足,方差大 |
-| trial_k2 | DeepCode + Kimi | 32 py / 8,266 行 | 4h15m | 0.4760 | 0.3754 | 有 1 个语法错误文件 |
-| **DeepCode / 裸跑(Kimi)** | | | | **0.82×** | **1.65×** | 同样随裁判翻转 |
-
-论文声称:fre 1.34×(Claude Code 0.6286 vs DeepCode 0.8435);rice 1.95×(Claude Code 0.3787 / Cursor 0.4186 / Codex 0.3645 vs DeepCode 0.7380)。
-
-#### 作废轮(不入统计,但都有记录)
-
-约 30 轮复现里 **7 轮因流水线自身问题作废**,这部分对判断"开源版工程成色"比分数更有价值:
-
-| 轮 | 原因 | 沉没 |
-| --- | --- | --- |
-| fre trial2 | 撞 4h 写码墙钟 | ¥2.90 |
-| fre trial3 | 写码被 900s stall 熔断,残缺(判了 0.4378,只作参考) | 已判 |
-| fre trial4 | 语料仅 1 仓库(下载侧问题) | — |
-| fre trial6 | 白天 API 限流,写到 9/24 三次重试打完,`status=incomplete` | ¥19.08 |
-| rice trial1 ×5 | ①克隆 TLS 断流 ②换网络节点 ③预筛静默回退全量索引(需 140h) ④假计划 ⑤stall 熔断 | ≈¥115 |
-| **fre trial_fx1 / fx2** | 完整跑完(PT 0.3618 / 0.4873),**因提示词含评分元知识整体作废** | ¥43 |
-| 判分批 ×2 | 余额耗尽(161~168/178 叶无效);裸模型名未登记上下文表(6 份 64 秒全失败) | ≈¥76 |
-
-#### 裁判校准(JudgeEval,rice/0 作者官方仓库,178 叶)
-
-| 裁判 serving | 准确率 / macro F1 | 通过率 | 偏向 | 花费 |
-| --- | --- | --- | --- | --- |
-| SiliconFlow(08-26) | 0.685 | 0.4494 | 严 9.0 pp | ¥27.7 |
-| Paratera(09-03) | 0.719 | 0.4494 | 严 9.0 pp | ¥28 |
-
-同一提交上两裁判一致 150/178(**84.3%**);28 处分歧里:都对 111、只 SF 对 11、只 PT 对 17、都错 39。
-官方对照(5 卷宏平均 Code-Dev):o1-high 0.740 / o3-mini 0.720 / gpt-4o 0.681 / gpt-4o-mini 0.588 ——
-**两个 serving 都在 gpt-4o 档,谁也不比谁准,所以无法仲裁 rice 的翻转。**
-
-#### 时间线与成本
-
-| 阶段 | 时间 | 做了什么 |
-| --- | --- | --- |
-| 装环境 | 08-25 ~ 08-26 | 两套系统跑通,13 个坑 |
-| 试点 | 08-26 | 阶段 A(白卷 0.000)→ B(43.3)→ B′(60.5,8 轮拼装+人工裁剪语料)→ JudgeEval;**B′ 在正式协议下不再现** |
-| 正式协议定案 | 08-26 晚 | 同底座双切、裁判恒定、闸门、作废规则 |
-| fre 线 | 08-26 ~ 08-29 | 6 轮 trial + 2 条裸跑 |
-| rice 线 | 08-29 ~ 08-31 | trial1 五次作废后 trial2/trial3 成功 |
-| Kimi 对照线 | 09-01 ~ 09-02 | 裸跑 + 两轮 DeepCode |
-| 修复验证线 | 09-02 晚 ~ 09-03 早 | 四个修复,两轮完整跑完后作废 |
-| 双裁判重判 | 09-03 上午 | 11 份全部换 serving 重判,rice 结论翻转 |
-| 公开 | 09-03 | 本仓库 |
-
-**总花费 ≈ ¥1,600**(约 30 轮复现 + 25 份判分 + 2 次 JudgeEval,含全部废轮)。
-单价:一轮复现 ≈¥20 / 3~6h;一份判分 ≈¥38 / 40~100min。
-
-逐份维度级失分、修复轮的维度证据、判分侧诊断数据见 `deepcode_test/docs/RESULTS_MASTER.md`;
-过程与决策见 `PROJECT_CHRONICLE.md`;踩坑总表见 `PITFALLS.md`。
-
----
 
 ## 2. 仓库结构
 
@@ -209,7 +88,8 @@ DeepCode 流水线里同一模式的四处静默降级 —— LLM 输出超限�
     ├── README.md                      实验总览与状态
     ├── docs/                          结论、发现、交接、审查报告、裸跑任务书
     ├── scripts/                       run_trial.sh / run_grade.sh / stage_b_driver.py / 监控与链式脚本
-    ├── fre/  rice/                    每篇论文:RESULTS.md · submissions/ · grades/ · logs/ · workspaces/ · task_archives/
+    ├── bam/                           当前三方对照:INPUT_STANDARD.md · bare_prompt_suffix.txt · paratera_proxy.py · submissions/ · grades/ · logs/
+    ├── fre/  rice/  sequential-neural-score-estimation/   历史(作废)论文:RESULTS.md · submissions/ · grades/ · logs/ · workspaces/ · task_archives/
     └── (frontier-evals/ 由 setup.sh 克隆,不入库)
 ```
 
@@ -222,7 +102,7 @@ DeepCode 流水线里同一模式的四处静默降级 —— LLM 输出超限�
 ### 3.1 前置
 
 - Linux / WSL2,Python 3.11+,`uv`,`git`,`curl`,Docker(判分时起沙箱);不需要 git-lfs,论文资产由 `setup.sh` 从 GitHub 直链按固定 commit 下载
-- 一个 OpenAI 兼容 API key,底座与裁判共用。我们用 Paratera 的 DeepSeek-V4-Pro(历史数据里另有 SiliconFlow 的同名模型,见 §1.1)。
+- 一个 OpenAI 兼容 API key,底座与裁判共用。我们用 Paratera 的 DeepSeek-V4-Pro(历史数据里另有 SiliconFlow 的同名模型,见附录 A.1)。
   换 key 用 `bash deepcode_test/scripts/paratera_key.sh set <新key>` —— 它会先探活、再把 key 同步写进
   `~/.deepcode/credentials.json`(底座)与 `frontier-evals/.../paperbench/.env`(裁判)两处,避免漏改一处后
   「复现正常、判分全部 401」。另有 `check` / `add` / `list` / `next` 子命令(`next` 在当前 key 失效时自动切备用池)
@@ -252,9 +132,10 @@ PAPER=fre TRIAL=trial1 nohup bash deepcode_test/scripts/run_trial.sh > run.log 2
 - 产物摆到 `~/pb_submissions/<paper>/<trial>/`,并复制到 `deepcode_test/<paper>/submissions/<trial>/`
 - 所有可调项都是环境变量(见 `run_trial.sh` 头部注释),默认值即本实验用值
 
-### 3.4 裸跑对照
+### 3.4 裸跑对照（2026-09-14 起的口径）
 
-任务书在 `deepcode_test/docs/CC_FRE_PROMPT.txt`(fre)与 `deepcode_test/rice/workspaces/cc_dsv4_run/PROMPT.txt`(rice,逐字一致仅换路径)。把它喂给 Claude Code(底座切成同一模型),产物放到 `~/pb_submissions/<paper>/bare_<model>/`。裸跑工作区与 git 历史导出见 `deepcode_test/<paper>/workspaces/`。
+裸跑提示词 = PaperBench 官方 `code_only_instructions.txt` 原文 + 冻结后缀 `deepcode_test/bam/bare_prompt_suffix.txt`，只把 `/home/paper`、`/home/submission` 换成本机路径；生成与校验命令见 `deepcode_test/bam/INPUT_STANDARD.md` §3。壳用 Codex，走 `deepcode_test/bam/paratera_proxy.py`（直通、只记 model 与 `reasoning_tokens`）。
+**旧任务书 `docs/CC_FRE_PROMPT.txt` 与 `rice/workspaces/cc_dsv4_run/PROMPT.txt` 带偏帮，已作废，仅作记录。**
 
 ### 3.5 判分
 
@@ -369,8 +250,10 @@ bash deepcode_test/scripts/ci/check_no_rubric_leak.sh    # 退出码 0 才可跑
 ## 5. 实验流程与作废规则
 
 ```
-论文 paper.md ──► run_trial.sh(DeepCode 全流程,同底座)──► ~/pb_submissions/<paper>/trialN
-                └► Claude Code + 同底座 + PROMPT.txt(裸跑)──► ~/pb_submissions/<paper>/bare_<model>
+PaperBench 论文目录(pdf/md/addendum/blacklist/assets,无 rubric)
+   ├► DeepEvol 复现线(--paper-dir,--thinking,不带 --ask)──► ~/pb_submissions/<paper>/deepevol_s10
+   ├► run_trial.sh(DeepCode,paper.md+addendum 并稿,思考=上游默认)──► ~/pb_submissions/<paper>/trialN
+   └► Codex + 官方指令原文+后缀(裸跑,直通代理留证)──► ~/pb_submissions/<paper>/bare_codex
                                                     │
                                         run_grade.sh(code_only,裁判固定)
                                                     │
@@ -385,6 +268,7 @@ bash deepcode_test/scripts/ci/check_no_rubric_leak.sh    # 退出码 0 才可跑
 
 | 文件 | 内容 |
 | --- | --- |
+| `deepcode_test/bam/INPUT_STANDARD.md` | **当前口径**：三方对照的输入标准（依据、三层规则、已拍板事项、起跑前核验） |
 | `deepcode_test/docs/OPTIMIZER_NOTICE.md` | **要在本仓库上跑自优化循环必读**:目标函数噪声的定量分析、替代判据、rubric 隔离、成本与样本量、六类陷阱 |
 | `deepcode_test/docs/DEEPCODE_INTERNALS.md` | **DeepCode 是怎么运转的**:11 个 Phase 的职责与产出、`task_dir` 文件合同、LLM 调用点与配置流、31 个归档 2,443 次工具调用的实证、怎么只跑前半段当前端 |
 | `deepcode_test/docs/PROJECT_CHRONICLE.md` / `RESULTS_MASTER.md` / `DECISIONS.md` | 全程纪事(含对话转折)/ 全部结果总表 / 决策记录 |
@@ -404,6 +288,7 @@ bash deepcode_test/scripts/ci/check_no_rubric_leak.sh    # 退出码 0 才可跑
 
 ## 7. 诚实声明
 
+- **09-03 之前的全部对比作废**（§0.1 四条）；下列各条描述的是那段历史实验，保留作记录。
 - **样本量**:每组 2 轮,组内摆动 0.13~0.16;只能看方向。
 - **裁判**:两家 serving 的同名模型判分行为不同(同一提交 16% 叶级分歧),JudgeEval 上二者同等水平、无法裁定。绝对分数与倍数**必须连同裁判 serving 一起报告**。
 - **配置**:DeepCode 侧有 15 处未门控改动(§4.1);"官方默认"不成立,相对比较成立。
@@ -414,3 +299,165 @@ bash deepcode_test/scripts/ci/check_no_rubric_leak.sh    # 退出码 0 才可跑
 ## 8. 许可证
 
 DeepCode(HKUDS,MIT)与 frontier-evals / PaperBench(OpenAI,MIT)各自的 LICENSE 随源码保留。本仓库新增的脚本、文档与产物同样以 MIT 发布。论文原文不随仓库分发,由 `setup.sh` 从上游 LFS 拉取。
+
+---
+
+## 附录 A. 历史结果（2026-08-25 → 09-14，**作废：输入有偏**）
+
+> ⚠️ **本附录里的分数不再作为对比结论使用。** 作废原因见 §0.1：裸跑提示词带偏帮（`docs/CC_FRE_PROMPT.txt`）、DeepCode 臂没拿到 addendum、"思考关"从未成立、裸跑壳是 Claude Code 而非 Codex。保留全部数字与失分分析是为了可追溯；其中 **A.3 工程发现、A.1 的裁判 serving 依赖、A.4 的 JudgeEval 校准与成本**不依赖输入口径，仍然成立。
+
+
+> 历史测试全览见 A.4(11 份有效提交 × 两裁判、作废轮、裁判校准、时间线与成本)。
+
+### A.1 双裁判对照
+
+所有提交、rubric、PaperBench 版本完全相同;只换裁判的服务商(模型名都是 DeepSeek-V4-Pro)。
+
+**fre(306 叶)**
+
+| 提交 | SiliconFlow 裁判 | Paratera 裁判 |
+| --- | --- | --- |
+| bare_v4 —— Claude Code 壳 + V4-Pro 裸跑 | 0.4817 | 0.4807 |
+| anchor —— Claude Code + Sonnet 4.5 裸跑 | 0.4839 | 0.5044 |
+| trial1 —— DeepCode + V4-Pro | 0.5184 | 0.4682 |
+| trial5 —— DeepCode + V4-Pro | 0.4246 | 0.3101 |
+| **DeepCode / 裸跑** | **0.98×** | **0.81×** |
+
+**rice(178 叶)**
+
+| 提交 | SiliconFlow 裁判 | Paratera 裁判 |
+| --- | --- | --- |
+| bare_v4 —— 裸跑 V4-Pro | 0.4680 | **0.1452** |
+| trial2 / trial3 —— DeepCode + V4-Pro | 0.5447 / 0.4374 | 0.4033 / 0.3446 |
+| **DeepCode / 裸跑** | **1.05×** | **2.58×** |
+| bare_kimi —— 裸跑 Kimi-K2.7-Code | 0.4633 | **0.1865** |
+| trial_k1 / trial_k2 —— DeepCode + Kimi | 0.2815 / 0.4760 | 0.2403 / 0.3754 |
+| **DeepCode / 裸跑** | **0.82×** | **1.65×** |
+
+论文声称:fre 1.34×、rice 1.95×。
+
+**sequential-neural-score-estimation(67 叶,2026-09-14,Paratera 裁判)**:DeepCode + V4-Pro(思考关)0.7280 对 DeepEvol 复现线(同模型)0.7729 / 0.6854 ——详见 [`deepcode_test/sequential-neural-score-estimation/RESULTS.md`](deepcode_test/sequential-neural-score-estimation/RESULTS.md)。
+
+### A.2 结论总结
+
+**能站住的**
+
+| # | 结论 | 证据 |
+| --- | --- | --- |
+| 1 | **fre 上没有增益** | 两个裁判一致(0.98× / 0.81×);失分位置一致(规划器漏掉 GC-IQL / GC-BC / OPAL 全部基线);"补上基线即可到 1.35×"的反事实被修复轮推翻(基线有分、主方法下滑) |
+| 2 | **Code-Dev 分数的精度不足以支撑论文声称的量级** | 同名裁判换一家 serving,同一份代码 16% 叶级分歧;人工标注上两裁判同等准确(F1 0.685 / 0.719,通过率与偏向完全相同);这个噪声底与论文的效应量同量级,而论文只用一个裁判、未报告此方差 |
+| 3 | **开源版有系统性静默降级** | 检索 / 挖掘 / 判分三侧四种"输出超限或为空 → 当正常继续"的缺陷,均有 A/B 实证(A.3) |
+| 4 | **本项目自身口径有瑕疵** | 15 处未门控改动(相对比较仍公平);修复轮因评分知识泄漏作废(§4.1) |
+
+**两边都站不住的**
+
+- rice 有没有增益:1.05× 或 2.58×,取决于裁判,人工标注裁不了。
+- 论文夸大了:不能这么说,论文的数字可以由一个合法的 setup 产生。
+- "相对效果在某些裁判下确实有这么大":也不能这么说,见下。
+
+**2.58× 是怎么来的:不是 DeepCode 涨了,是裸跑塌了**
+
+| rice | SiliconFlow | Paratera |
+| --- | --- | --- |
+| 裸跑 | 0.468 | **0.145**(−0.32) |
+| DeepCode | 0.545 / 0.437 | 0.403 / 0.345(−0.14 / −0.09) |
+
+严格裁判专门惩罚"抽象类 + 可配置参数"的写法;裸跑代码恰好是这种风格,DeepCode 按环境铺具体文件所以扛得住。2.58× 衡量的是**"写得具体 vs 写得抽象"在严格裁判眼里的差距**,不是"复现得更忠实";而且严格裁判在人工标注上并没有更准。即使论文的 o3-mini 裁判恰好是严格型、1.95× 是真实测得的,它证明的也只是 DeepCode 的输出风格更合裁判胃口。
+
+**一句话**:论文的倍数在本项目的精度内不可判定,但它声称的精度本身站不住;fre 上的增益在任何裁判下都没出现。
+
+**对"要不要用 DeepCode"的含义**:fre 上它没帮上忙;rice 上它的产物在严格裁判下更耐看,但那是"具体"而非"正确"的证据;它的工程状态有系统性盲区,本项目 30 轮里 7 轮因流水线自身问题作废。这个决策不应建立在"某些裁判下有 2.58×"上。它可验证的长处只有一个:**覆盖面**(环境 / 数据集维度普遍占优),这更适合作为"规划 + 语料"前端接给一个会执行验证的 agent,而不是整条流水线。
+
+### A.3 工程发现(独立于分数,可单独引用)
+
+DeepCode 流水线里同一模式的四处静默降级 —— LLM 输出超限或为空后,下游当正常继续、只留 INFO 日志:
+
+| 位置 | 现象 | 后果 |
+| --- | --- | --- |
+| CodeRAG 预筛(`tools/code_indexer.py`,`max_tokens=2000`) | 大仓库 JSON 截断 | 静默回退全量索引,论文声称的检索从未生效 |
+| 参考挖掘报告(`maxTokens=4096`) | 报告截断,续写只留尾段 | 下载侧只看见 1/5 仓库,整轮语料贫瘠 |
+| 预筛返回合法空列表 | 与"调用失败"共用分支 | 同样回退全量 |
+| 判分侧文件选择返回空 | `<files>` 为空 | 叶子静默得 0,`valid_score` 仍为 True |
+
+另一条与上表同源的观察:**写码阶段从不验证自己的产物**。命令执行器可用且被调用过 50 次,但全部是 `mkdir`/`touch` 建骨架与 `find`/`ls`/`cat` 查看目录;跨 31 个归档、2,443 次工具调用,**没有一次运行生成的代码**(无 python / pytest / import / pip install)。索引模式下工具面只有 `write_file` 与 `search_code_references`(`code_implementation_workflow.py:78`),执行类工具根本不在写码 agent 的可见范围内。
+
+详见 `deepcode_test/docs/FINDING_prefilter_silent_failure.md`、`FINDING_judge_serving_dependence.md`。
+
+### A.4 测试情况全览(可直接用来同步)
+
+**测试设计**:同一篇论文、同一个底座模型,唯一变量是有没有 DeepCode 脚手架。
+裸跑臂 = Claude Code 壳 + 同底座模型;脚手架臂 = DeepCode + 同底座模型。
+评测口径 PaperBench Code-Dev(`code_only=True`,只看代码不执行),裁判 DeepSeek-V4-Pro,
+全部 11 份有效提交在**两家 serving** 上各判一遍(SF = SiliconFlow,PT = Paratera),无效叶全部为 0。
+
+#### 有效提交(11 份)
+
+**fre(306 叶)**
+
+| 提交 | 臂 | 规模 | 耗时 | SF | PT | 失分要点(SF 口径) |
+| --- | --- | --- | --- | --- | --- | --- |
+| anchor | Claude Code + Sonnet 4.5 裸跑 | 15 py / 2,657 行 | ~1h | 0.4839 | 0.5044 | 数据集/环境 0.333 弱;GC-IQL/GC-BC 满分、OPAL 0 |
+| bare_v4 | Claude Code + V4-Pro 裸跑 | 15 py / 3,070 行 | ~5h | 0.4817 | 0.4807 | 主方法 0.815、三基线 0.67/0.80/0.94;数据集/环境 0.417 |
+| trial1 | DeepCode + V4-Pro | 21 py / 6,751 行 | ~4h | 0.5184 | 0.4682 | 数据集/环境 0.833 最高;**三基线全 0(文件不存在)** |
+| trial5 | DeepCode + V4-Pro | 28 py / 8,438 行 | ~5h | 0.4246 | 0.3101 | 写得最多分最低;三基线全 0;主方法 0.685 |
+| **DeepCode / 裸跑** | | | | **0.98×** | **0.81×** | 两裁判一致:无增益 |
+
+**rice(178 叶)**
+
+| 提交 | 臂 | 规模 | 耗时 | SF | PT | 失分要点(SF 口径) |
+| --- | --- | --- | --- | --- | --- | --- |
+| bare_v4 | Claude Code + V4-Pro 裸跑 | 11 py / 4,173 行 | 单次 | 0.4680 | **0.1452** | 环境搭建 0.000(9 个环境一个没写);实验 II(w4)0.750 全场最高 |
+| trial2 | DeepCode + V4-Pro | 22 py / 12,583 行 | 5h21m,¥31 | 0.5447 | 0.4033 | 环境 0.389、解释方法 0.821、实验 III 0.833 |
+| trial3 | DeepCode + V4-Pro | 39 py / 25,630 行 | 6h46m,¥45 | 0.4374 | 0.3446 | 环境 0.575、策略网络 0.875;实验 II 仅 0.396(其中 7 叶是判分侧"空文件"零分) |
+| **DeepCode / 裸跑(V4-Pro)** | | | | **1.05×** | **2.58×** | **结论随裁判翻转** |
+| bare_kimi | Claude Code + Kimi-K2.7 裸跑 | 18 py / 2,463 行 | 22 分钟 | 0.4633 | 0.1865 | 与裸跑 V4-Pro 几乎重合 |
+| trial_k1 | DeepCode + Kimi | 36 py / 12,056 行 | 3h02m | 0.2815 | 0.2403 | 实验逻辑还原不足,方差大 |
+| trial_k2 | DeepCode + Kimi | 32 py / 8,266 行 | 4h15m | 0.4760 | 0.3754 | 有 1 个语法错误文件 |
+| **DeepCode / 裸跑(Kimi)** | | | | **0.82×** | **1.65×** | 同样随裁判翻转 |
+
+论文声称:fre 1.34×(Claude Code 0.6286 vs DeepCode 0.8435);rice 1.95×(Claude Code 0.3787 / Cursor 0.4186 / Codex 0.3645 vs DeepCode 0.7380)。
+
+#### 作废轮(不入统计,但都有记录)
+
+约 30 轮复现里 **7 轮因流水线自身问题作废**,这部分对判断"开源版工程成色"比分数更有价值:
+
+| 轮 | 原因 | 沉没 |
+| --- | --- | --- |
+| fre trial2 | 撞 4h 写码墙钟 | ¥2.90 |
+| fre trial3 | 写码被 900s stall 熔断,残缺(判了 0.4378,只作参考) | 已判 |
+| fre trial4 | 语料仅 1 仓库(下载侧问题) | — |
+| fre trial6 | 白天 API 限流,写到 9/24 三次重试打完,`status=incomplete` | ¥19.08 |
+| rice trial1 ×5 | ①克隆 TLS 断流 ②换网络节点 ③预筛静默回退全量索引(需 140h) ④假计划 ⑤stall 熔断 | ≈¥115 |
+| **fre trial_fx1 / fx2** | 完整跑完(PT 0.3618 / 0.4873),**因提示词含评分元知识整体作废** | ¥43 |
+| 判分批 ×2 | 余额耗尽(161~168/178 叶无效);裸模型名未登记上下文表(6 份 64 秒全失败) | ≈¥76 |
+
+#### 裁判校准(JudgeEval,rice/0 作者官方仓库,178 叶)
+
+| 裁判 serving | 准确率 / macro F1 | 通过率 | 偏向 | 花费 |
+| --- | --- | --- | --- | --- |
+| SiliconFlow(08-26) | 0.685 | 0.4494 | 严 9.0 pp | ¥27.7 |
+| Paratera(09-03) | 0.719 | 0.4494 | 严 9.0 pp | ¥28 |
+
+同一提交上两裁判一致 150/178(**84.3%**);28 处分歧里:都对 111、只 SF 对 11、只 PT 对 17、都错 39。
+官方对照(5 卷宏平均 Code-Dev):o1-high 0.740 / o3-mini 0.720 / gpt-4o 0.681 / gpt-4o-mini 0.588 ——
+**两个 serving 都在 gpt-4o 档,谁也不比谁准,所以无法仲裁 rice 的翻转。**
+
+#### 时间线与成本
+
+| 阶段 | 时间 | 做了什么 |
+| --- | --- | --- |
+| 装环境 | 08-25 ~ 08-26 | 两套系统跑通,13 个坑 |
+| 试点 | 08-26 | 阶段 A(白卷 0.000)→ B(43.3)→ B′(60.5,8 轮拼装+人工裁剪语料)→ JudgeEval;**B′ 在正式协议下不再现** |
+| 正式协议定案 | 08-26 晚 | 同底座双切、裁判恒定、闸门、作废规则 |
+| fre 线 | 08-26 ~ 08-29 | 6 轮 trial + 2 条裸跑 |
+| rice 线 | 08-29 ~ 08-31 | trial1 五次作废后 trial2/trial3 成功 |
+| Kimi 对照线 | 09-01 ~ 09-02 | 裸跑 + 两轮 DeepCode |
+| 修复验证线 | 09-02 晚 ~ 09-03 早 | 四个修复,两轮完整跑完后作废 |
+| 双裁判重判 | 09-03 上午 | 11 份全部换 serving 重判,rice 结论翻转 |
+| 公开 | 09-03 | 本仓库 |
+
+**总花费 ≈ ¥1,600**(约 30 轮复现 + 25 份判分 + 2 次 JudgeEval,含全部废轮)。
+单价:一轮复现 ≈¥20 / 3~6h;一份判分 ≈¥38 / 40~100min。
+
+逐份维度级失分、修复轮的维度证据、判分侧诊断数据见 `deepcode_test/docs/RESULTS_MASTER.md`;
+过程与决策见 `PROJECT_CHRONICLE.md`;踩坑总表见 `PITFALLS.md`。
