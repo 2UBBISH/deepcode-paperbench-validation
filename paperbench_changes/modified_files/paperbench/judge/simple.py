@@ -115,8 +115,9 @@ class SimpleJudge(Judge):
         # [local] 并发上限可用 PB_JUDGE_CONCURRENCY 覆盖(默认仍是上游的 100)。
         # 与 DeepCode 复现轮同时跑判分时,100 路并发会把 SiliconFlow 打到限流,
         # 进而让复现轮的 LLM 调用空响应重试直至被 stall 护栏掐死。
+        # [local] 2026-09-15: Paratera answers half of 100 concurrent requests with 429; 20 in flight pass clean.
         self.leaf_semaphore = asyncio.Semaphore(
-            int(os.environ.get("PB_JUDGE_CONCURRENCY", "100"))
+            int(os.environ.get("PB_JUDGE_CONCURRENCY", "20"))
         )
         self.max_prior_nodes = max_prior_nodes
         if self.joined_addendum == "":
@@ -378,6 +379,27 @@ class SimpleJudge(Judge):
         )
         return truncated_tree_structure
 
+    def _resolve_selected_path(self, rel_path: str) -> Path | None:
+        """[local] The path a selection line names, as it exists in the submission, or None.
+
+        Leading "./" or "/", surrounding backticks and whitespace are noise; a line that names the file
+        without the submission's single top-level folder, or with it when the tree had none, still resolves
+        by exact name. Nothing fuzzier: a line that names no file is dropped."""
+        name = rel_path.strip().strip("`").strip().lstrip("./").strip("/")
+        if not name:
+            return None
+        candidates = [self.submission_dir / name]
+        tops = [e for e in self.submission_dir.iterdir() if e.is_dir() and not e.name.startswith(".")]
+        if len(tops) == 1:
+            candidates.append(tops[0] / name)
+        first, _, rest = name.partition("/")
+        if rest and first == self.submission_dir.name:
+            candidates.append(self.submission_dir / rest)
+        for candidate in candidates:
+            if candidate.is_file():
+                return candidate
+        return None
+
     async def _prepare_relevant_files(
         self,
         task: TaskNode,
@@ -419,11 +441,26 @@ class SimpleJudge(Judge):
                 "content": f"Here are the files in the submission attempt:\n\nDirectory structure:\n{tree_structure}\n\nNow return a list of the {str(max_files) + ' ' if max_files else ''}most relevant files in order of relevance (descending) to the resolution criteria, to be provided for your inspection. Your response must contain each filename separated by newlines, with each file containing the full path. Do not write anything else.",
             },
         ]
-        model_response = await self.completer.async_completion(conversation=messages)
-        selected_files = model_response.output_messages[0].content
-        if selected_files is None:
-            raise Exception("No response received from completer for file selection")
-        leaf_logger.info(f"Model file selection raw output:\n{selected_files}")
+        # [local] A selection whose paths resolve to no file at all is re-asked once; a second empty selection
+        # is an error (the leaf becomes invalid and counts as such) rather than a grade against an empty
+        # <files> block. No fallback to "every file": the judge reads what the selection names, or nothing.
+        for selection_attempt in range(2):
+            model_response = await self.completer.async_completion(conversation=messages)
+            selected_files = model_response.output_messages[0].content
+            if selected_files is None:
+                raise Exception("No response received from completer for file selection")
+            leaf_logger.info(f"Model file selection raw output (attempt {selection_attempt}):\n{selected_files}")
+            selected_paths = [
+                self._resolve_selected_path(rel_path)
+                for rel_path in selected_files.split("\n")[: max_files or None]
+            ]
+            if any(p is not None for p in selected_paths):
+                break
+            leaf_logger.info("File selection named no existing file; asking once more")
+        else:
+            raise RuntimeError(
+                "file selection named no existing file twice; the leaf is not graded against an empty submission"
+            )
 
         selected_files_tokens = []
         num_files = 0
@@ -433,19 +470,16 @@ class SimpleJudge(Judge):
         )  # Buffer of 2k tokens
 
         file_content_tasks = [
-            read_file_content(
-                self.submission_dir / rel_path.strip().strip("/"),
-                self.computer,
-            )
-            for rel_path in selected_files.split("\n")[: max_files or None]
+            read_file_content(full_path, self.computer)
+            for full_path in selected_paths
+            if full_path is not None
         ]
 
         file_contents: list[str | BaseException] = await asyncio.gather(
             *file_content_tasks, return_exceptions=True
         )
 
-        for rel_path, content in zip(selected_files.split("\n"), file_contents):
-            full_path = self.submission_dir / rel_path.strip()
+        for full_path, content in zip([p for p in selected_paths if p is not None], file_contents):
             try:
                 if isinstance(content, BaseException):
                     raise content
