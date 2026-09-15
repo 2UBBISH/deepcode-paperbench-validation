@@ -1,4 +1,6 @@
- .../preparedness_turn_completer/utils.py                |  5 +++++
- project/paperbench/paperbench/judge/simple.py           | 13 +++++++++++--
- project/paperbench/paperbench/nano/eval.py              | 17 +++++++++++++----
- 3 files changed, 29 insertions(+), 6 deletions(-)
+ .../preparedness_turn_completer/utils.py           |  5 ++
+ project/paperbench/paperbench/grade.py             | 11 ++++
+ project/paperbench/paperbench/judge/simple.py      | 71 +++++++++++++++++-----
+ project/paperbench/paperbench/nano/eval.py         | 17 ++++--
+ project/paperbench/paperbench/utils.py             |  5 +-
+ 5 files changed, 90 insertions(+), 19 deletions(-)

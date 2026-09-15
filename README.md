@@ -34,15 +34,20 @@
 
 后缀那两句是补 harness 条件（另两条线自己会跑到底、Codex 桌面版没有 harness 续跑；PaperBench 的 IterativeAgent 也这么做），不含论文或判分信息。
 
-### 0.3 bam 三方进度
+### 0.3 bam 三方结果（2026-09-15；裁判修过"选文件根目录"bug，见 §4.2）
 
 | 臂 | 系统 | 状态 | 总分 |
 | --- | --- | --- | --- |
-| 01_deepevol | DeepEvol 复现线 | 待起（阿里云） | |
-| 02_deepcode | DeepCode（e0767d0 + patch，`PAPER=bam TRIAL=trial1`） | 待起（本机） | |
-| 03_bare | Codex 桌面版 + V4-Pro | 起跑中（2026-09-14 晚） | |
+| 03_bare.gpt5-codex-high | Codex 桌面版 + gpt-5.5 high（底座不同，不进主表） | 完成，12.5 min | **0.9073** |
+| 02_deepcode | DeepCode（e0767d0 + patch，`PAPER=bam TRIAL=trial1`）+ V4-Pro | 完成，3 h 13 min | **0.8367** |
+| 03_bare | Codex 桌面版 + V4-Pro | 完成，26 min | **0.7343** |
+| 01_deepevol | DeepEvol 复现线 + V4-Pro | **停跑，无分**：Stage 1–8 过，Stage 9 五个 attempt 都没过（12 个工程缺陷，11 个已修），owner 于 09-15 22:07 叫停；等新架构重跑 | — |
 
-论文 Table 1 bam 列（Sonnet 4.5-think）：Codex 0.1937 / Claude Code 0.3829 / Cursor 0.3779 / DeepCode 0.8530。裁判不同（我们 DeepSeek-V4-Pro，论文 o3-mini），只看相对关系。
+同底座（V4-Pro）：DeepCode 0.8367 > 裸跑 Codex 0.7343，差 0.10，来自 §5.2/§5.3 两个实验节；核心算法节 DeepCode 反而低（0.721 vs 0.821）。
+三臂全丢的 38 片叶子几乎都是"ADVI 学习率网格搜索"。叶子级明细、各臂 RUN_NOTES 与原始 grade.json 在 owner 本机 `~/Documents/env/bam-threeway/`（`04_results/RESULTS.md`、`scores.csv`）；
+本仓库 `deepcode_test/bam/grades/` 放三份 grade.json。**修裁判前的三份分（0.7644 / 0.6659 / 0.6530）作废**，各臂留档 `grade_v1_judge_root_bug.json`。
+
+论文 Table 1 bam 列（Sonnet 4.5-think）：Codex 0.1937 / Claude Code 0.3829 / Cursor 0.3779 / DeepCode 0.8530。裁判不同（我们 DeepSeek-V4-Pro，论文 o3-mini），只看相对关系：Codex 0.19 的差距在同底座同裁判下不复现。
 
 ---
 
@@ -81,7 +86,7 @@
 ├── patches/
 │   ├── UPSTREAM_BASE.txt              两个上游仓库的固定 commit
 │   ├── deepcode_local_changes.patch   DeepCode 全部改动(git diff HEAD,12 文件)
-│   └── paperbench_local_changes.patch PaperBench 全部改动(3 文件)
+│   └── paperbench_local_changes.patch PaperBench 全部改动(5 文件)
 ├── paperbench_changes/          ← PaperBench 侧改动文件副本 + 新增文件(fre/rice split、裁判偏差分析、JudgeEval 结果)
 ├── config/                      ← ~/.deepcode 与 paperbench/.env 的模板(无密钥)
 └── deepcode_test/               ← 实验本体
@@ -160,7 +165,7 @@ PAPER=fre bash deepcode_test/scripts/run_grade.sh         # 真判,约 ¥38/份,
 | 内容 | 位置 | 说明 |
 | --- | --- | --- |
 | 判分树 rubric | `paperbench_changes/rubrics/{fre,rice}.rubric.json` | 上游原样复制,fre 437 叶 / rice 361 叶,共约 750KB。**仅供事后核对失分分析,严禁进入复现流水线** —— 见该目录 README |
-| PaperBench 改动 | `patches/paperbench_local_changes.patch` + `paperbench_changes/modified_files/` | 3 个文件、+29/−6 行,可直接对读 |
+| PaperBench 改动 | `patches/paperbench_local_changes.patch` + `paperbench_changes/modified_files/` | 5 个文件、+90/−19 行,可直接对读 |
 | 我们新增的文件 | `paperbench_changes/experiments/splits/`、`analyze_judge_eval_bias.py` | fre/rice 单篇 split、裁判偏差分析脚本 |
 | JudgeEval 完整结果 | `paperbench_changes/judge_eval_results_rice{,_paratera}/` | 两个 serving 的原始判分(F1 0.685 / 0.719) |
 | DeepCode 修改版全源码 | `DeepCode/` | 上游 `e0767d0` + 本地改动(不含 `.venv`、运行产物) |
@@ -235,15 +240,19 @@ bash deepcode_test/scripts/ci/check_no_rubric_leak.sh    # 退出码 0 才可跑
 
 **⚠️ 实验开关里的一处评分知识泄漏**:`DEEPCODE_PLAN_COVERAGE_CHECK` 与 `DEEPCODE_ALLOW_PLAN_EXTENSION` 的提示词含 "Graders assign separate credit to each baseline; omitting them forfeits those points",属于 PaperBench 评分结构元知识。用这两个开关跑的 trial_fx1/fx2 已**整体作废**(产物保留在 `fre/submissions/_作废/`)。**该句已于 2026-09-03 从源码删除**(`check_no_rubric_leak.sh` 现在扫描为零命中);原文与影响分析保留在 `docs/REVIEW_local_changes_2026-09-03.md`,作为忠实记录。
 
-### 4.2 PaperBench(`patches/paperbench_local_changes.patch`,3 文件)
+### 4.2 PaperBench(`patches/paperbench_local_changes.patch`,5 文件,+90/−19)
 
 | 文件 | 改动 |
 | --- | --- |
 | `common/preparedness_turn_completer/.../utils.py` | 上下文长度表登记 `deepseek-ai/DeepSeek-V4-Pro` 与 `DeepSeek-V4-Pro`(该表只认 OpenAI 模型名,无配置项) |
-| `paperbench/judge/simple.py` | 裁判的结构化解析模型可由 `PB_STRUCTURED_PARSER_MODEL` 指定(默认不变;本实验设为 DeepSeek-V4-Pro) |
+| `paperbench/judge/simple.py` | ① 结构化解析模型可由 `PB_STRUCTURED_PARSER_MODEL` 指定(默认不变);② 叶子并发 `PB_JUDGE_CONCURRENCY`(默认 20;上游 100 会被 Paratera 打 429);③ **选文件路径解析修复**(2026-09-15,见下) |
+| `paperbench/grade.py` | ① 摆卷 tar 解开后若只有一个顶层目录(`submission/`),从该目录内判分;② 每片叶子的日志与消息落到 `runs/<group>/<run>/judge_logs/`,方便追查"判了空提交" |
 | `paperbench/nano/eval.py` | `paper_split` 允许 `fre` / `rice` 单篇 split |
+| `paperbench/utils.py` | `is_docker_running` 走 `docker.from_env()`,尊重 `DOCKER_HOST`(macOS Docker Desktop 的 socket 不在 /var/run) |
 
-新增:`experiments/splits/{fre,rice}.txt`、`analyze_judge_eval_bias.py`、`judge_eval_results_rice/`(SiliconFlow 裁判,F1 = 0.685)与 `judge_eval_results_rice_paratera/`(Paratera 裁判,F1 = 0.719)。未改动裁判提示词、评分树、文件选择逻辑。
+**选文件根目录 bug(2026-09-15 发现并修,三份 bam 分数因此重判)**:上游裁判把摆卷目录树喂给模型让它列"最相关文件",模型约五分之一的回答(bam 上 40 个副本里 9 个)会把树根 `submission/` 这一层省掉;上游按 `submission_dir / 行` 原样拼路径,一个都读不到,于是这片叶子被拿空的 `<files>` 判——整份摆卷一片叶子一片叶子地被判"没有实现"。修法:`_resolve_selected_path` 只做精确解析(去 `./`、反引号,允许带或不带唯一顶层目录),**不做模糊匹配、不回退到"全部文件"**;一次选择解析不到任何文件就重问一次,第二次仍空则该叶子报错计为无效叶(不再判成 0)。修前/修后:gpt-5.5 Codex 0.7644→0.9073,DeepCode 0.6659→0.8367,Codex V4 0.6530→0.7343;三份无效叶均为 0。**2026-08-25 → 09-14 的全部历史分数(附录 A)本来就因输入有偏作废,这条又给它们加了一个作废理由;SNSE 三份旧分是否用修好的裁判重判(≈¥114)owner 未决。**
+
+新增:`experiments/splits/{fre,rice}.txt`、`analyze_judge_eval_bias.py`、`judge_eval_results_rice/`(SiliconFlow 裁判,F1 = 0.685)与 `judge_eval_results_rice_paratera/`(Paratera 裁判,F1 = 0.719)。未改动裁判提示词、评分树。
 
 ---
 
