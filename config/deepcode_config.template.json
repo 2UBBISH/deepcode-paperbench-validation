@@ -12,7 +12,10 @@
         "apiKeyEnv": "PARATERA_API_KEY",
         "extraHeaders": {},
         "modelCatalog": "manual",
-        "manualModels": [{ "id": "DeepSeek-V4-Flash", "contextWindow": 128000, "maxOutputTokens": 32768 }],
+        "manualModels": [
+          { "id": "DeepSeek-V4-Flash", "contextWindow": 128000, "maxOutputTokens": 32768 },
+          { "id": "DeepSeek-V4-Flash-Vision-Exp", "contextWindow": 128000, "maxOutputTokens": 32768 }
+        ],
         "enabled": true
       }
     }
@@ -20,7 +23,7 @@
   "agents": {
     "defaults": {
       "connection": "paratera",
-      "model": "DeepSeek-V4-Flash",
+      "model": "__MODEL__",
       "temperature": 0.1,
       "maxTokens": 32768
     },
