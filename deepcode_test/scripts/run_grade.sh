@@ -62,7 +62,11 @@ if [ "$DRY" = "1" ]; then
 fi
 
 echo ""
-echo "==== [3/4] 判分(code_only · 裁判 ${PB_JUDGE_MODEL:-DeepSeek-V4-Pro} 恒定)$(date +%F\ %T) ===="
+# 裁判模型：PB_JUDGE_MODEL（默认 V4-Pro）。Flash 在 JudgeEval rice/0 上与 Pro 同准（0.719）但偏宽 2.2 pp（Pro 偏严 9 pp），
+# 两种裁判的分数不能混表；二级解析器 PB_STRUCTURED_PARSER_MODEL 必须留 V4-Pro（Flash 对 response_format 返回坏 JSON）。
+PARSER=$(grep -E '^PB_STRUCTURED_PARSER_MODEL=' "$PB/.env" 2>/dev/null | cut -d= -f2)
+[ "$PARSER" = "DeepSeek-V4-Pro" ] || { echo "  ❌ $PB/.env 的 PB_STRUCTURED_PARSER_MODEL=$PARSER，必须是 DeepSeek-V4-Pro（README §6）"; exit 1; }
+echo "==== [3/4] 判分(code_only · 裁判 ${PB_JUDGE_MODEL:-DeepSeek-V4-Pro} 恒定 · 解析器 $PARSER)$(date +%F\ %T) ===="
 cd "$PB"
 export PATH="$HOME/.local/bin:$PATH"
 # macOS Docker Desktop serves ~/.docker/run/docker.sock, not /var/run/docker.sock: tell docker-py and the sandbox.
