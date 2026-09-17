@@ -58,6 +58,25 @@ DeepSeek-V4-Pro @ Paratera、`PB_JUDGE_CONCURRENCY=20`、裁判已修选文件�
 判分：两份共 4 分钟；Flash 每份约 3.1–3.2M 入 / 0.28–0.30M 出 token，Pro 解析器每份 0.1M 入。原始 `grade.json` 在本地 `archive/deepcode_test/sapg/grades/`。
 同批还有一轮基线 `trial1`（`max_tokens` 被钳在 8192，未判，产物在 `~/pb_submissions_archive/sapg/trial1_maxtok8192/`）和本线 C9 运行（未判）。
 
+### 1.2 sapg 成对重跑 S9（2026-09-18，裁判 DeepSeek-V4-Flash，解析器 V4-Pro，code_only，77 个 Code-Dev 叶）
+
+口径：两边 **DeepSeek-V4-Flash-Vision-Exp**、思考关（全程 `reasoning_tokens` 0）、每次调用 32768、同一份 `paper.md` + addendum（sha `04790c3f…`）、同黑名单、
+**同两处规划补丁都开**（`DEEPCODE_PLANNING_FANOUT=1`、`DEEPCODE_PLANNER_CONTEXT_WINDOW=1000000`，VENDOR 11）、写码单次输出上限 32768（VENDOR 12）；
+本线第 10 步在阿里云 T4（`ecs.gn6i-c8g1.2xlarge`）上跑 搭建环境 → 试跑 → 修复 ≤3 轮，基线在本机（上游自带的本地验证）。
+
+| 提交 | 总分 | SAPG 实现 (w1) | 实验设置 (w1) | Fig.2 / 5 / 7 / 8 | 产物 | 过程 |
+| --- | --- | --- | --- | --- | --- | --- |
+| 基线 `vexp2`（DeepCode 21ebc57f + 16 文件补丁，开关开） | **0.6910** | 0.979 | 0.917 | 0 / 0.25 / 1 / 1 | 27 py / 7,490 行 | 40 min，308 次调用 |
+| 本线 `s9off_pre`（run 091717329303，图描述关，修复前快照） | **0.6677** | 0.910 | 0.846 | 0 / 0.25 / 1 / 1 | 23 py / 9,372 行 | 全程 714 次调用 / 8.9M token（含第 10 步） |
+| 本线 `s9off_post`（同一 run，3 轮修复后） | **0.6365** | 0.969 | 0.850 | 0 / 0 / 1 / 1 | 23 py | 第 10 步：环境 1 轮 + 修复 3 轮（每轮 40 调用 / 15 探针），G2 未过、accept |
+| 本线 `s9on_post`（run 091717345069，**12 张图由 Vision-Exp 描述后插回原位**，3 轮修复后） | **0.6709** | 0.896 | 0.630 | 0 / 0.5 / 1 / 1 | 21 py / 8,853 行 | 全程 811 次调用 / 9.1M token；G2 未过、accept |
+
+叶级（77 叶）：基线 vs 本线关-修复前 同过 45、只基线 12、只本线 8；修复前 vs 修复后 同过 48、只修复前 5、只修复后 9；关-修复后 vs 开-修复后 同过 44、只关 13、只开 7。
+读法：① 四份都在 0.64–0.69，比 09-17 那对（0.34 / 0.32）高一倍——变量是规划补丁（扇出 + 全文 + 附录）与 Vision-Exp，Figure 7 / 8 子树从 0 变 1；
+② 基线与本线修复前差 0.023，仍在组内噪声（≈0.02–0.09）内；③ 修复 3 轮把关的分数从 0.668 拉到 0.637（−0.031）：修复 agent 改的是入口与算法文件让判据跑通，改动被 rubric 计为
+退步（Fig.5 子树 0.25 → 0）；④ 图描述开 vs 关（都修复后）+0.034，但 Fig.5 0.5 vs 0、实验设置 0.63 vs 0.85 反向，单样本说不清；开的修复前快照 `s9on_pre` 已摆卷未判（`~/pb_submissions_archive/sapg/`）。
+判分：四份 7 分钟；Flash 每份 3.2–4.4M 入 / 0.28–0.34M 出，Pro 解析器每份 0.1M 入。`grade.json` 在 `runs/sapg/grades/`（不入库）；提交已归档到 `~/pb_submissions_archive/sapg/`（另有基线 `vexp1`：同口径但写码上限 8192，33 文件，未判）。
+
 ## 2. sequential-neural-score-estimation（2026-09-14，对标前的数，裁判修 bug 前）
 
 裁判 DeepSeek-V4-Pro @ Paratera，67 叶，无效叶 0；**三份都是思考开的分数**（当时 `enable_thinking:false` 无效，49 次调用 reasoning 78.7 万 / completion 113 万 token）；
