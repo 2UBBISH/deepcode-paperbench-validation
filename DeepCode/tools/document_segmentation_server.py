@@ -560,7 +560,7 @@ class DocumentSegmenter:
             content_type = (
                 section_type
                 if section_type
-                in ["algorithm", "formula", "introduction", "conclusion"]
+                in ["algorithm", "formula", "introduction", "conclusion", "appendix"]
                 else "general"
             )
             importance_score = {
@@ -568,6 +568,7 @@ class DocumentSegmenter:
                 "formula": 0.9,
                 "introduction": 0.85,
                 "conclusion": 0.8,
+                "appendix": 0.9,  # PLAN-3 7b: hyperparameters, environment details, extra algorithms
             }.get(content_type, 0.7)
 
             segment = self._create_enhanced_segment(
@@ -597,6 +598,10 @@ class DocumentSegmenter:
             (r"(?i)(result|结果|finding)", "results"),
             (r"(?i)(conclusion|结论|总结)", "conclusion"),
             (r"(?i)(reference|参考文献|bibliography)", "references"),
+            # Paper2Code line, PLAN-3 7b: an appendix after the references is its own section (LaTeX
+            # `\section*{A. …}` / `\section*{Appendix …}` or a markdown heading); upstream lumped it into
+            # "references", so hyperparameter tables and environment details never reached the planner
+            (r"(?im)^(?:\\section\*?\{|#{1,6}[ \t]+)[ \t]*(appendix\b[^\n{}]*|[A-Z](?:\.\d+)?\.[ \t]+[A-Z][^\n{}]{2,80})", "appendix"),
         ]
 
         current_pos = 0
@@ -1088,6 +1093,11 @@ class DocumentSegmenter:
         elif content_type == "merged":
             # Merged content is usually important
             base_scores = {k: importance_score * 0.95 for k in base_scores}
+        elif content_type == "appendix":
+            # PLAN-3 7b: what the planner most often lacks (hyperparameter tables, environment details)
+            base_scores["code_planning"] = importance_score * 0.95
+            base_scores["algorithm_extraction"] = importance_score * 0.9
+            base_scores["concept_analysis"] = importance_score * 0.5
 
         # Additional bonus based on content density
         algorithm_indicators = ["algorithm", "method", "procedure", "step", "process"]
@@ -1346,6 +1356,8 @@ class DocumentSegmenter:
             return "conclusion"
         elif any(word in title_lower for word in ["reference", "bibliography"]):
             return "references"
+        elif "appendix" in title_lower or re.match(r"^[A-Z](?:\.\d+)?\.\s+\S", title.strip()):
+            return "appendix"  # PLAN-3 7b
         elif "algorithm" in content_lower or "procedure" in content_lower:
             return "algorithm"
         else:
@@ -1412,7 +1424,7 @@ class DocumentSegmenter:
         ) / len(code_indicators)
         scores["code_planning"] = min(
             1.0,
-            code_score + (0.7 if content_type in ["methodology", "algorithm"] else 0),
+            code_score + (0.7 if content_type in ["methodology", "algorithm", "appendix"] else 0),
         )
 
         return scores
