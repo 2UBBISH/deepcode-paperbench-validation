@@ -1,8 +1,8 @@
 diff --git a/project/common/preparedness_turn_completer/preparedness_turn_completer/utils.py b/project/common/preparedness_turn_completer/preparedness_turn_completer/utils.py
-index 71e01f9..d6905cf 100644
+index 71e01f9..6058fa4 100644
 --- a/project/common/preparedness_turn_completer/preparedness_turn_completer/utils.py
 +++ b/project/common/preparedness_turn_completer/preparedness_turn_completer/utils.py
-@@ -24,6 +24,11 @@ from pydantic import BaseModel
+@@ -24,6 +24,14 @@ from pydantic import BaseModel
  logger = structlog.stdlib.get_logger(component=__name__)
  
  CONTEXT_WINDOW_LENGTHS: dict[str, int] = {
@@ -11,6 +11,9 @@ index 71e01f9..d6905cf 100644
 +    "deepseek-ai/DeepSeek-V4-Pro": 1_000_000,
 +    # [local] Paratera 用裸模型名(无 vendor 前缀),同一权重同一上下文窗口
 +    "DeepSeek-V4-Pro": 1_000_000,
++    # [local] Flash judge trial (2026-09-17): same route, bare name
++    "DeepSeek-V4-Flash": 1_000_000,
++    "deepseek-ai/DeepSeek-V4-Flash": 1_000_000,
      "gpt-4o-mini": 128_000,
      "gpt-4o-mini-2024-07-18": 128_000,
      "gpt-4o": 128_000,

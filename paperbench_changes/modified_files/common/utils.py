@@ -29,6 +29,9 @@ CONTEXT_WINDOW_LENGTHS: dict[str, int] = {
     "deepseek-ai/DeepSeek-V4-Pro": 1_000_000,
     # [local] Paratera 用裸模型名(无 vendor 前缀),同一权重同一上下文窗口
     "DeepSeek-V4-Pro": 1_000_000,
+    # [local] Flash judge trial (2026-09-17): same route, bare name
+    "DeepSeek-V4-Flash": 1_000_000,
+    "deepseek-ai/DeepSeek-V4-Flash": 1_000_000,
     "gpt-4o-mini": 128_000,
     "gpt-4o-mini-2024-07-18": 128_000,
     "gpt-4o": 128_000,
