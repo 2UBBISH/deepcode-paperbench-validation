@@ -195,6 +195,7 @@ DeepEvol 线也不带 ①②：对比方法的覆盖交给计划审阅（`--ask`
 | 白天 429/5xx/空响应，三次重试打完整轮报废 | 上游 1/2/4 秒三次 | persistent：10/30/60/180/300 s，上限 900 s，同错 30 次 |
 | 300 s 无落盘即熔断，白天空响应期一次 30~50 分钟 | stall 阈值 | 7200 s；墙钟 21600 s；14 h 硬顶 |
 | 下载 agent 自主克隆论文官方仓库 | 论文声称的黑名单开源版没有 | git insteadOf + MCP 层 `DEEPCODE_URL_DENYLIST`（实测挡下过一次） |
+| `DEEPCODE_WORKSPACE=<路径>` 一设，加载配置就报 `error parsing value for field "workspace"` | 上游 `DeepCodeConfig` 用 pydantic-settings 的 `DEEPCODE_` 前缀读环境变量，同名变量被当成 `workspace` 配置对象解析 | 不设它；工作区用 cwd 默认 `DeepCode/deepcode_lab`（`run_trial.sh` 在 DeepCode/ 里起 driver） |
 | 老任务目录混入新轮 / 拿错论文摆卷 | `deepcode_lab/tasks` 未清、交接文件跨论文 stale | 开跑前归档全部 `paper_*`；按论文分交接文件 + `paper.md` 标题核验 |
 | 只判了 1 份，其余无声忽略 | 每个 task 实例只 `pop()` 一份提交 | `run_grade.sh` 自动数目录设 `n_tries` |
 | 判分中途余额耗尽，分数被压低但看似正常 | 150+ 叶无效仍出总分 | `num_invalid_leaf_nodes ≤ 2` 否则作废；Paratera 余额耗尽不报 402 而是 403 `team_model_access_denied` + 模型表从 93 掉到 8，开跑前 `paratera_key.sh check` |

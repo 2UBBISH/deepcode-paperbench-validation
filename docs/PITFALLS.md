@@ -32,6 +32,7 @@
 | — | "完整模式"反而是最弱配置 | `enable_indexing=True` 只给 2 个工具(`write_file` + `search_code_references`),fast 模式给 11 个 | 要么让 CodeRAG 真正生效,要么用 fast;绝不"完整模式 + 空索引" | RUNBOOK 8 ⚠️ |
 | 坑9 | 参考挖掘 / 下载 agent 饿死 | `max_iterations` 默认 8 | 提到 40~80(本项目写死 80,**属未门控改动**) | `docs/REVIEW_local_changes_2026-09-03.md` |
 | 坑10 | 下载 agent 自主克隆论文官方仓库(作弊) | 论文声称的黑名单在代码里不存在 | git `insteadOf` 封锁 + MCP 层 `DEEPCODE_URL_DENYLIST`(insteadOf 挡不住 HTTP 抓取);实测真挡下过一次 | `scripts/run_trial.sh`;`rice/RESULTS.md` |
+| — | `DEEPCODE_WORKSPACE=<路径>` 一设，`DeepCodeConfig` 加载报 `error parsing value for field "workspace"`（2026-09-17，21ebc57f） | pydantic-settings 以 `DEEPCODE_` 为前缀读环境变量，同名变量被当成 `workspace` 配置对象 | 不设它；工作区走 cwd 默认 `deepcode_lab/` | `run_trial.sh` 注释 |
 | 坑11 | f-string 语法错误 | **我方误判**:DeepCode 要求 py≥3.12,我们的 venv 是 3.11 | venv 重建为 3.12 | RUNBOOK 订正 |
 
 ## C. DeepCode 源码缺陷(要改代码;本项目全部 env 门控或已记录)
