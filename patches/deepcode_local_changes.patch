@@ -1109,7 +1109,7 @@ index ba9561e..a7866c1 100644
  **Objective:** {"Reply 'All files implemented' to finish" if not unimplemented_files else "Continue implementation by analyzing dependencies and implementing the next required file according to the plan's priority order."}""",
          }
 diff --git a/workflows/code_implementation_workflow.py b/workflows/code_implementation_workflow.py
-index 3b93f37..8243618 100644
+index 3b93f37..56e5f6a 100644
 --- a/workflows/code_implementation_workflow.py
 +++ b/workflows/code_implementation_workflow.py
 @@ -25,6 +25,7 @@ Domain strategy (unchanged, deliberately):
@@ -1133,7 +1133,7 @@ index 3b93f37..8243618 100644
  
  # DeepCode-native compat layer (owns the MCP server lifecycle)
  from core.compat import Agent, get_runtime
-@@ -88,11 +93,45 @@ _MCP_SERVER_NAMES = [
+@@ -88,11 +93,63 @@ _MCP_SERVER_NAMES = [
  ]
  
  _MAX_ITERATIONS = 800
@@ -1142,6 +1142,24 @@ index 3b93f37..8243618 100644
 +# upstream 7200 s. run_trial.sh injects DEEPCODE_MAX_WALL_SECONDS=21600 (reasoning
 +# models at ~670 lines/file plus daytime empty-response episodes exceed 2 h).
 +_MAX_WALL_SECONDS = int(os.environ.get("DEEPCODE_MAX_WALL_SECONDS", "7200"))
++_IMPLEMENT_MAX_TOKENS = 8192
++
++
++def _implement_max_tokens() -> int:
++    """[paper2code, PLAN-3 S9 / VENDOR 12] the output budget of one implementation call, env-overridable.
++
++    Upstream's 8192 cuts a ``write_file`` call whose file runs past ~8k tokens: the tool-call JSON arrives
++    truncated (``finish_reason=length``), the provider reports it as an error and the whole implementation
++    stops with files unwritten (sapg, DeepSeek-V4-Flash-Vision-Exp, 2026-09-18: a 30 KB
++    ``train_baselines.py`` at file 22 of 25). The paired runs set ``DEEPCODE_IMPLEMENT_MAX_TOKENS=32768``
++    on both sides; unset keeps upstream's value.
++    """
++    try:
++        return int(os.environ.get("DEEPCODE_IMPLEMENT_MAX_TOKENS", _IMPLEMENT_MAX_TOKENS))
++    except ValueError:
++        return _IMPLEMENT_MAX_TOKENS
++
++
  _EMERGENCY_TRIM_THRESHOLD = 50
  _MAX_TOOL_RESULT_CHARS = 60_000
  
@@ -1180,7 +1198,7 @@ index 3b93f37..8243618 100644
  @dataclass
  class _RunState:
      """Shared mutable state between the tool wrappers, hook and callbacks."""
-@@ -250,7 +289,17 @@ class _InstrumentedTool(AliasedTool):
+@@ -250,7 +307,17 @@ class _InstrumentedTool(AliasedTool):
          if state.abort_reason:
              return f"Error: tool execution aborted: {state.abort_reason}"
  
@@ -1199,7 +1217,7 @@ index 3b93f37..8243618 100644
          if loop_status["should_stop"]:
              state.abort_reason = loop_status["message"]
              state.run_status = (
-@@ -275,8 +324,12 @@ class _InstrumentedTool(AliasedTool):
+@@ -275,8 +342,12 @@ class _InstrumentedTool(AliasedTool):
              tool_name=self.name, tool_input=kwargs, tool_result=result
          )
  
@@ -1213,7 +1231,7 @@ index 3b93f37..8243618 100644
              completed_first_time = state.progress_tracker.complete_file(
                  state.memory_agent.normalize_file_path(filename)
              )
-@@ -287,9 +340,55 @@ class _InstrumentedTool(AliasedTool):
+@@ -287,9 +358,55 @@ class _InstrumentedTool(AliasedTool):
                      "Code implementation progress: "
                      f"{info['files_completed']}/{info['total_files']} files completed"
                  )
@@ -1269,7 +1287,7 @@ index 3b93f37..8243618 100644
  class _ImplementationHook(AgentHook):
      """Per-iteration domain policy: guidance, memory strategy, round sync."""
  
-@@ -425,7 +524,11 @@ class CodeImplementationWorkflow:
+@@ -425,7 +542,11 @@ class CodeImplementationWorkflow:
          self.logger = self._create_logger()
          self.mcp_agent = None
          self.enable_read_tools = True
@@ -1282,7 +1300,7 @@ index 3b93f37..8243618 100644
          self.progress_tracker = ProgressTracker()
          self._last_run_state: Dict[str, Any] = {
              "status": "unknown",
-@@ -617,13 +720,18 @@ class CodeImplementationWorkflow:
+@@ -617,13 +738,18 @@ class CodeImplementationWorkflow:
      ) -> list[dict[str, Any]]:
          """Run only mechanically discovered test commands, with bounded output."""
  
@@ -1303,6 +1321,15 @@ index 3b93f37..8243618 100644
                      command,
                      timeout_seconds=300,
                  )
+@@ -929,7 +1055,7 @@ Requirements:
+             max_iterations=_MAX_ITERATIONS,
+             max_tool_result_chars=_MAX_TOOL_RESULT_CHARS,
+             temperature=0.2,
+-            max_tokens=8192,
++            max_tokens=_implement_max_tokens(),
+             hook=_ImplementationHook(state),
+             session_key=f"code-implementation[{self._mcp_architecture}]",
+             provider_retry_mode="standard",
 diff --git a/workflows/codebase_index_workflow.py b/workflows/codebase_index_workflow.py
 index 7c5a1f1..3da9e47 100644
 --- a/workflows/codebase_index_workflow.py

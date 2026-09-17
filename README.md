@@ -91,7 +91,7 @@ PAPER=sapg bash deepcode_test/scripts/run_grade.sh           # 真判，约 ¥38
 ├── DeepCode/                    ← HKUDS/DeepCode main 21ebc57f + patches/deepcode_local_changes.patch（完整副本；.venv / deepcode_lab 不入库）
 ├── patches/
 │   ├── UPSTREAM_BASE.txt              两个上游仓库的固定 commit
-│   ├── deepcode_local_changes.patch   DeepCode 全部改动（16 文件，+811/−69，§5）
+│   ├── deepcode_local_changes.patch   DeepCode 全部改动（16 文件，+830/−70，§5）
 │   ├── deepcode_patched.sha256        打过补丁的 16 个文件的 sha256
 │   ├── verify_deepcode.sh             证明 DeepCode/ = 上游 + patch（setup.sh 自动跑）
 │   └── paperbench_local_changes.patch PaperBench 全部改动（5 文件，§5.4）
@@ -117,7 +117,7 @@ PAPER=sapg bash deepcode_test/scripts/run_grade.sh           # 真判，约 ¥38
 
 ## 5. 对上游的改动
 
-### 5.1 DeepCode（`patches/deepcode_local_changes.patch`，16 文件，+811/−69）
+### 5.1 DeepCode（`patches/deepcode_local_changes.patch`，16 文件，+830/−70）
 
 原则：每个改动 env 门控、默认值等于上游；`verify_deepcode.sh` 证明 `DeepCode/` 一个字节不多改。分四组：
 
@@ -129,7 +129,7 @@ PAPER=sapg bash deepcode_test/scripts/run_grade.sh           # 真判，约 ¥38
 | `tools/code_indexer.py` | 预筛 / 逐文件分析 / 关系抽取的 `max_tokens` env 化；**预筛止血（2026-09-17）**：输出只要 `file_path` + `confidence`（两个长文本字段下游从不读；263 文件的仓库曾把回复写到 11.8 万字符撞顶、解析失败、静默全量索引），两句作者残留的"推荐系统 / GNN / 扩散模型"改成中性表述，日志打实际选中数，`finish_reason=length` 视为失败走重试 | `DEEPCODE_PREFILTER_MAX_TOKENS` 2000 · `DEEPCODE_ANALYSIS_MAX_TOKENS` 1000 · `DEEPCODE_RELATIONSHIP_MAX_TOKENS` 1500 |
 | `workflows/agent_orchestration_engine.py` | 下载 agent：工具优先的提示、只给 `git_clone`、一次纠正重试、空 `code_base` fail-fast；挖掘 / 下载的输出上限与迭代预算 env 化 | `DEEPCODE_REFERENCE_MAX_TOKENS` 8192 · `DEEPCODE_DOWNLOAD_MAX_TOKENS` 4096 · `DEEPCODE_REFERENCE_MAX_ITERATIONS` 8 · `DEEPCODE_DOWNLOAD_MAX_ITERATIONS` 8 |
 | `workflows/agents/document_segmentation_agent.py` | 分段 agent 必须真的调工具；`document_index.json` 不存在即失败 | — |
-| `workflows/code_implementation_workflow.py` | 写码墙钟与 stall 阈值 env 化 | `DEEPCODE_MAX_WALL_SECONDS` 7200 · `DEEPCODE_STALL_THRESHOLD` 不设 = 上游 300 |
+| `workflows/code_implementation_workflow.py` | 写码墙钟与 stall 阈值 env 化；**写码单次输出上限 env 化（2026-09-18，VENDOR 12）**：上游写死 8192，一个 30 KB 文件把 `write_file` 的 JSON 截断、整轮写码中止 | `DEEPCODE_MAX_WALL_SECONDS` 7200 · `DEEPCODE_STALL_THRESHOLD` 不设 = 上游 300 · `DEEPCODE_IMPLEMENT_MAX_TOKENS` 不设 = 上游 8192（`run_trial.sh` 注入 32768） |
 | `workflows/codebase_index_workflow.py` | f-string 里的反斜杠提到表达式外（3.11 兼容） | — |
 | `workflows/agent_orchestration_engine.py`、`tools/document_segmentation_server.py` | **规划两处（2026-09-18，VENDOR 11，PLAN-3 第 7 / 7b 项）**：① 上游 `c9090c1a` 删掉的规划扇出搬回——Concept + Algorithm 两个分析 agent 先看论文，输出以 `# Worker outputs` 接在规划器消息后（与旧 `ParallelLLM` 一字不差），开关默认关；② 分段后规划器上下文原来写死 8 段 / 24 000 字符（sapg 56k 的论文规划器只看 24k，附录超参表从没进过规划器）——给了上下文窗口就按 (窗口 − max_tokens − 12k 提示预留) × 0.85 × 3 字符/token 定预算，整篇放得下全进、按原顺序，放不下才按上游相关度排序截断；分段器让参考文献之后的附录（`\section*{A. …}` / `# Appendix`）单独成段并给高 code_planning 相关度（这一条不带开关：分段产物本身变了，sapg 从 9 段变 10 段）。两个开关不设时规划路径与上游逐字节一致 | `DEEPCODE_PLANNING_FANOUT` 不设 = 关 · `DEEPCODE_PLANNER_CONTEXT_WINDOW` 不设 = 上游 8 段 / 24k（S9 成对重跑时基线与本线**都开**：`1` 与 `1000000`） |
 
