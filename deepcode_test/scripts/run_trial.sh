@@ -33,7 +33,8 @@ CODE_DIR_FILE="/tmp/stage_b_code_dir_${PAPER}.txt"
 STATUS_FILE="/tmp/stage_b_status_${PAPER}.txt"
 SUB_ROOT="$HOME/pb_submissions/$PAPER"
 export DEEPCODE_HOME="${DEEPCODE_HOME:-$REPO/.deepcode-home}"
-export DEEPCODE_WORKSPACE="$REPO/DeepCode/deepcode_lab"
+# 工作区 = <cwd>/deepcode_lab（脚本在 DeepCode/ 里起 driver）。不要 export DEEPCODE_WORKSPACE：
+# 上游 DeepCodeConfig 用 pydantic-settings 前缀 DEEPCODE_ 读环境变量，会把它当 workspace 配置对象解析而报错。
 
 # key 只经环境变量进入；文件内容不回显
 if [ -n "${ENV_FILE:-}" ]; then
