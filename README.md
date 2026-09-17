@@ -202,6 +202,7 @@ DeepEvol 线也不带 ①②：对比方法的覆盖交给计划审阅（`--ask`
 | 老任务目录混入新轮 / 拿错论文摆卷 | `deepcode_lab/tasks` 未清、交接文件跨论文 stale | 开跑前归档全部 `paper_*`；按论文分交接文件 + `paper.md` 标题核验 |
 | 只判了 1 份，其余无声忽略 | 每个 task 实例只 `pop()` 一份提交 | `run_grade.sh` 自动数目录设 `n_tries` |
 | 判分中途余额耗尽，分数被压低但看似正常 | 150+ 叶无效仍出总分 | `num_invalid_leaf_nodes ≤ 2` 否则作废；Paratera 余额耗尽不报 402 而是 403 `team_model_access_denied` + 模型表从 93 掉到 8，开跑前 `paratera_key.sh check` |
+| Flash 当裁判时二级解析器成片坏 JSON（`{"valid{"valid_score…`） | Paratera 的 Flash 在 `response_format` 请求上返回打乱的正文 | `PB_STRUCTURED_PARSER_MODEL=DeepSeek-V4-Pro` 保持不变，只把裁判换成 Flash |
 | 裁判"没看到文件"给 0 且 `valid_score=True` | 模型省掉树根 `submission/` | PaperBench 补丁：精确解析 + 重问 + 记无效叶 |
 | 论文资产全是 LFS 指针 | 稀疏/浅克隆下 `git lfs pull` 拿不到对象 | `setup.sh` 从 `media.githubusercontent.com` 按固定 commit 直链下载 |
 | `pkill -f "xxx"` 把自己杀了；改运行中的脚本错位执行 | 匹配到自己；bash 逐行读脚本 | `pkill -f "xx[x]"`；运行中的脚本不改 |
