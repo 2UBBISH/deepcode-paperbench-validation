@@ -80,6 +80,13 @@ for ph in ("defaults", "implementation"):
         assert (mt or 0) >= 32768, f"{ph}.maxTokens={mt} < 32768 — 会截断（坑8）"
 conn = d.get("connection") or d.get("provider")
 prof = (c.get("providers", {}).get("profiles") or {}).get(conn) or {}
+# 每次调用的 max_tokens = min(agents.maxTokens, 模型目录里该模型的 maxOutputTokens)。21ebc57f 的目录把 deepseek 家族缺省
+# 钳到 8192（2026-09-17 sapg trial1 实测），所以手动模型条目必须显式声明 maxOutputTokens ≥ 32768，才和 DeepEvol 线（32768）同口径。
+if prof.get("modelCatalog") == "manual":
+    entry = next((m for m in prof.get("manualModels") or [] if (m.get("id") if isinstance(m, dict) else m) == want), None)
+    assert entry is not None, f"providers.profiles.{conn}.manualModels 里没有 {want}"
+    mo = entry.get("maxOutputTokens") if isinstance(entry, dict) else None
+    assert (mo or 0) >= 32768, f"manualModels[{want}].maxOutputTokens={mo}：模型目录会把每次调用钳到 8192；请声明 ≥ 32768（见 README §6）"
 want_th = os.environ["DEEPCODE_EXPECT_THINKING"]
 th = (prof.get("compat") or {}).get("thinking")
 if want_th != "any":
@@ -100,7 +107,7 @@ else:
         except Exception:
             pass
 assert src, f"没有 key：既没设环境变量 {key_env or '(apiKeyEnv 未配置)'}，{home}/credentials.json 里也没有 connections.{conn}"
-print(f"  ✅ 口径：连接={conn} 模型=全程 {want}，思考={th}，maxTokens≥32768，MCP 7 项齐全；key 来源：{src}")
+print(f"  ✅ 口径：连接={conn} 模型=全程 {want}，思考={th}，maxTokens≥32768（含目录 maxOutputTokens），MCP 7 项齐全；key 来源：{src}")
 PY
 
 BL=$(git config --global --get-regexp 'insteadof' || true)
