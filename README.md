@@ -34,7 +34,7 @@ All earlier results (Aug 25 – Sep 15) are kept in `docs/RESULTS-HISTORY.md` wi
 | 黑名单 | `blacklist.txt` 在两层拦：git `insteadOf`（setup.sh）+ MCP 层 `DEEPCODE_URL_DENYLIST`（补丁） | setup.sh / run_trial.sh |
 | 预算 | 参考挖掘 40 轮 / 下载 12 轮；挖掘报告 32768、下载 16384、预筛 32000、分析 16000、关系 16000 token；规划限时 600 s；stall 7200 s；写码墙钟 21600 s；14 h 硬顶 | `run_trial.sh` 注入（补丁只把这些做成 env，默认全等于上游） |
 | 实验开关 | fix-①②③ **必须关**（§5.3） | `run_trial.sh` 拒绝 `=1` |
-| 判分 | PaperBench Code-Dev `code_only=True`，裁判 `DeepSeek-V4-Pro` @ Paratera（`PB_JUDGE_MODEL` 可换；Flash 当裁判的 JudgeEval 试跑见 RESULTS-HISTORY §7），`PB_JUDGE_CONCURRENCY=20`，`num_invalid_leaf_nodes ≤ 2` 才有效 | `run_grade.sh` |
+| 判分 | PaperBench Code-Dev `code_only=True`，裁判 `DeepSeek-V4-Pro` @ Paratera（`PB_JUDGE_MODEL` 可换；Flash 当裁判在 JudgeEval rice/0 上准确率与 Pro 相同 0.719、偏向相反，见 RESULTS-HISTORY §7；解析器必须留 Pro），`PB_JUDGE_CONCURRENCY=20`，`num_invalid_leaf_nodes ≤ 2` 才有效 | `run_grade.sh` |
 
 ## 3. 快速开始（clone 即跑）
 
