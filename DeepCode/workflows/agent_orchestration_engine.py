@@ -102,6 +102,88 @@ def _get_code_analyzer_timeout_s() -> int:
     return value
 
 
+# --- Paper2Code line, PLAN-3 items 7 / 7b (same hunk in both engine copies; VENDOR 11) -----------------
+# Upstream removed the planning fan-out in c9090c1a (2026-04-21, "avoids fan-out deadlocks") and left the
+# segmented planner context at 8 segments / 24 000 characters whatever the model — a paper over the 50k
+# segmentation threshold is planned from less than half of itself (sapg: 9 segments, 56k chars; the
+# appendix hyperparameter tables never reached the planner). Both are switchable so the default path stays
+# byte-identical to upstream:
+# * DEEPCODE_PLANNING_FANOUT=1: the Concept and Algorithm analysis agents run first, on the same message
+#   (their prompts never left prompts/code_prompts.py), and their outputs are appended to the planner's
+#   message under "# Worker outputs" exactly as the legacy ParallelLLM did (core/compat/parallel.py).
+# * DEEPCODE_PLANNER_CONTEXT_WINDOW=<tokens>: the planner's segment budget derives from the model's context
+#   window — (window − max_tokens − the fixed prompt reserve) × safety, in characters. When the whole paper
+#   fits, every segment goes in, in document order; only when it does not is upstream's relevance ranking
+#   used to truncate (no segment-count cap).
+_PLANNING_FANOUT_ENV = "DEEPCODE_PLANNING_FANOUT"
+_PLANNER_CONTEXT_WINDOW_ENV = "DEEPCODE_PLANNER_CONTEXT_WINDOW"
+_PLANNER_CHARS_PER_TOKEN = 3.0  # conservative for English prose with LaTeX
+_PLANNER_PROMPT_RESERVE_TOKENS = 12_000  # planning instruction + message frame + worker outputs
+_PLANNER_BUDGET_SAFETY = 0.85
+
+
+def _planning_fanout_enabled() -> bool:
+    return os.environ.get(_PLANNING_FANOUT_ENV, "").strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _planner_segment_budget_chars(max_tokens: int) -> Optional[int]:
+    """Characters of segment content the planner may be given, from the context window; None = upstream limits."""
+    raw = os.environ.get(_PLANNER_CONTEXT_WINDOW_ENV, "").strip()
+    if not raw:
+        return None
+    try:
+        window = int(raw)
+    except ValueError:
+        return None
+    if window <= 0:
+        return None
+    tokens = (window - int(max_tokens) - _PLANNER_PROMPT_RESERVE_TOKENS) * _PLANNER_BUDGET_SAFETY
+    budget = int(tokens * _PLANNER_CHARS_PER_TOKEN)
+    return budget if budget > 0 else None
+
+
+async def _generate_plan_with_fanout(
+    planner_agent: Agent,
+    fan_out_agents: List[Agent],
+    *,
+    message: str,
+    request_params: RequestParams,
+    timeout_s: int,
+    logger,
+) -> AgentRunResult:
+    """The legacy planning fan-out: every analysis agent gets ``message``, the planner gets ``message`` plus
+    their outputs under "# Worker outputs". A failed branch is reported in place, as ParallelLLM did."""
+
+    async def _run_branch(agent: Agent) -> tuple[str, str]:
+        async with agent:
+            llm = await attach_workflow_llm(agent, phase="planning")
+            try:
+                result = await llm.generate(message=message, request_params=request_params)
+            except Exception as exc:  # one branch must not sink the plan
+                logger.warning(f"Planning fan-out branch '{agent.name}' failed: {type(exc).__name__}: {exc}")
+                return agent.name, f"[{agent.name} error: {exc}]"
+            text = (result.final_content or "").strip()
+            logger.info(
+                f"Planning fan-out branch '{agent.name}' finished "
+                f"(stop={result.stop_reason}, chars={len(text)}, usage={result.usage})"
+            )
+            return agent.name, text
+
+    branch_results = await asyncio.gather(*(_run_branch(agent) for agent in fan_out_agents))
+    joined = "\n\n".join(f"## {name}\n{text}" for name, text in branch_results)
+    aggregator_message = f"{message}\n\n---\n# Worker outputs\n{joined}" if joined else message
+    async with planner_agent:
+        planner_llm = await attach_workflow_llm(planner_agent, phase="planning")
+        logger.info(
+            f"Fan-in planning started (timeout={timeout_s}s, agent={planner_agent.name}, "
+            f"branches={[name for name, _ in branch_results]})"
+        )
+        return await planner_llm.generate(message=aggregator_message, request_params=request_params)
+
+
+# --- end of the PLAN-3 7 / 7b hunk (its use sites are marked the same way below) -----------------------
+
+
 async def _generate_plan_with_single_agent(
     planner_agent: Agent,
     *,
@@ -150,9 +232,18 @@ def _load_paper_markdown_content(paper_dir: str, logger) -> tuple[str, str]:
 
 
 def _load_document_segments_context(
-    paper_dir: str, *, max_segments: int = 8, max_chars: int = 24000
+    paper_dir: str,
+    *,
+    max_segments: int = 8,
+    max_chars: int = 24000,
+    budget_chars: Optional[int] = None,
 ) -> Optional[str]:
-    """Build deterministic planner context from the segmentation index."""
+    """Build deterministic planner context from the segmentation index.
+
+    ``budget_chars`` (PLAN-3 7b, from ``_planner_segment_budget_chars``): when given and the whole paper
+    fits in it, every segment is used in document order; when it does not fit, it replaces ``max_chars``
+    and the segment-count cap is lifted, so upstream's relevance ranking decides what is dropped.
+    """
     index_path = os.path.join(paper_dir, "document_segments", "document_index.json")
     if not os.path.exists(index_path):
         return None
@@ -163,6 +254,13 @@ def _load_document_segments_context(
     segments = index_data.get("segments") or []
     if not segments:
         return None
+
+    if budget_chars is not None:
+        in_order = [seg for seg in segments if (seg.get("content") or "").strip()]
+        total_chars = sum(len((seg.get("content") or "").strip()) for seg in in_order)
+        if total_chars <= budget_chars:
+            return _render_segments_context(index_data, segments, in_order)
+        max_segments, max_chars = len(in_order), budget_chars
 
     ranked_segments = sorted(
         segments,
@@ -193,6 +291,12 @@ def _load_document_segments_context(
     if not selected_segments:
         return None
 
+    return _render_segments_context(index_data, segments, selected_segments)
+
+
+def _render_segments_context(
+    index_data: Dict[str, Any], segments: List[Dict[str, Any]], selected_segments: List[Dict[str, Any]]
+) -> str:
     overview = (
         f"document_type={index_data.get('document_type', 'unknown')}, "
         f"strategy={index_data.get('segmentation_strategy', 'unknown')}, "
@@ -642,11 +746,15 @@ async def run_code_analyzer(
     logger.info(f"Planning source markdown: {paper_file_path}")
 
     segmented_context = None
+    segment_budget: Optional[int] = None
     if use_segmentation:
-        segmented_context = _load_document_segments_context(paper_dir)
+        # PLAN-3 item 7b: the segment budget follows the model's context window when the line says what it is
+        segment_budget = _planner_segment_budget_chars(get_token_limits()[0])
+        segmented_context = _load_document_segments_context(paper_dir, budget_chars=segment_budget)
         if segmented_context:
             logger.info(
                 "Using segmented planner context derived from document_index.json"
+                + (f" (budget {segment_budget} chars from {_PLANNER_CONTEXT_WINDOW_ENV})" if segment_budget else "")
             )
         else:
             logger.warning(
@@ -662,6 +770,14 @@ async def run_code_analyzer(
         ),
         server_names=[],
     )
+    # PLAN-3 item 7: the analysis agents of the legacy fan-out, tool-less (the paper is in the message)
+    fan_out_agents: List[Agent] = []
+    if _planning_fanout_enabled():
+        fan_out_agents = [
+            Agent(name="ConceptAnalysisAgent", instruction=prompts["concept_analysis"], server_names=[]),
+            Agent(name="AlgorithmAnalysisAgent", instruction=prompts["algorithm_analysis"], server_names=[]),
+        ]
+        logger.info("Planning fan-out enabled (%s=1): Concept + Algorithm analysis before the planner", _PLANNING_FANOUT_ENV)
 
     base_max_tokens, _ = get_token_limits()
     max_iterations = 5 if use_segmentation else 2
@@ -698,6 +814,8 @@ async def run_code_analyzer(
             "max_iterations": max_iterations,
             "max_tokens": current_max_tokens,
             "temperature": current_temperature,
+            "fanout": [agent.name for agent in fan_out_agents],
+            "segment_budget_chars": segment_budget if use_segmentation else None,
         }
         attempt_logged = False
         try:
@@ -719,13 +837,23 @@ async def run_code_analyzer(
                     mode=planning_mode,
                 ),
             )
-            run_result = await _generate_plan_with_single_agent(
-                code_planner_agent,
-                message=message,
-                request_params=enhanced_params,
-                timeout_s=request_timeout_s,
-                logger=logger,
-            )
+            if fan_out_agents:
+                run_result = await _generate_plan_with_fanout(
+                    code_planner_agent,
+                    fan_out_agents,
+                    message=message,
+                    request_params=enhanced_params,
+                    timeout_s=request_timeout_s,
+                    logger=logger,
+                )
+            else:
+                run_result = await _generate_plan_with_single_agent(
+                    code_planner_agent,
+                    message=message,
+                    request_params=enhanced_params,
+                    timeout_s=request_timeout_s,
+                    logger=logger,
+                )
             result = (run_result.final_content or "").strip()
             attempt_record.update(
                 {

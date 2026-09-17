@@ -82,8 +82,8 @@ PAPER=sapg bash deepcode_test/scripts/run_grade.sh           # 真判，约 ¥38
 ├── DeepCode/                    ← HKUDS/DeepCode main 21ebc57f + patches/deepcode_local_changes.patch（完整副本；.venv / deepcode_lab 不入库）
 ├── patches/
 │   ├── UPSTREAM_BASE.txt              两个上游仓库的固定 commit
-│   ├── deepcode_local_changes.patch   DeepCode 全部改动（15 文件，+659/−57，§5）
-│   ├── deepcode_patched.sha256        打过补丁的 15 个文件的 sha256
+│   ├── deepcode_local_changes.patch   DeepCode 全部改动（16 文件，+811/−69，§5）
+│   ├── deepcode_patched.sha256        打过补丁的 16 个文件的 sha256
 │   ├── verify_deepcode.sh             证明 DeepCode/ = 上游 + patch（setup.sh 自动跑）
 │   └── paperbench_local_changes.patch PaperBench 全部改动（5 文件，§5.4）
 ├── config/                      ← deepcode_config.template.json（口径）、credentials.example.json、paperbench.env.example（无密钥）
@@ -108,11 +108,11 @@ PAPER=sapg bash deepcode_test/scripts/run_grade.sh           # 真判，约 ¥38
 
 ## 5. 对上游的改动
 
-### 5.1 DeepCode（`patches/deepcode_local_changes.patch`，15 文件，+659/−57）
+### 5.1 DeepCode（`patches/deepcode_local_changes.patch`，16 文件，+811/−69）
 
 原则：每个改动 env 门控、默认值等于上游；`verify_deepcode.sh` 证明 `DeepCode/` 一个字节不多改。分四组：
 
-**A. 带走子集**——与 DeepEvol 线 `apps/v2/agent_engine/paper2code/VENDOR.md` 第 2–7 条一一对应，两边引擎行为一致：
+**A. 带走子集**——与 DeepEvol 线 `apps/v2/agent_engine/paper2code/VENDOR.md` 第 2–7、10、11 条一一对应，两边引擎行为一致：
 
 | 文件 | 改动 | 旋钮（默认 = 上游） |
 | --- | --- | --- |
@@ -122,6 +122,7 @@ PAPER=sapg bash deepcode_test/scripts/run_grade.sh           # 真判，约 ¥38
 | `workflows/agents/document_segmentation_agent.py` | 分段 agent 必须真的调工具；`document_index.json` 不存在即失败 | — |
 | `workflows/code_implementation_workflow.py` | 写码墙钟与 stall 阈值 env 化 | `DEEPCODE_MAX_WALL_SECONDS` 7200 · `DEEPCODE_STALL_THRESHOLD` 不设 = 上游 300 |
 | `workflows/codebase_index_workflow.py` | f-string 里的反斜杠提到表达式外（3.11 兼容） | — |
+| `workflows/agent_orchestration_engine.py`、`tools/document_segmentation_server.py` | **规划两处（2026-09-18，VENDOR 11，PLAN-3 第 7 / 7b 项）**：① 上游 `c9090c1a` 删掉的规划扇出搬回——Concept + Algorithm 两个分析 agent 先看论文，输出以 `# Worker outputs` 接在规划器消息后（与旧 `ParallelLLM` 一字不差），开关默认关；② 分段后规划器上下文原来写死 8 段 / 24 000 字符（sapg 56k 的论文规划器只看 24k，附录超参表从没进过规划器）——给了上下文窗口就按 (窗口 − max_tokens − 12k 提示预留) × 0.85 × 3 字符/token 定预算，整篇放得下全进、按原顺序，放不下才按上游相关度排序截断；分段器让参考文献之后的附录（`\section*{A. …}` / `# Appendix`）单独成段并给高 code_planning 相关度（这一条不带开关：分段产物本身变了，sapg 从 9 段变 10 段）。两个开关不设时规划路径与上游逐字节一致 | `DEEPCODE_PLANNING_FANOUT` 不设 = 关 · `DEEPCODE_PLANNER_CONTEXT_WINDOW` 不设 = 上游 8 段 / 24k（S9 成对重跑时基线与本线**都开**：`1` 与 `1000000`） |
 
 **B. 基线运行必需**——DeepEvol 线在自己的 provider / 工具层原生具备，基线补齐才是同口径：
 
@@ -154,7 +155,7 @@ DeepEvol 线也不带 ①②：对比方法的覆盖交给计划审阅（`--ask`
 
 ### 5.2 DeepCode 维护者应知道的
 
-`DeepCode/` 是上游 `21ebc57f` 的完整副本（含 desktop / tests / website，1,011 文件），只有补丁里的 15 个文件不同。
+`DeepCode/` 是上游 `21ebc57f` 的完整副本（含 desktop / tests / website，1,011 文件），只有补丁里的 16 个文件不同。
 换上游 commit 的步骤：`git archive <commit>` 解到 `DeepCode/`，`patch -p1 < patches/deepcode_local_changes.patch`，手工合并失败的 hunk，
 `git diff` 重生成补丁，重算 `deepcode_patched.sha256`，改 `UPSTREAM_BASE.txt`。
 
