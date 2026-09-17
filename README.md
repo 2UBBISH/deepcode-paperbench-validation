@@ -54,6 +54,15 @@ PREFLIGHT_ONLY=1 PAPER=sapg ENV_FILE=~/my.env bash deepcode_test/scripts/run_tri
 PAPER=sapg TRIAL=trial1 ENV_FILE=~/my.env nohup bash deepcode_test/scripts/run_trial.sh > run.log 2>&1 &
 ```
 
+模型由 `$DEEPCODE_HOME/deepcode_config.json` 的 `agents.defaults.model` 决定（`setup.sh` 生成时按 `DEEPCODE_MODEL`，默认 `DeepSeek-V4-Flash`；
+`manualModels` 里 `DeepSeek-V4-Flash` 与 `DeepSeek-V4-Flash-Vision-Exp` 都是 32768 / 思考关）；`run_trial.sh` 的口径闸用
+`DEEPCODE_EXPECT_MODEL` 核对。**S9 成对重跑（2026-09-18 起）**：基线与 DeepEvol 线同模型 `DeepSeek-V4-Flash-Vision-Exp`、同两处规划补丁都开——
+
+```bash
+DEEPCODE_EXPECT_MODEL=DeepSeek-V4-Flash-Vision-Exp DEEPCODE_PLANNING_FANOUT=1 DEEPCODE_PLANNER_CONTEXT_WINDOW=1000000 \
+PAPER=sapg TRIAL=vexp1 ENV_FILE=~/my.env nohup bash deepcode_test/scripts/run_trial.sh > runs/sapg/console_vexp1.log 2>&1 &
+```
+
 - 全流程 3~6 小时（分段 → 规划 → 参考挖掘 → 克隆 → 索引 → 写码 → 上游自带的测试验证），V4-Flash 约 ¥5~10/轮
 - 三道闸门：口径闸（模型 / 思考 / 阶段覆盖 / maxTokens / 7 个 MCP / key 来源）、假计划闸（`planning_result_meta.json.source == generated`）、状态闸 + 产物归属（`completed*`、本轮 `tasks/` 下、`paper.md` 标题核验、≥5 个文件）
 - 产物摆到 `~/pb_submissions/<paper>/<trial>/`；日志、并稿输入、任务目录归档、摆卷副本在 `runs/<paper>/`（不入库）

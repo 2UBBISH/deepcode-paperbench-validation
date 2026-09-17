@@ -197,6 +197,10 @@ for x in DEEPCODE_PLAN_COVERAGE_CHECK DEEPCODE_ALLOW_PLAN_EXTENSION DEEPCODE_POS
   [ "${!x:-0}" = "1" ] && { echo "  ❌ $x=1：基线运行不允许开实验开关"; exit 1; }
 done
 echo "  ✅ 实验开关 fix-①②③ 全关"
+# PLAN-3 第 7 / 7b 项（DeepEvol VENDOR 11，本仓库 README §5.1 A）：两个规划开关，不设 = 上游逐字节；S9 成对重跑时基线与本线都开
+[ -n "${DEEPCODE_PLANNING_FANOUT:-}" ] && export DEEPCODE_PLANNING_FANOUT
+[ -n "${DEEPCODE_PLANNER_CONTEXT_WINDOW:-}" ] && export DEEPCODE_PLANNER_CONTEXT_WINDOW
+echo "  🧩 规划扇出=${DEEPCODE_PLANNING_FANOUT:-未设(关)} 规划器上下文窗口=${DEEPCODE_PLANNER_CONTEXT_WINDOW:-未设(上游 8 段/24k)}"
 
 cd "$REPO/DeepCode"
 set +e
