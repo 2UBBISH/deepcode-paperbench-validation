@@ -42,8 +42,21 @@ DeepSeek-V4-Pro @ Paratera、`PB_JUDGE_CONCURRENCY=20`、裁判已修选文件�
 | 计划 / 参考 / 克隆 / 索引 | 9,733 字符 `generated` 分段 · 5 URL · 5 仓库 · 5 索引（2,103 s） | 9,672 字符 `generated` 分段 · 4 URL · 4 仓库 · 4 索引（1,711 s） |
 | 写码 | 29/29 文件，518 s，24 py / 7,319 行；上游未发现测试命令、未执行 | 26/26 文件，599 s，22 py / 6,349 行；远端 compileall 通过、入口冒烟失败（嵌套包） |
 | 调用 | 413 次，`reasoning_tokens` 0，无 `length` 截断，每次 `max_tokens` **8192**（目录钳制，下一轮 32768） | 346 次，`reasoning_tokens` 0，每次 32768 |
-| 备注 | 后置闸门因运行中改脚本而手动补跑（同一段代码），全过 | 阿里云 ecs.c7.xlarge，两次 environment_run |
+| 备注 | 后置闸门因运行中改脚本而手动补跑（同一段代码），全过；未判分 | 阿里云 ecs.c7.xlarge，两次 environment_run；未判分 |
 
+
+### 1.1 sapg 第一对分数（2026-09-17，裁判 DeepSeek-V4-Flash，解析器 V4-Pro，code_only，77 个 Code-Dev 叶）
+
+口径：两边 DeepSeek-V4-Flash、思考关（全程 `reasoning_tokens` 0）、每次调用 32768、同一份 `paper.md` + addendum、同黑名单；本线跑在阿里云 ecs.c7.xlarge，基线在本机。
+
+| 提交 | 总分 | SAPG 实现 (w1) | 实验设置 (w1) | Fig.2 / 5 / 7 / 8 | 产物 | 过程 |
+| --- | --- | --- | --- | --- | --- | --- |
+| 基线 `trial2`（DeepCode 21ebc57f + 补丁） | **0.3374** | 0.413 | 0.611 | 0 / 0 / 0 / 1 | 19 py / 5,143 行 | 96 min，702 次调用，IsaacGymEnvs 预筛回退全量 |
+| DeepEvol 线 `deepevol_2`（run 09170541607c） | **0.3180** | 0.382 | 0.526 | 0 / 0 / 0 / 1 | 21 py / 6,279 行 | 76 min，544 次调用，入口冒烟通过 |
+
+叶级：77 个 Code-Dev 叶里两边同过 22，只有本线过 9，只有基线过 11。差 0.019，远小于历史组内摆动（0.09–0.19），**不能说谁优**；两边一起丢的是三张结果图的整条子树（Figure 2/5/7 全 0）、"五个种子"、"六个策略"、"0.001 熵系数"，本线另丢了"熵系数二选一"和 hard 任务的一半。
+判分：两份共 4 分钟；Flash 每份约 3.1–3.2M 入 / 0.28–0.30M 出 token，Pro 解析器每份 0.1M 入。原始 `grade.json` 在本地 `archive/deepcode_test/sapg/grades/`。
+同批还有一轮基线 `trial1`（`max_tokens` 被钳在 8192，未判，产物在 `~/pb_submissions_archive/sapg/trial1_maxtok8192/`）和本线 C9 运行（未判）。
 
 ## 2. sequential-neural-score-estimation（2026-09-14，对标前的数，裁判修 bug 前）
 
