@@ -44,9 +44,10 @@
 | — | 300s 无落盘即熔断;白天空响应期可达 30~50 分钟 | stall 阈值常量 | 1800→7200(未门控/env) | `run_trial.sh` 注释 |
 | — | 索引阶段每次全量重建(¥3~30 白烧) | 唯独索引无幂等 | `_index.json` 齐全即复用 | RUNBOOK 7-12 |
 | P1/坑 | CodeRAG 预筛 JSON 截断 → **静默回退全量索引**(17 文件仓库成功,151/239 文件 100% 失败;google-research 8,885 py 需 140h) | `code_indexer.py:566 max_tokens=2000` 写死;截断点聚在 2000×4.3 字符 | `DEEPCODE_PREFILTER_MAX_TOKENS`(默认不变) | `docs/FINDING_prefilter_silent_failure.md` |
+| P1 续 | 32000 也不够：263 文件仓库的预筛回复 11.8 万字符撞顶（sapg trial2，2026-09-17），同一仓库同日另一次 303 条 / 23.7k token 险过——能否过关看模型当次多写几句理由 | 每条记录带 `relevance_reason` / `expected_contribution` 两个长字段，下游从不读 | 补丁：只要 `file_path` + `confidence`；`_call_llm` 见 `length` 即失败重试；日志打实际选中数（模型自报 120，实际 303 条） | `patches/deepcode_local_changes.patch` `tools/code_indexer.py` hunk |
 | P1 | 参考挖掘报告截断,续写只留尾段 → 下载侧只见 1/5 仓库,整轮语料贫瘠 | `reference_params.maxTokens` 写死 | `DEEPCODE_REFERENCE_MAX_TOKENS`;A/B:8192→1 仓库,32768→5 仓库 | 同上 附 |
 | P3 | 预筛返回**合法空列表**也回退全量,日志一律写 "failed" | `if selected_file_paths:` 把"选 0 个"和"调用失败"合并 | 分流 + WARNING(未修) | 同上 附二 |
-| P7 | 预筛提示词硬编码 "recommendation systems, GNN, diffusion",把 RL 文件判为不相关 | 上一个项目的领域先验残留(`code_indexer.py:558`) | 运行时注入论文关键词(未修) | 同上 |
+| P7 | 预筛提示词硬编码 "recommendation systems, GNN, diffusion",把 RL 文件判为不相关 | 作者自己示例工程的领域先验残留（2025-07-20 首发就在，上游从未改；同文件 docstring 还是 `gcn.py / diffusion.py`） | 补丁改成中性表述"按目标工程结构判断相关性，不限领域"（2026-09-17） | 同上 |
 | P8 / 假计划 | 规划三连败后上游用 `coerce_text_to_minimal_plan` 造通用脚手架假计划并标 `completeness_score=1.0`,整轮静默报废 | `planning_runtime.py:174`;规划超时默认 180s 对推理模型不够 | `DEEPCODE_CODE_ANALYZER_TIMEOUT_S=600` + 摆卷前核 `planning_result_meta.json.source == generated` | `run_trial.sh` 假计划闸 |
 | P8 | 规划一次定死文件树,漏掉的基线后面几百轮补不回来(fre 三基线全 0) | Phase 5 冻结 + 写码只填空壳 | 规划必须可增量修订;**整体重生成会改坏主方法**(fx 轮实证) | `fre/RESULTS.md`;`docs/CONCLUSIONS.md` §⑥ |
 | — | 写码全程不执行不验证 | 索引模式工具面无执行器;`command_executor` 2,443 次工具调用零次运行代码 | 自建循环把执行放进去 | `release/README.md` §1.3 |
