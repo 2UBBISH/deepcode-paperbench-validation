@@ -12,7 +12,7 @@
         "apiKeyEnv": "PARATERA_API_KEY",
         "extraHeaders": {},
         "modelCatalog": "manual",
-        "manualModels": ["DeepSeek-V4-Flash"],
+        "manualModels": [{ "id": "DeepSeek-V4-Flash", "contextWindow": 128000, "maxOutputTokens": 32768 }],
         "enabled": true
       }
     }

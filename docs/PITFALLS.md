@@ -33,6 +33,7 @@
 | 坑9 | 参考挖掘 / 下载 agent 饿死 | `max_iterations` 默认 8 | 提到 40~80(本项目写死 80,**属未门控改动**) | `docs/REVIEW_local_changes_2026-09-03.md` |
 | 坑10 | 下载 agent 自主克隆论文官方仓库(作弊) | 论文声称的黑名单在代码里不存在 | git `insteadOf` 封锁 + MCP 层 `DEEPCODE_URL_DENYLIST`(insteadOf 挡不住 HTTP 抓取);实测真挡下过一次 | `scripts/run_trial.sh`;`rice/RESULTS.md` |
 | — | `DEEPCODE_WORKSPACE=<路径>` 一设，`DeepCodeConfig` 加载报 `error parsing value for field "workspace"`（2026-09-17，21ebc57f） | pydantic-settings 以 `DEEPCODE_` 为前缀读环境变量，同名变量被当成 `workspace` 配置对象 | 不设它；工作区走 cwd 默认 `deepcode_lab/` | `run_trial.sh` 注释 |
+| — | `maxTokens: 32768` 写了，实际每次调用 8192（`Resolved workflow LLM … max_tokens=8192`） | 21ebc57f 执行档按模型目录 `maxOutputTokens` 钳；手动目录只写名字 → deepseek 家族缺省 8192 | `manualModels: [{id, contextWindow, maxOutputTokens: 32768}]`；`run_trial.sh` 口径闸核对 | sapg trial1 日志 |
 | 坑11 | f-string 语法错误 | **我方误判**:DeepCode 要求 py≥3.12,我们的 venv 是 3.11 | venv 重建为 3.12 | RUNBOOK 订正 |
 
 ## C. DeepCode 源码缺陷(要改代码;本项目全部 env 门控或已记录)

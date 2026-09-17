@@ -28,7 +28,7 @@ All earlier results (Aug 25 – Sep 15) are kept in `docs/RESULTS-HISTORY.md` wi
 
 | 项 | 值 | 谁保证 |
 | --- | --- | --- |
-| 模型 | `DeepSeek-V4-Flash` @ Paratera（`https://llmapi.paratera.com/v1`），规划与写码同一模型，无阶段覆盖 | `config/deepcode_config.template.json`；`run_trial.sh` 口径闸 |
+| 模型 | `DeepSeek-V4-Flash` @ Paratera（`https://llmapi.paratera.com/v1`），规划与写码同一模型，无阶段覆盖；每次调用 `max_tokens` 32768（模板把它声明成带 `maxOutputTokens: 32768` 的手动模型条目，否则 DeepCode 的模型目录按 deepseek 家族缺省钳到 8192） | `config/deepcode_config.template.json`；`run_trial.sh` 口径闸 |
 | 思考 | **关**。每次请求带 `thinking: {"type": "disabled"}`（`compat.thinking=disabled`）；回包 `reasoning_tokens` 必须为 0（Paratera 忽略 `enable_thinking:false`，只认这一种写法） | 补丁 `core/providers/protocol_config.py`；跑完 `run_trial.sh` 汇总 llm 日志核验 |
 | 输入 | PaperBench 给 agent 的材料：`paper.md` 末尾并入 `# Addendum`（DeepCode 只吃一个 markdown）；不给 rubric/config | `run_trial.sh` [2/3]（与 DeepEvol 线 `intake.compose_input` 字节一致） |
 | 黑名单 | `blacklist.txt` 在两层拦：git `insteadOf`（setup.sh）+ MCP 层 `DEEPCODE_URL_DENYLIST`（补丁） | setup.sh / run_trial.sh |
@@ -187,6 +187,7 @@ DeepEvol 线也不带 ①②：对比方法的覆盖交给计划审阅（`--ask`
 | "思考关"没关，70% 输出 token 是思考 | Paratera 忽略 `enable_thinking:false` | 只认 `thinking:{type:disabled}`（`compat.thinking`）；`run_trial.sh` 跑完汇总 `reasoning_tokens`，非 0 即口径失败 |
 | 所有 agent 零工具空转、产物为空 | `deepcode init` 不写 `tools.mcpServers` | 模板带 7 个服务器，`python -m tools.xxx` 模块方式启动；filesystem / fetch 装成固定路径（`npx`/`uvx` 首次解析 20 s+ 会撞 MCP 连接超时，`uvx` 还会重编 cryptography）；口径闸检查齐全 |
 | `filesystem` MCP 一连就 `Connection closed` | 服务器启动时校验允许目录存在，`deepcode_lab/` 还没建 | `setup.sh` 先 `mkdir -p DeepCode/deepcode_lab` |
+| 配置写了 `maxTokens: 32768`，日志却是 `Resolved workflow LLM … max_tokens=8192`，长文件会被截断 | 21ebc57f 的执行档按模型目录的 `maxOutputTokens` 钳 `max_tokens`；手动目录里只写模型名字符串时，deepseek 家族缺省 8192 | 模板把模型写成对象 `{id, contextWindow, maxOutputTokens: 32768}`；口径闸核对。**sapg trial1（2026-09-17）是在 8192 下跑的**，见 RESULTS-HISTORY |
 | 参考挖掘 / 下载 agent 8 轮就放弃、报告是 runner 的"到达上限"文本 | 上游 `max_iterations=8` | 40 / 12（两次真机 8 都不够） |
 | 挖掘报告截断，下载侧只见 1 个仓库 | `maxTokens=4096/8192` | 32768 / 16384 |
 | CodeRAG 预筛 JSON 截断 → 静默回退全量索引（8,885 文件仓库需 140 h） | `max_tokens=2000` | 32000；分析/关系 16000 |
