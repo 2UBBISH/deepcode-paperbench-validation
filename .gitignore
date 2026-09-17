@@ -10,6 +10,7 @@ __pycache__/
 .venv/
 deepcode_lab/
 .deepcode-home/
+.mcp-node/
 # PaperBench is cloned by setup.sh at a pinned commit (patches/UPSTREAM_BASE.txt)
 frontier-evals/
 # every run's logs, inputs, task-directory archives, submission copies and grades live here, never in git
