@@ -3,7 +3,7 @@
 # 编排器跑完全部轮次后以退出码 9 收摊(外层 `bash trial_tick.sh || exit 0` 停表)。
 R="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"; export DEEPEVOL_ROOT="$R"
 PAPER="${PAPER:-rice}"
-OUT="$R/deepcode_test/$PAPER"
+OUT="$R/runs/$PAPER"
 L=$(ls -1t "$OUT"/logs/${PAPER}_trial*_deepcode_*.log 2>/dev/null | head -1)
 DRV=$(pgrep -f "stage_b_drive[r]\.py" | head -1)
 ORCH=$(pgrep -f "run_all_trial[s]\.sh" | head -1)
@@ -65,6 +65,6 @@ else
   for d in "$HOME"/pb_submissions/$PAPER/trial*/; do
     [ -d "$d" ] && echo "  $(basename "$d"): $(find "$d" -type f -not -path '*/.git/*'|wc -l) 文件 / $(find "$d" -name '*.py' -print0|xargs -0 cat 2>/dev/null|wc -l) 行"
   done
-  tail -4 "$(ls -1t $R/deepcode_test/$PAPER/logs/${PAPER}_ledger.txt 2>/dev/null | head -1)" 2>/dev/null
+  tail -4 "$(ls -1t $R/runs/$PAPER/logs/${PAPER}_ledger.txt 2>/dev/null | head -1)" 2>/dev/null
   exit 9
 fi

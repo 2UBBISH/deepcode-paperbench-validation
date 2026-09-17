@@ -1,472 +1,237 @@
-# DeepCode × PaperBench 独立复现验证
+# DeepCode × PaperBench 验证仓库
 
-> **状态（2026-09-14）**：09-03 之前的全部对比结果**作废**——裸跑提示词有偏、DeepCode 臂没拿到 addendum、"思考关"从未成立（见附录 A 开头的说明）。当前只认一套输入标准（§0），正在 PaperBench `bam` 上跑三方对照：**DeepEvol 复现线 / DeepCode 脚手架 / Codex 裸跑**，同底座 DeepSeek-V4-Pro @ Paratera，思考开，裁判恒定。
-> 本仓库包含：修改版 DeepCode 源码、PaperBench 补丁、全部脚本、历史提交产物与判分 JSON、分析文档。**clone 后跑 `setup.sh` 即可复现整个流程。**
+> **是什么**：一套可 clone 即跑的脚手架，用来在 PaperBench Code-Dev 口径下跑 **DeepCode 的基线运行**（原装
+> [HKUDS/DeepCode](https://github.com/HKUDS/DeepCode) main `21ebc57f` + 一份逐条说明的补丁）并统一判分，
+> 作为 DeepEvol 复现线（同一引擎嵌入 DeepEvol 的 Paper2Code 线）的对照。
+> 仓库里**只有**验证脚手架、DeepCode 副本 + 补丁、PaperBench 补丁与判分脚本、文档；产物、日志、判分 JSON 都不入库。
+> 2026-08-25 → 09-15 的全部历史数字在 [`docs/RESULTS-HISTORY.md`](docs/RESULTS-HISTORY.md)（含作废标记）。
 
-**English summary.** This repository started (Aug 25 – Sep 3) as an independent replication of the DeepCode paper's claim that its paper-to-code scaffold beats bare coding agents on PaperBench Code-Dev. **Those results are withdrawn**: the bare arm's prompt carried extra guidance the official PaperBench instructions do not (reading order, the blacklist URL, "don't stop / don't ask", "prioritise implementation over runnability"), the DeepCode arm did not receive the benchmark's `addendum.md`, and "thinking off" was never in effect (the provider ignores `enable_thinking:false`; we later concluded thinking cannot be switched off at all on this route). Two findings survive because they do not depend on inputs: the judge-serving dependence of Code-Dev scores (same model, two servings, 16% leaf-level disagreement, JudgeEval cannot arbitrate) and four silent-degradation defects in the DeepCode pipeline. From Sep 14 the comparison is re-run under one input standard (§0): the materials PaperBench hands an agent (paper.pdf/md, addendum, blacklist, assets — no rubric), the official `code_only_instructions.txt` verbatim for the bare arm (Codex) plus a frozen two-line suffix, thinking on for every arm, a fixed judge. First paper: `bam`.
+**English.** Scaffolding for running upstream DeepCode (main `21ebc57f`, plus a fully itemised, env-gated patch)
+against PaperBench Code-Dev papers under one fixed caliber (DeepSeek-V4-Flash via Paratera, thinking off, same
+model for planning and coding, paper.md + addendum as the only input, blacklist enforced at git and MCP level), and
+grading submissions with a pinned, patched PaperBench judge. It is the baseline arm for DeepEvol's Paper2Code line.
+All earlier results (Aug 25 – Sep 15) are kept in `docs/RESULTS-HISTORY.md` with their void status.
 
----
+## 1. 用途
 
-## 0. 当前口径：三方对照的输入标准（2026-09-14 起）
+三条线共用一套 PaperBench 论文材料与裁判：
 
-完整文本：[`deepcode_test/bam/INPUT_STANDARD.md`](deepcode_test/bam/INPUT_STANDARD.md)（工作副本在 `~/Documents/env/bam-threeway/`，三条线的产物按同一套子目录放在那里）。
-
-### 0.1 为什么之前的结果作废
-
-| # | 问题 | 影响的轮次 |
+| 线 | 是什么 | 在哪跑 |
 | --- | --- | --- |
-| 1 | **裸跑提示词有偏**：`docs/CC_FRE_PROMPT.txt` 及 rice/snse 同款在 PaperBench 官方指令之外多给了六类东西——点名先读 addendum、把黑名单 URL 抄进提示、"不要问我/不要停/必须全自主"、"不要钉版本"、"代码不执行所以优先实现而非可跑"、结束时报文件数/行数 | fre / rice / snse 全部裸跑臂（bare_v4、anchor、bare_kimi、snse tilted） |
-| 2 | **DeepCode 臂缺 addendum**：`run_trial.sh` 09-14 之前只喂 `paper.md`，而基准给 agent 的还有 `addendum.md`（作者澄清、范围说明、VAE 结构等） | fre / rice 全部 DeepCode 轮，snse trial2 |
-| 3 | **"思考关"从未成立**：Paratera 的 OpenAI 兼容路由忽略 `enable_thinking:false`，SNSE 里 70% 的输出 token 是思考；改发 `thinking:{type:disabled}` 之后 owner 判定运行层无法可靠关闭，标准改为**三方全开** | 所有标注"思考关"的轮次 |
-| 4 | **裸跑壳不一致**：论文 Table 1 里 bam 差距最大的是 Codex 行（0.1937），我们之前用 Claude Code 壳 | 全部裸跑臂 |
+| **DeepEvol 复现线** | DeepCode 的 Paper2Code 引擎嵌入 DeepEvol（`apps/v2/agent/paper2code/`），自己的 provider / 工具 / 执行端口 / 闸门 | DeepEvol 仓库，`scripts/paper2code_canary.py` |
+| **基线运行**（本仓库） | 原装 DeepCode + 本仓库补丁，`run_trial.sh` 一轮一摆卷 | 本仓库 |
+| 裸跑（bare） | Codex 桌面版 + 官方指令原文 + 冻结后缀 | `deepcode_test/bare/`，本批暂不起 |
 
-仍然成立的（与输入无关）：§附录 A.3 工程发现（四处静默降级、写码从不执行）、A.1/A.4 的裁判 serving 依赖与 JudgeEval 校准。
+术语按 DeepEvol 根 `CONTEXT.md`：**对比方法**（论文里被比较的算法，rubric 里的 baseline）≠ **基线运行**（原装 DeepCode 在同口径下的一次运行）。本文不用裸的"基线"。
 
-### 0.2 标准（摘要）
+## 2. 口径（两边一致，改一处必须两边同时改）
 
-依据只有两处，都不是我们定的：PaperBench 给 agent 的目录（`paperbench/nano/task.py:108-128`：`paper.pdf` `paper.md` `addendum.md` `blacklist.txt` `assets/`，**不给 rubric.json / config.yaml**）和 Code-Dev 官方指令 `code_only_instructions.txt`。DeepCode 论文 §4.1 对基线用了什么提示词一字未提。
-
-| 层 | 规则 | DeepEvol | DeepCode | 裸跑（Codex） |
-| --- | --- | --- | --- | --- |
-| 材料 | 五样字节级相同，谁的目录里出现 rubric/config 即作废 | 论文包（addendum 每阶段可见，黑名单 Stage 4/6 拒绝） | `paper.md` + `# Addendum` 并稿；`DEEPCODE_URL_DENYLIST` | 目录原样（唯一不对称：只有它能看 assets 图，偏帮裸跑，记录不改） |
-| 指令 | 裸跑 = 官方原文 + 冻结的两句后缀（`bare_prompt_suffix.txt`：不要停下来问/等；产物只放 submission/），只换两个路径；另两方用各自内建提示，不加 bam 专项内容 | 自带阶段提示 | 自带提示 | `PROMPT.txt` 由 `官方 + 后缀 + sed 路径` 生成，diff 校验 |
-| 运行 | 同底座 `DeepSeek-V4-Pro`（不是 `-0813`）、**思考开**（回包 `reasoning_tokens>0` 为证）、上网允许、黑名单 `modichirag/GSM-VI`（论文两处点名的官方实现）、零信息量人工输入、裁判恒定 | `init --thinking`，`run` 不带 `--ask` | 不设 `DEEPCODE_THINKING` | 走 `paratera_proxy.py` 直通记录；停下来问只回 `Continue; no further input will be provided.` 并记 `interactions.log` |
-
-后缀那两句是补 harness 条件（另两条线自己会跑到底、Codex 桌面版没有 harness 续跑；PaperBench 的 IterativeAgent 也这么做），不含论文或判分信息。
-
-### 0.3 bam 三方结果（2026-09-15；裁判修过"选文件根目录"bug，见 §4.2）
-
-| 臂 | 系统 | 状态 | 总分 |
-| --- | --- | --- | --- |
-| 03_bare.gpt5-codex-high | Codex 桌面版 + gpt-5.5 high（底座不同，不进主表） | 完成，12.5 min | **0.9073** |
-| 02_deepcode | DeepCode（e0767d0 + patch，`PAPER=bam TRIAL=trial1`）+ V4-Pro | 完成，3 h 13 min | **0.8367** |
-| 03_bare | Codex 桌面版 + V4-Pro | 完成，26 min | **0.7343** |
-| 01_deepevol | DeepEvol 复现线 + V4-Pro | **停跑，无分**：Stage 1–8 过，Stage 9 五个 attempt 都没过（12 个工程缺陷，11 个已修），owner 于 09-15 22:07 叫停；等新架构重跑 | — |
-
-同底座（V4-Pro）：DeepCode 0.8367 > 裸跑 Codex 0.7343，差 0.10，来自 §5.2/§5.3 两个实验节；核心算法节 DeepCode 反而低（0.721 vs 0.821）。
-三臂全丢的 38 片叶子几乎都是"ADVI 学习率网格搜索"。叶子级明细、各臂 RUN_NOTES 与原始 grade.json 在 owner 本机 `~/Documents/env/bam-threeway/`（`04_results/RESULTS.md`、`scores.csv`）；
-本仓库 `deepcode_test/bam/grades/` 放三份 grade.json。**修裁判前的三份分（0.7644 / 0.6659 / 0.6530）作废**，各臂留档 `grade_v1_judge_root_bug.json`。
-
-论文 Table 1 bam 列（Sonnet 4.5-think）：Codex 0.1937 / Claude Code 0.3829 / Cursor 0.3779 / DeepCode 0.8530。裁判不同（我们 DeepSeek-V4-Pro，论文 o3-mini），只看相对关系：Codex 0.19 的差距在同底座同裁判下不复现。
-
----
-
-## 1. 如果你是来造自己的复现 agent 的（先读这一节）
-
-**这个仓库对你的意义**:它不是一个可以直接用的复现 agent,而是三样东西——(a) 上游 **DeepCode**(HKUDS,`e0767d0`)的修改版源码与全部改动记录,是目前唯一有成果可参照的同类开源实现;(b) 对它做的两周独立验证的**全部证据**(11 份提交 × 两个裁判 serving、维度级失分分析、JudgeEval 校准);(c) 从证据推出的**自建 agent 架构设计与踩坑总表**。用户在从 0 到 1 自建论文复现 agent(不能接 Claude Code 壳,模型只走 Paratera 的 OpenAI 兼容端点),本仓库是它的参考基线。
-
-**和上游 DeepCode 的关系**
-
-| | 是什么 | 在哪 |
+| 项 | 值 | 谁保证 |
 | --- | --- | --- |
-| 上游原版 | https://github.com/HKUDS/DeepCode @ `e0767d0` | `patches/UPSTREAM_BASE.txt` |
-| 我们的改动 | 12 文件 +462/−46:env 门控的抗限流与截断修复、4 个实验开关、**15 处未门控改动**(REVIEW 文档逐条核验) | `patches/deepcode_local_changes.patch`;`DeepCode/` 是打过补丁的完整源码 |
-| 哪些改动值得带走 | 工具名消毒、URL 黑名单、假计划闸、状态闸、预筛/挖掘/下载上限 env 化、persistent 重试 | `deepcode_test/scripts/run_trial.sh` + patch |
-| 哪些改动不要带走 | 两个实验开关提示词里的评分元知识("Graders assign…");写死的 `max_iterations=80` 等未门控值 | `docs/REVIEW_local_changes_2026-09-03.md` |
-| DeepCode 里值得复用的 | 前半段:参考挖掘、下载、CodeRAG 索引与检索、文档分段(产物是独立文件) | `docs/ARCHITECTURE_v0.2_OPTIMAL.md` §4 A1、§8 复用地图 |
-| DeepCode 里要整体替换的 | 后半段 Phase 9 写码循环(不执行、规划冻结、预算常量、clean-slate、2 个工具) | 同上 §4 A3 |
+| 模型 | `DeepSeek-V4-Flash` @ Paratera（`https://llmapi.paratera.com/v1`），规划与写码同一模型，无阶段覆盖 | `config/deepcode_config.template.json`；`run_trial.sh` 口径闸 |
+| 思考 | **关**。每次请求带 `thinking: {"type": "disabled"}`（`compat.thinking=disabled`）；回包 `reasoning_tokens` 必须为 0（Paratera 忽略 `enable_thinking:false`，只认这一种写法） | 补丁 `core/providers/protocol_config.py`；跑完 `run_trial.sh` 汇总 llm 日志核验 |
+| 输入 | PaperBench 给 agent 的材料：`paper.md` 末尾并入 `# Addendum`（DeepCode 只吃一个 markdown）；不给 rubric/config | `run_trial.sh` [2/3]（与 DeepEvol 线 `intake.compose_input` 字节一致） |
+| 黑名单 | `blacklist.txt` 在两层拦：git `insteadOf`（setup.sh）+ MCP 层 `DEEPCODE_URL_DENYLIST`（补丁） | setup.sh / run_trial.sh |
+| 预算 | 参考挖掘 40 轮 / 下载 12 轮；挖掘报告 32768、下载 16384、预筛 32000、分析 16000、关系 16000 token；规划限时 600 s；stall 7200 s；写码墙钟 21600 s；14 h 硬顶 | `run_trial.sh` 注入（补丁只把这些做成 env，默认全等于上游） |
+| 实验开关 | fix-①②③ **必须关**（§5.3） | `run_trial.sh` 拒绝 `=1` |
+| 判分 | PaperBench Code-Dev `code_only=True`，裁判 `DeepSeek-V4-Pro` @ Paratera，`PB_JUDGE_CONCURRENCY=20`，`num_invalid_leaf_nodes ≤ 2` 才有效 | `run_grade.sh` |
 
-**阅读顺序(约 1 小时)**
+## 3. 快速开始（clone 即跑）
 
-1. 本 README §0(当前口径)与附录 A.3(工程发现)—— 5 分钟
-2. `deepcode_test/docs/PROJECT_CHRONICLE.md` —— **前因后果全纪事**:从 08-25 装环境到 09-03 转向自建,每一步做了什么、得到什么数字、用户在对话里问了什么、我们因此改了什么;配套 `RESULTS_MASTER.md`(全部结果总表,含作废轮与试点)与 `DECISIONS.md`(22 条决策记录)—— 20 分钟
-3. `deepcode_test/docs/PITFALLS.md` —— **踩坑总表,60 余条,分 PaperBench / DeepCode 配置 / DeepCode 源码 / 供应商 / 方法学 / 运维**,大多数会在新系统里原样重现 —— 15 分钟
-4. `deepcode_test/docs/ARCHITECTURE_v0.2_OPTIMAL.md` —— 自建 agent 的目标架构、建造顺序、每层验收、复用地图、给下一个对话的操作指引 —— 15 分钟
-5. 需要细节时:`docs/CONCLUSIONS.md`(失分机制)、`docs/FINDING_judge_serving_dependence.md`(为什么裁判分不能做目标)、`docs/FINDING_prefilter_silent_failure.md`(四种静默降级)、`docs/REVIEW_local_changes_2026-09-03.md`(我们自己的改动哪些没守住纪律)、`docs/ARCHITECTURE_PROPOSAL_v0.1.md`(周末降配版与 AutoSOTA 逐条)
+前置：Linux / macOS，`git` `curl` `uv`（含 `uvx`）`npx`（Node ≥ 18）`patch`；判分时要 Docker。不需要 git-lfs。
+一把 Paratera 的 OpenAI 兼容 key（复现用 `PARATERA_API_KEY`，裁判用 paperbench/.env 的 `OPENAI_API_KEY`）。
 
-**五条不要做的事**(每条都有真金白银的教训):不用 LLM 裁判分做目标函数;不让任何评分表信息进入流水线或提示词;不在没有执行验证的循环里写码;不让 LLM→程序的任何接缝静默降级;每组 <5 轮不下结论。
+```bash
+git clone git@github.com:2UBBISH/deepcode-paperbench-validation.git && cd deepcode-paperbench-validation
+PAPERS=sapg bash setup.sh        # 稀疏克隆 PaperBench@固定 commit 并打补丁、水合 sapg 资产、校验 DeepCode/、uv sync、
+                                 # 生成 .deepcode-home/deepcode_config.json（口径）、设 git 封锁、建 ~/pb_submissions/sapg
+```
 
-## 2. 仓库结构
+key 只经环境变量进入：写一个文件（不进仓库），内容一行 `PARATERA_API_KEY=...`，然后：
+
+```bash
+PREFLIGHT_ONLY=1 PAPER=sapg ENV_FILE=~/my.env bash deepcode_test/scripts/run_trial.sh      # 免费自检，过口径闸
+PAPER=sapg TRIAL=trial1 ENV_FILE=~/my.env nohup bash deepcode_test/scripts/run_trial.sh > run.log 2>&1 &
+```
+
+- 全流程 3~6 小时（分段 → 规划 → 参考挖掘 → 克隆 → 索引 → 写码 → 上游自带的测试验证），V4-Flash 约 ¥5~10/轮
+- 三道闸门：口径闸（模型 / 思考 / 阶段覆盖 / maxTokens / 7 个 MCP / key 来源）、假计划闸（`planning_result_meta.json.source == generated`）、状态闸 + 产物归属（`completed*`、本轮 `tasks/` 下、`paper.md` 标题核验、≥5 个文件）
+- 产物摆到 `~/pb_submissions/<paper>/<trial>/`；日志、并稿输入、任务目录归档、摆卷副本在 `runs/<paper>/`（不入库）
+- 所有可调项都是环境变量，默认值即本实验用值（`run_trial.sh` [2/3] 段）；`--help` 打印用法
+- 多轮串行：`PAPER=sapg FROM=1 TO=3 bash deepcode_test/scripts/run_all_trials.sh`；进度快照 `deepcode_test/scripts/monitor/trial_tick.sh`
+
+判分（花钱，先 DRY 看报价）：
+
+```bash
+PAPER=sapg DRY=1 bash deepcode_test/scripts/run_grade.sh     # 只清点与报价
+PAPER=sapg bash deepcode_test/scripts/run_grade.sh           # 真判，约 ¥38/份，40~100 分钟；结果 runs/sapg/grades/
+```
+
+判 `~/pb_submissions/<paper>/` 下全部提交，脚本自动设 `paperbench.n_tries`；判完把提交移到 `~/pb_submissions_archive/`，否则重判白花钱。
+**判新论文前**：PaperBench 的 `paper_split` 是硬编码枚举，要在 `paperbench/nano/eval.py` 的 Literal 里加论文 id 并放一个
+`experiments/splits/<paper>.txt`（补丁里已有 fre / rice / sequential-neural-score-estimation / bam 的写法）。
+
+跑自优化循环前先过泄漏闸：`bash deepcode_test/scripts/ci/check_no_rubric_leak.sh`（退出码 0 才可跑；扫描 DeepCode 提示词、补丁、裸跑固定件）。
+
+## 4. 目录
 
 ```
 .
 ├── README.md                    ← 本文件
-├── setup.sh                     ← 一键环境搭建(clone 后只需跑这个)
-├── DeepCode/                    ← 修改版 DeepCode 源码(上游 e0767d0 + 本地改动;不含 .venv / 运行产物)
+├── setup.sh                     ← 一键环境（幂等）
+├── DeepCode/                    ← HKUDS/DeepCode main 21ebc57f + patches/deepcode_local_changes.patch（完整副本；.venv / deepcode_lab 不入库）
 ├── patches/
 │   ├── UPSTREAM_BASE.txt              两个上游仓库的固定 commit
-│   ├── deepcode_local_changes.patch   DeepCode 全部改动(git diff HEAD,12 文件)
-│   └── paperbench_local_changes.patch PaperBench 全部改动(5 文件)
-├── paperbench_changes/          ← PaperBench 侧改动文件副本 + 新增文件(fre/rice split、裁判偏差分析、JudgeEval 结果)
-├── config/                      ← ~/.deepcode 与 paperbench/.env 的模板(无密钥)
-└── deepcode_test/               ← 实验本体
-    ├── README.md                      实验总览与状态
-    ├── docs/                          结论、发现、交接、审查报告、裸跑任务书
-    ├── scripts/                       run_trial.sh / run_grade.sh / stage_b_driver.py / 监控与链式脚本
-    ├── bam/                           当前三方对照:INPUT_STANDARD.md · bare_prompt_suffix.txt · paratera_proxy.py · submissions/ · grades/ · logs/
-    ├── fre/  rice/  sequential-neural-score-estimation/   历史(作废)论文:RESULTS.md · submissions/ · grades/ · logs/ · workspaces/ · task_archives/
-    └── (frontier-evals/ 由 setup.sh 克隆,不入库)
+│   ├── deepcode_local_changes.patch   DeepCode 全部改动（15 文件，+628/−49，§5）
+│   ├── deepcode_patched.sha256        打过补丁的 15 个文件的 sha256
+│   ├── verify_deepcode.sh             证明 DeepCode/ = 上游 + patch（setup.sh 自动跑）
+│   └── paperbench_local_changes.patch PaperBench 全部改动（5 文件，§5.4）
+├── config/                      ← deepcode_config.template.json（口径）、credentials.example.json、paperbench.env.example（无密钥）
+├── deepcode_test/
+│   ├── scripts/                       run_trial.sh · run_grade.sh · stage_b_driver.py · run_all_trials.sh · paratera_key.sh
+│   │   ├── gates/exec_level.py        执行级结构判据（确定性、零成本，给自优化循环当目标函数）
+│   │   ├── ci/check_no_rubric_leak.sh 评分知识泄漏扫描
+│   │   └── monitor/                   进度快照
+│   └── bare/                          裸跑臂固定件：bare_prompt_suffix.txt · paratera_proxy.py
+├── paperbench_changes/          ← PaperBench 改动文件副本 + 新增（单篇 split、裁判偏差分析脚本）
+├── docs/
+│   ├── RESULTS-HISTORY.md             全部历史数字与结论（含作废标记）
+│   ├── INPUT_STANDARD.md              三方输入标准（依据、三层规则、起跑前核验）
+│   └── PITFALLS.md                    踩坑总表（60 余条）
+├── runs/                        ← 每轮的日志 / 输入 / 任务归档 / 摆卷副本 / 判分 JSON（gitignore）
+├── .deepcode-home/              ← setup.sh 生成的 DeepCode 配置目录（gitignore；与你机器上其它 DeepCode 完全隔离）
+└── frontier-evals/              ← setup.sh 稀疏克隆的 PaperBench（gitignore）
 ```
 
-`task_archives/` 保留每轮的计划、挖掘报告、下载汇总、规划元数据与 LLM/MCP 日志;克隆下来的参考仓库与索引卡片(7GB)不入库。
+`~/pb_submissions/<paper>/<trial>/` 是判分器硬性要求的提交池，根目录下每个子目录名必须是合法 paper id。
 
----
+## 5. 对上游的改动
 
-## 3. 快速开始(clone 即跑)
+### 5.1 DeepCode（`patches/deepcode_local_changes.patch`，15 文件，+628/−49）
 
-### 3.1 前置
+原则：每个改动 env 门控、默认值等于上游；`verify_deepcode.sh` 证明 `DeepCode/` 一个字节不多改。分四组：
 
-- Linux / WSL2,Python 3.11+,`uv`,`git`,`curl`,Docker(判分时起沙箱);不需要 git-lfs,论文资产由 `setup.sh` 从 GitHub 直链按固定 commit 下载
-- 一个 OpenAI 兼容 API key,底座与裁判共用。我们用 Paratera 的 DeepSeek-V4-Pro(历史数据里另有 SiliconFlow 的同名模型,见附录 A.1)。
-  换 key 用 `bash deepcode_test/scripts/paratera_key.sh set <新key>` —— 它会先探活、再把 key 同步写进
-  `~/.deepcode/credentials.json`(底座)与 `frontier-evals/.../paperbench/.env`(裁判)两处,避免漏改一处后
-  「复现正常、判分全部 401」。另有 `check` / `add` / `list` / `next` 子命令(`next` 在当前 key 失效时自动切备用池)
-- 裸跑对照需要 Claude Code(或任何交互式编码 agent)+ 同一底座模型
+**A. 带走子集**——与 DeepEvol 线 `apps/v2/agent_engine/paper2code/VENDOR.md` 第 2–7 条一一对应，两边引擎行为一致：
 
-### 3.2 三步
-
-```bash
-git clone https://github.com/2UBBISH/deepcode-paperbench-validation.git && cd deepcode-paperbench-validation
-bash setup.sh          # 克隆 PaperBench@固定 commit 并打补丁、uv sync、写配置模板、设防作弊封锁
-```
-
-填两处 key:`~/.deepcode/credentials.json`(底座)与 `frontier-evals/project/paperbench/.env`(裁判)。然后:
-
-```bash
-PREFLIGHT_ONLY=1 PAPER=fre bash deepcode_test/scripts/run_trial.sh     # 免费自检
-```
-
-### 3.3 跑一轮 DeepCode 复现
-
-```bash
-PAPER=fre TRIAL=trial1 nohup bash deepcode_test/scripts/run_trial.sh > run.log 2>&1 &
-```
-
-- 全流程 3~6 小时(参考仓库挖掘 → 索引 → 规划 → 写码),V4-Pro 约 ¥20/轮
-- 三道闸门:假计划闸(规划失败后上游会伪造通用计划,一律判废)、状态闸、产物归属核验
-- 产物摆到 `~/pb_submissions/<paper>/<trial>/`,并复制到 `deepcode_test/<paper>/submissions/<trial>/`
-- 所有可调项都是环境变量(见 `run_trial.sh` 头部注释),默认值即本实验用值
-
-### 3.4 裸跑对照（2026-09-14 起的口径）
-
-裸跑提示词 = PaperBench 官方 `code_only_instructions.txt` 原文 + 冻结后缀 `deepcode_test/bam/bare_prompt_suffix.txt`，只把 `/home/paper`、`/home/submission` 换成本机路径；生成与校验命令见 `deepcode_test/bam/INPUT_STANDARD.md` §3。壳用 Codex，走 `deepcode_test/bam/paratera_proxy.py`（直通、只记 model 与 `reasoning_tokens`）。
-**旧任务书 `docs/CC_FRE_PROMPT.txt` 与 `rice/workspaces/cc_dsv4_run/PROMPT.txt` 带偏帮，已作废，仅作记录。**
-
-### 3.5 判分
-
-```bash
-PAPER=fre DRY=1 bash deepcode_test/scripts/run_grade.sh   # 只清点与报价
-PAPER=fre bash deepcode_test/scripts/run_grade.sh         # 真判,约 ¥38/份,40~100 分钟
-```
-
-- 判 `~/pb_submissions/<paper>/` 下全部提交;脚本自动设 `n_tries`(不设只判 1 份,其余静默忽略)
-- 判完检查 `num_invalid_leaf_nodes ≤ 2`,否则该份作废(余额耗尽等中途出错会把分数压低)
-- 已判提交请移出提交池,否则重判白花钱
-- 换裁判服务商时,必须把模型名登记进 `preparedness_turn_completer/utils.py` 的上下文长度表(见 patch)
-
----
-
-## 3.6 上传了什么、没上传什么(以及为什么)
-
-本仓库**不整份分发 PaperBench**,而是「固定 commit + 补丁 + 我们自己的产物」。`setup.sh` 会按 `patches/UPSTREAM_BASE.txt` 里的 commit 稀疏检出上游并自动打补丁,复现性不受影响。
-
-**已上传**
-
-| 内容 | 位置 | 说明 |
+| 文件 | 改动 | 旋钮（默认 = 上游） |
 | --- | --- | --- |
-| 判分树 rubric | `paperbench_changes/rubrics/{fre,rice}.rubric.json` | 上游原样复制,fre 437 叶 / rice 361 叶,共约 750KB。**仅供事后核对失分分析,严禁进入复现流水线** —— 见该目录 README |
-| PaperBench 改动 | `patches/paperbench_local_changes.patch` + `paperbench_changes/modified_files/` | 5 个文件、+90/−19 行,可直接对读 |
-| 我们新增的文件 | `paperbench_changes/experiments/splits/`、`analyze_judge_eval_bias.py` | fre/rice 单篇 split、裁判偏差分析脚本 |
-| JudgeEval 完整结果 | `paperbench_changes/judge_eval_results_rice{,_paratera}/` | 两个 serving 的原始判分(F1 0.685 / 0.719) |
-| DeepCode 修改版全源码 | `DeepCode/` | 上游 `e0767d0` + 本地改动(不含 `.venv`、运行产物) |
-| 全部提交产物与判分 JSON | `deepcode_test/{fre,rice}/` | 含作废轮,文件名标注原因 |
+| `core/compat/agent.py` | `tool_filter` 按消毒后的前缀（`-`→`_`）匹配 | — |
+| `tools/code_indexer.py` | 预筛 / 逐文件分析 / 关系抽取的 `max_tokens` env 化 | `DEEPCODE_PREFILTER_MAX_TOKENS` 2000 · `DEEPCODE_ANALYSIS_MAX_TOKENS` 1000 · `DEEPCODE_RELATIONSHIP_MAX_TOKENS` 1500 |
+| `workflows/agent_orchestration_engine.py` | 下载 agent：工具优先的提示、只给 `git_clone`、一次纠正重试、空 `code_base` fail-fast；挖掘 / 下载的输出上限与迭代预算 env 化 | `DEEPCODE_REFERENCE_MAX_TOKENS` 8192 · `DEEPCODE_DOWNLOAD_MAX_TOKENS` 4096 · `DEEPCODE_REFERENCE_MAX_ITERATIONS` 8 · `DEEPCODE_DOWNLOAD_MAX_ITERATIONS` 8 |
+| `workflows/agents/document_segmentation_agent.py` | 分段 agent 必须真的调工具；`document_index.json` 不存在即失败 | — |
+| `workflows/code_implementation_workflow.py` | 写码墙钟与 stall 阈值 env 化 | `DEEPCODE_MAX_WALL_SECONDS` 7200 · `DEEPCODE_STALL_THRESHOLD` 不设 = 上游 300 |
+| `workflows/codebase_index_workflow.py` | f-string 里的反斜杠提到表达式外（3.11 兼容） | — |
 
-**未上传**
+**B. 基线运行必需**——DeepEvol 线在自己的 provider / 工具层原生具备，基线补齐才是同口径：
 
-| 内容 | 体积 | 原因 |
+| 文件 | 改动 | 旋钮 |
 | --- | --- | --- |
-| `data/papers/*/paper.md`、`paper.pdf`、`assets/` | 205MB / 23 篇 | **论文正文与插图,版权属原作者与出版方**,不是我们能再分发的;上游用 Git LFS 托管,`setup.sh` 按需拉取 fre/rice 两篇 |
-| `data/papers/rice/judge/` | 37MB | 被引论文(JSRL、StateMask)的 PDF 与插图,同样是第三方版权内容 |
-| `data/judge_eval/` | 62MB | 上游 JudgeEval 数据集,其 README 明说部分内容不能自动再分发,须用 `download_data.py` 自取 |
-| PaperBench 其余源码 | — | 未改动的上游代码,用 pin + patch 表达比复制一份更准确 |
-| `.venv/`、`runs/`、DeepCode `deepcode_lab/`、`task_archives/*/code_base` 与 `indexes/` | 约 8GB | 本地环境与运行中间物,可由脚本重建 |
+| `core/agent_runtime/tools/mcp.py` | 模型可见的工具名 `-`→`_`（Kimi 对含连字符的名字静默不调用）；`DEEPCODE_URL_DENYLIST` 在 MCP 层拒绝黑名单 URL（论文 §4.1 声称、开源代码未实现）；同一 URL 只允许 fetch 2 次 | `DEEPCODE_URL_DENYLIST` 空 |
+| `core/compat/request_params.py`、`core/providers/base.py` | 重试模式与退避 env 化 | `DEEPCODE_LLM_RETRY_MODE` standard · `DEEPCODE_CHAT_RETRY_DELAYS` 1,2,4 · `DEEPCODE_PERSISTENT_MAX_DELAY` 60 · `DEEPCODE_PERSISTENT_IDENTICAL_ERROR_LIMIT` 10 |
+| `core/providers/protocol_config.py` | `compat.thinking: enabled\|disabled` → 每次请求 `extra_body.thinking={"type": …}`（口径开关） | 配置项 |
+| `workflows/planning_runtime.py` | 只认**未缩进**的 ``` 围栏定界计划；block scalar 里嵌套的 bash/python 围栏曾把完整计划截成半个并判校验失败 | — |
+| `workflows/agents/code_implementation_agent.py`、`workflows/code_implementation_workflow.py` | 统计 `write_multiple_files` 写的文件（批量写入的运行曾报 0 个文件、永远到不了完成判定）；写类工具的循环检测按参数摘要键（写不同文件是进展，不是死循环）；验证根目录下钻唯一子项目 | — |
+| `core/verification.py` | `resolve_project_root` | — |
+| `workflows/environment.py` | stdlib logger 的 `{}` 占位适配 | — |
 
----
+B 组后四行来自 DeepCode 维护者本机 main 工作树上尚未提交的修复，与 DeepEvol 线 vendor 的引擎相同。
 
-## 3.7 想在这个仓库上跑自优化循环?先读这段
+**C. 实验开关（默认关，基线运行禁止开）**：
 
-闭环是通的:`setup.sh` → 改 `DeepCode/` → `run_trial.sh` → `run_grade.sh` → 分数。
-但**默认的目标函数(PaperBench 裁判分)是噪声**,直接优化会得到一条漂亮且错误的曲线。
+| 开关 | 做什么 |
+| --- | --- |
+| `DEEPCODE_PLAN_COVERAGE_CHECK=1`（fix-①） | 蓝图出完后追加一次"审计"调用：按 (1) 每个对比方法 (2) 每个正文实验 (3) 每个数据集/环境 查漏并补文件 |
+| `DEEPCODE_ALLOW_PLAN_EXTENSION=1`（fix-②） | 写码循环里告诉模型"蓝图不是上限，缺对比方法或实验的文件就新建" |
+| `DEEPCODE_POSTWRITE_COMPILE=1`（fix-③） | 每次写文件后本机 `py_compile`，失败回灌让模型重写 |
 
-**为什么**:实测同组轮间 σ≈0.1,真实组间效应只有 0.010~0.023;同名裁判换 serving,
-同一份代码 15.7% 叶级分歧。用 σ=0.1 模拟一个**改动完全无效**的优化器,按 best-iterate 上报:
+**为什么基线运行不开它们**：①② 的提示词就是 PaperBench rubric 的三个评分维度。带着它们跑出来的分数衡量的是"我们对 rubric 的了解"，
+不是引擎——这就是对评测过拟合。修复轮 fx1/fx2 的实证（`docs/RESULTS-HISTORY.md` §6）：基线补上了、主方法从 0.82 塌到 0.26。
+基线运行的意义是给 DeepEvol 线一个原装的参照，所以必须关着；留在仓库只为让人能 A/B 出这三条各值多少分。
+DeepEvol 线也不带 ①②：对比方法的覆盖交给计划审阅（`--ask`）和将来的自建循环；③ 由远端 `compileall` 作业机械完成。
 
-| 迭代轮数 | 报告的"提升" | 相对基线 0.48 |
+**D. 不再带的**：旧补丁里"索引产物齐全即跳过重建"（静默跳过与按阶段重跑冲突）、`utils/loop_detector.py` 的写类工具豁免（被 B 组按参数摘要键取代）、写死的 `max_iterations=40/80`、墙钟 14400、stall 1800（全部改为 env，默认上游）。
+
+### 5.2 DeepCode 维护者应知道的
+
+`DeepCode/` 是上游 `21ebc57f` 的完整副本（含 desktop / tests / website，1,011 文件），只有补丁里的 15 个文件不同。
+换上游 commit 的步骤：`git archive <commit>` 解到 `DeepCode/`，`patch -p1 < patches/deepcode_local_changes.patch`，手工合并失败的 hunk，
+`git diff` 重生成补丁，重算 `deepcode_patched.sha256`，改 `UPSTREAM_BASE.txt`。
+
+### 5.3 与 DeepEvol 线的差异（补丁之外）
+
+| 项 | 基线运行（本仓库） | DeepEvol 线 |
 | --- | --- | --- |
-| 5 | +0.117 | +24% |
-| 8 | +0.143 | **+30%** |
-| 20 | +0.186 | +39% |
+| provider | DeepCode 自带 `openai_compat`，retry 走 persistent env | 自己的 `ParateraProvider`，每次回包核对 `reasoning_tokens`，非零即事件 |
+| 工具 | 7 个 stdio MCP 服务器（npx / uvx / venv python） | 同一批工具进程内包装，无 MCP 进程 |
+| 执行 | 上游自带：发现到测试命令就在**本机**跑 | 远端容器（阿里云租期）+ `compileall` + 入口冒烟 |
+| 闸门 | `run_trial.sh` 三道 | preflight / plan_source / implementation_status / ownership 四道 |
+| 计划审阅 | 无 | `--ask` 文件式审阅 |
 
-对照:AutoSOTA 在 ICML 上报的成功案例中位提升是 3.43%。**纯噪声刷出来的"提升"比真实系统报告的中位提升大一个数量级。**
-
-**改用这个目标函数**(确定性、零成本、秒级,不调模型):
-
-```bash
-python3 deepcode_test/scripts/gates/exec_level.py --json <提交目录>
-# → {"score": 4, "max": 5, "gates": {"compiles": true, "has_entrypoint": true, ...}}
-```
-
-**跑循环前先过闸**(防评分知识泄漏 —— 本项目曾因提示词里一句话作废两轮):
-
-```bash
-bash deepcode_test/scripts/ci/check_no_rubric_leak.sh    # 退出码 0 才可跑
-```
-
-成本结构:一次完整迭代 ≈ **¥58 / 5~8 小时**;要分辨 Δ=0.05 的真实效应需**每臂约 63 轮**。
-任何 n<5 的对照只能说方向。
-
-完整说明(含模拟复现代码、五项判据在 10 份已判提交上的实测、六类会误导优化器的陷阱)见
-`deepcode_test/docs/OPTIMIZER_NOTICE.md`。
-
----
-
-## 4. 对上游的改动
-
-### 4.1 DeepCode(`patches/deepcode_local_changes.patch`,12 文件,+462/−46)
-
-**环境变量门控、默认值等于上游的**(用于抗限流与修工程缺陷,不改生成逻辑):
-
-| 变量 | 作用 | 上游默认 |
-| --- | --- | --- |
-| `DEEPCODE_PREFILTER_MAX_TOKENS` | CodeRAG 预筛响应上限 | 2000 |
-| `DEEPCODE_DOWNLOAD_MAX_TOKENS` | GitHub 下载 agent 输出上限 | 4096 |
-| `DEEPCODE_LLM_RETRY_MODE` / `_CHAT_RETRY_DELAYS` / `_PERSISTENT_MAX_DELAY` / `_PERSISTENT_IDENTICAL_ERROR_LIMIT` | 重试与退避 | standard / 1,2,4 / 300 / 30 |
-| `DEEPCODE_OPENAI_REQUEST_TIMEOUT_S` / `DEEPCODE_CODE_ANALYZER_TIMEOUT_S` | 请求 / 规划超时 | 上游值 |
-| `DEEPCODE_URL_DENYLIST` | fetch/下载层强制执行论文黑名单(论文 §4.1 声称但代码未实现) | 空 |
-
-**实验开关(默认关)**:`DEEPCODE_PLAN_COVERAGE_CHECK`(规划后覆盖审计)、`DEEPCODE_ALLOW_PLAN_EXTENSION`(写码时允许扩展文件树)、`DEEPCODE_POSTWRITE_COMPILE`(写后 `py_compile`)、`DEEPCODE_REFERENCE_MAX_TOKENS`。
-
-**⚠️ 未门控 / 默认漂移的改动(15 处,全部 DeepCode 轮次共享)**:参考挖掘 `maxTokens` 4096→8192、`max_iterations` 8→80,写码墙钟 7200→14400,stall 阈值 300→1800,GitHub 下载 agent 提示词重写与 `max_iterations=40`,fetch 同 URL 限流,空 `code_base` fail-fast,分段提示词加固等。这些是 fre 早期为让流水线跑通所做,**使得"官方默认配置"的表述不成立**;但裸跑 vs DeepCode 的相对比较不受影响(所有 DeepCode 轮次用同一套代码)。完整清单与逐条核验见 `deepcode_test/docs/REVIEW_local_changes_2026-09-03.md`。
-
-**⚠️ 实验开关里的一处评分知识泄漏**:`DEEPCODE_PLAN_COVERAGE_CHECK` 与 `DEEPCODE_ALLOW_PLAN_EXTENSION` 的提示词含 "Graders assign separate credit to each baseline; omitting them forfeits those points",属于 PaperBench 评分结构元知识。用这两个开关跑的 trial_fx1/fx2 已**整体作废**(产物保留在 `fre/submissions/_作废/`)。**该句已于 2026-09-03 从源码删除**(`check_no_rubric_leak.sh` 现在扫描为零命中);原文与影响分析保留在 `docs/REVIEW_local_changes_2026-09-03.md`,作为忠实记录。
-
-### 4.2 PaperBench(`patches/paperbench_local_changes.patch`,5 文件,+90/−19)
+### 5.4 PaperBench（`patches/paperbench_local_changes.patch`，5 文件）
 
 | 文件 | 改动 |
 | --- | --- |
-| `common/preparedness_turn_completer/.../utils.py` | 上下文长度表登记 `deepseek-ai/DeepSeek-V4-Pro` 与 `DeepSeek-V4-Pro`(该表只认 OpenAI 模型名,无配置项) |
-| `paperbench/judge/simple.py` | ① 结构化解析模型可由 `PB_STRUCTURED_PARSER_MODEL` 指定(默认不变);② 叶子并发 `PB_JUDGE_CONCURRENCY`(默认 20;上游 100 会被 Paratera 打 429);③ **选文件路径解析修复**(2026-09-15,见下) |
-| `paperbench/grade.py` | ① 摆卷 tar 解开后若只有一个顶层目录(`submission/`),从该目录内判分;② 每片叶子的日志与消息落到 `runs/<group>/<run>/judge_logs/`,方便追查"判了空提交" |
-| `paperbench/nano/eval.py` | `paper_split` 允许 `fre` / `rice` 单篇 split |
-| `paperbench/utils.py` | `is_docker_running` 走 `docker.from_env()`,尊重 `DOCKER_HOST`(macOS Docker Desktop 的 socket 不在 /var/run) |
+| `common/preparedness_turn_completer/.../utils.py` | 上下文长度表登记 `deepseek-ai/DeepSeek-V4-Pro` 与 `DeepSeek-V4-Pro`（该表只认 OpenAI 模型名；换裁判模型要再加） |
+| `paperbench/judge/simple.py` | 结构化解析模型可由 `PB_STRUCTURED_PARSER_MODEL` 指定；叶子并发 `PB_JUDGE_CONCURRENCY`（默认 20，上游 100 会被 Paratera 打 429）；**选文件路径解析修复**（只做精确解析，允许带或不带唯一顶层目录，选不到就重问一次，仍空则记无效叶而不是判 0） |
+| `paperbench/grade.py` | 摆卷 tar 解开后若只有一个顶层目录就从里面判；每叶日志落到 `runs/<group>/<run>/judge_logs/` |
+| `paperbench/nano/eval.py` | `paper_split` 允许单篇 split（fre / rice / sequential-neural-score-estimation / bam / lite） |
+| `paperbench/utils.py` | `is_docker_running` 走 `docker.from_env()`，尊重 `DOCKER_HOST`（macOS Docker Desktop 的 socket 不在 /var/run） |
 
-**选文件根目录 bug(2026-09-15 发现并修,三份 bam 分数因此重判)**:上游裁判把摆卷目录树喂给模型让它列"最相关文件",模型约五分之一的回答(bam 上 40 个副本里 9 个)会把树根 `submission/` 这一层省掉;上游按 `submission_dir / 行` 原样拼路径,一个都读不到,于是这片叶子被拿空的 `<files>` 判——整份摆卷一片叶子一片叶子地被判"没有实现"。修法:`_resolve_selected_path` 只做精确解析(去 `./`、反引号,允许带或不带唯一顶层目录),**不做模糊匹配、不回退到"全部文件"**;一次选择解析不到任何文件就重问一次,第二次仍空则该叶子报错计为无效叶(不再判成 0)。修前/修后:gpt-5.5 Codex 0.7644→0.9073,DeepCode 0.6659→0.8367,Codex V4 0.6530→0.7343;三份无效叶均为 0。**2026-08-25 → 09-14 的全部历史分数(附录 A)本来就因输入有偏作废,这条又给它们加了一个作废理由;SNSE 三份旧分是否用修好的裁判重判(≈¥114)owner 未决。**
+未改动裁判提示词与评分树。
 
-新增:`experiments/splits/{fre,rice}.txt`、`analyze_judge_eval_bias.py`、`judge_eval_results_rice/`(SiliconFlow 裁判,F1 = 0.685)与 `judge_eval_results_rice_paratera/`(Paratera 裁判,F1 = 0.719)。未改动裁判提示词、评分树。
+## 6. 坑（先读这一节再开跑；全表 60 余条在 `docs/PITFALLS.md`）
 
----
-
-## 5. 实验流程与作废规则
-
-```
-PaperBench 论文目录(pdf/md/addendum/blacklist/assets,无 rubric)
-   ├► DeepEvol 复现线(--paper-dir,--thinking,不带 --ask)──► ~/pb_submissions/<paper>/deepevol_s10
-   ├► run_trial.sh(DeepCode,paper.md+addendum 并稿,思考=上游默认)──► ~/pb_submissions/<paper>/trialN
-   └► Codex + 官方指令原文+后缀(裸跑,直通代理留证)──► ~/pb_submissions/<paper>/bare_codex
-                                                    │
-                                        run_grade.sh(code_only,裁判固定)
-                                                    │
-                                          grade.json → RESULTS.md
-```
-
-**只统计完整跑完且判分有效的轮次。** 作废轮及原因:fre trial3(写码被 stall 截断)、trial4(语料仅 1 仓库,下载侧)、trial6(未完成);rice trial1(三次:网络 / 假计划 / 墙钟);fx1/fx2(评分知识泄漏);两份余额耗尽的判分。全部在 `deepcode_test/<paper>/logs/` 与 `submissions/_作废/` 可查。
-
----
-
-## 6. 文档索引
-
-| 文件 | 内容 |
-| --- | --- |
-| `deepcode_test/bam/INPUT_STANDARD.md` | **当前口径**：三方对照的输入标准（依据、三层规则、已拍板事项、起跑前核验） |
-| `deepcode_test/docs/OPTIMIZER_NOTICE.md` | **要在本仓库上跑自优化循环必读**:目标函数噪声的定量分析、替代判据、rubric 隔离、成本与样本量、六类陷阱 |
-| `deepcode_test/docs/DEEPCODE_INTERNALS.md` | **DeepCode 是怎么运转的**:11 个 Phase 的职责与产出、`task_dir` 文件合同、LLM 调用点与配置流、31 个归档 2,443 次工具调用的实证、怎么只跑前半段当前端 |
-| `deepcode_test/docs/PROJECT_CHRONICLE.md` / `RESULTS_MASTER.md` / `DECISIONS.md` | 全程纪事(含对话转折)/ 全部结果总表 / 决策记录 |
-| `deepcode_test/docs/PITFALLS.md` | **踩坑总表**(60 余条,分六类,每条现象/根因/修法/证据) |
-| `deepcode_test/docs/ARCHITECTURE_v0.2_OPTIMAL.md` | **最优版架构(交接文档,自含全部事实与路径)**:度量体/复现体分离、建造顺序、每层验收、复用地图 |
-| `deepcode_test/docs/ARCHITECTURE_PROPOSAL_v0.1.md` | **下一步:自建论文复现 agent 的架构设计**(多 agent 工作流合成:AutoSOTA 研读 + 计划批评 + 3 提案 6 评审;含周末/下周计划) |
-| `deepcode_test/docs/CONCLUSIONS.md` | 总结论、可信度五项核验、逐份失分表、§⑦ 裁判依赖 |
-| `deepcode_test/docs/FINDING_judge_serving_dependence.md` | 双裁判对照与诊断(本项目最重要的发现) |
-| `deepcode_test/docs/FINDING_prefilter_silent_failure.md` | 四种静默降级的证据链 |
-| `deepcode_test/docs/FINDING_generic_pipeline_failures.md` | 可迁移的 LLM 流水线失败模式 |
-| `deepcode_test/docs/REVIEW_local_changes_2026-09-03.md` | 对我们自己改动的独立审查(纪律 A/B 核验) |
-| `deepcode_test/fre/RESULTS.md` / `rice/RESULTS.md` | 每篇的分数、丢分位置、判分侧问题 |
-| `deepcode_test/docs/PAPERBENCH_RUNBOOK.md` | 13 个坑与修法 |
-| `deepcode_test/docs/HANDOFF_FRE.md` | 接手文档 |
-
----
-
-## 7. 诚实声明
-
-- **09-03 之前的全部对比作废**（§0.1 四条）；下列各条描述的是那段历史实验，保留作记录。
-- **样本量**:每组 2 轮,组内摆动 0.13~0.16;只能看方向。
-- **裁判**:两家 serving 的同名模型判分行为不同(同一提交 16% 叶级分歧),JudgeEval 上二者同等水平、无法裁定。绝对分数与倍数**必须连同裁判 serving 一起报告**。
-- **配置**:DeepCode 侧有 15 处未门控改动(§4.1);"官方默认"不成立,相对比较成立。
-- **修复线**:①②③④ 是否能恢复增益**未得到有效检验**(fx 轮作废)。
-- **底座**:论文用 Sonnet 4.5;我们用 DeepSeek-V4-Pro / Kimi-K2.7,同底座双切保证公平但不能直接对照论文数字。
-- **费用**:全部实验约 ¥1,450(约 30 轮复现 + 25 份判分 + 2 次 JudgeEval,含作废)。
-
-## 8. 许可证
-
-DeepCode(HKUDS,MIT)与 frontier-evals / PaperBench(OpenAI,MIT)各自的 LICENSE 随源码保留。本仓库新增的脚本、文档与产物同样以 MIT 发布。论文原文不随仓库分发,由 `setup.sh` 从上游 LFS 拉取。
-
----
-
-## 附录 A. 历史结果（2026-08-25 → 09-14，**作废：输入有偏**）
-
-> ⚠️ **本附录里的分数不再作为对比结论使用。** 作废原因见 §0.1：裸跑提示词带偏帮（`docs/CC_FRE_PROMPT.txt`）、DeepCode 臂没拿到 addendum、"思考关"从未成立、裸跑壳是 Claude Code 而非 Codex。保留全部数字与失分分析是为了可追溯；其中 **A.3 工程发现、A.1 的裁判 serving 依赖、A.4 的 JudgeEval 校准与成本**不依赖输入口径，仍然成立。
-
-
-> 历史测试全览见 A.4(11 份有效提交 × 两裁判、作废轮、裁判校准、时间线与成本)。
-
-### A.1 双裁判对照
-
-所有提交、rubric、PaperBench 版本完全相同;只换裁判的服务商(模型名都是 DeepSeek-V4-Pro)。
-
-**fre(306 叶)**
-
-| 提交 | SiliconFlow 裁判 | Paratera 裁判 |
+| 现象 | 根因 | 本仓库怎么处理 |
 | --- | --- | --- |
-| bare_v4 —— Claude Code 壳 + V4-Pro 裸跑 | 0.4817 | 0.4807 |
-| anchor —— Claude Code + Sonnet 4.5 裸跑 | 0.4839 | 0.5044 |
-| trial1 —— DeepCode + V4-Pro | 0.5184 | 0.4682 |
-| trial5 —— DeepCode + V4-Pro | 0.4246 | 0.3101 |
-| **DeepCode / 裸跑** | **0.98×** | **0.81×** |
+| "思考关"没关，70% 输出 token 是思考 | Paratera 忽略 `enable_thinking:false` | 只认 `thinking:{type:disabled}`（`compat.thinking`）；`run_trial.sh` 跑完汇总 `reasoning_tokens`，非 0 即口径失败 |
+| 所有 agent 零工具空转、产物为空 | `deepcode init` 不写 `tools.mcpServers` | 模板带 7 个服务器，`python -m tools.xxx` 模块方式启动；口径闸检查齐全 |
+| 参考挖掘 / 下载 agent 8 轮就放弃、报告是 runner 的"到达上限"文本 | 上游 `max_iterations=8` | 40 / 12（两次真机 8 都不够） |
+| 挖掘报告截断，下载侧只见 1 个仓库 | `maxTokens=4096/8192` | 32768 / 16384 |
+| CodeRAG 预筛 JSON 截断 → 静默回退全量索引（8,885 文件仓库需 140 h） | `max_tokens=2000` | 32000；分析/关系 16000 |
+| 规划三连败后上游伪造通用脚手架计划并标 `completeness_score=1.0` | `coerce_text_to_minimal_plan` | 假计划闸；规划限时 600 s |
+| 完整计划被判校验失败 → 假计划 | 计划里嵌套的 bash 围栏截断了 YAML 提取 | 补丁 B：只认未缩进围栏 |
+| 写码报 0 个文件、永远不完成 | 只统计 `write_file`，模型用了 `write_multiple_files` | 补丁 B：批量写也计数 |
+| 连续 `write_file` 被当死循环杀掉 | 循环检测只看工具名 | 补丁 B：写类工具按参数摘要键 |
+| 白天 429/5xx/空响应，三次重试打完整轮报废 | 上游 1/2/4 秒三次 | persistent：10/30/60/180/300 s，上限 900 s，同错 30 次 |
+| 300 s 无落盘即熔断，白天空响应期一次 30~50 分钟 | stall 阈值 | 7200 s；墙钟 21600 s；14 h 硬顶 |
+| 下载 agent 自主克隆论文官方仓库 | 论文声称的黑名单开源版没有 | git insteadOf + MCP 层 `DEEPCODE_URL_DENYLIST`（实测挡下过一次） |
+| 老任务目录混入新轮 / 拿错论文摆卷 | `deepcode_lab/tasks` 未清、交接文件跨论文 stale | 开跑前归档全部 `paper_*`；按论文分交接文件 + `paper.md` 标题核验 |
+| 只判了 1 份，其余无声忽略 | 每个 task 实例只 `pop()` 一份提交 | `run_grade.sh` 自动数目录设 `n_tries` |
+| 判分中途余额耗尽，分数被压低但看似正常 | 150+ 叶无效仍出总分 | `num_invalid_leaf_nodes ≤ 2` 否则作废；Paratera 余额耗尽不报 402 而是 403 `team_model_access_denied` + 模型表从 93 掉到 8，开跑前 `paratera_key.sh check` |
+| 裁判"没看到文件"给 0 且 `valid_score=True` | 模型省掉树根 `submission/` | PaperBench 补丁：精确解析 + 重问 + 记无效叶 |
+| 论文资产全是 LFS 指针 | 稀疏/浅克隆下 `git lfs pull` 拿不到对象 | `setup.sh` 从 `media.githubusercontent.com` 按固定 commit 直链下载 |
+| `pkill -f "xxx"` 把自己杀了；改运行中的脚本错位执行 | 匹配到自己；bash 逐行读脚本 | `pkill -f "xx[x]"`；运行中的脚本不改 |
+| 提示词里一句 "Graders assign separate credit…" | 评分元知识进流水线 | 两轮整体作废；`ci/check_no_rubric_leak.sh`；rubric 物理不进工作区 |
+| 每组 2 轮就下结论 | 组内摆动 0.13~0.16，组间 0.01~0.02 | n ≥ 5 才说"优于"；任何分数带裁判 serving |
 
-**rice(178 叶)**
+## 7. 作废规则
 
-| 提交 | SiliconFlow 裁判 | Paratera 裁判 |
-| --- | --- | --- |
-| bare_v4 —— 裸跑 V4-Pro | 0.4680 | **0.1452** |
-| trial2 / trial3 —— DeepCode + V4-Pro | 0.5447 / 0.4374 | 0.4033 / 0.3446 |
-| **DeepCode / 裸跑** | **1.05×** | **2.58×** |
-| bare_kimi —— 裸跑 Kimi-K2.7-Code | 0.4633 | **0.1865** |
-| trial_k1 / trial_k2 —— DeepCode + Kimi | 0.2815 / 0.4760 | 0.2403 / 0.3754 |
-| **DeepCode / 裸跑** | **0.82×** | **1.65×** |
+只统计**完整跑完且判分有效**的轮次。一轮作废的条件：
 
-论文声称:fre 1.34×、rice 1.95×。
+- 口径闸没过就跑了（模型 / 思考 / 阶段覆盖任一不符）；跑完 `reasoning_tokens` 合计非 0
+- 假计划（`planning_result_meta.json.source != generated`）、流水线状态非 `completed*`、产物不在本轮 `tasks/` 下或 `paper.md` 标题对不上、产物 < 5 文件
+- 判分 `num_invalid_leaf_nodes > 2`（余额耗尽、裁判模型名未登记上下文表）
+- 任何评分知识进入提示词或工作区（rubric / config.yaml 出现在 agent 目录即作废）
+- 三方输入不一致（材料五样 sha256 不同、裸跑提示词 diff 非空）
 
-**sequential-neural-score-estimation(67 叶,2026-09-14,Paratera 裁判)**:DeepCode + V4-Pro(思考关)0.7280 对 DeepEvol 复现线(同模型)0.7729 / 0.6854 ——详见 [`deepcode_test/sequential-neural-score-estimation/RESULTS.md`](deepcode_test/sequential-neural-score-estimation/RESULTS.md)。
+作废轮的产物与日志照样归档，文件名标明原因，只作机制分析。
 
-### A.2 结论总结
+## 8. 历史结果索引
 
-**能站住的**
+全部在 [`docs/RESULTS-HISTORY.md`](docs/RESULTS-HISTORY.md)：§1 bam 三方（09-15，当前唯一有效）· §2 snse（09-14，对标前）· §3 fre · §4 rice + Kimi（08-25→09-03，输入有偏作废）·
+§5 裁判 serving 依赖 · §6 作废轮与修复轮证据 · §7 JudgeEval 校准 · §8 工程发现 · §9 原始文件位置（本地 archive）。
+2026-09-17 起 sapg 的两边并排数字先记在 DeepEvol 仓库 `apps/v2/agent/paper2code/HANDOFF.md`，判分后回填。
 
-| # | 结论 | 证据 |
-| --- | --- | --- |
-| 1 | **fre 上没有增益** | 两个裁判一致(0.98× / 0.81×);失分位置一致(规划器漏掉 GC-IQL / GC-BC / OPAL 全部基线);"补上基线即可到 1.35×"的反事实被修复轮推翻(基线有分、主方法下滑) |
-| 2 | **Code-Dev 分数的精度不足以支撑论文声称的量级** | 同名裁判换一家 serving,同一份代码 16% 叶级分歧;人工标注上两裁判同等准确(F1 0.685 / 0.719,通过率与偏向完全相同);这个噪声底与论文的效应量同量级,而论文只用一个裁判、未报告此方差 |
-| 3 | **开源版有系统性静默降级** | 检索 / 挖掘 / 判分三侧四种"输出超限或为空 → 当正常继续"的缺陷,均有 A/B 实证(A.3) |
-| 4 | **本项目自身口径有瑕疵** | 15 处未门控改动(相对比较仍公平);修复轮因评分知识泄漏作废(§4.1) |
+## 9. 诚实声明
 
-**两边都站不住的**
+- 09-14 之前的全部对比作废（输入有偏），09-15 修裁判前的全部分数作废；两条都在 RESULTS-HISTORY §0。
+- 样本量：至今每组 1~2 轮，组内摆动远大于组间差距；只能看方向。
+- 裁判：两家 serving 的同名模型判分行为不同（同一提交 16% 叶级分歧），JudgeEval 上二者同等水平；绝对分数与倍数必须连同裁判 serving 一起报告，且不能与论文数字直接相减。
+- 配置：旧补丁曾有 15 处未门控改动；本版全部 env 门控、默认等于上游（`verify_deepcode.sh` 可证）。上游自带的测试验证会在本机跑生成的代码（DeepEvol 线在容器里跑），这是两边一处已知不对称。
+- 底座：论文用 Sonnet 4.5 / o3-mini 裁判；我们用 DeepSeek-V4-Flash（复现）/ V4-Pro（裁判），同底座保证公平但不能直接对照论文数字。
+- 费用：历史全部实验约 ¥1,600；V4-Flash 一轮基线运行约 ¥5~10，一份判分约 ¥38。
 
-- rice 有没有增益:1.05× 或 2.58×,取决于裁判,人工标注裁不了。
-- 论文夸大了:不能这么说,论文的数字可以由一个合法的 setup 产生。
-- "相对效果在某些裁判下确实有这么大":也不能这么说,见下。
+## 10. 许可证
 
-**2.58× 是怎么来的:不是 DeepCode 涨了,是裸跑塌了**
-
-| rice | SiliconFlow | Paratera |
-| --- | --- | --- |
-| 裸跑 | 0.468 | **0.145**(−0.32) |
-| DeepCode | 0.545 / 0.437 | 0.403 / 0.345(−0.14 / −0.09) |
-
-严格裁判专门惩罚"抽象类 + 可配置参数"的写法;裸跑代码恰好是这种风格,DeepCode 按环境铺具体文件所以扛得住。2.58× 衡量的是**"写得具体 vs 写得抽象"在严格裁判眼里的差距**,不是"复现得更忠实";而且严格裁判在人工标注上并没有更准。即使论文的 o3-mini 裁判恰好是严格型、1.95× 是真实测得的,它证明的也只是 DeepCode 的输出风格更合裁判胃口。
-
-**一句话**:论文的倍数在本项目的精度内不可判定,但它声称的精度本身站不住;fre 上的增益在任何裁判下都没出现。
-
-**对"要不要用 DeepCode"的含义**:fre 上它没帮上忙;rice 上它的产物在严格裁判下更耐看,但那是"具体"而非"正确"的证据;它的工程状态有系统性盲区,本项目 30 轮里 7 轮因流水线自身问题作废。这个决策不应建立在"某些裁判下有 2.58×"上。它可验证的长处只有一个:**覆盖面**(环境 / 数据集维度普遍占优),这更适合作为"规划 + 语料"前端接给一个会执行验证的 agent,而不是整条流水线。
-
-### A.3 工程发现(独立于分数,可单独引用)
-
-DeepCode 流水线里同一模式的四处静默降级 —— LLM 输出超限或为空后,下游当正常继续、只留 INFO 日志:
-
-| 位置 | 现象 | 后果 |
-| --- | --- | --- |
-| CodeRAG 预筛(`tools/code_indexer.py`,`max_tokens=2000`) | 大仓库 JSON 截断 | 静默回退全量索引,论文声称的检索从未生效 |
-| 参考挖掘报告(`maxTokens=4096`) | 报告截断,续写只留尾段 | 下载侧只看见 1/5 仓库,整轮语料贫瘠 |
-| 预筛返回合法空列表 | 与"调用失败"共用分支 | 同样回退全量 |
-| 判分侧文件选择返回空 | `<files>` 为空 | 叶子静默得 0,`valid_score` 仍为 True |
-
-另一条与上表同源的观察:**写码阶段从不验证自己的产物**。命令执行器可用且被调用过 50 次,但全部是 `mkdir`/`touch` 建骨架与 `find`/`ls`/`cat` 查看目录;跨 31 个归档、2,443 次工具调用,**没有一次运行生成的代码**(无 python / pytest / import / pip install)。索引模式下工具面只有 `write_file` 与 `search_code_references`(`code_implementation_workflow.py:78`),执行类工具根本不在写码 agent 的可见范围内。
-
-详见 `deepcode_test/docs/FINDING_prefilter_silent_failure.md`、`FINDING_judge_serving_dependence.md`。
-
-### A.4 测试情况全览(可直接用来同步)
-
-**测试设计**:同一篇论文、同一个底座模型,唯一变量是有没有 DeepCode 脚手架。
-裸跑臂 = Claude Code 壳 + 同底座模型;脚手架臂 = DeepCode + 同底座模型。
-评测口径 PaperBench Code-Dev(`code_only=True`,只看代码不执行),裁判 DeepSeek-V4-Pro,
-全部 11 份有效提交在**两家 serving** 上各判一遍(SF = SiliconFlow,PT = Paratera),无效叶全部为 0。
-
-#### 有效提交(11 份)
-
-**fre(306 叶)**
-
-| 提交 | 臂 | 规模 | 耗时 | SF | PT | 失分要点(SF 口径) |
-| --- | --- | --- | --- | --- | --- | --- |
-| anchor | Claude Code + Sonnet 4.5 裸跑 | 15 py / 2,657 行 | ~1h | 0.4839 | 0.5044 | 数据集/环境 0.333 弱;GC-IQL/GC-BC 满分、OPAL 0 |
-| bare_v4 | Claude Code + V4-Pro 裸跑 | 15 py / 3,070 行 | ~5h | 0.4817 | 0.4807 | 主方法 0.815、三基线 0.67/0.80/0.94;数据集/环境 0.417 |
-| trial1 | DeepCode + V4-Pro | 21 py / 6,751 行 | ~4h | 0.5184 | 0.4682 | 数据集/环境 0.833 最高;**三基线全 0(文件不存在)** |
-| trial5 | DeepCode + V4-Pro | 28 py / 8,438 行 | ~5h | 0.4246 | 0.3101 | 写得最多分最低;三基线全 0;主方法 0.685 |
-| **DeepCode / 裸跑** | | | | **0.98×** | **0.81×** | 两裁判一致:无增益 |
-
-**rice(178 叶)**
-
-| 提交 | 臂 | 规模 | 耗时 | SF | PT | 失分要点(SF 口径) |
-| --- | --- | --- | --- | --- | --- | --- |
-| bare_v4 | Claude Code + V4-Pro 裸跑 | 11 py / 4,173 行 | 单次 | 0.4680 | **0.1452** | 环境搭建 0.000(9 个环境一个没写);实验 II(w4)0.750 全场最高 |
-| trial2 | DeepCode + V4-Pro | 22 py / 12,583 行 | 5h21m,¥31 | 0.5447 | 0.4033 | 环境 0.389、解释方法 0.821、实验 III 0.833 |
-| trial3 | DeepCode + V4-Pro | 39 py / 25,630 行 | 6h46m,¥45 | 0.4374 | 0.3446 | 环境 0.575、策略网络 0.875;实验 II 仅 0.396(其中 7 叶是判分侧"空文件"零分) |
-| **DeepCode / 裸跑(V4-Pro)** | | | | **1.05×** | **2.58×** | **结论随裁判翻转** |
-| bare_kimi | Claude Code + Kimi-K2.7 裸跑 | 18 py / 2,463 行 | 22 分钟 | 0.4633 | 0.1865 | 与裸跑 V4-Pro 几乎重合 |
-| trial_k1 | DeepCode + Kimi | 36 py / 12,056 行 | 3h02m | 0.2815 | 0.2403 | 实验逻辑还原不足,方差大 |
-| trial_k2 | DeepCode + Kimi | 32 py / 8,266 行 | 4h15m | 0.4760 | 0.3754 | 有 1 个语法错误文件 |
-| **DeepCode / 裸跑(Kimi)** | | | | **0.82×** | **1.65×** | 同样随裁判翻转 |
-
-论文声称:fre 1.34×(Claude Code 0.6286 vs DeepCode 0.8435);rice 1.95×(Claude Code 0.3787 / Cursor 0.4186 / Codex 0.3645 vs DeepCode 0.7380)。
-
-#### 作废轮(不入统计,但都有记录)
-
-约 30 轮复现里 **7 轮因流水线自身问题作废**,这部分对判断"开源版工程成色"比分数更有价值:
-
-| 轮 | 原因 | 沉没 |
-| --- | --- | --- |
-| fre trial2 | 撞 4h 写码墙钟 | ¥2.90 |
-| fre trial3 | 写码被 900s stall 熔断,残缺(判了 0.4378,只作参考) | 已判 |
-| fre trial4 | 语料仅 1 仓库(下载侧问题) | — |
-| fre trial6 | 白天 API 限流,写到 9/24 三次重试打完,`status=incomplete` | ¥19.08 |
-| rice trial1 ×5 | ①克隆 TLS 断流 ②换网络节点 ③预筛静默回退全量索引(需 140h) ④假计划 ⑤stall 熔断 | ≈¥115 |
-| **fre trial_fx1 / fx2** | 完整跑完(PT 0.3618 / 0.4873),**因提示词含评分元知识整体作废** | ¥43 |
-| 判分批 ×2 | 余额耗尽(161~168/178 叶无效);裸模型名未登记上下文表(6 份 64 秒全失败) | ≈¥76 |
-
-#### 裁判校准(JudgeEval,rice/0 作者官方仓库,178 叶)
-
-| 裁判 serving | 准确率 / macro F1 | 通过率 | 偏向 | 花费 |
-| --- | --- | --- | --- | --- |
-| SiliconFlow(08-26) | 0.685 | 0.4494 | 严 9.0 pp | ¥27.7 |
-| Paratera(09-03) | 0.719 | 0.4494 | 严 9.0 pp | ¥28 |
-
-同一提交上两裁判一致 150/178(**84.3%**);28 处分歧里:都对 111、只 SF 对 11、只 PT 对 17、都错 39。
-官方对照(5 卷宏平均 Code-Dev):o1-high 0.740 / o3-mini 0.720 / gpt-4o 0.681 / gpt-4o-mini 0.588 ——
-**两个 serving 都在 gpt-4o 档,谁也不比谁准,所以无法仲裁 rice 的翻转。**
-
-#### 时间线与成本
-
-| 阶段 | 时间 | 做了什么 |
-| --- | --- | --- |
-| 装环境 | 08-25 ~ 08-26 | 两套系统跑通,13 个坑 |
-| 试点 | 08-26 | 阶段 A(白卷 0.000)→ B(43.3)→ B′(60.5,8 轮拼装+人工裁剪语料)→ JudgeEval;**B′ 在正式协议下不再现** |
-| 正式协议定案 | 08-26 晚 | 同底座双切、裁判恒定、闸门、作废规则 |
-| fre 线 | 08-26 ~ 08-29 | 6 轮 trial + 2 条裸跑 |
-| rice 线 | 08-29 ~ 08-31 | trial1 五次作废后 trial2/trial3 成功 |
-| Kimi 对照线 | 09-01 ~ 09-02 | 裸跑 + 两轮 DeepCode |
-| 修复验证线 | 09-02 晚 ~ 09-03 早 | 四个修复,两轮完整跑完后作废 |
-| 双裁判重判 | 09-03 上午 | 11 份全部换 serving 重判,rice 结论翻转 |
-| 公开 | 09-03 | 本仓库 |
-
-**总花费 ≈ ¥1,600**(约 30 轮复现 + 25 份判分 + 2 次 JudgeEval,含全部废轮)。
-单价:一轮复现 ≈¥20 / 3~6h;一份判分 ≈¥38 / 40~100min。
-
-逐份维度级失分、修复轮的维度证据、判分侧诊断数据见 `deepcode_test/docs/RESULTS_MASTER.md`;
-过程与决策见 `PROJECT_CHRONICLE.md`;踩坑总表见 `PITFALLS.md`。
+DeepCode（HKUDS，MIT）与 frontier-evals / PaperBench（OpenAI，MIT）各自的 LICENSE 随源码保留（`DeepCode/LICENSE`、`paperbench_changes/LICENSE.md`）。
+本仓库新增的脚本、补丁与文档同样以 MIT 发布。论文原文不随仓库分发，由 `setup.sh` 从上游 LFS 直链拉取。

@@ -23,6 +23,7 @@ Every helper is a private ``_xxx`` so the contract stays small.
 
 from __future__ import annotations
 
+import logging
 import os
 import shutil
 import uuid
@@ -58,6 +59,53 @@ _LOW_DISK_THRESHOLD_BYTES = 500 * 1024 * 1024
 # ---------------------------------------------------------------------------
 
 
+class _BraceLoggerAdapter:
+    """Let ``{}``-style (loguru) log calls work on a stdlib ``logging.Logger``.
+
+    The Desktop/Web workflow adapter injects ``logging.getLogger(...)``; every
+    call in this module is written for loguru, and stdlib would try
+    ``msg % args`` and raise ``TypeError: not all arguments converted``. The
+    stdlib handler swallows that in a bare CLI run, but the App Server bridges
+    stdlib records into loguru and the error surfaces as a failed pipeline.
+    """
+
+    def __init__(self, inner: Any) -> None:
+        self._inner = inner
+
+    def _emit(self, level: str, msg: Any, *args: Any, **kwargs: Any) -> None:
+        text = str(msg)
+        if args or kwargs:
+            try:
+                text = text.format(*args, **kwargs)
+            except (IndexError, KeyError, ValueError):
+                text = f"{text} {args if args else ''}{kwargs if kwargs else ''}"
+        getattr(self._inner, level)(text)
+
+    def debug(self, msg: Any, *args: Any, **kwargs: Any) -> None:
+        self._emit("debug", msg, *args, **kwargs)
+
+    def info(self, msg: Any, *args: Any, **kwargs: Any) -> None:
+        self._emit("info", msg, *args, **kwargs)
+
+    def warning(self, msg: Any, *args: Any, **kwargs: Any) -> None:
+        self._emit("warning", msg, *args, **kwargs)
+
+    def error(self, msg: Any, *args: Any, **kwargs: Any) -> None:
+        self._emit("error", msg, *args, **kwargs)
+
+    def exception(self, msg: Any, *args: Any, **kwargs: Any) -> None:
+        self._emit("exception", msg, *args, **kwargs)
+
+
+def _brace_logger(logger: Any) -> Any:
+    """Return a logger that accepts loguru-style ``{}`` placeholders."""
+    if logger is None:
+        return default_logger
+    if isinstance(logger, logging.Logger):
+        return _BraceLoggerAdapter(logger)
+    return logger
+
+
 async def prepare_workflow_environment(
     raw_input: str,
     *,
@@ -82,7 +130,7 @@ async def prepare_workflow_environment(
     are **not** auto-resumed; users who want to continue an old run need
     to re-submit the input.
     """
-    log = logger or default_logger
+    log = _brace_logger(logger)
     _maybe_progress(progress_cb, 1, "🔧 Resolving workspace and validating input...")
 
     yaml_root, max_input_mb = _load_workspace_config()

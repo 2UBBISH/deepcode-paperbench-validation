@@ -19,6 +19,7 @@ Design:
 from __future__ import annotations
 
 import asyncio
+from collections.abc import Awaitable, Callable
 from contextvars import ContextVar
 from functools import partial
 from pathlib import Path
@@ -399,9 +400,11 @@ class AgentSession:
         tool_filter: Any | None = None,
         closure_callback: Any | None = None,
         mcp_runtime: McpSessionRuntime | None = None,
+        provider_cleanup: Callable[[], Awaitable[None]] | None = None,
     ) -> None:
         self._runner = AgentRunner(provider)
         self._provider = provider
+        self._provider_cleanup = provider_cleanup
         self._tools = tools
         self._model = model
         self._system_prompt = system_prompt
@@ -459,6 +462,9 @@ class AgentSession:
         # this to ask the model for one final complete/blocked/continue decision;
         # ordinary Turns leave it unset.
         self._closure_callback = closure_callback
+        # P1-5: compaction summaries → memory vault (compacted sessions stay
+        # retrievable). Built once here so auto and manual compaction share it.
+        self._compaction_summary_sink = self._make_compaction_summary_sink()
         self._mcp_runtime = mcp_runtime
         # Secret-free immutable selection used by persistence/frontends.
         self.execution_profile = execution_profile
@@ -490,6 +496,40 @@ class AgentSession:
                 submission_id=self._submission_id.get(),
             )
         )
+
+    def _make_compaction_summary_sink(self):
+        """P1-5: build the compaction → memory deposit callable (never raises).
+
+        The sink runs the memory write on a daemon thread (non-blocking) so
+        compaction never stalls the turn. Without a workspace there is no
+        memory directory to write to, so the sink is a no-op.
+        """
+
+        def _deposit(summary: str, anchor: dict[str, Any] | None = None) -> None:
+            import threading
+
+            if self._workspace is None:
+                return
+
+            def _work() -> None:
+                try:
+                    from core.harness.memory import write_compaction_summary
+
+                    write_compaction_summary(self._workspace, summary, anchor)
+                except Exception:  # noqa: BLE001 - memory work never breaks turns
+                    logger.debug("compaction summary deposit failed", exc_info=True)
+
+            try:
+                thread = threading.Thread(
+                    target=_work,
+                    name="compaction-memory",
+                    daemon=True,
+                )
+                thread.start()
+            except Exception:  # noqa: BLE001, S110
+                pass
+
+        return _deposit
 
     async def next_event(self) -> Event:
         return await self._events.get()
@@ -599,6 +639,7 @@ class AgentSession:
             max_tool_result_chars=_DEFAULT_MAX_TOOL_RESULT_CHARS,
             context_window_tokens=self._context_window_tokens,
             token_meter=self._token_meter,
+            compaction_summary_sink=self._compaction_summary_sink,
         )
         before = list(self._history)
         compacted, reason = await self._runner.compact_history(spec, before)
@@ -654,6 +695,9 @@ class AgentSession:
         if self._mcp_runtime is not None:
             await self._mcp_runtime.aclose()
         await self._tools.aclose()
+        if self._provider_cleanup is not None:
+            await self._provider_cleanup()
+            self._provider_cleanup = None
 
     async def _cancel_turn_subagents(self) -> None:
         """Stop delegated work without letting repeated Stop interrupt teardown."""
@@ -994,6 +1038,7 @@ class AgentSession:
                 if self._skill_runtime is not None or self._tool_filter is not None
                 else None
             ),
+            compaction_summary_sink=self._compaction_summary_sink,
         )
 
         try:

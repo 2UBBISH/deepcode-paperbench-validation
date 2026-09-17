@@ -14,7 +14,7 @@ set -uo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PAPER="${PAPER:-rice}"
 FROM="${FROM:-1}"; TO="${TO:-3}"
-OUT="$HERE/../$PAPER"
+OUT="$R/runs/$PAPER"
 LEDGER="$OUT/logs/${PAPER}_ledger.txt"
 mkdir -p "$OUT/logs"
 log(){ echo "[$(date +%m-%d\ %H:%M:%S)] $*" | tee -a "$LEDGER"; }

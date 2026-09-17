@@ -28,9 +28,8 @@ else
     "$REPO/DeepCode/workflows"
     "$REPO/DeepCode/prompts"
     "$REPO/DeepCode/tools"
-    "$REPO/deepcode_test/docs/CC_FRE_PROMPT.txt"
-    "$REPO/deepcode_test/rice/workspaces/cc_dsv4_run/PROMPT.txt"
-    "$REPO/deepcode_test/rice/workspaces/cc_kimi_run/PROMPT.txt"
+    "$REPO/deepcode_test/bare"
+    "$REPO/patches/deepcode_local_changes.patch"
   )
 fi
 
@@ -48,7 +47,7 @@ for t in "${TARGETS[@]}"; do
   # 排除本脚本自身与说明文档(它们理应提到这些词)
   hits=$(grep -rInE "$PATTERNS" "$t" \
           --include='*.py' --include='*.sh' --include='*.txt' --include='*.yaml' --include='*.yml' --include='*.json' \
-          --exclude='check_no_rubric_leak.sh' --exclude='OPTIMIZER_NOTICE.md' \
+          --exclude='check_no_rubric_leak.sh' --include='*.patch' --include='*.md' \
           --exclude-dir='__pycache__' --exclude-dir='.git' 2>/dev/null)
   if [ -n "$hits" ]; then
     echo "  ❌ ${t#$REPO/}"

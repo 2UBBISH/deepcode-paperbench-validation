@@ -118,9 +118,24 @@ def build_planning_checkpoint_callback(
 
 
 def extract_yaml_candidate(text: str) -> str:
-    """Return the most likely YAML block from a planner response."""
+    """Return the most likely YAML block from a planner response.
+
+    Only an *unindented* fence delimits the plan. Planners routinely nest
+    bash or python code fences inside block scalars such as
+    ``environment_setup: |``; those fences are indented, and a non-greedy
+    fence-to-fence match used to stop at the first of them, dropping every
+    later section and failing validation on an otherwise complete plan.
+    """
     if not text:
         return ""
+    opening = re.search(
+        r"^```(?:yaml|yml)?[ \t]*\r?\n", text, re.IGNORECASE | re.MULTILINE
+    )
+    if opening:
+        body_start = opening.end()
+        closing = re.search(r"^```[ \t]*$", text[body_start:], re.MULTILINE)
+        body = text[body_start : body_start + closing.start()] if closing else text[body_start:]
+        return body.strip()
     fenced = re.search(r"```(?:yaml|yml)?\s*(.*?)```", text, re.IGNORECASE | re.DOTALL)
     if fenced:
         return fenced.group(1).strip()

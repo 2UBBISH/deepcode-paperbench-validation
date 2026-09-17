@@ -36,13 +36,24 @@ from pathlib import Path
 from typing import Any, Literal
 
 from loguru import logger
-from pydantic import AliasChoices, BaseModel, ConfigDict, Field
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field, model_validator
 from pydantic.alias_generators import to_camel
 from pydantic_settings import BaseSettings
 
 from core.agent_runtime.tools.mcp import MCPServerConfig
 from core.mcp.models import McpServerDefinition
 from core.providers.base import GenerationSettings, LLMProvider
+from core.providers.egress import (
+    WARN,
+    describe_denial,
+    evaluate_provider_egress,
+    resolve_egress_policy,
+)
+from core.providers.protocol_config import (
+    ProviderCompat,
+    ProviderProtocol,
+    protocol_adapter,
+)
 from core.providers.registry import (
     PROVIDERS,
     ProviderSpec,
@@ -67,6 +78,7 @@ class _Base(BaseModel):
         alias_generator=to_camel,
         populate_by_name=True,
         extra="ignore",
+        hide_input_in_errors=True,
     )
 
 
@@ -145,6 +157,18 @@ class ProviderConfig(_Base):
     api_key: str | None = None
     api_base: str | None = None
     extra_headers: dict[str, str] | None = None
+    protocol: ProviderProtocol = "auto"
+    compat: ProviderCompat = Field(default_factory=ProviderCompat)
+    auth: Literal["api_key", "none"] = "api_key"
+
+    @model_validator(mode="after")
+    def validate_wire(self):
+        self.compat.validate_protocol(self.protocol)
+        if self.auth == "none" and self.protocol == "anthropic_messages":
+            raise ValueError(
+                "Unauthenticated endpoints currently require an OpenAI protocol"
+            )
+        return self
 
 
 class ManualModelConfig(_Base):
@@ -167,6 +191,19 @@ class ManualModelConfig(_Base):
     context_window: int | None = None
     max_output_tokens: int | None = None
     reasoning_efforts: list[str] | Literal[False] | None = None
+    input_modalities: list[Literal["text", "image"]] | None = Field(
+        default=None, min_length=1, max_length=2
+    )
+    tool_calling: bool | None = None
+    compat: ProviderCompat = Field(default_factory=ProviderCompat)
+
+    @model_validator(mode="after")
+    def validate_modalities(self):
+        if self.input_modalities is not None and len(set(self.input_modalities)) != len(
+            self.input_modalities
+        ):
+            raise ValueError("Input modalities must be unique")
+        return self
 
 
 class ConnectionProfileConfig(_Base):
@@ -179,6 +216,9 @@ class ConnectionProfileConfig(_Base):
     label: str = ""
     template: str = "custom"
     adapter: Literal["openai_compat", "anthropic"] | None = None
+    protocol: ProviderProtocol = "auto"
+    auth: Literal["api_key", "none", "oauth"] = "api_key"
+    compat: ProviderCompat = Field(default_factory=ProviderCompat)
     api_base: str | None = None
     api_key_env: str | None = None
     extra_headers: dict[str, str] = Field(default_factory=dict)
@@ -187,6 +227,84 @@ class ConnectionProfileConfig(_Base):
     )
     manual_models: list[str | ManualModelConfig] = Field(default_factory=list)
     enabled: bool = True
+
+    @model_validator(mode="after")
+    def validate_wire(self):
+        spec = find_by_name(self.template)
+        legacy = self.adapter or (spec.backend if spec else "openai_compat")
+        effective = protocol_adapter(self.protocol, legacy)
+        if (
+            self.protocol != "auto"
+            and self.adapter is not None
+            and self.adapter != effective
+        ):
+            raise ValueError(
+                "Explicit protocol and legacy adapter disagree; clear the adapter or select the matching protocol"
+            )
+        if self.auth == "none" and effective == "anthropic":
+            raise ValueError(
+                "Unauthenticated endpoints currently require an OpenAI protocol"
+            )
+        if self.auth == "oauth" and (
+            self.template != "openrouter"
+            or self.protocol not in {"auto", "openai_chat"}
+            or effective != "openai_compat"
+            or self.api_base
+            not in {
+                None,
+                "https://openrouter.ai/api/v1",
+                "https://openrouter.ai/api/v1/",
+            }
+            or self.api_key_env
+            or any(
+                key.lower() in {"authorization", "x-api-key"}
+                for key in self.extra_headers
+            )
+        ):
+            raise ValueError(
+                "OAuth currently requires the official OpenRouter Chat endpoint without credential overrides"
+            )
+        self.compat.validate_protocol(self.protocol)
+        for model in self.manual_models:
+            if isinstance(model, ManualModelConfig):
+                model.compat.validate_protocol(self.protocol)
+        return self
+
+
+class EgressPolicyConfig(_Base):
+    """Optional model-egress policy for LLM provider endpoints (P0-1).
+
+    Why: ``apiBase`` *is* the trust boundary. Whoever terminates TLS for an
+    endpoint reads every prompt and tool result in plaintext and can rewrite
+    the tool calls in the response, so the same hostname policy that already
+    guards WebFetch is applied to model traffic.
+
+    Accepted keys (camelCase; snake_case also accepted):
+
+    - ``allowedDomains``: list of domains. Empty means "no allow-list
+      configured" — every host is allowed unless blocked. That is the existing
+      meaning of an empty allow-list in ``core/network/hostnames.py`` and is
+      preserved so an unconfigured install keeps working after upgrade.
+    - ``blockedDomains``: list of domains. Deny wins over allow; matching is
+      exact-or-subdomain.
+    - ``mode``: ``enforce`` (default) or ``warn``. ``warn`` evaluates and logs
+      but never blocks, so the policy can be rolled out against a live setup.
+
+    Environment overrides, taken as a union with the config lists (block still
+    wins, and an env list cannot un-block what the config blocks):
+
+    - ``DEEPCODE_EGRESS_ALLOW_DOMAINS`` — comma-separated.
+    - ``DEEPCODE_EGRESS_BLOCK_DOMAINS`` — comma-separated.
+    - ``DEEPCODE_EGRESS_MODE`` — ``enforce`` (default) or ``warn``.
+
+    A project-level ``deepcode_config.json`` cannot loosen this: the project
+    layer (``_project_runtime_layer``) drops every provider routing field
+    except a literal ``apiKey``, so ``providers.egress`` stays user-owned.
+    """
+
+    allowed_domains: list[str] = Field(default_factory=list)
+    blocked_domains: list[str] = Field(default_factory=list)
+    mode: Literal["enforce", "warn"] | None = None
 
 
 class ProvidersConfig(_Base):
@@ -198,6 +316,7 @@ class ProvidersConfig(_Base):
     openrouter: ProviderConfig = Field(default_factory=ProviderConfig)
     forge: ProviderConfig = Field(default_factory=ProviderConfig)
     requesty: ProviderConfig = Field(default_factory=ProviderConfig)
+    bedrock: ProviderConfig = Field(default_factory=ProviderConfig)
     anthropic: ProviderConfig = Field(default_factory=ProviderConfig)
     openai: ProviderConfig = Field(default_factory=ProviderConfig)
     deepseek: ProviderConfig = Field(default_factory=ProviderConfig)
@@ -208,6 +327,9 @@ class ProvidersConfig(_Base):
     vllm: ProviderConfig = Field(default_factory=ProviderConfig)
     ollama: ProviderConfig = Field(default_factory=ProviderConfig)
     profiles: dict[str, ConnectionProfileConfig] = Field(default_factory=dict)
+    # Not a provider block: resolves by name from the registry, never
+    # `getattr(providers, spec.name)`, so it cannot shadow a provider entry.
+    egress: EgressPolicyConfig = Field(default_factory=EgressPolicyConfig)
 
 
 # ---------------------------------------------------------------------------
@@ -856,6 +978,56 @@ def _resolve_spec_for_phase(
     return matched_cfg, spec, chosen_model, settings
 
 
+def _enforce_provider_egress(
+    config: DeepCodeConfig,
+    spec: ProviderSpec,
+    api_base: str | None,
+    *,
+    phase: str,
+) -> None:
+    """Apply the model-egress policy to one resolved provider endpoint (P0-1).
+
+    Called exactly once per provider construction, so it must stay cheap: the
+    decision is a string comparison, not a request-time cost. Policy lives in
+    ``providers.egress`` and the ``DEEPCODE_EGRESS_*`` env vars; see
+    :class:`EgressPolicyConfig`.
+
+    ``enforce`` raises :class:`ConfigError` (the convention of this module for
+    user-fixable configuration problems, and still a ``ValueError`` for legacy
+    handlers). ``warn`` logs the same message and continues, which is what lets
+    an operator measure a live setup before turning the gate on.
+    """
+
+    policy = resolve_egress_policy(config)
+    endpoint_class = spec.resolve_endpoint_class(api_base)
+    decision = evaluate_provider_egress(
+        api_base,
+        endpoint_class=endpoint_class,
+        allowed_domains=policy.allowed_domains,
+        blocked_domains=policy.blocked_domains,
+    )
+    if decision.allowed:
+        logger.trace(
+            "Model egress ok: provider={} host={} endpoint_class={}",
+            spec.name,
+            decision.host,
+            decision.endpoint_class,
+        )
+        return
+
+    message = describe_denial(
+        provider=spec.name,
+        phase=phase,
+        decision=decision,
+        policy=policy,
+        api_base=api_base,
+    )
+    if policy.mode == WARN:
+        logger.warning(message)
+        return
+    raise ConfigError(message)
+
+
 def make_llm_provider(
     config: DeepCodeConfig,
     *,
@@ -869,6 +1041,10 @@ def make_llm_provider(
     :class:`~core.providers.registry.ProviderSpec` decides which backend
     (``openai_compat``, ``anthropic``, ...) is instantiated. ``GenerationSettings``
     are derived from the resolved phase settings.
+
+    The resolved endpoint passes the model-egress policy once, here — this
+    function is the single construction point for LLM providers, so gating it
+    covers every backend without teaching each SDK client about policy.
     """
     provider_cfg, spec, chosen_model, settings = _resolve_spec_for_phase(
         config, phase, provider_override=provider_name, model_override=model
@@ -879,12 +1055,18 @@ def make_llm_provider(
             "Set agents.defaults.provider or fill in the matching providers.<name>.apiKey."
         )
 
-    backend = spec.backend
+    protocol = provider_cfg.protocol if provider_cfg else "auto"
+    backend = protocol_adapter(protocol, spec.backend)
     api_key = provider_cfg.api_key if provider_cfg else None
     api_base = provider_cfg.api_base if provider_cfg else None
     extra_headers = provider_cfg.extra_headers if provider_cfg else None
 
-    needs_key = not (spec.is_oauth or spec.is_local or spec.is_direct)
+    auth_mode = provider_cfg.auth if provider_cfg else "api_key"
+    if auth_mode == "none" and backend == "anthropic":
+        raise ConfigError("Anthropic Messages requires an API key")
+    needs_key = auth_mode != "none" and not (
+        spec.is_oauth or spec.is_local or spec.is_direct
+    )
     if needs_key and not api_key:
         raise ConfigError(
             f"Provider '{spec.name}' (phase '{phase}') requires providers.{spec.name}.apiKey "
@@ -892,6 +1074,9 @@ def make_llm_provider(
         )
 
     effective_base = api_base or spec.default_api_base or None
+    # P0-1: one egress decision per provider construction. Placed after
+    # `effective_base` so the spec's own default endpoint is judged too.
+    _enforce_provider_egress(config, spec, effective_base, phase=phase)
 
     if backend == "anthropic":
         from core.providers.anthropic import AnthropicProvider
@@ -901,6 +1086,7 @@ def make_llm_provider(
             api_base=effective_base,
             default_model=chosen_model,
             extra_headers=extra_headers,
+            compat=provider_cfg.compat if provider_cfg else None,
         )
     elif backend == "openai_compat":
         from core.providers.openai_compat import OpenAICompatProvider
@@ -911,6 +1097,9 @@ def make_llm_provider(
             default_model=chosen_model,
             extra_headers=extra_headers,
             spec=spec,
+            protocol=protocol,
+            compat=provider_cfg.compat if provider_cfg else None,
+            auth_mode=auth_mode,
         )
     else:
         raise ValueError(
@@ -935,6 +1124,7 @@ __all__ = [
     "ManualModelConfig",
     "DeepCodeConfig",
     "DocumentSegmentationConfig",
+    "EgressPolicyConfig",
     "LLMLoggerConfig",
     "LoggerConfig",
     "LoggerGlobalFile",

@@ -1,5 +1,6 @@
 import { useEffect, useMemo } from "react";
 import { X } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 import type {
   Artifact,
@@ -8,7 +9,7 @@ import type {
   Turn,
   WorkflowRun,
 } from "../../generated/app-server";
-import type { DesktopRuntime } from "../../rpc/contracts";
+import type { ClientRuntime } from "../../rpc/contracts";
 import type { DesktopInspectorTab } from "../../app/useDesktopUi";
 import { TerminalPanel } from "../workbench/TerminalPanel";
 import { useCodeWorkbench } from "../workbench/useCodeWorkbench";
@@ -20,7 +21,7 @@ import { TestsPanel } from "./TestsPanel";
 import styles from "./Inspector.module.css";
 
 interface InspectorProps {
-  runtime: DesktopRuntime;
+  runtime: ClientRuntime;
   thread: Thread | null;
   trusted: boolean;
   turns: Turn[];
@@ -59,6 +60,7 @@ export function Inspector({
   onDirtyChange,
   onClose,
 }: InspectorProps) {
+  const { t } = useTranslation();
   const workbench = useCodeWorkbench(runtime, thread);
   const selected = items.find((item) => item.id === selectedItemId) ?? null;
   const dirty = Boolean(
@@ -110,9 +112,18 @@ export function Inspector({
     return null;
   };
 
+  const TAB_LABELS: Record<string, string> = {
+    changes: t("inspector.tab.changes", "changes"),
+    files: t("inspector.tab.files", "files"),
+    artifacts: t("inspector.tab.artifacts", "artifacts"),
+    tests: t("inspector.tab.tests", "tests"),
+    terminal: t("inspector.tab.terminal", "terminal"),
+    details: t("inspector.tab.details", "details"),
+  };
+
   return (
-    <aside className={styles.inspector} aria-label="Inspector">
-      <div className={styles.tabs} role="tablist" aria-label="Inspector views">
+    <aside className={styles.inspector} aria-label={t("inspector.label", "Inspector")}>
+      <div className={styles.tabs} role="tablist" aria-label={t("inspector.views", "Inspector views")}>
         {tabs.map((candidate) => (
           <button
             key={candidate}
@@ -121,7 +132,7 @@ export function Inspector({
             aria-selected={tab === candidate}
             onClick={() => onTabChange(candidate)}
           >
-            {candidate}
+            {TAB_LABELS[candidate] ?? candidate}
             {badge(candidate) ? ` ${badge(candidate)}` : ""}
           </button>
         ))}
@@ -130,7 +141,7 @@ export function Inspector({
         className={styles.close}
         type="button"
         onClick={onClose}
-        aria-label="Close review panel"
+        aria-label={t("inspector.closeReview", "Close review panel")}
       >
         <X size={16} />
       </button>
@@ -148,6 +159,7 @@ export function Inspector({
         ) : null}
         {tab === "files" ? (
           <FilesPanel
+            onDownload={runtime.downloadFile && thread ? (path) => runtime.downloadFile!(thread.id, path) : undefined}
             trusted={trusted}
             hasActiveTurn={hasActiveTurn}
             workbench={workbench}

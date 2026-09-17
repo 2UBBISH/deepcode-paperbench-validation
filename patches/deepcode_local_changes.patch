@@ -228,7 +228,7 @@ index 1121556..79be2bb 100644
          checkpoint_callback: Any | None = None,
          llm_timeout_s: float | None = None,
 diff --git a/core/providers/base.py b/core/providers/base.py
-index 79f2b6f..a8ecbd5 100644
+index 2d1f35b..507048a 100644
 --- a/core/providers/base.py
 +++ b/core/providers/base.py
 @@ -2,6 +2,7 @@
@@ -239,7 +239,7 @@ index 79f2b6f..a8ecbd5 100644
  import re
  from abc import ABC, abstractmethod
  from collections.abc import Awaitable, Callable
-@@ -144,9 +145,17 @@ _SYNTHETIC_USER_CONTENT = "(conversation continued)"
+@@ -152,9 +153,17 @@ _SYNTHETIC_USER_CONTENT = "(conversation continued)"
  class LLMProvider(ABC):
      """Base class for LLM providers."""
  
@@ -260,8 +260,92 @@ index 79f2b6f..a8ecbd5 100644
      _RETRY_HEARTBEAT_CHUNK = 30
      _TRANSIENT_ERROR_MARKERS = (
          "429",
+diff --git a/core/providers/protocol_config.py b/core/providers/protocol_config.py
+index a66df60..027da22 100644
+--- a/core/providers/protocol_config.py
++++ b/core/providers/protocol_config.py
+@@ -26,6 +26,11 @@ class ProviderCompat(BaseModel):
+     system_role: Literal["system", "developer", "user"] | None = None
+     reasoning_field: Literal["reasoning_effort", "reasoning", "omit"] | None = None
+     reasoning_content: Literal["preserve", "empty", "omit"] | None = None
++    # DeepSeek / GLM style body toggle ``thinking: {"type": ...}``. Independent
++    # of ``reasoning_field``: a gateway may accept ``reasoning_effort: high``
++    # yet only switch thinking off through this body (LiteLLM rejects
++    # ``reasoning_effort: "none"``).
++    thinking: Literal["enabled", "disabled"] | None = None
+     tool_message_name: bool | None = None
+     parallel_tool_calls: bool | None = None
+ 
+@@ -96,6 +101,10 @@ def apply_chat_compat(
+             body["extra_body"] = extra
+         else:
+             body.pop("extra_body", None)
++    if compat.thinking is not None:
++        extra = dict(body.get("extra_body", {}))
++        extra["thinking"] = {"type": compat.thinking}
++        body["extra_body"] = extra
+     if compat.reasoning_content is not None:
+         for message in messages:
+             if message.get("role") == "assistant":
+diff --git a/core/verification.py b/core/verification.py
+index f85175a..c668eac 100644
+--- a/core/verification.py
++++ b/core/verification.py
+@@ -39,6 +39,52 @@ class VerificationResult:
+         return self.exit_code == 0 and not self.timed_out
+ 
+ 
++_PROJECT_MARKERS = (
++    "pytest.ini",
++    "pyproject.toml",
++    "setup.cfg",
++    "setup.py",
++    "tests",
++    "package.json",
++    "Cargo.toml",
++)
++
++
++def resolve_project_root(root: Path) -> Path:
++    """Descend into a single top-level project folder when ``root`` is a wrapper.
++
++    Planners routinely emit one project directory (``my_project/``) under the
++    generation root and put ``tests/`` inside it. Discovery on the wrapper
++    then finds nothing and the run is reported ``unverified`` although a full
++    test suite exists one level down. Only an unambiguous layout is
++    followed: no markers at ``root`` and exactly one candidate subdirectory
++    that carries a marker or a ``test_*.py`` file.
++    """
++    root = Path(root)
++    if any((root / name).exists() for name in _PROJECT_MARKERS):
++        return root
++    if any(root.glob("test_*.py")) or any(root.glob("*_test.py")):
++        return root
++    try:
++        children = [
++            child
++            for child in root.iterdir()
++            if child.is_dir()
++            and not child.name.startswith(".")
++            and child.name not in {"__pycache__", "node_modules", "venv", ".venv"}
++        ]
++    except OSError:
++        return root
++    if len(children) != 1:
++        return root
++    child = children[0]
++    if any((child / name).exists() for name in _PROJECT_MARKERS):
++        return child
++    if any(child.glob("test_*.py")) or any(child.glob("*_test.py")):
++        return child
++    return root
++
++
+ def discover_verification_commands(root: Path) -> tuple[VerificationCommand, ...]:
+     commands: list[VerificationCommand] = []
+     python_tests = _discover_python_tests(root)
 diff --git a/tools/code_indexer.py b/tools/code_indexer.py
-index 9c02e36..a9b6710 100644
+index 9c02e36..a0f816c 100644
 --- a/tools/code_indexer.py
 +++ b/tools/code_indexer.py
 @@ -563,7 +563,14 @@ class CodeIndexer:
@@ -280,37 +364,33 @@ index 9c02e36..a9b6710 100644
              )
  
              # Parse JSON response
-diff --git a/utils/loop_detector.py b/utils/loop_detector.py
-index 19bfea3..d3166b3 100644
---- a/utils/loop_detector.py
-+++ b/utils/loop_detector.py
-@@ -89,11 +89,19 @@ class LoopDetector:
-         if len(self.tool_history) >= self.max_repeats:
-             recent_tools = self.tool_history[-self.max_repeats :]
-             if len(set(recent_tools)) == 1:  # All same tool
--                return {
--                    "status": "loop_detected",
--                    "message": f"⚠️ Loop detected: {recent_tools[0]} called {self.max_repeats} times consecutively",
--                    "should_stop": True,
--                }
-+                # [local compat] Consecutive write_file calls are the NORMAL
-+                # working mode in the indexed (2-tool) surface: the agent
-+                # writes planned files one after another with different
-+                # arguments. This name-only check cannot tell real loops
-+                # from healthy progress for write-class tools, so exempt
-+                # them; runaway behaviour is still covered by the progress
-+                # stall, per-file timeout, error-count, and iteration caps.
-+                if recent_tools[0] not in ("write_file", "write_multiple_files"):
-+                    return {
-+                        "status": "loop_detected",
-+                        "message": f"⚠️ Loop detected: {recent_tools[0]} called {self.max_repeats} times consecutively",
-+                        "should_stop": True,
-+                    }
+@@ -720,7 +727,11 @@ class CodeIndexer:
+             """
  
-         # Check file timeout
-         if (
+             # Get LLM analysis with configured parameters
+-            llm_response = await self._call_llm(analysis_prompt, max_tokens=1000)
++            # [local compat] env-overridable; upstream default 1000 truncates reasoning
++            # models (snse 2026-09-14: 20/51 analyses lost). run_trial.sh injects 16000.
++            llm_response = await self._call_llm(
++                analysis_prompt, max_tokens=int(os.environ.get("DEEPCODE_ANALYSIS_MAX_TOKENS", "1000"))
++            )
+ 
+             try:
+                 # Try to parse JSON response
+@@ -812,7 +823,10 @@ class CodeIndexer:
+         """
+ 
+         try:
+-            llm_response = await self._call_llm(relationship_prompt, max_tokens=1500)
++            # [local compat] env-overridable; upstream default 1500 (snse: 91 length cuts).
++            llm_response = await self._call_llm(
++                relationship_prompt, max_tokens=int(os.environ.get("DEEPCODE_RELATIONSHIP_MAX_TOKENS", "1500"))
++            )
+ 
+             match = re.search(r"\{.*\}", llm_response, re.DOTALL)
+             relationship_data = json.loads(match.group(0))
 diff --git a/workflows/agent_orchestration_engine.py b/workflows/agent_orchestration_engine.py
-index ed7dc7d..00c66e3 100644
+index ed7dc7d..339cd51 100644
 --- a/workflows/agent_orchestration_engine.py
 +++ b/workflows/agent_orchestration_engine.py
 @@ -778,6 +778,61 @@ async def run_code_analyzer(
@@ -443,9 +523,9 @@ index ed7dc7d..00c66e3 100644
 +            # [fix-④b] 下载 agent 输出上限 env 化(默认保持 4096)
 +            maxTokens=int(os.environ.get("DEEPCODE_DOWNLOAD_MAX_TOKENS", "4096")),
              temperature=0.1,
-+            # [local compat] see reference_params: default 8 iterations is
-+            # too few to clone several candidate repositories via tools.
-+            max_iterations=40,
++            # [local compat] iteration budget env-overridable (upstream default 8 is
++            # too few to clone several repositories); run_trial.sh injects 12.
++            max_iterations=int(os.environ.get("DEEPCODE_DOWNLOAD_MAX_ITERATIONS", "8")),
 +            # [local compat][E1-D3] narrow the surface to the clone tool only.
 +            # 17 unfiltered tools + a loose contract is exactly the
 +            # configuration that yielded zero tool calls in E1, while the
@@ -491,7 +571,7 @@ index ed7dc7d..00c66e3 100644
  
  async def paper_reference_analyzer(paper_dir: str, logger) -> str:
      """
-@@ -986,8 +1113,20 @@ Goal: Find the most valuable GitHub repositories from the paper's reference list
+@@ -986,8 +1113,15 @@ Goal: Find the most valuable GitHub repositories from the paper's reference list
  
          # Filter tools to only essential ones for reference analysis
          reference_params = RequestParams(
@@ -501,19 +581,14 @@ index ed7dc7d..00c66e3 100644
 +            # 整轮语料贫瘠(trial4 同因)。env 可调,默认保持 8192。
 +            maxTokens=int(os.environ.get("DEEPCODE_REFERENCE_MAX_TOKENS", "8192")),
              temperature=0.2,
-+            # [local compat] default max_iterations=8 starves this agent: it
-+            # must read the (segmented) paper and fetch several pages before
-+            # it can write the report. Give it real headroom.
-+            # [fre] 40 was tuned for Kimi (~9 rounds). DeepSeek-V4-Pro verifies
-+            # each candidate repository individually and exhausted 40 on fre
-+            # without emitting a report (67 distinct URLs fetched). With the
-+            # repeat-fetch guard now capping wasted retries, 80 covers that
-+            # working style; the cap is a backstop, not the expected cost.
-+            max_iterations=80,
++            # [local compat] iteration budget env-overridable (upstream default 8
++            # starves this agent: it reads the segmented paper and fetches several
++            # pages before it can write the report); run_trial.sh injects 40.
++            max_iterations=int(os.environ.get("DEEPCODE_REFERENCE_MAX_ITERATIONS", "8")),
              tool_filter={
                  "filesystem": {"read_text_file", "list_directory"},
                  "fetch": {"fetch"},
-@@ -1406,21 +1545,24 @@ async def automate_repository_acquisition_agent(
+@@ -1406,21 +1540,24 @@ async def automate_repository_acquisition_agent(
                      f"Successfully downloaded {len(downloaded_repos)} repositories: {downloaded_repos}"
                  )
              else:
@@ -551,37 +626,60 @@ index ed7dc7d..00c66e3 100644
  
      except Exception as e:
          print(f"Error during GitHub repository download: {e}")
-@@ -1457,6 +1599,30 @@ async def orchestrate_codebase_intelligence_agent(
-     )
-     await asyncio.sleep(2)  # Brief pause before starting indexing
+diff --git a/workflows/agents/code_implementation_agent.py b/workflows/agents/code_implementation_agent.py
+index 7bf79e4..2ef741f 100644
+--- a/workflows/agents/code_implementation_agent.py
++++ b/workflows/agents/code_implementation_agent.py
+@@ -233,6 +233,8 @@ class CodeImplementationAgent:
+                         await self._track_file_implementation_with_summary(
+                             tool_call, result
+                         )
++                    elif tool_name == "write_multiple_files":
++                        self._track_batch_file_implementation(tool_call, result)
+                     elif tool_name == "read_file":
+                         self._track_dependency_analysis(tool_call, result)
  
-+    # [local compat] Every other phase (planning/reference/download) reuses
-+    # existing artifacts on resume; indexing alone rebuilt from scratch each
-+    # run. Skip when per-repo index files already exist for the current
-+    # code_base contents.
-+    _idx_dir = os.path.join(dir_info["paper_dir"], "indexes")
-+    _cb_dir = os.path.join(dir_info["paper_dir"], "code_base")
-+    if os.path.isdir(_idx_dir) and os.path.isdir(_cb_dir):
-+        _repos = [
-+            d
-+            for d in os.listdir(_cb_dir)
-+            if os.path.isdir(os.path.join(_cb_dir, d)) and not d.startswith(".")
-+        ]
-+        _indexed = {
-+            f[: -len("_index.json")]
-+            for f in os.listdir(_idx_dir)
-+            if f.endswith("_index.json")
-+        }
-+        if _repos and all(r in _indexed for r in _repos):
-+            print(f"Reusing existing indexes for {len(_repos)} repositories; skipping rebuild")
-+            return {
-+                "status": "success",
-+                "message": f"Reused existing indexes for {len(_repos)} repositories",
-+            }
+@@ -545,6 +547,40 @@ class CodeImplementationAgent:
+                     f"File implementation counted (emergency fallback): count={self.files_implemented_count}, file={file_path}"
+                 )
+ 
++    def _track_batch_file_implementation(self, tool_call: Dict, result: Any):
++        """Count every file a ``write_multiple_files`` call wrote successfully.
 +
-     # Check if code_base directory exists and has content
-     code_base_path = os.path.join(dir_info["paper_dir"], "code_base")
-     if not os.path.exists(code_base_path):
++        The batch tool is part of the model-facing surface, but only
++        ``write_file`` used to feed the implemented-files bookkeeping, so a
++        run that wrote everything in batches reported ``0 files`` and never
++        reached the completion check.
++        """
++        text = result if isinstance(result, str) else str(getattr(result, "content", result))
++        paths: List[str] = []
++        try:
++            payload = json.loads(text)
++            files = payload.get("files") if isinstance(payload, dict) else None
++            if isinstance(files, dict):
++                paths = [
++                    str(path)
++                    for path, info in files.items()
++                    if isinstance(info, dict) and info.get("status") == "success"
++                ]
++        except (TypeError, ValueError):
++            paths = []
++        if not paths:
++            raw = tool_call.get("input", {}).get("file_implementations")
++            try:
++                mapping = json.loads(raw) if isinstance(raw, str) else raw
++                paths = [str(k) for k in mapping] if isinstance(mapping, dict) else []
++            except (TypeError, ValueError):
++                paths = []
++        for path in paths:
++            self._track_file_implementation(
++                {"input": {"file_path": path}},
++                {"status": "success", "file_path": path},
++            )
++
+     def _track_dependency_analysis(self, tool_call: Dict, result: Any):
+         """
+         Track dependency analysis through read_file calls
 diff --git a/workflows/agents/document_segmentation_agent.py b/workflows/agents/document_segmentation_agent.py
 index ec7ba22..37c61a8 100644
 --- a/workflows/agents/document_segmentation_agent.py
@@ -661,24 +759,39 @@ index ba9561e..a7866c1 100644
  **Objective:** {"Reply 'All files implemented' to finish" if not unimplemented_files else "Continue implementation by analyzing dependencies and implementing the next required file according to the plan's priority order."}""",
          }
 diff --git a/workflows/code_implementation_workflow.py b/workflows/code_implementation_workflow.py
-index 4eb37c7..66514ea 100644
+index 3b93f37..8243618 100644
 --- a/workflows/code_implementation_workflow.py
 +++ b/workflows/code_implementation_workflow.py
-@@ -88,11 +88,51 @@ _MCP_SERVER_NAMES = [
+@@ -25,6 +25,7 @@ Domain strategy (unchanged, deliberately):
+ """
+ 
+ import asyncio
++import hashlib
+ import json
+ import logging
+ import os
+@@ -42,7 +43,11 @@ from core.agent_runtime.tools.registry import ToolRegistry
+ from core.harness.approval import TerminalApprover
+ from core.harness.permissions import PermissionMode
+ from core.harness.policy import build_permission_engine
+-from core.verification import discover_verification_commands, run_verification
++from core.verification import (
++    discover_verification_commands,
++    resolve_project_root,
++    run_verification,
++)
+ 
+ # DeepCode-native compat layer (owns the MCP server lifecycle)
+ from core.compat import Agent, get_runtime
+@@ -88,11 +93,45 @@ _MCP_SERVER_NAMES = [
  ]
  
  _MAX_ITERATIONS = 800
 -_MAX_WALL_SECONDS = 7200  # 120 minutes (2 hours)
-+# [local compat][fre] 7200s (2h) truncates reasoning-model implementation runs:
-+# DeepSeek-V4-Pro spends most of its output budget on thinking (~225s/call
-+# measured before the maxTokens fix), and fre needs two calls per file
-+# (write + summary). Hitting the wall mid-run would measure the time budget
-+# rather than the model, so the ceiling is raised to 4h. This only permits
-+# longer runs; fast models (Kimi finished rice well inside 2h) are unaffected.
-+# [rice] 4h still truncates: 33-file plans at ~670 lines/file plus daytime
-+# empty-response episodes (30-50 min each, API-load correlated) can push a
-+# healthy run past 4h. Env-overridable; default keeps the 4h above.
-+_MAX_WALL_SECONDS = int(os.environ.get("DEEPCODE_MAX_WALL_SECONDS", "14400"))
++# [local compat] Implementation wall clock, env-overridable; the default is the
++# upstream 7200 s. run_trial.sh injects DEEPCODE_MAX_WALL_SECONDS=21600 (reasoning
++# models at ~670 lines/file plus daytime empty-response episodes exceed 2 h).
++_MAX_WALL_SECONDS = int(os.environ.get("DEEPCODE_MAX_WALL_SECONDS", "7200"))
  _EMERGENCY_TRIM_THRESHOLD = 50
  _MAX_TOOL_RESULT_CHARS = 60_000
  
@@ -717,7 +830,40 @@ index 4eb37c7..66514ea 100644
  @dataclass
  class _RunState:
      """Shared mutable state between the tool wrappers, hook and callbacks."""
-@@ -287,6 +327,20 @@ class _InstrumentedTool(AliasedTool):
+@@ -250,7 +289,17 @@ class _InstrumentedTool(AliasedTool):
+         if state.abort_reason:
+             return f"Error: tool execution aborted: {state.abort_reason}"
+ 
+-        loop_status = state.loop_detector.check_tool_call(self.name)
++        # Writes to *different* files are progress, not a loop: key the
++        # repeat check on the arguments for write tools so five consecutive
++        # ``write_multiple_files`` batches with distinct paths pass, while an
++        # identical call repeated five times is still caught.
++        loop_key = self.name
++        if self.name in _WRITE_TOOL_NAMES:
++            digest = hashlib.sha1(
++                json.dumps(kwargs, sort_keys=True, default=str).encode("utf-8")
++            ).hexdigest()[:8]
++            loop_key = f"{self.name}#{digest}"
++        loop_status = state.loop_detector.check_tool_call(loop_key)
+         if loop_status["should_stop"]:
+             state.abort_reason = loop_status["message"]
+             state.run_status = (
+@@ -275,8 +324,12 @@ class _InstrumentedTool(AliasedTool):
+             tool_name=self.name, tool_input=kwargs, tool_result=result
+         )
+ 
++        written: list[str] = []
+         if self.name == "write_file":
+-            filename = kwargs.get("file_path", "unknown")
++            written = [kwargs.get("file_path", "unknown")]
++        elif self.name == "write_multiple_files":
++            written = _batch_written_paths(kwargs, result)
++        for filename in written:
+             completed_first_time = state.progress_tracker.complete_file(
+                 state.memory_agent.normalize_file_path(filename)
+             )
+@@ -287,9 +340,55 @@ class _InstrumentedTool(AliasedTool):
                      "Code implementation progress: "
                      f"{info['files_completed']}/{info['total_files']} files completed"
                  )
@@ -738,27 +884,75 @@ index 4eb37c7..66514ea 100644
          return result
  
  
-@@ -425,7 +479,19 @@ class CodeImplementationWorkflow:
++_WRITE_TOOL_NAMES = frozenset({"write_file", "write_multiple_files"})
++
++
++def _batch_written_paths(kwargs: Dict[str, Any], result: Any) -> List[str]:
++    """Paths that a ``write_multiple_files`` call actually wrote.
++
++    Prefer the server's per-file statuses; fall back to the requested paths
++    when the result is not the expected JSON (legacy servers, error text).
++    """
++    requested: List[str] = []
++    raw = kwargs.get("file_implementations")
++    try:
++        mapping = json.loads(raw) if isinstance(raw, str) else raw
++        if isinstance(mapping, dict):
++            requested = [str(k) for k in mapping]
++    except (TypeError, ValueError):
++        requested = []
++    text = result if isinstance(result, str) else str(result)
++    try:
++        payload = json.loads(text)
++    except (TypeError, ValueError):
++        return requested
++    files = payload.get("files") if isinstance(payload, dict) else None
++    if not isinstance(files, dict):
++        return requested
++    return [
++        str(path)
++        for path, info in files.items()
++        if isinstance(info, dict) and info.get("status") == "success"
++    ]
++
++
+ class _ImplementationHook(AgentHook):
+     """Per-iteration domain policy: guidance, memory strategy, round sync."""
+ 
+@@ -425,7 +524,11 @@ class CodeImplementationWorkflow:
          self.logger = self._create_logger()
          self.mcp_agent = None
          self.enable_read_tools = True
 -        self.loop_detector = LoopDetector()
-+        # [local compat] The default 300s stall threshold assumes ~30s LLM
-+        # turns; one transient error + retry + a long truncated-output turn
-+        # (observed: 5m34s) trips it during healthy progress. Widen it; the
-+        # wall-clock and iteration caps still bound runaway runs.
-+        # [fre] 900s still fired twice on DeepSeek-V4-Pro (fre trials, both
-+        # aborted at 13/31 and 15/20 files with the core algorithm already
-+        # written) — its thinking turns plus retries exceed 15 minutes under
-+        # daytime API load. Raised to 1800s; runaway runs remain bounded by
-+        # the 4h implementation wall clock and the 800-iteration cap, neither
-+        # of which any completed run has approached.
-+        self.loop_detector = LoopDetector(
-+            stall_threshold=int(os.environ.get("DEEPCODE_STALL_THRESHOLD", "1800"))
-+        )
++        # [local compat] Stall threshold: upstream default (300 s) unless
++        # DEEPCODE_STALL_THRESHOLD is set. run_trial.sh injects 7200 (daytime
++        # empty-response episodes of 30-50 min tripped 300/900/1800 on healthy runs).
++        _stall = os.environ.get("DEEPCODE_STALL_THRESHOLD")
++        self.loop_detector = LoopDetector(stall_threshold=int(_stall)) if _stall else LoopDetector()
          self.progress_tracker = ProgressTracker()
          self._last_run_state: Dict[str, Any] = {
              "status": "unknown",
+@@ -617,13 +720,18 @@ class CodeImplementationWorkflow:
+     ) -> list[dict[str, Any]]:
+         """Run only mechanically discovered test commands, with bounded output."""
+ 
+-        commands = discover_verification_commands(code_directory)
++        project_root = resolve_project_root(Path(code_directory))
++        if project_root != Path(code_directory):
++            self.logger.info(
++                "🔎 Verification root resolved to project folder: %s", project_root
++            )
++        commands = discover_verification_commands(project_root)
+         results: list[dict[str, Any]] = []
+         for command in commands:
+             try:
+                 result = await asyncio.to_thread(
+                     run_verification,
+-                    code_directory,
++                    project_root,
+                     command,
+                     timeout_seconds=300,
+                 )
 diff --git a/workflows/codebase_index_workflow.py b/workflows/codebase_index_workflow.py
 index 7c5a1f1..3da9e47 100644
 --- a/workflows/codebase_index_workflow.py
@@ -779,3 +973,108 @@ index 7c5a1f1..3da9e47 100644
                  return file_tree
              else:
                  self.logger.warning("⚠️ Unable to extract file tree from initial plan")
+diff --git a/workflows/environment.py b/workflows/environment.py
+index 6a3d582..fee9e49 100644
+--- a/workflows/environment.py
++++ b/workflows/environment.py
+@@ -23,6 +23,7 @@ Every helper is a private ``_xxx`` so the contract stays small.
+ 
+ from __future__ import annotations
+ 
++import logging
+ import os
+ import shutil
+ import uuid
+@@ -58,6 +59,53 @@ _LOW_DISK_THRESHOLD_BYTES = 500 * 1024 * 1024
+ # ---------------------------------------------------------------------------
+ 
+ 
++class _BraceLoggerAdapter:
++    """Let ``{}``-style (loguru) log calls work on a stdlib ``logging.Logger``.
++
++    The Desktop/Web workflow adapter injects ``logging.getLogger(...)``; every
++    call in this module is written for loguru, and stdlib would try
++    ``msg % args`` and raise ``TypeError: not all arguments converted``. The
++    stdlib handler swallows that in a bare CLI run, but the App Server bridges
++    stdlib records into loguru and the error surfaces as a failed pipeline.
++    """
++
++    def __init__(self, inner: Any) -> None:
++        self._inner = inner
++
++    def _emit(self, level: str, msg: Any, *args: Any, **kwargs: Any) -> None:
++        text = str(msg)
++        if args or kwargs:
++            try:
++                text = text.format(*args, **kwargs)
++            except (IndexError, KeyError, ValueError):
++                text = f"{text} {args if args else ''}{kwargs if kwargs else ''}"
++        getattr(self._inner, level)(text)
++
++    def debug(self, msg: Any, *args: Any, **kwargs: Any) -> None:
++        self._emit("debug", msg, *args, **kwargs)
++
++    def info(self, msg: Any, *args: Any, **kwargs: Any) -> None:
++        self._emit("info", msg, *args, **kwargs)
++
++    def warning(self, msg: Any, *args: Any, **kwargs: Any) -> None:
++        self._emit("warning", msg, *args, **kwargs)
++
++    def error(self, msg: Any, *args: Any, **kwargs: Any) -> None:
++        self._emit("error", msg, *args, **kwargs)
++
++    def exception(self, msg: Any, *args: Any, **kwargs: Any) -> None:
++        self._emit("exception", msg, *args, **kwargs)
++
++
++def _brace_logger(logger: Any) -> Any:
++    """Return a logger that accepts loguru-style ``{}`` placeholders."""
++    if logger is None:
++        return default_logger
++    if isinstance(logger, logging.Logger):
++        return _BraceLoggerAdapter(logger)
++    return logger
++
++
+ async def prepare_workflow_environment(
+     raw_input: str,
+     *,
+@@ -82,7 +130,7 @@ async def prepare_workflow_environment(
+     are **not** auto-resumed; users who want to continue an old run need
+     to re-submit the input.
+     """
+-    log = logger or default_logger
++    log = _brace_logger(logger)
+     _maybe_progress(progress_cb, 1, "🔧 Resolving workspace and validating input...")
+ 
+     yaml_root, max_input_mb = _load_workspace_config()
+diff --git a/workflows/planning_runtime.py b/workflows/planning_runtime.py
+index 0c00038..32b177d 100644
+--- a/workflows/planning_runtime.py
++++ b/workflows/planning_runtime.py
+@@ -118,9 +118,24 @@ def build_planning_checkpoint_callback(
+ 
+ 
+ def extract_yaml_candidate(text: str) -> str:
+-    """Return the most likely YAML block from a planner response."""
++    """Return the most likely YAML block from a planner response.
++
++    Only an *unindented* fence delimits the plan. Planners routinely nest
++    bash or python code fences inside block scalars such as
++    ``environment_setup: |``; those fences are indented, and a non-greedy
++    fence-to-fence match used to stop at the first of them, dropping every
++    later section and failing validation on an otherwise complete plan.
++    """
+     if not text:
+         return ""
++    opening = re.search(
++        r"^```(?:yaml|yml)?[ \t]*\r?\n", text, re.IGNORECASE | re.MULTILINE
++    )
++    if opening:
++        body_start = opening.end()
++        closing = re.search(r"^```[ \t]*$", text[body_start:], re.MULTILINE)
++        body = text[body_start : body_start + closing.start()] if closing else text[body_start:]
++        return body.strip()
+     fenced = re.search(r"```(?:yaml|yml)?\s*(.*?)```", text, re.IGNORECASE | re.DOTALL)
+     if fenced:
+         return fenced.group(1).strip()

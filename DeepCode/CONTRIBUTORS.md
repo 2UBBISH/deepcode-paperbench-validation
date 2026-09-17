@@ -23,7 +23,12 @@ People with commits on `main`.
 - [@curator-me](https://github.com/curator-me)
 - [@clankwright](https://github.com/clankwright)
 - [@Osamaali313](https://github.com/Osamaali313) — fixed the inverted `ensure_ascii` config flag in the code indexer ([#139](https://github.com/HKUDS/DeepCode/pull/139))
-- [@raymondginger2018-sudo](https://github.com/raymondginger2018-sudo) — Windows Job Object sandbox backend and NTFS ACL hardening for private storage ([#149](https://github.com/HKUDS/DeepCode/pull/149), [#148](https://github.com/HKUDS/DeepCode/pull/148))
+- [@raymondginger2018-sudo](https://github.com/raymondginger2018-sudo) — Windows Job Object sandbox backend and NTFS ACL hardening for private storage ([#149](https://github.com/HKUDS/DeepCode/pull/149), [#148](https://github.com/HKUDS/DeepCode/pull/148), [#164](https://github.com/HKUDS/DeepCode/pull/164)); SessionEnd and PreCompact hook lifecycle ([#172](https://github.com/HKUDS/DeepCode/pull/172)); lazy MCP server activation ([#184](https://github.com/HKUDS/DeepCode/pull/184)); instruction-file exclusions ([#186](https://github.com/HKUDS/DeepCode/pull/186)); compaction-as-memory and the untrusted-data memory boundary ([#204](https://github.com/HKUDS/DeepCode/pull/204))
+- [@atirna](https://github.com/atirna) — closed the command-executor blocklist bypass and the native file-operation escape from the sandbox ([#193](https://github.com/HKUDS/DeepCode/pull/193))
+- [@lihuiyang1024](https://github.com/lihuiyang1024) — plaintext-credential warnings for Plugin manifests, Session context-window caps, and zh-CN appearance settings ([#194](https://github.com/HKUDS/DeepCode/pull/194), [#203](https://github.com/HKUDS/DeepCode/pull/203), [#202](https://github.com/HKUDS/DeepCode/pull/202))
+- [@rifkir23](https://github.com/rifkir23) — Simplified Chinese coverage across the Desktop shell and the argv-based `execute_bash` screen ([#187](https://github.com/HKUDS/DeepCode/pull/187), [#195](https://github.com/HKUDS/DeepCode/pull/195))
+- [@imshunsuke](https://github.com/imshunsuke) — isolated the Desktop MCP catalog refresh by project ([#201](https://github.com/HKUDS/DeepCode/pull/201))
+- [@MarkHe1222](https://github.com/MarkHe1222) — README grammar fix ([#180](https://github.com/HKUDS/DeepCode/pull/180))
 
 ## Pull request authors
 
@@ -52,7 +57,12 @@ mattered, and it is recorded here.
 | [@AAtomical](https://github.com/AAtomical) | [#135](https://github.com/HKUDS/DeepCode/pull/135) |
 | [@Thibaultjaigu](https://github.com/Thibaultjaigu) | [#138](https://github.com/HKUDS/DeepCode/pull/138) |
 | [@Osamaali313](https://github.com/Osamaali313) | [#139](https://github.com/HKUDS/DeepCode/pull/139) |
-| [@raymondginger2018-sudo](https://github.com/raymondginger2018-sudo) | [#141](https://github.com/HKUDS/DeepCode/pull/141), [#143](https://github.com/HKUDS/DeepCode/pull/143), [#144](https://github.com/HKUDS/DeepCode/pull/144), [#146](https://github.com/HKUDS/DeepCode/pull/146), [#148](https://github.com/HKUDS/DeepCode/pull/148), [#149](https://github.com/HKUDS/DeepCode/pull/149) |
+| [@raymondginger2018-sudo](https://github.com/raymondginger2018-sudo) | [#141](https://github.com/HKUDS/DeepCode/pull/141), [#143](https://github.com/HKUDS/DeepCode/pull/143), [#144](https://github.com/HKUDS/DeepCode/pull/144), [#146](https://github.com/HKUDS/DeepCode/pull/146), [#148](https://github.com/HKUDS/DeepCode/pull/148), [#149](https://github.com/HKUDS/DeepCode/pull/149), [#164](https://github.com/HKUDS/DeepCode/pull/164), [#172](https://github.com/HKUDS/DeepCode/pull/172), [#178](https://github.com/HKUDS/DeepCode/pull/178), [#181](https://github.com/HKUDS/DeepCode/pull/181), [#183](https://github.com/HKUDS/DeepCode/pull/183), [#184](https://github.com/HKUDS/DeepCode/pull/184), [#186](https://github.com/HKUDS/DeepCode/pull/186), [#188](https://github.com/HKUDS/DeepCode/pull/188), [#189](https://github.com/HKUDS/DeepCode/pull/189), [#190](https://github.com/HKUDS/DeepCode/pull/190), [#191](https://github.com/HKUDS/DeepCode/pull/191), [#197](https://github.com/HKUDS/DeepCode/pull/197), [#198](https://github.com/HKUDS/DeepCode/pull/198), [#199](https://github.com/HKUDS/DeepCode/pull/199), [#200](https://github.com/HKUDS/DeepCode/pull/200), [#204](https://github.com/HKUDS/DeepCode/pull/204), [#205](https://github.com/HKUDS/DeepCode/pull/205) |
+| [@MarkHe1222](https://github.com/MarkHe1222) | [#179](https://github.com/HKUDS/DeepCode/pull/179), [#180](https://github.com/HKUDS/DeepCode/pull/180) |
+| [@rifkir23](https://github.com/rifkir23) | [#187](https://github.com/HKUDS/DeepCode/pull/187), [#195](https://github.com/HKUDS/DeepCode/pull/195) |
+| [@atirna](https://github.com/atirna) | [#193](https://github.com/HKUDS/DeepCode/pull/193) |
+| [@lihuiyang1024](https://github.com/lihuiyang1024) | [#194](https://github.com/HKUDS/DeepCode/pull/194), [#202](https://github.com/HKUDS/DeepCode/pull/202), [#203](https://github.com/HKUDS/DeepCode/pull/203) |
+| [@imshunsuke](https://github.com/imshunsuke) | [#201](https://github.com/HKUDS/DeepCode/pull/201) |
 
 ## Adding yourself
 

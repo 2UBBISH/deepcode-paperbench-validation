@@ -1,1 +1,0 @@
-Stage 10 accepted; bundles are the accepted programs (repaired by the Stage 10 loop).

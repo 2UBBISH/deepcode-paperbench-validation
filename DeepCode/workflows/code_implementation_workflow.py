@@ -25,6 +25,7 @@ Domain strategy (unchanged, deliberately):
 """
 
 import asyncio
+import hashlib
 import json
 import logging
 import os
@@ -42,7 +43,11 @@ from core.agent_runtime.tools.registry import ToolRegistry
 from core.harness.approval import TerminalApprover
 from core.harness.permissions import PermissionMode
 from core.harness.policy import build_permission_engine
-from core.verification import discover_verification_commands, run_verification
+from core.verification import (
+    discover_verification_commands,
+    resolve_project_root,
+    run_verification,
+)
 
 # DeepCode-native compat layer (owns the MCP server lifecycle)
 from core.compat import Agent, get_runtime
@@ -88,16 +93,10 @@ _MCP_SERVER_NAMES = [
 ]
 
 _MAX_ITERATIONS = 800
-# [local compat][fre] 7200s (2h) truncates reasoning-model implementation runs:
-# DeepSeek-V4-Pro spends most of its output budget on thinking (~225s/call
-# measured before the maxTokens fix), and fre needs two calls per file
-# (write + summary). Hitting the wall mid-run would measure the time budget
-# rather than the model, so the ceiling is raised to 4h. This only permits
-# longer runs; fast models (Kimi finished rice well inside 2h) are unaffected.
-# [rice] 4h still truncates: 33-file plans at ~670 lines/file plus daytime
-# empty-response episodes (30-50 min each, API-load correlated) can push a
-# healthy run past 4h. Env-overridable; default keeps the 4h above.
-_MAX_WALL_SECONDS = int(os.environ.get("DEEPCODE_MAX_WALL_SECONDS", "14400"))
+# [local compat] Implementation wall clock, env-overridable; the default is the
+# upstream 7200 s. run_trial.sh injects DEEPCODE_MAX_WALL_SECONDS=21600 (reasoning
+# models at ~670 lines/file plus daytime empty-response episodes exceed 2 h).
+_MAX_WALL_SECONDS = int(os.environ.get("DEEPCODE_MAX_WALL_SECONDS", "7200"))
 _EMERGENCY_TRIM_THRESHOLD = 50
 _MAX_TOOL_RESULT_CHARS = 60_000
 
@@ -290,7 +289,17 @@ class _InstrumentedTool(AliasedTool):
         if state.abort_reason:
             return f"Error: tool execution aborted: {state.abort_reason}"
 
-        loop_status = state.loop_detector.check_tool_call(self.name)
+        # Writes to *different* files are progress, not a loop: key the
+        # repeat check on the arguments for write tools so five consecutive
+        # ``write_multiple_files`` batches with distinct paths pass, while an
+        # identical call repeated five times is still caught.
+        loop_key = self.name
+        if self.name in _WRITE_TOOL_NAMES:
+            digest = hashlib.sha1(
+                json.dumps(kwargs, sort_keys=True, default=str).encode("utf-8")
+            ).hexdigest()[:8]
+            loop_key = f"{self.name}#{digest}"
+        loop_status = state.loop_detector.check_tool_call(loop_key)
         if loop_status["should_stop"]:
             state.abort_reason = loop_status["message"]
             state.run_status = (
@@ -315,8 +324,12 @@ class _InstrumentedTool(AliasedTool):
             tool_name=self.name, tool_input=kwargs, tool_result=result
         )
 
+        written: list[str] = []
         if self.name == "write_file":
-            filename = kwargs.get("file_path", "unknown")
+            written = [kwargs.get("file_path", "unknown")]
+        elif self.name == "write_multiple_files":
+            written = _batch_written_paths(kwargs, result)
+        for filename in written:
             completed_first_time = state.progress_tracker.complete_file(
                 state.memory_agent.normalize_file_path(filename)
             )
@@ -342,6 +355,38 @@ class _InstrumentedTool(AliasedTool):
                         "error before implementing the next file."
                     )
         return result
+
+
+_WRITE_TOOL_NAMES = frozenset({"write_file", "write_multiple_files"})
+
+
+def _batch_written_paths(kwargs: Dict[str, Any], result: Any) -> List[str]:
+    """Paths that a ``write_multiple_files`` call actually wrote.
+
+    Prefer the server's per-file statuses; fall back to the requested paths
+    when the result is not the expected JSON (legacy servers, error text).
+    """
+    requested: List[str] = []
+    raw = kwargs.get("file_implementations")
+    try:
+        mapping = json.loads(raw) if isinstance(raw, str) else raw
+        if isinstance(mapping, dict):
+            requested = [str(k) for k in mapping]
+    except (TypeError, ValueError):
+        requested = []
+    text = result if isinstance(result, str) else str(result)
+    try:
+        payload = json.loads(text)
+    except (TypeError, ValueError):
+        return requested
+    files = payload.get("files") if isinstance(payload, dict) else None
+    if not isinstance(files, dict):
+        return requested
+    return [
+        str(path)
+        for path, info in files.items()
+        if isinstance(info, dict) and info.get("status") == "success"
+    ]
 
 
 class _ImplementationHook(AgentHook):
@@ -479,19 +524,11 @@ class CodeImplementationWorkflow:
         self.logger = self._create_logger()
         self.mcp_agent = None
         self.enable_read_tools = True
-        # [local compat] The default 300s stall threshold assumes ~30s LLM
-        # turns; one transient error + retry + a long truncated-output turn
-        # (observed: 5m34s) trips it during healthy progress. Widen it; the
-        # wall-clock and iteration caps still bound runaway runs.
-        # [fre] 900s still fired twice on DeepSeek-V4-Pro (fre trials, both
-        # aborted at 13/31 and 15/20 files with the core algorithm already
-        # written) — its thinking turns plus retries exceed 15 minutes under
-        # daytime API load. Raised to 1800s; runaway runs remain bounded by
-        # the 4h implementation wall clock and the 800-iteration cap, neither
-        # of which any completed run has approached.
-        self.loop_detector = LoopDetector(
-            stall_threshold=int(os.environ.get("DEEPCODE_STALL_THRESHOLD", "1800"))
-        )
+        # [local compat] Stall threshold: upstream default (300 s) unless
+        # DEEPCODE_STALL_THRESHOLD is set. run_trial.sh injects 7200 (daytime
+        # empty-response episodes of 30-50 min tripped 300/900/1800 on healthy runs).
+        _stall = os.environ.get("DEEPCODE_STALL_THRESHOLD")
+        self.loop_detector = LoopDetector(stall_threshold=int(_stall)) if _stall else LoopDetector()
         self.progress_tracker = ProgressTracker()
         self._last_run_state: Dict[str, Any] = {
             "status": "unknown",
@@ -683,13 +720,18 @@ class CodeImplementationWorkflow:
     ) -> list[dict[str, Any]]:
         """Run only mechanically discovered test commands, with bounded output."""
 
-        commands = discover_verification_commands(code_directory)
+        project_root = resolve_project_root(Path(code_directory))
+        if project_root != Path(code_directory):
+            self.logger.info(
+                "🔎 Verification root resolved to project folder: %s", project_root
+            )
+        commands = discover_verification_commands(project_root)
         results: list[dict[str, Any]] = []
         for command in commands:
             try:
                 result = await asyncio.to_thread(
                     run_verification,
-                    code_directory,
+                    project_root,
                     command,
                     timeout_seconds=300,
                 )
@@ -970,7 +1012,16 @@ Requirements:
         # approver so an `ask` becomes an interactive confirmation. An unknown
         # value falls back to this legacy client's FULL_AUTO default.
         security_cfg = getattr(get_runtime().config, "security", None)
-        permission_engine = build_permission_engine(security_cfg, cwd=code_directory)
+        # ``default_mode`` is passed explicitly rather than left to the
+        # signature default. This workflow is the one caller that intentionally
+        # runs unattended, so its mode should be readable at the call site
+        # instead of inherited from a parameter far away — and a reviewer
+        # grepping for "who runs with no approver?" gets an answer.
+        permission_engine = build_permission_engine(
+            security_cfg,
+            cwd=code_directory,
+            default_mode=PermissionMode.FULL_AUTO,
+        )
         mode = permission_engine.mode
         approval_cb = None
         if mode is not PermissionMode.FULL_AUTO:
