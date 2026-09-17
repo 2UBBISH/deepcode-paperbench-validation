@@ -82,7 +82,7 @@ PAPER=sapg bash deepcode_test/scripts/run_grade.sh           # 真判，约 ¥38
 ├── DeepCode/                    ← HKUDS/DeepCode main 21ebc57f + patches/deepcode_local_changes.patch（完整副本；.venv / deepcode_lab 不入库）
 ├── patches/
 │   ├── UPSTREAM_BASE.txt              两个上游仓库的固定 commit
-│   ├── deepcode_local_changes.patch   DeepCode 全部改动（15 文件，+628/−49，§5）
+│   ├── deepcode_local_changes.patch   DeepCode 全部改动（15 文件，+659/−57，§5）
 │   ├── deepcode_patched.sha256        打过补丁的 15 个文件的 sha256
 │   ├── verify_deepcode.sh             证明 DeepCode/ = 上游 + patch（setup.sh 自动跑）
 │   └── paperbench_local_changes.patch PaperBench 全部改动（5 文件，§5.4）
@@ -108,7 +108,7 @@ PAPER=sapg bash deepcode_test/scripts/run_grade.sh           # 真判，约 ¥38
 
 ## 5. 对上游的改动
 
-### 5.1 DeepCode（`patches/deepcode_local_changes.patch`，15 文件，+628/−49）
+### 5.1 DeepCode（`patches/deepcode_local_changes.patch`，15 文件，+659/−57）
 
 原则：每个改动 env 门控、默认值等于上游；`verify_deepcode.sh` 证明 `DeepCode/` 一个字节不多改。分四组：
 
@@ -117,7 +117,7 @@ PAPER=sapg bash deepcode_test/scripts/run_grade.sh           # 真判，约 ¥38
 | 文件 | 改动 | 旋钮（默认 = 上游） |
 | --- | --- | --- |
 | `core/compat/agent.py` | `tool_filter` 按消毒后的前缀（`-`→`_`）匹配 | — |
-| `tools/code_indexer.py` | 预筛 / 逐文件分析 / 关系抽取的 `max_tokens` env 化 | `DEEPCODE_PREFILTER_MAX_TOKENS` 2000 · `DEEPCODE_ANALYSIS_MAX_TOKENS` 1000 · `DEEPCODE_RELATIONSHIP_MAX_TOKENS` 1500 |
+| `tools/code_indexer.py` | 预筛 / 逐文件分析 / 关系抽取的 `max_tokens` env 化；**预筛止血（2026-09-17）**：输出只要 `file_path` + `confidence`（两个长文本字段下游从不读；263 文件的仓库曾把回复写到 11.8 万字符撞顶、解析失败、静默全量索引），两句作者残留的"推荐系统 / GNN / 扩散模型"改成中性表述，日志打实际选中数，`finish_reason=length` 视为失败走重试 | `DEEPCODE_PREFILTER_MAX_TOKENS` 2000 · `DEEPCODE_ANALYSIS_MAX_TOKENS` 1000 · `DEEPCODE_RELATIONSHIP_MAX_TOKENS` 1500 |
 | `workflows/agent_orchestration_engine.py` | 下载 agent：工具优先的提示、只给 `git_clone`、一次纠正重试、空 `code_base` fail-fast；挖掘 / 下载的输出上限与迭代预算 env 化 | `DEEPCODE_REFERENCE_MAX_TOKENS` 8192 · `DEEPCODE_DOWNLOAD_MAX_TOKENS` 4096 · `DEEPCODE_REFERENCE_MAX_ITERATIONS` 8 · `DEEPCODE_DOWNLOAD_MAX_ITERATIONS` 8 |
 | `workflows/agents/document_segmentation_agent.py` | 分段 agent 必须真的调工具；`document_index.json` 不存在即失败 | — |
 | `workflows/code_implementation_workflow.py` | 写码墙钟与 stall 阈值 env 化 | `DEEPCODE_MAX_WALL_SECONDS` 7200 · `DEEPCODE_STALL_THRESHOLD` 不设 = 上游 300 |
@@ -190,7 +190,7 @@ DeepEvol 线也不带 ①②：对比方法的覆盖交给计划审阅（`--ask`
 | 配置写了 `maxTokens: 32768`，日志却是 `Resolved workflow LLM … max_tokens=8192`，长文件会被截断 | 21ebc57f 的执行档按模型目录的 `maxOutputTokens` 钳 `max_tokens`；手动目录里只写模型名字符串时，deepseek 家族缺省 8192 | 模板把模型写成对象 `{id, contextWindow, maxOutputTokens: 32768}`；口径闸核对。**sapg trial1（2026-09-17）是在 8192 下跑的**，见 RESULTS-HISTORY |
 | 参考挖掘 / 下载 agent 8 轮就放弃、报告是 runner 的"到达上限"文本 | 上游 `max_iterations=8` | 40 / 12（两次真机 8 都不够） |
 | 挖掘报告截断，下载侧只见 1 个仓库 | `maxTokens=4096/8192` | 32768 / 16384 |
-| CodeRAG 预筛 JSON 截断 → 静默回退全量索引（8,885 文件仓库需 140 h） | `max_tokens=2000` | 32000；分析/关系 16000 |
+| CodeRAG 预筛 JSON 截断 → 静默回退全量索引（8,885 文件仓库需 140 h；sapg trial2 的 263 文件仓库在 32000 下照样撞顶） | 每个候选文件一条带理由的长记录 | 32000 之外，补丁把输出改成路径 + 置信度（缩 4 倍）并把 `length` 当失败重试；分析/关系 16000 |
 | 规划三连败后上游伪造通用脚手架计划并标 `completeness_score=1.0` | `coerce_text_to_minimal_plan` | 假计划闸；规划限时 600 s |
 | 完整计划被判校验失败 → 假计划 | 计划里嵌套的 bash 围栏截断了 YAML 提取 | 补丁 B：只认未缩进围栏 |
 | 写码报 0 个文件、永远不完成 | 只统计 `write_file`，模型用了 `write_multiple_files` | 补丁 B：批量写也计数 |

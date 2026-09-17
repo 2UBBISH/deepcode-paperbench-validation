@@ -353,6 +353,15 @@ class CodeIndexer:
                     raise RuntimeError(
                         response.content or "LLM provider returned an error"
                     )
+                # [local compat][paper2code] A reply cut at max_tokens is not an answer: every
+                # caller here parses JSON out of it, and a truncated body parses as "failed" or,
+                # for the pre-filter, as "analyse every file". Raise so the retry loop below runs
+                # (bounded by max_retries) and the failure is logged as what it is.
+                if response.finish_reason == "length":
+                    raise RuntimeError(
+                        f"LLM output truncated at max_tokens={max_tokens}; "
+                        "the reply cannot be parsed"
+                    )
 
                 content = response.content or ""
                 if self.save_raw_responses:
@@ -531,32 +540,43 @@ class CodeIndexer:
         {file_tree}
 
         Please analyze which files might be helpful for implementing the target project structure, including:
-        - Core algorithm implementation files (such as GCN, recommendation systems, graph neural networks, etc.)
+        - Core algorithm implementation files (the methods, models and training or evaluation procedures the target project needs)
         - Data processing and preprocessing files
         - Loss functions and evaluation metric files
         - Configuration and utility files
         - Test files
         - Documentation files
 
-        Please return the filtering results in JSON format:
+        Please return the filtering results in JSON format, one short record per relevant file
+        (no reasons or descriptions; the list must stay compact even for repositories with hundreds of files):
         {{
             "relevant_files": [
                 {{
                     "file_path": "file path relative to repository root",
-                    "relevance_reason": "why this file is relevant",
-                    "confidence": 0.0-1.0,
-                    "expected_contribution": "expected contribution to the target project"
+                    "confidence": 0.0-1.0
                 }}
             ],
             "summary": {{
                 "total_files_analyzed": "total number of files analyzed",
                 "relevant_files_count": "number of relevant files",
-                "filtering_strategy": "explanation of filtering strategy"
+                "filtering_strategy": "one sentence"
             }}
         }}
 
-        Only return files with confidence > {self.min_confidence_score}. Focus on files related to recommendation systems, graph neural networks, and diffusion models.
+        Only return files with confidence > {self.min_confidence_score}. Judge relevance against the target project structure above, whatever its domain.
         """
+        # [local compat][paper2code] Two changes to the prompt above, 2026-09-17:
+        # 1. Output records carry only file_path + confidence. The upstream schema also asked for
+        #    relevance_reason and expected_contribution, which nothing below ever reads, and for a
+        #    263-file repository (IsaacGymEnvs, sapg) that made the reply 117,835 chars — past the
+        #    output budget — so json.loads failed and the except branch below silently analysed all
+        #    263 files (2.5x the indexing time). The same repository on the same day produced 303
+        #    records / 23,728 tokens when it happened to fit; paths-only is about 4x smaller.
+        # 2. The closing sentence used to say "Focus on files related to recommendation systems,
+        #    graph neural networks, and diffusion models" — a leftover from the authors' own example
+        #    project (this file's docstring still shows gcn.py / diffusion.py). It biased the filter
+        #    against every other domain (an RL paper's env/ppo files); relevance is now judged
+        #    against the target structure only. Same edit applied to the bullet list above.
 
         try:
             self.logger.info("Starting LLM pre-filtering of files...")
@@ -594,8 +614,11 @@ class CodeIndexer:
                     selected_files.append(file_path)
 
             summary = filter_data.get("summary", {})
+            # [local compat][paper2code] log the count we will actually use; the model's own
+            # relevant_files_count was off by 2-3x on large repositories (120 reported, 303 records).
             self.logger.info(
-                f"LLM filtering completed: {summary.get('relevant_files_count', len(selected_files))} relevant files selected"
+                f"LLM filtering completed: {len(selected_files)} relevant files selected"
+                f" (model reported {summary.get('relevant_files_count', 'n/a')})"
             )
             self.logger.info(
                 f"Filtering strategy: {summary.get('filtering_strategy', 'Not provided')}"
