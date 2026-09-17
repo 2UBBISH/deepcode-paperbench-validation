@@ -156,10 +156,17 @@ rice bare_v4 判分侧诊断（SF vs PT）：每叶输入 60,757 vs 62,852 token
 
 ## 7. 裁判校准（JudgeEval，rice/0 作者官方仓库，178 叶，code_only；与输入无关）
 
-| 裁判 serving | 准确率 / macro F1 | 通过率 | 偏向 | 花费 |
-| --- | --- | --- | --- | --- |
-| SiliconFlow（08-26） | 0.685 | 0.4494 | 严 9.0 pp | ¥27.7 |
-| Paratera（09-03） | 0.719 | 0.4494 | 严 9.0 pp | ¥28 |
+| 裁判 | 准确率 | macro F1 | 通过率（人工 0.539） | 偏向 | token（入 / 出） | 花费 | 用时 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| DeepSeek-V4-Pro @ SiliconFlow（08-26） | 0.685 | 0.685 | 0.449 | 严 9.0 pp | — | ¥27.7 | — |
+| DeepSeek-V4-Pro @ Paratera（09-03） | 0.719 | 0.719 | 0.449 | 严 9.0 pp（FP 17 / FN 33） | 7.98M / 0.44M | ¥28 | — |
+| **DeepSeek-V4-Flash @ Paratera（09-17）**，解析器仍 V4-Pro | **0.719** | **0.716** | **0.562** | **宽 2.2 pp**（FP 27 / FN 23） | 7.68M / 1.19M（+ Pro 解析 0.22M / 0.02M） | 未查账单；按 Flash ≈ Pro 单价 1/4 折算约 ¥13–25 | 9.5 min |
+
+Flash vs Pro（Paratera，同一批叶子）：叶级一致 138/178（77.5%）；都对 108、只 Flash 对 20、只 Pro 对 20、都错 30。
+准确率相同、偏向相反：Pro 偏严（把人判过的判挂），Flash 偏宽且更接近人工通过率。两者都在 gpt-4o 档（0.681），谁也不比谁准。
+Flash 的输出 token 是 Pro 的 2.7 倍（思考开着；PaperBench 的判分请求没有关思考的开关，三次都是思考开）。
+**坑**：Flash 不能做二级结构化解析器——Paratera 上带 `response_format` 的请求返回前缀重复的坏 JSON（90 秒 7 个叶子失败），
+`PB_STRUCTURED_PARSER_MODEL` 必须留 V4-Pro（见 README §6）。原始输出在本地 `archive/paperbench_changes/judge_eval_results_rice_flash/`。
 
 同一提交上两裁判一致 150/178（84.3%）；28 处分歧里都对 111、只 SF 对 11、只 PT 对 17、都错 39。
 官方对照（5 卷宏平均 Code-Dev）：o1-high 0.740 / o3-mini 0.720 / gpt-4o 0.681 / gpt-4o-mini 0.588——两个 serving 都在 gpt-4o 档，无法仲裁 rice 的翻转。
