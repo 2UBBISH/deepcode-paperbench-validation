@@ -34,7 +34,16 @@ DeepSeek-V4-Pro @ Paratera、`PB_JUDGE_CONCURRENCY=20`、裁判已修选文件�
 
 叶子级明细、各臂 RUN_NOTES 与原始 grade.json：`archive/deepcode_test/bam/` 与 owner 本机 `~/Documents/env/bam-threeway/`。
 
-**2026-09-17 起的新一批**：DeepEvol 的 Paper2Code 线（原装 DeepCode 引擎嵌入）vs 本仓库的基线运行，口径改为 **DeepSeek-V4-Flash、思考关**（`reasoning_tokens == 0`），第一篇 `sapg`。结果登记在 DeepEvol 仓库 `apps/v2/agent/paper2code/HANDOFF.md`，判分后再回填到这里。
+**2026-09-17 起的新一批**：DeepEvol 的 Paper2Code 线（原装 DeepCode 引擎嵌入）vs 本仓库的基线运行，口径改为 **DeepSeek-V4-Flash、思考关**（`reasoning_tokens == 0`），第一篇 `sapg`。两边并排的过程数字在 DeepEvol 仓库 `apps/v2/agent/paper2code/HANDOFF.md`「Second batch」，判分后再回填到这里。
+
+| 2026-09-17 sapg | 基线运行 `trial1`（本仓库，DeepCode 21ebc57f + 补丁） | DeepEvol 线 C9 运行 |
+| --- | --- | --- |
+| 状态 | 完成，未判分；摆卷 `~/pb_submissions/sapg/trial1/`（30 文件） | 完成，未判分 |
+| 计划 / 参考 / 克隆 / 索引 | 9,733 字符 `generated` 分段 · 5 URL · 5 仓库 · 5 索引（2,103 s） | 9,672 字符 `generated` 分段 · 4 URL · 4 仓库 · 4 索引（1,711 s） |
+| 写码 | 29/29 文件，518 s，24 py / 7,319 行；上游未发现测试命令、未执行 | 26/26 文件，599 s，22 py / 6,349 行；远端 compileall 通过、入口冒烟失败（嵌套包） |
+| 调用 | 413 次，`reasoning_tokens` 0，无 `length` 截断，每次 `max_tokens` **8192**（目录钳制，下一轮 32768） | 346 次，`reasoning_tokens` 0，每次 32768 |
+| 备注 | 后置闸门因运行中改脚本而手动补跑（同一段代码），全过 | 阿里云 ecs.c7.xlarge，两次 environment_run |
+
 
 ## 2. sequential-neural-score-estimation（2026-09-14，对标前的数，裁判修 bug 前）
 
