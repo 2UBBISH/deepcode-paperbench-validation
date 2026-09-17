@@ -97,6 +97,24 @@ _MAX_ITERATIONS = 800
 # upstream 7200 s. run_trial.sh injects DEEPCODE_MAX_WALL_SECONDS=21600 (reasoning
 # models at ~670 lines/file plus daytime empty-response episodes exceed 2 h).
 _MAX_WALL_SECONDS = int(os.environ.get("DEEPCODE_MAX_WALL_SECONDS", "7200"))
+_IMPLEMENT_MAX_TOKENS = 8192
+
+
+def _implement_max_tokens() -> int:
+    """[paper2code, PLAN-3 S9 / VENDOR 12] the output budget of one implementation call, env-overridable.
+
+    Upstream's 8192 cuts a ``write_file`` call whose file runs past ~8k tokens: the tool-call JSON arrives
+    truncated (``finish_reason=length``), the provider reports it as an error and the whole implementation
+    stops with files unwritten (sapg, DeepSeek-V4-Flash-Vision-Exp, 2026-09-18: a 30 KB
+    ``train_baselines.py`` at file 22 of 25). The paired runs set ``DEEPCODE_IMPLEMENT_MAX_TOKENS=32768``
+    on both sides; unset keeps upstream's value.
+    """
+    try:
+        return int(os.environ.get("DEEPCODE_IMPLEMENT_MAX_TOKENS", _IMPLEMENT_MAX_TOKENS))
+    except ValueError:
+        return _IMPLEMENT_MAX_TOKENS
+
+
 _EMERGENCY_TRIM_THRESHOLD = 50
 _MAX_TOOL_RESULT_CHARS = 60_000
 
@@ -1037,7 +1055,7 @@ Requirements:
             max_iterations=_MAX_ITERATIONS,
             max_tool_result_chars=_MAX_TOOL_RESULT_CHARS,
             temperature=0.2,
-            max_tokens=8192,
+            max_tokens=_implement_max_tokens(),
             hook=_ImplementationHook(state),
             session_key=f"code-implementation[{self._mcp_architecture}]",
             provider_retry_mode="standard",

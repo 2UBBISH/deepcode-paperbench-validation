@@ -190,7 +190,9 @@ echo "  📚 挖掘 max_tokens=$DEEPCODE_REFERENCE_MAX_TOKENS/$DEEPCODE_REFERENC
 # 写码 stall 阈值与墙钟（上游 300s / 7200s；白天空响应期一次可达 30~50 分钟）
 export DEEPCODE_STALL_THRESHOLD="${DEEPCODE_STALL_THRESHOLD:-7200}"
 export DEEPCODE_MAX_WALL_SECONDS="${DEEPCODE_MAX_WALL_SECONDS:-21600}"
-echo "  ⏱️  stall=${DEEPCODE_STALL_THRESHOLD}s 写码墙钟=${DEEPCODE_MAX_WALL_SECONDS}s"
+# 写码单次调用输出上限（上游 8192：一个 30 KB 的文件把 write_file 的 JSON 截断，整轮写码中止；2026-09-18 sapg Vision-Exp）
+export DEEPCODE_IMPLEMENT_MAX_TOKENS="${DEEPCODE_IMPLEMENT_MAX_TOKENS:-32768}"
+echo "  ⏱️  stall=${DEEPCODE_STALL_THRESHOLD}s 写码墙钟=${DEEPCODE_MAX_WALL_SECONDS}s 写码单次输出上限=${DEEPCODE_IMPLEMENT_MAX_TOKENS}"
 echo "  🧠 思考=关（配置 compat.thinking=disabled；跑完核对 llm 日志 reasoning_tokens）"
 # 实验开关（fix-①②③）必须关：①② 的提示词就是评分维度，开着跑出来的分数不是基线（README §对上游的改动）
 for x in DEEPCODE_PLAN_COVERAGE_CHECK DEEPCODE_ALLOW_PLAN_EXTENSION DEEPCODE_POSTWRITE_COMPILE; do
