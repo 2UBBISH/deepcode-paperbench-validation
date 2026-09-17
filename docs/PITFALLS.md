@@ -64,6 +64,7 @@
 | 白天 429 / 5xx / 连续 11 次空响应,整轮报废 | SiliconFlow 日间限流;上游重试只有 1/2/4s 三次 | persistent 退避 `10/30/60/180/300s`、上限 900s、同错 30 次;夜间跑;后改用 Paratera(30 分钟零异常) | `run_trial.sh` 注释;台账 |
 | **同名裁判模型换一家 serving,rice 倍数 1.05× ↔ 2.58×**;同一提交 16% 叶级分歧;JudgeEval 上二者同等准确 | serving 差异(对话模板、推理量:输出 token 减半) | 任何分数带"模型名 + serving + temperature + 提示词版本";LLM 裁判分不做目标函数 | `docs/FINDING_judge_serving_dependence.md` |
 | 坑14:Paratera 余额耗尽**不报 402**,付费模型 403 `team_model_access_denied`、免费档仍 200、模型表从 93 掉到 8 | 平台降级到免费档;无余额查询端点 | 开跑前 `scripts/paratera_key.sh check`(三件同时出现 = 余额耗尽) | RUNBOOK 坑 14 |
+| Flash 当裁判：叶子成片 `Grading leaf … failed`，`ParsedJudgeResponseInt` 收到 `{"valid{"valid_score…`、`{\n{\n "valid_score"…` 这类前缀重复的坏 JSON（2026-09-17，7 叶/90 秒） | Paratera 的 `DeepSeek-V4-Flash` 对带 `response_format`（JSON schema）的请求返回的正文被打乱；判分正文（自由文本）那一步没事，坏的是二级结构化解析 | 裁判用 Flash、`PB_STRUCTURED_PARSER_MODEL` 仍用 `DeepSeek-V4-Pro`（解析调用短，成本可忽略）；不要把 Flash 用在任何 `response_format` 路径上 | `runs/judge_eval/console_flash_rice0_attempt1_flash_parser.log` |
 | Paratera 没有 Kimi-K2.7-Code、Qwen3-Coder-Plus | 模型表差异 | 换模型前 `GET /v1/models` 核对;tool-calling 先探针 | `docs/ARCHITECTURE_v0.2_OPTIMAL.md` §0.3 |
 | 推理模型输出被 `max_tokens` 截断且无告警 | 上限写死在四处(agents / 预筛 / 挖掘 / 下载) | 每次调用校验 `finish_reason`、长度、JSON 闭合、空返回 | P1 |
 | 密钥被写进脚本、被 DeepCode 记进 `logs/llm.jsonl` | 明文与日志 | 只经环境变量注入;发布前全树扫描;日志脱敏 | REVIEW 🔴 |
