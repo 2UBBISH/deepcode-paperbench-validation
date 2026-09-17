@@ -38,7 +38,7 @@ All earlier results (Aug 25 – Sep 15) are kept in `docs/RESULTS-HISTORY.md` wi
 
 ## 3. 快速开始（clone 即跑）
 
-前置：Linux / macOS，`git` `curl` `uv`（含 `uvx`）`npx`（Node ≥ 18）`patch`；判分时要 Docker。不需要 git-lfs。
+前置：Linux / macOS，`git` `curl` `uv` `node`+`npm`（Node ≥ 18）`patch`；判分时要 Docker。不需要 git-lfs。
 一把 Paratera 的 OpenAI 兼容 key（复现用 `PARATERA_API_KEY`，裁判用 paperbench/.env 的 `OPENAI_API_KEY`）。
 
 ```bash
@@ -100,6 +100,7 @@ PAPER=sapg bash deepcode_test/scripts/run_grade.sh           # 真判，约 ¥38
 │   └── PITFALLS.md                    踩坑总表（60 余条）
 ├── runs/                        ← 每轮的日志 / 输入 / 任务归档 / 摆卷副本 / 判分 JSON（gitignore）
 ├── .deepcode-home/              ← setup.sh 生成的 DeepCode 配置目录（gitignore；与你机器上其它 DeepCode 完全隔离）
+├── .mcp-node/                   ← setup.sh 装的 filesystem MCP 服务器（gitignore）
 └── frontier-evals/              ← setup.sh 稀疏克隆的 PaperBench（gitignore）
 ```
 
@@ -184,7 +185,8 @@ DeepEvol 线也不带 ①②：对比方法的覆盖交给计划审阅（`--ask`
 | 现象 | 根因 | 本仓库怎么处理 |
 | --- | --- | --- |
 | "思考关"没关，70% 输出 token 是思考 | Paratera 忽略 `enable_thinking:false` | 只认 `thinking:{type:disabled}`（`compat.thinking`）；`run_trial.sh` 跑完汇总 `reasoning_tokens`，非 0 即口径失败 |
-| 所有 agent 零工具空转、产物为空 | `deepcode init` 不写 `tools.mcpServers` | 模板带 7 个服务器，`python -m tools.xxx` 模块方式启动；口径闸检查齐全 |
+| 所有 agent 零工具空转、产物为空 | `deepcode init` 不写 `tools.mcpServers` | 模板带 7 个服务器，`python -m tools.xxx` 模块方式启动；filesystem / fetch 装成固定路径（`npx`/`uvx` 首次解析 20 s+ 会撞 MCP 连接超时，`uvx` 还会重编 cryptography）；口径闸检查齐全 |
+| `filesystem` MCP 一连就 `Connection closed` | 服务器启动时校验允许目录存在，`deepcode_lab/` 还没建 | `setup.sh` 先 `mkdir -p DeepCode/deepcode_lab` |
 | 参考挖掘 / 下载 agent 8 轮就放弃、报告是 runner 的"到达上限"文本 | 上游 `max_iterations=8` | 40 / 12（两次真机 8 都不够） |
 | 挖掘报告截断，下载侧只见 1 个仓库 | `maxTokens=4096/8192` | 32768 / 16384 |
 | CodeRAG 预筛 JSON 截断 → 静默回退全量索引（8,885 文件仓库需 140 h） | `max_tokens=2000` | 32000；分析/关系 16000 |

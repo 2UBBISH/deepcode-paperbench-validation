@@ -6,7 +6,7 @@
 #   bash setup.sh                       # 默认只水合 sapg 的论文资产；PAPERS="sapg bam" bash setup.sh 可多篇
 #
 # 做的事：
-#   1. 检查 git / curl / uv / npx / uvx / docker
+#   1. 检查 git / curl / uv / node / npm / patch / docker
 #   2. 稀疏克隆 openai/frontier-evals（固定 commit），打 patches/paperbench_local_changes.patch，
 #      复制我们新增的 split 等文件，按 $PAPERS 下载论文资产（LFS 直链）
 #   3. 校验 DeepCode/ = 上游 21ebc57f + patches/deepcode_local_changes.patch，然后 uv venv + uv pip install -r requirements.txt（Python 3.12）
@@ -35,8 +35,8 @@ need() { command -v "$1" >/dev/null 2>&1 || { echo "  ❌ 缺 $1 —— $2"; exi
 need git   "https://git-scm.com"
 need curl  "下载论文资产"
 need uv    "curl -LsSf https://astral.sh/uv/install.sh | sh"
-need uvx   "随 uv 一起安装；fetch MCP 用 uvx mcp-server-fetch"
-need npx   "Node.js ≥ 18；filesystem MCP 用 npx @modelcontextprotocol/server-filesystem"
+need node  "Node.js ≥ 18；filesystem MCP 是一个 node 服务器"
+need npm   "随 Node 一起；setup 把 @modelcontextprotocol/server-filesystem 装到 <仓库>/.mcp-node"
 need patch "GNU/BSD patch，校验 DeepCode/ 用"
 if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then echo "  ✅ docker daemon 在跑（判分要用）"; else echo "  ⚠️ docker 未运行（复现不需要，判分前再启动）"; fi
 
@@ -85,8 +85,18 @@ bash "$ROOT/patches/verify_deepcode.sh"
 # --only-binary cryptography：Intel macOS 上最新 cryptography 没有 wheel、从源码编译失败，让 uv 退到有 wheel 的版本（实测 48.0.1）
 ( cd "$ROOT/DeepCode" \
   && { [ -x .venv/bin/python ] || uv venv --python "$PYTHON_VERSION" .venv >/dev/null; } \
-  && uv pip install --python .venv/bin/python -q --only-binary cryptography -r requirements.txt \
-  && echo "  ✅ DeepCode/.venv ($(.venv/bin/python --version)，requirements.txt 已装)" )
+  && uv pip install --python .venv/bin/python -q --only-binary cryptography -r requirements.txt mcp-server-fetch \
+  && echo "  ✅ DeepCode/.venv ($(.venv/bin/python --version)，requirements.txt + mcp-server-fetch 已装)" )
+# 两个外部 MCP 服务器装成固定路径，而不是运行时 npx/uvx（npx 首次解析包要 20 秒以上、会撞 MCP 连接超时；
+# uvx mcp-server-fetch 会重新编译 cryptography）。fetch 装进 DeepCode/.venv，filesystem 装到 <仓库>/.mcp-node。
+# filesystem MCP 启动时校验允许目录存在，否则立刻退出（DeepCode 侧只看到 "Connection closed"）：先建好工作区
+mkdir -p "$ROOT/DeepCode/deepcode_lab"
+FS_JS="$ROOT/.mcp-node/node_modules/@modelcontextprotocol/server-filesystem/dist/index.js"
+if [ ! -f "$FS_JS" ]; then
+  npm install --silent --no-audit --no-fund --prefix "$ROOT/.mcp-node" @modelcontextprotocol/server-filesystem >/dev/null
+fi
+[ -f "$FS_JS" ] && echo "  ✅ filesystem MCP: $FS_JS" || { echo "  ❌ 装不上 @modelcontextprotocol/server-filesystem"; exit 1; }
+[ -x "$ROOT/DeepCode/.venv/bin/mcp-server-fetch" ] && echo "  ✅ fetch MCP: DeepCode/.venv/bin/mcp-server-fetch" || { echo "  ❌ DeepCode/.venv/bin/mcp-server-fetch 不存在"; exit 1; }
 ( cd "$PB" && uv sync >/dev/null && echo "  ✅ paperbench .venv" )
 
 echo "==== [4/6] 配置：DEEPCODE_HOME=$DEEPCODE_HOME ===="
@@ -95,8 +105,9 @@ if [ -f "$DEEPCODE_HOME/deepcode_config.json" ]; then
   echo "  ⏭ deepcode_config.json 已存在（不覆盖；要重生成先删掉它）"
 else
   sed -e "s#__PY__#$ROOT/DeepCode/.venv/bin/python#g" \
-      -e "s#__NPX__#$(command -v npx)#g" \
-      -e "s#__UVX__#$(command -v uvx)#g" \
+      -e "s#__NODE__#$(command -v node)#g" \
+      -e "s#__FS_JS__#$ROOT/.mcp-node/node_modules/@modelcontextprotocol/server-filesystem/dist/index.js#g" \
+      -e "s#__FETCH__#$ROOT/DeepCode/.venv/bin/mcp-server-fetch#g" \
       -e "s#__WORKSPACE__#$ROOT/DeepCode/deepcode_lab#g" \
       "$ROOT/config/deepcode_config.template.json" > "$DEEPCODE_HOME/deepcode_config.json"
   chmod 600 "$DEEPCODE_HOME/deepcode_config.json"

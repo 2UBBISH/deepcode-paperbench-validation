@@ -33,8 +33,8 @@
       "code-implementation":    { "type": "stdio", "command": "__PY__",  "args": ["-m", "tools.code_implementation_server"], "tool_timeout": 600 },
       "code-reference-indexer": { "type": "stdio", "command": "__PY__",  "args": ["-m", "tools.code_reference_indexer"],    "tool_timeout": 300 },
       "document-segmentation":  { "type": "stdio", "command": "__PY__",  "args": ["-m", "tools.document_segmentation_server"], "tool_timeout": 300 },
-      "filesystem":             { "type": "stdio", "command": "__NPX__", "args": ["-y", "@modelcontextprotocol/server-filesystem", "__WORKSPACE__"], "tool_timeout": 300 },
-      "fetch":                  { "type": "stdio", "command": "__UVX__", "args": ["mcp-server-fetch"], "tool_timeout": 300 },
+      "filesystem":             { "type": "stdio", "command": "__NODE__", "args": ["__FS_JS__", "__WORKSPACE__"], "tool_timeout": 300 },
+      "fetch":                  { "type": "stdio", "command": "__FETCH__", "args": [], "tool_timeout": 300 },
       "github-downloader":      { "type": "stdio", "command": "__PY__",  "args": ["-m", "tools.git_command"],      "tool_timeout": 600 },
       "command-executor":       { "type": "stdio", "command": "__PY__",  "args": ["-m", "tools.command_executor"], "tool_timeout": 600 }
     }
