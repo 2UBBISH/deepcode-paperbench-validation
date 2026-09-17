@@ -106,6 +106,14 @@ _REASONING_KIMI_K3 = ModelReasoningCapabilities(
     default_enabled=True,
     supports_summary=True,
 )
+#: Zhipu GLM-5.2 publishes two named effort levels on top of the thinking
+#: switch (docs.z.ai/guides/llm/glm-5.2): ``high`` (enhanced
+#: reasoning) and ``max`` (deep reasoning, the default).
+_REASONING_GLM_52 = ModelReasoningCapabilities(
+    supported_efforts=("high", "max"),
+    default_effort="max",
+    default_enabled=True,
+)
 #: A binary thinking switch with no published ladder (``thinking_style`` on
 #: the ProviderSpec is the wire mechanism). Product surface: Auto / Off.
 _REASONING_TOGGLE = ModelReasoningCapabilities(default_enabled=True)
@@ -113,6 +121,18 @@ _REASONING_TOGGLE = ModelReasoningCapabilities(default_enabled=True)
 _REASONING_ALWAYS_ON = ModelReasoningCapabilities(
     default_enabled=True,
     mandatory=True,
+)
+
+# Bedrock exposes the same Claude release through direct, geography-scoped,
+# and global inference IDs. Keep these exact spellings in the offline catalog:
+# the dots are part of the IDs and cannot be removed by the slash normalizer.
+_BEDROCK_CLAUDE_SONNET_46_IDS = (
+    "anthropic.claude-sonnet-4-6",
+    "us.anthropic.claude-sonnet-4-6",
+    "eu.anthropic.claude-sonnet-4-6",
+    "au.anthropic.claude-sonnet-4-6",
+    "jp.anthropic.claude-sonnet-4-6",
+    "global.anthropic.claude-sonnet-4-6",
 )
 
 # --------------------------------------------------------------------------
@@ -178,6 +198,14 @@ _SEED: dict[str, ModelInfo] = {
     "claude-haiku-4-5": ModelInfo(
         "claude-haiku-4-5", 200_000, 64_000, 1.0, 5.0, reasoning=_REASONING_ANTHROPIC
     ),
+    # Amazon Bedrock Claude Sonnet 4.6 inference IDs. Bedrock publishes a 1M
+    # context window for this release. Pricing is deliberately absent because
+    # it is account/region/service-tier dependent, and the OpenAI-compatible
+    # surface does not publish DeepCode's semantic reasoning-effort ladder.
+    **{
+        model_id: ModelInfo(model_id, 1_000_000, 64_000)
+        for model_id in _BEDROCK_CLAUDE_SONNET_46_IDS
+    },
     # Dotted spellings of the same Anthropic releases. Listed rather than
     # normalised away, because the dot is meaningful elsewhere in this table
     # (``gpt-5.4``, ``kimi-k2.5`` are distinct models, not separator noise).
@@ -232,6 +260,18 @@ _SEED: dict[str, ModelInfo] = {
     # ``thinking: {"type": ...}`` (docs.z.ai/guides/llm/glm-4.6).
     "glm-4.6": ModelInfo(
         "glm-4.6", 204_800, 131_072, 0.43, 1.75, reasoning=_REASONING_TOGGLE
+    ),
+    # Zhipu GLM-5.2 — 1M context / 128K output, deep thinking enabled by
+    # default with ``thinking: {"type": "enabled"}`` + ``reasoning_effort``
+    # high|max (docs.z.ai/guides/llm/glm-5.2). List prices
+    # ¥8 / ¥28 per 1M tokens (bigmodel.cn), cached input ¥2.
+    "glm-5.2": ModelInfo(
+        "glm-5.2",
+        1_048_576,
+        131_072,
+        1.14,
+        4.0,
+        reasoning=_REASONING_GLM_52,
     ),
     # MiniMax — the M2 line shares one window; M3 is the long-context tier
     # (platform.minimax.io/docs/api-reference/api-overview). The published
@@ -291,6 +331,8 @@ _FAMILY_RULES: tuple[tuple[str, ModelInfo], ...] = (
     # Longest prefix first: M3 is the 1M tier, the rest of the line is 200K.
     ("minimax-m3", _SEED["minimax-m3"]),
     ("minimax", _SEED["minimax-m2.7"]),
+    # GLM-5.x is the 1M window tier; GLM-4.x stays 200K.
+    ("glm-5", _SEED["glm-5.2"]),
     ("glm", _SEED["glm-4.6"]),
 )
 

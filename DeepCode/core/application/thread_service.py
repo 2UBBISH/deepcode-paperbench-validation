@@ -22,7 +22,12 @@ from core.application.event_service import EventBroker
 from core.application.views import item_view, thread_view, turn_view, workflow_view
 from core.domain.common import new_id, utc_now
 from core.domain.event import DomainEvent
-from core.domain.execution_profile import ExecutionProfile
+from core.domain.execution_profile import (
+    MAX_CONTEXT_WINDOW_TOKENS,
+    MIN_CONTEXT_WINDOW_TOKENS,
+    ExecutionProfile,
+    ExecutionSelection,
+)
 from core.domain.execution_security import (
     ExecutionAccessPreset,
     ExecutionSecurityProfile,
@@ -56,6 +61,15 @@ _MISSING_WORKSPACE_DIR = ".missing-workspaces"
 _UNSET = object()
 
 
+def _visible_conversation_items(items: list[Item]) -> list[Item]:
+    """Match the canonical text conversation, retaining tool-only timeline items.
+
+    An assistant record carrying toolCalls can have no text. Its reconstructed
+    item belongs to the timeline, but neither side counts it as spoken text.
+    """
+    return [item for item in items if str(item.payload.get("text", item.summary))]
+
+
 def _projected_item_kind(message: SessionMessage) -> ItemKind:
     """The item kind a rebuilt-from-JSONL record should carry.
 
@@ -80,7 +94,22 @@ def _projected_item_kind(message: SessionMessage) -> ItemKind:
 def _projected_item_payload(message: SessionMessage) -> dict[str, object]:
     """Payload matching what the live projection stores for the same kind."""
     if message.role != "tool":
-        return {"text": message.content, "projectedFromSession": True}
+        payload = {"text": message.content, "projectedFromSession": True}
+        if message.role == "user":
+            # Keep admission receipts when rebuilding disposable SQLite state.
+            metadata = message.metadata or {}
+            for key in (
+                "messageId",
+                "requestFingerprint",
+                "expectedTurnId",
+                "deliveryState",
+                "source",
+                "delivery",
+                "client",
+            ):
+                if isinstance(metadata.get(key), str):
+                    payload[key] = metadata[key]
+        return payload
     metadata = message.metadata or {}
     name = str(metadata.get("name") or "tool")
     return {
@@ -140,6 +169,7 @@ class ThreadService:
         model: str | None = None,
         connection_id: str | None = None,
         reasoning_effort: str | None = None,
+        context_window: int | None = None,
         access_preset_override: ExecutionAccessPreset | None = None,
         workspace_path: str | None = None,
         parent_thread_id: str | None = None,
@@ -178,6 +208,7 @@ class ThreadService:
             else None
         )
         resolved_reasoning = normalize_reasoning_effort(reasoning_effort)
+        resolved_context_window = self._normalize_context_window(context_window)
         if access_preset_override is not None and not isinstance(
             access_preset_override,
             ExecutionAccessPreset,
@@ -222,6 +253,7 @@ class ThreadService:
             "model": resolved_model,
             "connection_id": resolved_connection,
             "reasoning_effort": resolved_reasoning,
+            "context_window": resolved_context_window,
             "access_preset_override": (
                 access_preset_override.value
                 if access_preset_override is not None
@@ -468,6 +500,7 @@ class ThreadService:
         connection_id: str | None,
         model: str | None,
         reasoning_effort: str | None | object = _UNSET,
+        context_window: int | None | object = _UNSET,
     ) -> Thread:
         """Atomically change the selection used by future Turns."""
 
@@ -477,13 +510,17 @@ class ThreadService:
             else None
         )
         resolved_model = model.strip() if model and model.strip() else None
-        metadata: dict[str, str | None] = {
+        metadata: dict[str, object] = {
             "connection_id": resolved_connection,
             "model": resolved_model,
         }
         if reasoning_effort is not _UNSET:
             metadata["reasoning_effort"] = normalize_reasoning_effort(
                 reasoning_effort if isinstance(reasoning_effort, str) else None
+            )
+        if context_window is not _UNSET:
+            metadata["context_window"] = self._normalize_context_window(
+                context_window if isinstance(context_window, int) else None
             )
         if not self.session_store.update_metadata(thread_id, metadata):
             raise ThreadNotFoundError(f"thread not found: {thread_id}")
@@ -630,6 +667,7 @@ class ThreadService:
         model = self._model_for(metadata)
         connection_id = self._connection_for(metadata)
         reasoning_effort = self._reasoning_for(metadata)
+        context_window = self._context_window_for(metadata)
         access_preset_override = self._access_preset_for(metadata)
         archived = bool(metadata.get("archived"))
         archived_at = (
@@ -661,6 +699,7 @@ class ThreadService:
                     model=model,
                     connection_id=connection_id,
                     reasoning_effort=reasoning_effort,
+                    context_window=context_window,
                     access_preset_override=access_preset_override,
                     workspace_path=str(workspace),
                     created_at=canonical_created,
@@ -699,6 +738,7 @@ class ThreadService:
                     model=model,
                     connection_id=connection_id,
                     reasoning_effort=reasoning_effort,
+                    context_window=context_window,
                     access_preset_override=access_preset_override,
                     workspace_path=str(workspace),
                     updated_at=updated_at,
@@ -765,7 +805,9 @@ class ThreadService:
             if message.role in {"user", "assistant"} and message.content
         ]
         items = ItemRepository(connection)
-        projected_items = items.conversation_for_thread(thread.id)
+        projected_items = _visible_conversation_items(
+            items.conversation_for_thread(thread.id)
+        )
         projected = [
             (
                 "user" if item.kind is ItemKind.USER_MESSAGE else "assistant",
@@ -1237,6 +1279,7 @@ class ThreadService:
             "model": thread.model,
             "connection_id": thread.connection_id,
             "reasoning_effort": thread.reasoning_effort,
+            "context_window": thread.context_window,
             "access_preset_override": (
                 thread.access_preset_override.value
                 if thread.access_preset_override is not None
@@ -1274,6 +1317,7 @@ class ThreadService:
             thread.model,
             thread.connection_id,
             thread.reasoning_effort,
+            thread.context_window,
             thread.access_preset_override,
             thread.status is ThreadStatus.ARCHIVED,
             thread.archived_at,
@@ -1363,7 +1407,12 @@ class ThreadService:
         projection conflict.
         """
         metadata = message.metadata or {}
-        return "delivery" in metadata
+        # User input also carries delivery provenance (current_turn/next_turn).
+        # Only the context-note sink's markers identify internal user-role notes.
+        return message.role == "user" and metadata.get("delivery") in (
+            "mid_turn",
+            "between_turns",
+        )
 
     def _merge_projection_tail(
         self,
@@ -1372,6 +1421,7 @@ class ThreadService:
         *,
         projection_thread_id: str,
     ) -> bool:
+        projected_items = _visible_conversation_items(projected_items)
         canonical_pairs = [
             (message.role, message.content)
             for message in canonical.messages
@@ -1509,6 +1559,29 @@ class ThreadService:
     def _reasoning_for(metadata: dict) -> str | None:
         raw = metadata.get("reasoning_effort") or metadata.get("reasoningEffort")
         return normalize_reasoning_effort(str(raw)) if raw is not None else None
+
+    @staticmethod
+    def _context_window_for(metadata: dict) -> int | None:
+        raw = metadata.get("context_window") or metadata.get("contextWindow")
+        if (
+            isinstance(raw, bool)
+            or not isinstance(raw, int)
+            or raw < MIN_CONTEXT_WINDOW_TOKENS
+            or raw > MAX_CONTEXT_WINDOW_TOKENS
+        ):
+            return None
+        return raw
+
+    @staticmethod
+    def _normalize_context_window(value: int | None) -> int | None:
+        if value is not None and (
+            isinstance(value, bool) or not isinstance(value, int)
+        ):
+            raise InvalidArgumentError("context_window must be an integer or None")
+        try:
+            return ExecutionSelection(context_window=value).normalized().context_window
+        except ValueError as exc:
+            raise InvalidArgumentError(str(exc)) from exc
 
     @staticmethod
     def _access_preset_for(metadata: dict) -> ExecutionAccessPreset | None:

@@ -3,7 +3,7 @@
 # Paratera API key 统一管理
 #
 # 为什么需要它:key 同时被两个消费方读取,手工改容易漏一处 ——
-#   ① 底座  ~/.deepcode/credentials.json         connections.paratera
+#   ① 底座  $DEEPCODE_HOME/credentials.json    connections.paratera（默认 <仓库>/.deepcode-home）
 #   ② 裁判  frontier-evals/.../paperbench/.env    OPENAI_API_KEY
 # 漏改的表现是「复现跑得好好的,判分全部 401」,而且要等判分启动才发现。
 #
@@ -14,13 +14,15 @@
 #   bash paratera_key.sh list               列出备用池(打码显示)
 #   bash paratera_key.sh next               当前 key 探活失败时,自动切到池里第一个可用的
 #
-# 备用池: ~/.deepcode/paratera_keys.json(chmod 600,不进仓库)
+# 备用池: $DEEPCODE_HOME/paratera_keys.json(chmod 600,不进仓库)
+# 也可以完全不用 credentials.json：run_trial.sh 的 ENV_FILE 只经环境变量注入 PARATERA_API_KEY
 # ============================================================
 set -euo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO="$(cd "$HERE/../.." && pwd)"
-CRED="$HOME/.deepcode/credentials.json"
-POOL="$HOME/.deepcode/paratera_keys.json"
+DEEPCODE_HOME="${DEEPCODE_HOME:-$REPO/.deepcode-home}"
+CRED="$DEEPCODE_HOME/credentials.json"
+POOL="$DEEPCODE_HOME/paratera_keys.json"
 PB_ENV="$REPO/frontier-evals/project/paperbench/.env"
 BASE_URL="https://llmapi.paratera.com/v1"
 MODEL="${PARATERA_PROBE_MODEL:-DeepSeek-V4-Pro}"

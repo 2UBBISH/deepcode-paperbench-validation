@@ -89,19 +89,11 @@ class LoopDetector:
         if len(self.tool_history) >= self.max_repeats:
             recent_tools = self.tool_history[-self.max_repeats :]
             if len(set(recent_tools)) == 1:  # All same tool
-                # [local compat] Consecutive write_file calls are the NORMAL
-                # working mode in the indexed (2-tool) surface: the agent
-                # writes planned files one after another with different
-                # arguments. This name-only check cannot tell real loops
-                # from healthy progress for write-class tools, so exempt
-                # them; runaway behaviour is still covered by the progress
-                # stall, per-file timeout, error-count, and iteration caps.
-                if recent_tools[0] not in ("write_file", "write_multiple_files"):
-                    return {
-                        "status": "loop_detected",
-                        "message": f"⚠️ Loop detected: {recent_tools[0]} called {self.max_repeats} times consecutively",
-                        "should_stop": True,
-                    }
+                return {
+                    "status": "loop_detected",
+                    "message": f"⚠️ Loop detected: {recent_tools[0]} called {self.max_repeats} times consecutively",
+                    "should_stop": True,
+                }
 
         # Check file timeout
         if (

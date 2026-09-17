@@ -21,7 +21,7 @@ REPO="$(cd "$HERE/../.." && pwd)"
 PAPER="${PAPER:-fre}"
 PB="$REPO/frontier-evals/project/paperbench"
 SUB_ROOT="$HOME/pb_submissions/$PAPER"
-OUT="$HERE/../$PAPER"
+OUT="$REPO/runs/$PAPER"
 DRY="${DRY:-0}"
 
 echo "==== [0/4] 前置检查 ===="
@@ -62,7 +62,7 @@ if [ "$DRY" = "1" ]; then
 fi
 
 echo ""
-echo "==== [3/4] 判分(code_only · DeepSeek-V4-Pro 裁判恒定)$(date +%F\ %T) ===="
+echo "==== [3/4] 判分(code_only · 裁判 ${PB_JUDGE_MODEL:-DeepSeek-V4-Pro} 恒定)$(date +%F\ %T) ===="
 cd "$PB"
 export PATH="$HOME/.local/bin:$PATH"
 # macOS Docker Desktop serves ~/.docker/run/docker.sock, not /var/run/docker.sock: tell docker-py and the sandbox.
@@ -97,4 +97,4 @@ for f in sorted(glob.glob(os.path.join(grp, '*', 'grade.json'))):
     shutil.copy(f, os.path.join(out, f"{os.path.basename(os.path.dirname(f))}.grade.json"))
 print(f"\n  判分结果已复制到 {out}")
 PY
-echo "==== 记得回填 docs/HANDOFF_FRE.md ===="
+echo "==== 判分 JSON 在 $OUT/grades（不入库）；数字请登记到 docs/RESULTS-HISTORY.md ===="

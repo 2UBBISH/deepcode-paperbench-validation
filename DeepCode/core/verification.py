@@ -39,6 +39,52 @@ class VerificationResult:
         return self.exit_code == 0 and not self.timed_out
 
 
+_PROJECT_MARKERS = (
+    "pytest.ini",
+    "pyproject.toml",
+    "setup.cfg",
+    "setup.py",
+    "tests",
+    "package.json",
+    "Cargo.toml",
+)
+
+
+def resolve_project_root(root: Path) -> Path:
+    """Descend into a single top-level project folder when ``root`` is a wrapper.
+
+    Planners routinely emit one project directory (``my_project/``) under the
+    generation root and put ``tests/`` inside it. Discovery on the wrapper
+    then finds nothing and the run is reported ``unverified`` although a full
+    test suite exists one level down. Only an unambiguous layout is
+    followed: no markers at ``root`` and exactly one candidate subdirectory
+    that carries a marker or a ``test_*.py`` file.
+    """
+    root = Path(root)
+    if any((root / name).exists() for name in _PROJECT_MARKERS):
+        return root
+    if any(root.glob("test_*.py")) or any(root.glob("*_test.py")):
+        return root
+    try:
+        children = [
+            child
+            for child in root.iterdir()
+            if child.is_dir()
+            and not child.name.startswith(".")
+            and child.name not in {"__pycache__", "node_modules", "venv", ".venv"}
+        ]
+    except OSError:
+        return root
+    if len(children) != 1:
+        return root
+    child = children[0]
+    if any((child / name).exists() for name in _PROJECT_MARKERS):
+        return child
+    if any(child.glob("test_*.py")) or any(child.glob("*_test.py")):
+        return child
+    return root
+
+
 def discover_verification_commands(root: Path) -> tuple[VerificationCommand, ...]:
     commands: list[VerificationCommand] = []
     python_tests = _discover_python_tests(root)

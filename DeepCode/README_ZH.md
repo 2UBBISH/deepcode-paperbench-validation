@@ -77,11 +77,10 @@
 *在可视化工作台中使用 DeepCode，管理 Session 和目标，并查看工具活动、代码修改与验证过程。*
 </div>
 
-DeepCode 只有一套 Agent 运行时，同时提供两种使用界面：面向终端
-工作流的交互式 CLI，以及用于 Session、审查和设置的 Tauri Desktop。
-两端打开同一份本地 Project、Session 历史、模型、Skills、权限、Goals 与
-Automations。从源码启动请参考
-[`Desktop 运行指南`](desktop/README.md)。
+DeepCode 提供 TUI、Desktop 和 Web 三种客户端，连接同一个本地共享后台，
+共用 Project、Session 历史、模型、Skills、权限、Goals 与 Automations。
+分别使用 `deepcode`、`deepcode desktop` 和 `deepcode web` 启动；安装及首次任务
+见[快速开始](#快速开始)。
 
 ---
 
@@ -121,32 +120,252 @@ Automations。从源码启动请参考
 - [📰 新闻](#新闻)
 - [🧠 DeepCode 中的 Deep](#deepcode-中的-deep)
 - [🚀 核心能力](#核心能力)
-  - [Agent Harness](#agent-harness)
-  - [Loop Engineering](#loop-engineering)
-  - [Context Engineering](#context-engineering)
+  - [直接在你的仓库里工作](#直接在你的仓库里工作)
+  - [以 Goal 驱动的 Loop Engineering](#以-goal-驱动的-loop-engineering)
   - [以证据判断完成](#以证据判断完成)
-  - [持久化本地工作](#持久化本地工作)
-  - [由用户控制的模型与 Skills](#由用户控制的模型与-skills)
-  - [实时 Web 调研](#live-web-research)
-  - [并行且可重复的工作](#并行且可重复的工作)
+  - [持久化的 Session 与项目上下文](#持久化的-session-与项目上下文)
+  - [你的模型，你的推理设置](#你的模型你的推理设置)
+  - [可复用的 Skills](#可复用的-skills)
+  - [看得懂的权限](#看得懂的权限)
+  - [并行 Agent，互不冲突文件](#并行-agent互不冲突文件)
+  - [让可重复的工程工作自动化](#让可重复的工程工作自动化)
+  - [Paper2Code](#paper2code)
 - [⚡ 快速开始](#快速开始)
+  - [三种启动入口](#三种启动入口)
+  - [安装 DeepCode](#安装-deepcode)
+  - [配置并选择模型](#配置并选择模型)
+  - [启动 TUI](#启动-tui)
+  - [启动 Desktop](#启动-desktop)
+  - [启动 Web](#启动-web)
+  - [完成并验收第一个任务](#完成并验收第一个任务)
+  - [管理共享后台与排查问题](#管理共享后台与排查问题)
 - [🧭 使用 DeepCode](#使用-deepcode)
 - [⚙️ Headless 与 Automation](docs/HEADLESS_AND_AUTOMATION.md#中文)
-- [🔬 Paper2Code](#paper2code)
+- [🔬 Paper2Code](#paper2code-1)
   - [原始架构](#原始架构)
   - [研究结果](#研究结果)
-- [🎬 实时演示](#live-demonstrations)
+- [🎬 实时演示](#-实时演示)
 - [🛠️ 开发](#开发)
-- [⭐ 星标历史](#star-history)
-- [🙏 致谢](#contributors)
-- [📖 引用](#citation)
-- [📄 许可证](#license)
+- [⭐ 星标历史](#-星标历史)
+- [🙏 致谢](#-致谢)
+- [📖 引用](#-引用)
+- [📄 许可证](#-许可证)
 
 <p align="center">
   <img src="assets/readme/deepcode-overview.png" alt="DeepCode 完成并验证一个真实任务" width="1080" />
 </p>
 
 ## 新闻
+
+**2026-09-09 · TUI、Desktop 与 Web 共用一个本地后台**
+
+- **选择你习惯的界面。** 运行 `deepcode` 启动 TUI，`deepcode desktop`
+  打开桌面应用，或用 `deepcode web` 在浏览器中打开工作台。三种界面连接
+  同一个本地后台，Web 无需注册 DeepCode 账号。
+- **换个界面，继续同一个任务。** 关闭客户端后，正在执行的任务继续在后台
+  运行。你可以从其他界面重新连接，查看同一段对话、工具活动并处理审批。
+  任务继续执行需要电脑保持唤醒，遇到审批时仍需你确认。
+- **配置模型，并验证它能否正常工作。** 保存的云端或本地模型连接可在三种
+  界面中使用。你可以查看可用模型、发送简短请求检查响应，并在使用自定义
+  模型服务前验证流式输出和工具调用。参见[模型与服务商指南](docs/guide/models.md)。
+- **管理后台，为升级做好准备。** 使用 `deepcode service` 命令查看状态和
+  日志，或等待当前任务完成后停止服务。升级前可以创建运行时数据快照，
+  需要时再恢复；项目文件仍使用你原有的版本管理或备份方式。
+  参见[升级与恢复指南](docs/UPGRADE_AND_RESTORE.md)。
+
+从更新后的[快速开始](#快速开始)和[第一个编程任务教程](docs/guide/getting-started.md)
+开始使用。（[#212](https://github.com/HKUDS/DeepCode/pull/212)）
+
+**2026-09-06 · DeepCode v2.2.0：Session 上下文窗口上限、会留下记忆的压缩，以及完整本地化的 Desktop**
+
+- **给 Session 的上下文窗口设上限。** TUI 里的 `/context 64k` 或 Desktop 模型
+  选择器旁的预设，可以把模型公布的窗口收窄给后续 Turn 使用；上限会冻结进每个
+  被接受的 Turn，并直接作用于压缩门控。`/context auto` 恢复跟随模型。（#203）
+- **压缩会在记忆里留下一条笔记，记忆笔记也逃不出它的边界。** 压缩摘要会在
+  后台线程写入工作区记忆；注入的记忆内容包在 `<untrusted-data>` 边界里，
+  闭合标签会被转义，被投毒的笔记无法伪造指令。（#204）
+- **外观设置也说简体中文了**，Desktop 外壳的 zh-CN 覆盖至此完整。（#202）
+
+**2026-09-03 · Desktop 目录竞态、更诚实的命令筛查、GLM-5.2 与两项依赖升级**
+
+- **切换项目不再让 MCP 目录卡住。** 在一个项目里发起的探测或变更，不会再
+  作废你切换过去的那个项目的加载，目录不再停在加载状态。（#201）
+- **legacy `execute_bash` 的筛查改按 argv 匹配，而不是子串。** `rm -r -f`、
+  `--recursive --force`、`chmod 0777` 以及藏在管道里的破坏性阶段都能被识别；
+  `touch rm-rf-notes.txt` 不会再被误拦。它仍只是沙箱前面一层廉价的初筛，
+  沙箱才是边界。（#195）
+- **GLM-5.2 进入模型目录** —— 1M 上下文、128K 输出、`reasoning_effort`
+  `high` / `max`。（来自 #198）
+- **安全升级：** Desktop 工具链的 `browserslist` 越过 GHSA-c83g-rgw3-j3cx，
+  App Server sidecar 的 `pypdf` 升到 6.16.1（CVE-2026-84309/84310/84311）。
+
+**2026-08-28 · 社区修复：插件凭据警告与更完整的简体中文 Desktop**
+
+- **Agent Plugin 清单会对明文凭据发出警告。** 插件 `mcp.json` 里看起来像
+  密钥的字面 `env` 与 `headers` 值会产生一条脱敏警告，而不是静默加载；
+  文档改为指引运行时凭据绑定。（#194，2026-08-27 合入）
+- **Desktop 外壳的大部分界面说简体中文了。** 线程头、Goal 面板、审批卡片、
+  检查器、侧栏以及"更新"与"诊断"设置新增约一百条 zh-CN 字符串；英文仍是
+  内联默认值。（#187）
+
+**2026-08-25 · 命令执行器堵上两个绕过**
+
+- **大小写和空白不再能溜过危险命令检查**；原生 `mkdir`/`touch`/`rm`/`cp`/`mv`
+  快路径会拒绝任何指向工作目录之外的操作数，让这些命令像其他命令一样经过
+  沙箱执行，而不是在进程内直接做文件操作。（#193）
+
+**2026-08-23 · 五个经修复的贡献一起落地**
+
+- **MCP 服务器可以懒启动。** `deferLoading` 让服务器保持关闭，直到 Agent
+  调用 `activate_server`；延迟的服务器仍可达且取消安全。（#184）
+- **Hooks 看得到完整生命周期。** `SessionEnd` 在拆卸时恰好运行一次，
+  `PreCompact` 可以在压缩前注入上下文。（#172）
+- **指令文件可以被排除，危险预设必须显式命名。**（#186）
+- **Windows 私有文件获得 fail-safe 的 ACL**，在创建时应用一次（#164）；
+  Desktop sidecar 的 pip 锁定也越过了 PYSEC-2026-3721（#191）。
+
+**2026-08-19 · 经得住恢复、压缩与第二个窗口的 Session**
+
+- **恢复 Session 时找回的是 Agent 做过什么，而不只是说过什么。** 工具调用
+  及其结果现在是规范记录的一部分，恢复后的 Agent 能回答"你刚才运行了什么"。
+  一条测试把规则固化下来：一次运行发出的每个请求，都必须能仅凭 Session
+  文件重建。
+- **压缩保留最近的尾部。** 检查点替换较早的区段，最近的内容——包括助手消息
+  与工具结果——逐字保留，而不是丢掉它们再把摘要放在最后。手动 `/compact`
+  过去几乎会拒绝所有真实对话；现在它能工作，并且检查点以模型自己的历史
+  口吻出现，不再被当成别人的转述而打折扣。
+- **上下文压力靠测量，不靠猜。** 门控现在锚定在服务商自己报告的大小上。
+  内置估算器把中文散文的成本高估了两倍以上，导致中文对话在只用到约一半
+  上下文时就被压缩。
+- **同一 Session 开两个窗口不再互相崩溃。** 每个 Session 现在只有一个
+  活跃写入者，由围绕一个 Turn 持有的操作系统锁保证：第二个窗口会看到一句
+  说明是谁在运行它，而不是有一半概率因为数据库约束而进程死亡。可以在
+  Desktop 与终端之间自由切换——只是别在 Turn 中途。
+
+**2026-08-18 · 运行时学会 dsh 的上下文纪律，TUI 有了面孔**
+
+- **新的 Turn 不再丢掉提示缓存。** 环境块过去每个 Turn 都会重新插到你最新
+  消息之前，于是每个 Turn 都恰好在那个块的位置与上一次请求分叉：每个 Turn
+  边界要重算 7,420 个提示 token，现在是 28 个。
+- **TUI 有了 logo、实时状态行和读得懂的工具卡片。** 工作进行时有旋转指示
+  与扫光，路径按你会敲出来的样子书写，plan 工具的清单终于可见，每个 Turn
+  的页脚带耗时和 token 用量。空闲的 TUI 动画不占任何开销。
+- **一次对照 dsh 的源码级比较变成了计划。** 模型看到的消息列表从哪里来、
+  压缩应该保留什么、Session 记录必须包含什么——逐项测量并写成文档，
+  同时退役了四份无人引用的文档。
+
+**2026-08-17 · 对新设置与 TUI 工作的一轮审查修复**
+
+- **声明的模型在所有地方读起来一致。** 逐模型声明现在会影响选择器展示的
+  目录，而不只是 Turn 执行用的参数，所以你为避免溢出而设置的上下文窗口，
+  就是你看到的那个数字。
+- **采用抓取到的模型后立刻可见。** 目录缓存按塑造它的设置作为键，而不是
+  最多一小时内一直返回上一次的远程列表。
+- **Escape 只关一层。** 关闭服务商编辑器不再连带拆掉外面的设置对话框、
+  丢掉输入到一半的密钥。
+- **删除模型行时带走它自己的容量参数**，而不是留在幸存的那一行上——那样
+  会把它们保存到错误的模型。
+- **自动化运行保留自己的工具。** 为交互聊天选择的默认 agent 预设，不再
+  在背后收窄 `deepcode exec` 与 goal 运行的工具面。
+- **服务商区块明确标注为用户级作用域**，而不是让对话框的项目写入作用域
+  造成误解。
+
+**2026-08-16 · TUI 对每个裸命令都给出选择器**
+
+- **敲命令，从列表里选。** `/model` 现在打开完整的模型目录——每个已配置
+  连接的目录（远程快照或声明条目，OpenRouter 上近千行）汇成一个可过滤的
+  选择器，当前路由置顶，Shift+Tab 切换每个模型公布的推理档位；Enter 同时
+  提交模型与强度。`/preset`、`/effort`、`/permissions`、`/transcript` 与
+  `/skill` 加入 `/resume` 的行列：裸调用打开标出当前选择的选择器，带参数的
+  形式与管道运行保持文本路径。
+- **后台 traceback 不再能撕碎对话记录。** 标准库 logging 以保留调用点的
+  方式桥接进 loguru，所以只写文件的传输真的只写文件；持久事件中继在持续
+  失败时指数退避——每轮一次 traceback、重复只占一行、恢复时给出提示。
+
+**2026-08-15 · 设置长大了：dsh 风格对话框、声明式模型与更安全的配置**
+
+- **连接的密钥只到达为它解析的那些请求。** 构建服务商不再把密钥导出到
+  进程环境（否则每个同模板的连接都可能把它当成自己的）；移除服务商会
+  取消配置所有密钥来源，而不是让它重新出现；当启动环境变量遮蔽了粘贴的
+  密钥时，编辑器会说明是哪一个、以及它优先。验证现在也能从异步宿主发起。
+- **agent 预设选择器长大了。** 带逐预设描述与信任标记的菜单取代了拥挤的
+  原生下拉框，重复的"Default"行没了，已开始的 Session 显示一个只读标签
+  说明它运行的是什么。
+- **管理每个连接实际提供的模型。** 服务商编辑器可以从连接端点抓取实时
+  模型列表并把选中的模型采纳为手动列表；环境提供的密钥会锁定粘贴框而不是
+  悄悄压过它；连接行显示发现的模型数量。
+- **`deepcode chat` 读起来像终端应用，而不是日志。** 重新设计的对话记录
+  ——品牌渐变横幅、按状态着色并带结果折线的工具卡片、块间距、按词边界
+  换行——加上能在提示重绘后存活的真彩色流式输出，而不是 `?[36m` 垃圾。
+- **Desktop 设置变成 dsh 风格对话框。** 左栏是通用 / 模型 / 插件 / Agent
+  预设，头部有"打开配置文件"与写入作用域选择器。通用页新增五个规范行——
+  新 Session 的默认 agent 预设（创建时按值快照应用，CLI 与 TUI 同样）、
+  权限、语言（English/中文，首批翻译）、浅色/深色/跟随系统外观卡片，以及
+  忙碌时 Enter 是转向还是排队的偏好。
+- **模型现在是声明。** `manualModels` 条目可以携带标签、容量与公布的推理
+  档位；离线时声明对执行画像和每个选择器都是权威。发现会按编辑器表单当前
+  所示探测——包括未保存的 URL 或密钥——采纳的选择落成准确的声明行。配置
+  写入获得乐观并发（文件已变化时报冲突而不是覆盖），settings.changed 推送
+  让打开的对话框保持最新。
+- **Session 与模型命令站稳了。** `/resume` 与 `/model` 打开内联选择器——
+  输入按标题过滤、方向键移动、Enter 选中、Tab 切换目录范围、Shift+Tab 循环
+  该路由公布的推理强度——resume 会回放对话尾部。裸模型名会解析出它的连接，
+  打错字不再杀死 REPL，`/compact` 用你实际选中的模型做摘要。新动词：
+  `/rename`、`/delete`、`/retry`，并为 session id、记录模式、权限预设和
+  强度档位提供 Tab 补全。
+
+<details>
+<summary><strong>2026 年 8 月更早的更新</strong></summary>
+
+**2026-08-14 · 子代理运行时、压缩与单向持久化**
+
+- **把任务委派给 Codex 或 Claude Code 子代理。** `spawn_agent` 新增外部
+  后端，以洗净的环境和严格的成功判据运行已安装的 CLI；原生子代理则获得
+  人设、经校验的工具白名单、JSON 输出 schema、通过 `send_message` 的后续
+  对话，以及在父 Session 中的完整记录。
+- **守住循环。** 工具可以声明由 runner 强制执行的超时；重复调用追踪器在
+  相同调用反复出现时注入逐级升级、模型可见的提醒。
+- **按需压缩。** `/compact` 对驻留上下文中较早的 Turn 做摘要；每次拒绝都
+  是一个稳定、可读的原因（Turn 忙碌、历史太短、摘要失败或没有变小），
+  规范的 Session 数据从不被触碰。
+- **看清每个配置值来自哪个文件。** 诊断会报告每个已配置的叶子及其提供层
+  与有界预览；形似凭据的子树整体脱敏。一份原样的 deepseek-harness Skill
+  也能不加修改地从 `.agents/skills` 加载。
+- **用最便宜的足够手段缓解上下文压力。** 有压力时运行时先对过大的工具
+  结果做中段裁剪——一次免费、收敛、同时覆盖 MCP 与自定义工具的处理——
+  不够时才做摘要；摘要调用把路由请求作为真正的前缀重放，以复用服务商的
+  提示缓存，而不会让对话变小的摘要会被拒绝。
+- **删掉的 Session 不会复活。** Desktop 投影不再把线程收养回规范存储，
+  除非 SQLite 真正拥有它（遗留导入或自动化引导）；模型在 Turn 中途看到的
+  每条消息——goal 更新、恢复提示、注入的结果——现在都落入规范 Session
+  日志，恢复后的 Session 重建的正是模型看到过的历史。
+- **以另一个 agent 身份打开 Session。** 命名的 agent 预设把人设与工具面
+  打包在一起——`deepcode exec --preset code-reader`、TUI 里的 `/preset`，
+  或 Desktop 模型控件旁的选择器——模型路由与权限仍是独立旋钮。一个预设就
+  是一个 `.claude/agents`/`.agents` 方言的 markdown agent 文件，为其他
+  harness 写的定义可以原样加载；解析出的组合会快照进 Session 记录，对话
+  开始后锁定，此时 Desktop 选择器变成一个只读标签。
+
+**2026-08-13 · Desktop 的排版、主题与原生控件**
+
+- **让字号偏好真正缩放整个应用。** 所有界面尺寸现在都从同一个基于 rem 的
+  比例派生，外观滑块会移动整个窗口。此前它几乎什么都不动：255 个硬编码的
+  像素值无视它，最小的标签只有 7px。
+- **八套主题可选，包含高对比度。** 浅色、深色、Paper 与 Midnight 之外新增
+  两套赤陶色调色板和一个符合 WCAG AAA 的高对比度选项。测试会把每套调色板
+  与完整的 token 集比对，主题不可能只应用一半而露出零散的默认值。
+- **看到一套设计语言，而不是操作系统的。** 滑块、下拉框与焦点环现在跟随
+  当前主题，而不是回落到平台外观；显式选择主题时 `color-scheme` 会随之
+  变化，原生控件不再按系统配色渲染。
+- **看得清那些安静的文字。** 浅色调色板的次要色调与所有强调色都按它们
+  实际所在的表面重新调到 WCAG AA 以上——其中好几处此前不到 3:1。
+
+**2026-08-12 · 经审查的上游核心 Skills**
+
+- **从经审查的上游 Skills 起步。** DeepCode 现在内置八个钉定版本、可追溯
+  来源的 Agent Skills，来自 OpenAI、Codex 与 Anthropic，覆盖 Skill 编写、
+  代码审查、安全分析、前端设计、MCP 构建与 Web 应用测试。它们与项目级、
+  用户级和 Plugin Skills 使用同一套目录与 Turn 运行时。
 
 **2026-08-12 · MCP 模板目录、OAuth 与真实连接测试**
 
@@ -158,6 +377,49 @@ Automations。从源码启动请参考
 - **分开显示配置、授权与连接状态。** 真实测试会初始化 MCP 并统计 tools、
   resources 和 prompts；浏览器 OAuth 使用本机回调，凭据保存在项目配置之外，
   Agent 启动时不会擅自打开浏览器。
+
+**2026-08-10 · 通用 MCP 运行时与可移植的本地 Plugins**
+
+- **从每个入口连接标准 MCP 服务器。** 用户级与受信项目级配置、App Server、
+  CLI 与 Desktop 现在共享一套通用的 stdio/SSE/Streamable HTTP 客户端运行时，
+  带有有界发现、稳定的工具身份、超时、取消以及由 Session 拥有的清理。
+- **让凭据与权限保持显式。** 可执行的配置层整体替换条目，子进程只拿到
+  最小环境，服务商密钥留在私有的 DeepCode 连接里，MCP 策略只能收窄全局的
+  信任、只读、审批与沙箱决定。
+- **不分叉格式地运行 Agent Plugins 1.0 的 MCP 组件。** 合法的 `mcp.json`
+  服务器只在 Agent Session 启动时加入同一运行时，获得隔离的 `PLUGIN_ROOT` /
+  `PLUGIN_DATA`，并独立于内置 Skills 和其他服务器失败。
+- **以 MCP 加两个普通 Skills 接入 OpenSpace。** 一份经审查的配方绑定
+  OpenRouter 连接而不含明文密钥，把 OpenSpace 的宿主 Skills 导入独立目录，
+  并默认禁用云端/上传工具。
+
+- **注册受信的本地 Plugin 文件夹。** CLI 与 Desktop 现在共享一个用户级
+  Plugin 注册表，支持添加、查看、启用、禁用与注销；注销从不删除源文件。
+- **保持单一执行路径。** 启用的 Plugins 通过现有的 Skill Provider 宿主贡献
+  受权限约束的 Skills，因此选择、依赖、渐进读取、权限、版本与审计元数据在
+  CLI、TUI、无头执行与 Desktop 之间保持一致。
+- **保留独立的 Skills。** 项目级与用户级 Skills 仍可独立安装，并优先于同名
+  的 Plugin Skill。Plugins 是可选的打包来源，从不取代 Skill 的生命周期。
+- **使用同一份可移植的包契约。** 本地 Plugins 使用 Agent Plugins 1.0.0 的根
+  清单与固定的 `skills/` 布局；实验性的 DeepCode 清单不再被接受。Hooks、
+  Apps、Marketplaces、下载与更新保持惰性。
+
+**2026-08-09 · Skills 有了真正的运行时契约**
+
+- **通过一个 provider 边界加载指导。** Skill 的发现、内容读取与包内搜索
+  现在都留在拥有该 Skill 的 provider 里，目录只保存元数据。本地 Skills 保持
+  原有的优先级与身份，未来的 provider 不再需要文件系统捷径来适配运行时。
+- **组合 Skills 而不隐藏缺失的能力。** Skills 可以声明工具与 Skill 依赖；
+  DeepCode 按顺序展开、检测环路，并在某项要求不可用时于第一次模型请求前
+  失败。
+- **只暴露任务需要的部分。** Agent 可以渐进地搜索并读取有界的包资源，
+  版本、遍历、符号链接与大小检查都在共享的 provider 契约上执行。
+- **让执行受限且可审计。** Skill 可以收窄 Session 已允许的工具，但不能授予
+  新权限。CLI、TUI 与 Desktop 共享同一份不可变的 Turn 快照，只持久化 Skill
+  的身份、调用类型与版本——不含指令正文。
+- **改动处处可见，无需重启。** 一个工作区宿主拥有共享的目录与 provider
+  缓存，每个 Agent Session 保持自己的 Turn 上下文。本地 Skill 与策略的改动
+  会自动刷新 Desktop，Composer、管理、CLI 与无头执行都通过同一生命周期解析。
 
 **2026-08-07 · 思考强度控制、更多模型服务商、可调的 Desktop**
 
@@ -206,42 +468,25 @@ DeepCode v2.0 带来一套全新的通用型 Coding Agent 框架，面向真实�
 DeepCode v2.0 希望让你少花时间逐步盯着 Agent，多花时间完成真正值得发布的
 软件。期待看到你用它创造出的作品！🚀
 
-**2026-07-31 · CLI 与 Desktop 共用统一执行模型**
-
-- 交互式对话、无头任务、Goal、Automation 与 Desktop 全部进入同一套持久化
-  Project、Session、Thread 和 Turn 生命周期。
-- Workspace trust 与 Session 工具权限相互独立；权限可选 **Ask**、
-  **Read only** 或 **Full access**。
-- 模型 Thinking 强度与推理展示详细度分开控制，改变界面展示不会改变模型请求。
-
-**2026-07-21 · 持久化 Goals 与安全的 Session 生命周期**
-
-- 长任务可以作为 CLI 与 Desktop 共享的可恢复、证据驱动 Goal 运行。
-- Archive 保留历史；永久删除通过统一的 Session 生命周期清理记录，
-  不会删除仓库文件。
-- 中断的删除会从持久化 tombstone 恢复，不会让旧 Session 记录重新出现。
-
-**2026-07-20 · Session 级模型控制与共享 Skills**
-
-- 命名 LLM 连接只需配置一次，即可在整个 DeepCode 中使用。
-- 为后续 Turn 切换连接或模型时，不会丢失之前的完整对话。
-- 无论任务从哪里启动，都能发现、导入、启用和选择同一套项目级或用户级 Skills。
-
-**2026-07-17 · 持久化 Session 导航与回放**
-
-- 每个 Project 管理自己的可折叠 Session 列表，同时仍可跨目录发现更早的记录。
-- 长对话采用增量回放，不再因为把全部历史作为一条超大消息传输而失败。
-- 批准、变更审查、测试与 Artifacts 始终保留在产生它们的任务中。
-
-**2026-07-10 · Loop Engineering 与并行 Agent**
-
-- 给出一个可修改的 Goal，DeepCode 可以在普通 Turn 之间持续理解、
-  实现、按需验证与修复，并且始终可被纠正。
-- 将聚焦任务委派给隔离 worktree 中的 Agent，并在集成前明确暴露冲突。
+</details>
 
 <details>
-<summary><strong>更早的里程碑</strong></summary>
+<summary><strong>2026 年更早的里程碑</strong></summary>
 
+- **2026-07-31 · CLI 与 Desktop 共用统一执行模型。** 交互式对话、无头任务、
+  Goal、Automation 与 Desktop 共享同一套持久化的 Project、Session、Thread
+  与 Turn 生命周期。Workspace trust 与 Session 访问预设相互独立，推理控制
+  保持模型感知。
+- **2026-07-21 · 持久化 Goals 与安全的 Session 生命周期。** 长任务 Goal 可在
+  CLI 与 Desktop 之间恢复；受保护的归档与删除保留仓库文件，并能在中断后
+  安全恢复。
+- **2026-07-20 · Session 级模型控制与共享 Skills。** 命名 LLM 连接与后续 Turn
+  的模型切换保留完整对话历史；项目级与用户级 Skills 在所有入口共享。
+- **2026-07-17 · 持久化 Session 导航与回放。** Project 管理可折叠的 Session
+  历史，长对话增量回放，批准、审查、测试与 Artifacts 始终附着在各自任务上。
+- **2026-07-10 · Loop Engineering 与并行 Agent。** 可修改的 Goal 能在可纠正
+  的 Turn 之间理解、实现、验证与修复；聚焦任务可委派到隔离 worktree，冲突
+  显式暴露。
 - **2026-07-08 · 持久化 Sessions 与记忆。** Session 历史可以跨重启恢复；
   项目长期指令可以写入 `AGENTS.md` 或 `DEEPCODE.md`，持久笔记跟随工作区保存。
 - **2026-07-08 · 通用 Coding Agent。** 自由对话式 TUI、原生文件与 Shell 工具、
@@ -253,7 +498,7 @@ DeepCode v2.0 希望让你少花时间逐步盯着 Agent，多花时间完成真
 
 </details>
 
-## What Deep means in DeepCode
+## DeepCode 中的 Deep
 
 大多数 Coding Agent 都能生成代码。真正困难的是：理解一个真实项目、在正确的边界内完成修改、根据运行结果持续修正，并让用户清楚地知道结果为什么可信。
 
@@ -276,15 +521,15 @@ DeepCode 最特别的地方可以归纳为三点：
 
 DeepCode 的目标不是让 Agent 显得更忙，而是帮助你更可靠地完成真正的软件工程工作。
 
-## Core capabilities
+## 核心能力
 
-DeepCode 提供完整的本地 Coding Agent 工作流。CLI 和 Desktop 只是两种使用方式，它们共享同一套 Agent、Session、模型、Skills、权限和任务状态。
+DeepCode 提供完整的本地 Coding Agent 工作流。TUI、Desktop 和 Web 通过共享后台，使用同一套 Agent、Session、模型、Skills、权限和任务状态。
 
 <p align="center">
   <img src="assets/readme/verification-loop.png" alt="DeepCode Agent Harness 与验证循环" width="1080" />
 </p>
 
-### Work directly in your repository
+### 直接在你的仓库里工作
 
 DeepCode 可以读取和搜索代码、编辑文件、应用 Patch、运行命令与测试，并根据结果继续修改。工具调用、执行进度和文件变化会被持续展示，你可以随时查看 Agent 做了什么以及项目发生了哪些变化。
 
@@ -292,7 +537,7 @@ DeepCode 可以读取和搜索代码、编辑文件、应用 Patch、运行命�
 
 当你提供一个公开的 HTTP 或 HTTPS URL 时，共享的 `web_fetch` 工具可以直接读取页面，不需要搜索服务或额外的 API Key。
 
-### Goal-driven Loop Engineering
+### 以 Goal 驱动的 Loop Engineering
 
 对于无法在一次回答中完成的任务，你可以直接给 DeepCode 一个自然语言 Goal。Agent 会围绕目标持续进行分析、实现、验证和修复，而不需要用户手动推动每一个步骤。
 
@@ -306,31 +551,31 @@ DeepCode 可以读取和搜索代码、编辑文件、应用 Patch、运行命�
 
 任务不会因为进入自动执行就失去控制权。你始终可以改变接下来的方向。
 
-### Evidence-driven completion
+### 以证据判断完成
 
 DeepCode 不使用一套硬编码规则判断所有 Coding 任务。它会根据任务本身选择合适的证据，例如测试结果、构建输出、静态检查、诊断信息、文件变化、Diff 或生成的 Artifacts。
 
 验证失败不会被包装成成功，而会成为下一轮修复的输入。任务完成或真正受阻时，结果、原因以及相关证据会继续保留在 Session 中，方便你检查和复现。
 
-### Durable Sessions and project context
+### 持久化的 Session 与项目上下文
 
 每个 Session 都会保存在本地，并关联到它最初所属的项目。你可以从任意目录启动 DeepCode，找到之前的项目和 Session，在 CLI 或 Desktop 中继续同一段工作。
 
 Session 不只保存聊天文本，还保存工具调用、权限决策、Goal、模型配置和验证记录。项目规则、持久记忆、Skills 与长对话压缩共同帮助 Agent 在复杂任务中保持上下文连续。
 
-### Your models, your reasoning settings
+### 你的模型，你的推理设置
 
 DeepCode 不绑定单一模型厂商。你可以连接 OpenRouter、OpenAI、Anthropic、DeepSeek、Gemini、OpenAI-compatible Gateway、Ollama、vLLM 或其他兼容端点，并使用自己的 API Key。
 
 连接可以在使用前检查凭据、模型列表和真实推理请求。每个 Session 都可以选择模型与 Thinking Level；中途切换模型只影响后续 Turn，不会删除已有对话或混淆之前的工作来源。模型支持时，DeepCode 也会展示 Provider 返回的推理摘要。
 
-### Reusable Skills
+### 可复用的 Skills
 
-Skills 可以把团队规范、领域知识、评审方法或重复工作流变成 Agent 可复用的能力。项目 Skill 放在 `.agents/skills`，个人 Skill 放在 `~/.agents/skills`，也可以通过内置 Skill Creator 以对话方式创建。
+Skills 可以把团队规范、领域知识、评审方法或重复工作流变成 Agent 可复用的能力。DeepCode 内置了钉定版本的上游 Skills，覆盖 Skill 编写、代码审查、安全、前端、MCP 与 Web 测试工作流。项目 Skill 放在 `.agents/skills`，个人 Skill 放在 `~/.agents/skills`，也可以通过内置 Skill Creator 以对话方式创建。
 
 DeepCode 继续读取已有的 `.deepcode/skills` 和 Claude 风格目录，不会自动迁移。Skill 可以指导 Agent 如何工作，但不能绕过项目信任、工具权限或安全边界。
 
-### Permissions you can understand
+### 看得懂的权限
 
 每个项目在执行前都需要明确信任。每个 Session 可以选择：
 
@@ -340,13 +585,13 @@ DeepCode 继续读取已有的 `.deepcode/skills` 和 Claude 风格目录，不�
 
 工具级别还支持 `allow`、`ask` 和 `deny`。CLI 与 Desktop 使用相同的权限状态，任务被停止或异常中断时，DeepCode 不会静默重放可能产生副作用的操作。
 
-### Parallel agents without file collisions
+### 并行 Agent，互不冲突文件
 
 复杂任务可以被拆分给多个专门的 Agent，例如让不同 Agent 分别负责代码调查、测试分析和实现审查。
 
 并行修改可以运行在隔离的 Git Worktree 中，避免多个 Agent 同时修改同一个工作目录。结果返回主任务后再进行检查和整合，冲突会被明确展示，而不是被静默覆盖。主 Agent 始终负责最终 Goal，不会因为委派任务而失去方向。
 
-### Automate repeatable engineering work
+### 让可重复的工程工作自动化
 
 当一项工作已经足够稳定，可以把它保存为 Automation，手动运行或按时间间隔重复执行。例如：
 
@@ -365,150 +610,171 @@ Paper2Code 是 DeepCode 最初的研究方向，也是当前产品中专门面�
 
 ## 快速开始
 
-DeepCode 提供两种界面，并且对应两条独立安装路径。任选一种即可开始；两端
-使用相同的 Agent 运行时和规范 Session 历史。
+你可以用 DeepCode 阅读项目代码、开发功能、修复问题和运行测试。选择习惯的终端、
+桌面应用或浏览器即可，项目和对话可以在三端继续使用。
 
-> `uv tool install --python 3.12 deepcode-hku` 安装的是 CLI 和共享 Python
-> 运行时，**不会**安装 Tauri Desktop 应用。
+### 三种启动入口
 
-### 方案 A：安装 CLI
+安装后，选择一种方式打开 DeepCode：
 
-如果尚未安装 `uv`，请先安装。Windows PowerShell 使用：
+| 界面 | 启动命令 |
+|---|---|
+| **TUI**：在终端中工作 | `deepcode` |
+| **Desktop**：使用桌面应用 | `deepcode desktop` |
+| **Web**：在浏览器中工作 | `deepcode web` |
 
-```powershell
-winget install --id astral-sh.uv --exact
-```
+DeepCode 会自动启动本地后台。你可以关闭界面，下次再回来继续同一段对话。
 
-首次安装 `uv` 后重新打开终端，再执行：
+### 安装 DeepCode
+
+#### 安装已发布版本
+
+准备好 `uv` 后，在终端运行：
 
 ```console
 uv tool install --python 3.12 deepcode-hku
 deepcode init
 ```
 
-这里显式选择 Python 是有意的：DeepCode 要求 Python 3.12+，不能在旧解释器上
-回退安装已经不受支持的历史版本。
-如果现有 uv tool 环境仍安装着 DeepCode 1.x，可执行
-`uv tool upgrade --python 3.12 deepcode-hku` 完成迁移。
+Windows 用户可以先运行 `winget install --id astral-sh.uv --exact` 安装 `uv`，
+再重新打开终端。DeepCode 需要 Python 3.12 或更高版本。
 
-首次创建模型连接。`--api-key` 会打开不回显的安全输入：
+如果想使用桌面应用，还需要从 [GitHub Releases](https://github.com/HKUDS/DeepCode/releases)
+安装 DeepCode Desktop。想体验尚未发布的更新，可以使用下面的源码安装方式。
 
-```console
-deepcode provider set personal-openrouter --template openrouter --label "OpenRouter · Personal" --api-key
-deepcode provider models personal-openrouter --refresh
-deepcode provider test personal-openrouter --model <model-id>
-```
+<details>
+<summary>从源码安装</summary>
 
-进入希望 DeepCode 操作的仓库，然后启动交互式 Agent：
+#### 安装当前源码版本
+
+准备 Git、`uv` 和 Node.js 22 或更高版本，然后运行：
 
 ```console
-cd <你的项目>
-deepcode
-```
-
-`deepcode init` 会在 `~/.deepcode/` 下创建最小用户配置。凭证单独保存在
-用户私有存储中，不会进入 Session 历史。也可以在合适的 Python 3.12+
-环境中使用 `pipx install deepcode-hku` 或 `pip install deepcode-hku`。
-
-### 方案 B：安装 Desktop
-
-Desktop 安装包与 Python 包分开发布。先检查
-[GitHub Releases](https://github.com/HKUDS/DeepCode/releases) 是否提供当前
-平台的签名安装包；如果没有，请使用下面的源码安装流程。
-
-#### macOS 与 Linux 源码安装
-
-请先根据 [Tauri 2 前置依赖指南](https://v2.tauri.app/start/prerequisites/)
-安装平台依赖，并准备 Git、Python 3.12+、`uv`、Node.js 22+ 和稳定版 Rust。
-然后执行：
-
-```bash
 git clone https://github.com/HKUDS/DeepCode.git
 cd DeepCode
-uv venv --python 3.12
-uv pip install --python .venv/bin/python -e .
-.venv/bin/deepcode init
-cd desktop
-npm ci
-npm run setup:sidecar
-npm run build:sidecar
-cd ..
-mkdir -p ~/.local/bin
-ln -sf "$(pwd)/scripts/deepcode-desktop" ~/.local/bin/deepcode-desktop
-export PATH="$HOME/.local/bin:$PATH"
-deepcode-desktop
+npm --prefix desktop ci
+npm --prefix desktop run build:web
+uv tool install --python 3.12 --force .
+deepcode init
 ```
 
-以上步骤会完成一次性的源码启动器安装。以后只要 `~/.local/bin` 已加入
-`PATH`，就可以从任意目录运行 `deepcode-desktop` 启动这个源码版本。如果
-Shell 尚未配置该路径，请把上述 export 写入 Shell profile。命令只负责启动
-Desktop；需要操作的仓库仍应在 Project 侧边栏中添加或选择。
+已有仓库时，从仓库根目录开始，跳过克隆步骤。安装完成后，可在任意目录运行
+`deepcode`。如果还要运行源码版 Desktop，请按照 [Desktop 指南](desktop/README.md)
+准备 Rust 和对应平台的依赖。
 
-#### Windows 源码安装
+</details>
 
-Windows 必须安装 Microsoft Edge WebView2，以及 Visual Studio 2022 Build
-Tools 的 **Desktop development with C++** 工作负载。Build Tools 弹出 UAC
-提示时请选择“是”：
+如果终端提示找不到 `deepcode`，运行 `uv tool update-shell`，再重新打开终端。
 
-```powershell
-winget install --id Git.Git --exact
-winget install --id astral-sh.uv --exact
-winget install --id OpenJS.NodeJS.LTS --exact
-winget install --id Rustlang.Rustup --exact
-winget install --id Microsoft.VisualStudio.2022.BuildTools --exact `
-  --override "--wait --passive --norestart --add Microsoft.VisualStudio.Workload.VCTools --includeRecommended"
-```
+### 配置并选择模型
 
-关闭 PowerShell，重新打开一个窗口并验证工具链：
+你可以在图形界面中配置，也可以使用终端命令，任选一种即可。
 
-```powershell
-git --version
-uv --version
-node --version
-rustup default stable-msvc
-rustc --version
-cargo --version
-```
-
-克隆、准备并启动 Desktop：
-
-```powershell
-git clone https://github.com/HKUDS/DeepCode.git
-Set-Location DeepCode
-uv venv --python 3.12
-uv pip install --python .venv\Scripts\python.exe -e .
-.venv\Scripts\deepcode.exe init
-Set-Location desktop
-npm ci
-$env:DEEPCODE_PYTHON = (Resolve-Path ..\.venv\Scripts\python.exe)
-npm run setup:sidecar
-npm run build:sidecar
-npm run tauri -- dev
-```
-
-Desktop 运行期间请保持这个 PowerShell 窗口开启。后续启动和故障排查请参考
-[Desktop 源码运行指南](desktop/README.md#windows-powershell)。
-
-#### 配置 Desktop 模型
-
-Desktop 启动后，打开 **Settings → AI providers**。
+**在 Desktop 或 Web 中：** 打开 **Settings → AI providers**，点击 **Add provider**，
+选择模型服务并填写 API Key。点击 **Save and check** 获取模型列表；在 **Agent model**
+中选择模型，再点击 **Save and verify model** 发送一条简短请求，检查模型是否可用。
+随后在对话输入框中选择要使用的连接和模型。
 
 <div align="center">
-  <img src="assets/setting_model.png" alt="在 DeepCode Desktop 中配置 AI Provider 与模型" width="100%" style="border-radius: 10px; box-shadow: 0 8px 20px rgba(45,55,72,0.2); margin: 15px 0;"/>
-
-  <sub>在同一个 Desktop 流程中完成凭证保存、模型发现和真实推理验证。</sub>
+  <img src="assets/setting_model.png" alt="在 DeepCode 设置中选择模型服务和模型" width="100%" style="border-radius: 10px; box-shadow: 0 8px 20px rgba(45,55,72,0.2); margin: 15px 0;"/>
 </div>
 
-1. 点击 **Add provider**，选择模型服务，并输入 API Key 或保存它的环境变量名。
-2. 点击 **Save and check**，检查凭证并读取 Provider 的模型目录；这一阶段不会
-   发送项目内容。
-3. 在 **Agent model** 中选择准确的模型 ID，然后点击 **Save and verify
-   model**；最后一步只会发送一次极小的真实推理请求。
-4. 添加或打开 Project，创建 Session，选择模型、Thinking 档位和权限，然后
-   用自然语言描述任务。
+**在终端中：** 下面以 OpenRouter 为例。按提示输入 API Key，输入内容不会显示在终端上。
 
-> 使用界面只改变工作的呈现方式，不改变背后的 Agent、策略、配置和 Session
-> 历史。
+```console
+deepcode provider set my-openrouter --template openrouter --api-key
+deepcode provider models my-openrouter --refresh
+```
+
+从列表中选择一个模型，将下文中的 `MODEL_ID` 替换为它的完整 ID，再测试连接：
+
+```console
+deepcode provider test my-openrouter --model MODEL_ID
+```
+
+配置好的连接可以在三端使用。其他模型服务、本地模型和工具调用检查，见
+[模型配置指南](docs/guide/models.md)。
+
+### 启动 TUI
+
+进入希望 DeepCode 帮你处理的项目目录。第一次使用该目录时，加上 `--trust`，
+表示你信任这个项目并允许 DeepCode 在其中工作。使用上面配置的连接启动：
+
+```console
+cd /path/to/your-project
+deepcode --trust --connection my-openrouter --model MODEL_ID
+```
+
+将路径替换为你的项目目录；Windows 路径例如 `C:\projects\my-app`。以后回到这个
+目录，运行 `deepcode` 即可打开 TUI。输入 `/model` 选择连接和模型，输入 `/help`
+查看可用命令。
+
+### 启动 Desktop
+
+```console
+deepcode desktop
+```
+
+添加你的项目文件夹，确认信任后，点击 **New thread** 开始对话。在输入框中选择
+模型，然后描述你希望完成的任务。
+
+如果从源码安装，该命令会打开开发版应用。首次启动需要准备依赖，可能花费较长时间；
+使用期间请保持启动终端开启。平台依赖和自定义安装位置见 [Desktop 指南](desktop/README.md)。
+
+### 启动 Web
+
+```console
+deepcode web
+```
+
+DeepCode 会自动打开浏览器页面。添加这台电脑上的项目目录，确认信任，创建对话，
+选择模型后即可开始使用，无需 DeepCode 账号。
+
+如果希望自己复制链接打开，运行 `deepcode web --no-open`。请在 60 秒内打开生成的
+访问链接；链接过期或页面提示重新授权时，再运行一次 `deepcode web` 即可。
+
+### 完成并验收第一个任务
+
+进入项目后，可以先让 DeepCode 帮你了解代码：
+
+```text
+介绍这个项目的目录结构、主要模块，以及应该如何运行测试。先不要修改文件。
+```
+
+了解项目后，再提出一个具体的小任务，说明期望的行为和检查方法。例如：
+
+```text
+为配置加载模块补充缺少配置项、配置值不合法时的测试。沿用项目现有的测试风格，
+运行相关测试，并说明修改了哪些文件、测试结果如何。
+```
+
+请按你的项目调整任务内容。DeepCode 工作时，你可以查看工具调用、处理审批，
+并检查文件修改和测试输出。需要调整方向时，直接发送补充消息；需要中断时，
+点击停止按钮，或在 TUI 输入 `/stop`。
+
+对话会自动保存。在 Desktop/Web 中，从项目的对话列表重新打开；在 TUI 中，
+输入 `/resume` 选择历史对话。换一个界面，也可以接着做同一个任务。
+
+如果想从空目录开始练习，请阅读[第一个编程任务](docs/guide/getting-started.md)：
+跟着创建一个 Python 函数、运行测试，再学习如何恢复对话。
+更多用法见[使用指南目录](docs/guide/README.md)。
+
+### 管理共享后台与排查问题
+
+关闭界面后，已经开始的任务会继续在后台运行；遇到待审批操作时，仍需你回来处理。
+执行期间请保持电脑运行，避免休眠。
+
+日常直接打开你喜欢的界面即可。需要检查或停止后台时，按需使用以下命令：
+
+| 你想做什么 | 命令 |
+|---|---|
+| 检查 DeepCode 是否正在运行 | `deepcode service status` |
+| 查看最近的运行日志 | `deepcode service logs --lines 100` |
+| 等当前工作结束后停止后台 | `deepcode service stop --drain --timeout 60` |
+| 登录电脑后自动启动后台 | `deepcode service install --at-login` |
+
+更新版本和备份数据时，参考[升级与恢复指南](docs/UPGRADE_AND_RESTORE.md)。
+遇到启动、模型连接或页面断线问题，先查看[故障排查](docs/guide/troubleshooting.md)。
 
 ## 使用 DeepCode
 
@@ -516,9 +782,11 @@ Desktop 启动后，打开 **Settings → AI providers**。
 
 每项工作都保存在与原始 Project 关联的持久 Session 中。在 Desktop 打开
 Project，或者从项目目录启动 `deepcode`，然后创建新 Session 或恢复历史。
-同一份历史可以直接在 Desktop 与 CLI 之间继续，无需导出或转换。
+同一份历史可以在 TUI、Desktop 和 Web 中继续，无需导出或转换。共享后台统一执行
+任务；执行中发送的普通消息用于引导当前 Turn，显式排队用于后续 Turn。
+多个客户端可同时查看同一 Session，并处理其中的审批。
 
-| 需要完成的操作 | Desktop | 交互式 CLI |
+| 需要完成的操作 | Desktop / Web | 交互式 CLI |
 |---|---|---|
 | 创建 Session | **New thread** | `/new [标题]` |
 | 恢复当前项目历史 | 在 Project 下选择 Session | `/resume` |
@@ -526,6 +794,7 @@ Project，或者从项目目录启动 `deepcode`，然后创建新 Session 或�
 | 附加文件 | 使用输入框附件 | `@文件路径` |
 | 修改下一个 Turn 的模型 | 输入框模型选择器 | `/model` |
 | 调整 Thinking 档位 | 输入框 Thinking 选择器 | `/effort` |
+| 限制 Session 上下文窗口 | 模型选择器上下文控件 | `/context` |
 | 选择工具权限 | 输入框权限选择器 | `/permissions` |
 | 为下一个 Turn 加载 Skills | 输入框 Skills 控件 | `/skill <名称>` |
 | 创建可复用 Skill | **Skills → Create Skill** | `$skill-creator` |
@@ -540,6 +809,8 @@ Session，不删除历史；永久删除只移除 Session 记录，不会删除�
 Desktop 在 **Settings → AI providers** 中提供连接配置与验证。CLI 使用
 `/model` 修改后续 Turn 的连接和模型，使用 `/effort` 选择该模型支持的
 Thinking 档位。
+在模型选择器中设置上下文上限，或在 TUI 中输入 `/context 64k`，可以让
+后续 Turn 更早压缩历史；`/context auto` 会恢复模型公布的上下文窗口。
 
 模型切换不会改写已有历史，也不会改变正在运行的 Turn。Thinking 档位决定
 发送给 Provider 的请求；transcript 详细程度只影响界面展示。DeepCode 只在
@@ -560,6 +831,10 @@ Skill**，或在 CLI 调用 `$skill-creator`，即可通过普通 Agent Turn 创
 兼容读取。Skill 只能指导 Agent，不能授予权限，也不能绕过 Project trust、
 审批或工具策略。导入、启用、禁用和目录管理命令统一放在
 [高级指南](docs/HEADLESS_AND_AUTOMATION.md#skills-管理)中。
+
+### Local Plugins
+
+Plugins 可以选择性地把 Skills 打包在一份经校验的本地清单之后；独立的项目级与用户级 Skills 无需 Plugin 也照常安装和运行。新的包必须使用 Agent Plugins 1.0.0 清单与固定的 `skills/` 布局。在 Desktop 的 Plugins 工作区添加一个受信文件夹，或执行 `deepcode plugin add <path>`，其中的 Skills 就会出现在普通的 Skill 目录与 Composer 中。符合标准的 `mcp.json` 也可以贡献 MCP 服务器；注册本身保持惰性，这些进程只会在 Agent Session 内启动。DeepCode 不执行 Plugin 的 hooks 或 Apps，也不会从 Marketplace 下载。参见[本地 Plugin 契约](docs/LOCAL_PLUGINS.md)。
 
 ### MCP 服务器
 
@@ -806,6 +1081,8 @@ uv pip install -e .
 Windows PowerShell 请使用 `.\.venv\Scripts\Activate.ps1` 激活环境。
 
 ### 验证
+
+复现 CI 的 Python 环境、了解各项检查及排查失败，请参考 [CI 指南](docs/CI.md)。
 
 ```bash
 uvx pre-commit run --all-files

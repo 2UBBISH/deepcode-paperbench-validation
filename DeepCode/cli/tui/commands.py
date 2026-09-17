@@ -16,6 +16,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Any
 
+from cli.execution_options import parse_context_window
 from cli.transcript import TranscriptMode
 from cli.tui import theme
 from cli.tui.picker import Picker, PickerItem, PickerScope, PickerVariant
@@ -38,6 +39,10 @@ class Command:
 
 
 _HELP_USAGE_COLUMN_CAP = 30
+
+
+async def _cmd_reconnect(app, args: str) -> str:
+    return await app.reconnect_service()
 
 
 async def _cmd_help(app, args: str) -> str | None:
@@ -130,6 +135,14 @@ def _permission_presets(app, prefix: str) -> list[str]:
 def _effort_levels(app, prefix: str) -> list[str]:
     levels = ("auto", "none", *app.reasoning_options(app.model))
     return [level for level in levels if level.startswith(prefix)]
+
+
+def _context_windows(app, prefix: str) -> list[str]:
+    return [
+        value
+        for value in ("auto", "32k", "64k", "128k", "256k", "512k", "1m")
+        if value.startswith(prefix.lower())
+    ]
 
 
 def _resolve_session_prefix(app, target: str) -> str | list[str]:
@@ -444,6 +457,26 @@ async def _cmd_effort(app, args: str) -> str | None:
     )
 
 
+async def _cmd_context(app, args: str) -> str | None:
+    wanted = args.strip()
+    profile = app.thread_client.execution_profile
+    if not wanted:
+        return (
+            f"context cap: {app.requested_context_window} · "
+            f"effective: {profile.context_window} tokens"
+        )
+    try:
+        requested = parse_context_window(wanted)
+        await app.switch_context_window(requested)
+    except (OSError, RuntimeError, ValueError) as exc:
+        return f"context switch failed: {exc}"
+    profile = app.thread_client.execution_profile
+    return (
+        f"context cap switched to {app.requested_context_window} "
+        f"(effective: {profile.context_window} tokens; history preserved)"
+    )
+
+
 _PERMISSION_CHOICES: dict[str, str | None] = {
     "ask": "ask",
     "read-only": "read_only",
@@ -652,9 +685,7 @@ async def _cmd_skills(app, args: str) -> str | None:
 
 async def _skill_via_picker(app) -> str | None:
     try:
-        skills = app.thread_client.application.skills.list(
-            app.thread_client.project.id
-        ).skills
+        skills = app.thread_client.skills.list(app.thread_client.project.id).skills
     except (OSError, RuntimeError, ValueError) as exc:
         return f"Skill listing failed: {exc}"
     selected = set(app.selected_skill_ids)
@@ -731,6 +762,9 @@ REGISTRY: dict[str, Command] = {
     c.name: c
     for c in (
         Command("help", "/help", "show this help", _cmd_help),
+        Command(
+            "reconnect", "/reconnect", "Reconnect to the shared service", _cmd_reconnect
+        ),
         Command("new", "/new [title]", "start a new conversation", _cmd_new),
         Command(
             "resume",
@@ -764,6 +798,13 @@ REGISTRY: dict[str, Command] = {
             "show or switch reasoning effort",
             _cmd_effort,
             arguments=_effort_levels,
+        ),
+        Command(
+            "context",
+            "/context [auto|tokens]",
+            "show or set this Session's context-window cap",
+            _cmd_context,
+            arguments=_context_windows,
         ),
         Command(
             "permissions",

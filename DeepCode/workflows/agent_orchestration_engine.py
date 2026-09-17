@@ -1038,9 +1038,9 @@ async def github_repo_download(search_result: str, paper_dir: str, logger) -> st
             # [fix-④b] 下载 agent 输出上限 env 化(默认保持 4096)
             maxTokens=int(os.environ.get("DEEPCODE_DOWNLOAD_MAX_TOKENS", "4096")),
             temperature=0.1,
-            # [local compat] see reference_params: default 8 iterations is
-            # too few to clone several candidate repositories via tools.
-            max_iterations=40,
+            # [local compat] iteration budget env-overridable (upstream default 8 is
+            # too few to clone several repositories); run_trial.sh injects 12.
+            max_iterations=int(os.environ.get("DEEPCODE_DOWNLOAD_MAX_ITERATIONS", "8")),
             # [local compat][E1-D3] narrow the surface to the clone tool only.
             # 17 unfiltered tools + a loose contract is exactly the
             # configuration that yielded zero tool calls in E1, while the
@@ -1118,15 +1118,10 @@ Goal: Find the most valuable GitHub repositories from the paper's reference list
             # 整轮语料贫瘠(trial4 同因)。env 可调,默认保持 8192。
             maxTokens=int(os.environ.get("DEEPCODE_REFERENCE_MAX_TOKENS", "8192")),
             temperature=0.2,
-            # [local compat] default max_iterations=8 starves this agent: it
-            # must read the (segmented) paper and fetch several pages before
-            # it can write the report. Give it real headroom.
-            # [fre] 40 was tuned for Kimi (~9 rounds). DeepSeek-V4-Pro verifies
-            # each candidate repository individually and exhausted 40 on fre
-            # without emitting a report (67 distinct URLs fetched). With the
-            # repeat-fetch guard now capping wasted retries, 80 covers that
-            # working style; the cap is a backstop, not the expected cost.
-            max_iterations=80,
+            # [local compat] iteration budget env-overridable (upstream default 8
+            # starves this agent: it reads the segmented paper and fetches several
+            # pages before it can write the report); run_trial.sh injects 40.
+            max_iterations=int(os.environ.get("DEEPCODE_REFERENCE_MAX_ITERATIONS", "8")),
             tool_filter={
                 "filesystem": {"read_text_file", "list_directory"},
                 "fetch": {"fetch"},
@@ -1598,30 +1593,6 @@ async def orchestrate_codebase_intelligence_agent(
         "Initiating intelligent codebase analysis with AI-powered relationship mapping..."
     )
     await asyncio.sleep(2)  # Brief pause before starting indexing
-
-    # [local compat] Every other phase (planning/reference/download) reuses
-    # existing artifacts on resume; indexing alone rebuilt from scratch each
-    # run. Skip when per-repo index files already exist for the current
-    # code_base contents.
-    _idx_dir = os.path.join(dir_info["paper_dir"], "indexes")
-    _cb_dir = os.path.join(dir_info["paper_dir"], "code_base")
-    if os.path.isdir(_idx_dir) and os.path.isdir(_cb_dir):
-        _repos = [
-            d
-            for d in os.listdir(_cb_dir)
-            if os.path.isdir(os.path.join(_cb_dir, d)) and not d.startswith(".")
-        ]
-        _indexed = {
-            f[: -len("_index.json")]
-            for f in os.listdir(_idx_dir)
-            if f.endswith("_index.json")
-        }
-        if _repos and all(r in _indexed for r in _repos):
-            print(f"Reusing existing indexes for {len(_repos)} repositories; skipping rebuild")
-            return {
-                "status": "success",
-                "message": f"Reused existing indexes for {len(_repos)} repositories",
-            }
 
     # Check if code_base directory exists and has content
     code_base_path = os.path.join(dir_info["paper_dir"], "code_base")

@@ -67,6 +67,7 @@ describe("workspace event projection", () => {
     model: null,
     connectionId: null,
     reasoningEffort: null,
+    contextWindow: null,
     accessPresetOverride: null,
     workspacePath: "/workspace/project-1",
     worktreePath: null,
@@ -87,7 +88,7 @@ describe("workspace event projection", () => {
 
     expect(replayed.items[0].status).toBe("completed");
     expect(replayed.items[0].payload.text).toBe("final");
-    expect(replayed.lastSequence).toBe(20);
+    expect(replayed.entitySequences["item:item-1"]).toBe(20);
   });
 
   it("projects Goal outcome from the same versioned event", () => {
@@ -324,7 +325,7 @@ describe("workspace event projection", () => {
     });
 
     expect(projected.workflows).toEqual([workflow]);
-    expect(projected.lastSequence).toBe(21);
+    expect(projected.entitySequences[`workflow:${workflow.id}`]).toBe(21);
   });
 
   it("replays structured Turn plans and ignores stale updates", () => {
@@ -380,7 +381,7 @@ describe("workspace event projection", () => {
       ],
       updatedAt: "2026-07-16T00:00:02Z",
     });
-    expect(stale.lastSequence).toBe(22);
+    expect(stale.entitySequences[`plan:${turn.id}`]).toBe(22);
   });
 
   it("keeps the global Session index when project context changes", () => {
@@ -415,7 +416,7 @@ describe("workspace event projection", () => {
             updatedAt: "2026-07-16T00:00:00Z",
           },
         },
-        lastSequence: 4,
+        entitySequences: { "item:item-1": 4 },
       },
       { type: "thread-remove", threadId: thread.id },
     );
@@ -425,6 +426,6 @@ describe("workspace event projection", () => {
     expect(removed.turns).toEqual([]);
     expect(removed.items).toEqual([]);
     expect(removed.plansByTurnId).toEqual({});
-    expect(removed.lastSequence).toBe(0);
+    expect(removed.entitySequences).toEqual({});
   });
 });

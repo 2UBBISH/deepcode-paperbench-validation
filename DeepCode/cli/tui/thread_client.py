@@ -4,9 +4,8 @@ from __future__ import annotations
 
 import asyncio
 from collections.abc import Callable
-from dataclasses import dataclass
-from datetime import datetime
 
+from cli.thread_client import ThreadListing, TurnDelivery, turn_access_summary
 from cli.project_trust import (
     open_workspace_project,
     require_project_trusted,
@@ -27,7 +26,6 @@ from core.domain.event import DomainEvent
 from core.domain.execution_profile import ExecutionProfile, ExecutionSelection
 from core.domain.execution_security import (
     ExecutionAccessPreset,
-    ExecutionSecurityProfile,
 )
 from core.domain.message_provenance import ClientSurface
 from core.domain.project import TrustState
@@ -36,24 +34,6 @@ from core.domain.turn import Turn, TurnStatus
 from core.events import Event
 from core.harness.permissions import PermissionMode
 from core.sessions import SessionStore, get_default_store
-
-
-@dataclass(frozen=True, slots=True)
-class TuiDelivery:
-    kind: str
-    turn: Turn
-
-
-@dataclass(frozen=True, slots=True)
-class ThreadListing:
-    """One row of the resume picker — display data only."""
-
-    session_id: str
-    title: str
-    message_count: int
-    updated_at: datetime
-    workspace: str
-    is_current: bool
 
 
 class TuiThreadClient:
@@ -123,6 +103,28 @@ class TuiThreadClient:
             self.application.close()
             raise
 
+    runtime_mode = "compatibility"
+
+    @property
+    def llm(self):
+        return self.application.llm
+
+    @property
+    def skills(self):
+        return self.application.skills
+
+    @property
+    def plugins(self):
+        return self.application.plugins
+
+    @property
+    def mcp(self):
+        return self.application.mcp
+
+    @property
+    def goals(self):
+        return self.application.goals
+
     @property
     def session_id(self) -> str:
         return self.thread.id
@@ -162,8 +164,8 @@ class TuiThreadClient:
         )
         queued = tuple(turn for turn in turns if turn.status is TurnStatus.QUEUED)
         return (
-            _turn_access_summary(current) if current is not None else None,
-            tuple(_turn_access_summary(turn) for turn in queued),
+            turn_access_summary(current) if current is not None else None,
+            tuple(turn_access_summary(turn) for turn in queued),
         )
 
     def set_event_loop(self, loop: asyncio.AbstractEventLoop) -> None:
@@ -211,7 +213,7 @@ class TuiThreadClient:
         prompt: str,
         *,
         skill_ids: tuple[str, ...] = (),
-    ) -> TuiDelivery:
+    ) -> TurnDelivery:
         active = self.application.turns.executing_for_thread(self.thread.id)
         result: InteractiveTurnResult = self.router.send(
             self.thread.id,
@@ -225,14 +227,14 @@ class TuiThreadClient:
             InteractiveDelivery.QUEUED,
         }:
             self._title_from_first_prompt(prompt)
-        return TuiDelivery(result.delivery.value, result.turn)
+        return TurnDelivery(result.delivery.value, result.turn)
 
     def queue(
         self,
         prompt: str,
         *,
         skill_ids: tuple[str, ...] = (),
-    ) -> TuiDelivery:
+    ) -> TurnDelivery:
         snapshot = self.application.turns.enqueue(
             self.thread.id,
             prompt=prompt,
@@ -241,7 +243,7 @@ class TuiThreadClient:
             client_surface=ClientSurface.CLI,
         )
         self._title_from_first_prompt(prompt)
-        return TuiDelivery("queued", snapshot.turn)
+        return TurnDelivery("queued", snapshot.turn)
 
     def has_active_turn(self) -> bool:
         return self.application.turns.active_for_thread(self.thread.id) is not None
@@ -325,6 +327,7 @@ class TuiThreadClient:
             connection_id=self.execution_profile.connection_id,
             model=self.execution_profile.model_id,
             reasoning_effort=self._requested.reasoning_effort,
+            context_window=self._requested.context_window,
             workspace_path=self.workspace,
         )
         self._replace_thread(thread)
@@ -391,11 +394,13 @@ class TuiThreadClient:
         connection_id: str | None,
         model: str | None,
         reasoning_effort: str | None,
+        context_window: int | None,
     ) -> ExecutionProfile:
         selection = ExecutionSelection(
             connection_id=connection_id,
             model_id=model,
             reasoning_effort=reasoning_effort,
+            context_window=context_window,
         )
         profile = self.application.llm.resolve(self.workspace, selection)
         self.thread = self.application.threads.set_execution_selection(
@@ -403,6 +408,7 @@ class TuiThreadClient:
             connection_id=profile.connection_id,
             model=profile.model_id,
             reasoning_effort=reasoning_effort,
+            context_window=context_window,
         )
         self._requested = selection
         self.execution_profile = profile
@@ -462,6 +468,7 @@ class TuiThreadClient:
                 connection_id=profile.connection_id,
                 model=profile.model_id,
                 reasoning_effort=self._requested.reasoning_effort,
+                context_window=self._requested.context_window,
                 workspace_path=self.workspace,
             )
         thread = self.application.threads.resume(
@@ -476,6 +483,11 @@ class TuiThreadClient:
                 if self._requested.reasoning_effort is not None
                 else thread.reasoning_effort
             ),
+            context_window=(
+                self._requested.context_window
+                if self._requested.context_window is not None
+                else thread.context_window
+            ),
         )
         self._requested = stored_selection
         profile = self.application.llm.resolve(self.workspace, stored_selection)
@@ -484,6 +496,7 @@ class TuiThreadClient:
             connection_id=profile.connection_id,
             model=profile.model_id,
             reasoning_effort=stored_selection.reasoning_effort,
+            context_window=stored_selection.context_window,
         )
 
     def _resolve_selection(self, thread: Thread) -> ExecutionProfile:
@@ -495,6 +508,7 @@ class TuiThreadClient:
             connection_id=thread.connection_id,
             model_id=thread.model,
             reasoning_effort=thread.reasoning_effort,
+            context_window=thread.context_window,
         )
         self._requested = selection
         return self.application.llm.resolve(self.workspace, selection)
@@ -556,16 +570,4 @@ class TuiThreadClient:
             )
 
 
-def _turn_access_summary(turn: Turn) -> str:
-    profile: ExecutionSecurityProfile | None = turn.execution_security_profile
-    if profile is not None:
-        if profile.access_preset is not None:
-            return profile.access_preset.value.replace("_", " ")
-        sandbox = "sandboxed" if profile.command_sandbox else "unsandboxed"
-        return f"legacy {profile.permission_mode.value.replace('_', ' ')} · {sandbox}"
-    if turn.execution_permission_mode is not None:
-        return f"legacy {turn.execution_permission_mode.value.replace('_', ' ')}"
-    return "legacy unknown"
-
-
-__all__ = ["TuiDelivery", "TuiThreadClient"]
+__all__ = ["TuiThreadClient"]

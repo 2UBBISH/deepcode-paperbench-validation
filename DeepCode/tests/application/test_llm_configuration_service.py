@@ -241,6 +241,31 @@ def test_execution_profile_freezes_generation_and_connection_revision(
     assert profile.temperature == 0.1
     assert "key" not in repr(profile.to_dict()).lower()
 
+    capped = resolver.execution_profile(
+        ExecutionSelection(
+            "router-b",
+            "moonshotai/kimi-k2.6",
+            context_window=64_000,
+        )
+    )
+    assert capped.context_window == 64_000
+    with pytest.raises(ConfigError, match="exceeds the published 256000"):
+        resolver.execution_profile(
+            ExecutionSelection(
+                "router-b",
+                "moonshotai/kimi-k2.6",
+                context_window=512_000,
+            )
+        )
+    with pytest.raises(ConfigError, match="must exceed the 8192 token generation"):
+        resolver.execution_profile(
+            ExecutionSelection(
+                "router-b",
+                "moonshotai/kimi-k2.6",
+                context_window=8_192,
+            )
+        )
+
     # Credential rotation is deliberately live and does not mutate the
     # persisted, secret-free execution profile.
     credentials.set("router-b", "rotated-key")
@@ -365,6 +390,9 @@ def test_connection_verification_sends_only_a_minimal_real_model_probe(
     requests: list[dict] = []
 
     class ProbeProvider:
+        async def aclose(self):
+            pass
+
         async def chat(self, **kwargs):
             requests.append(kwargs)
             return LLMResponse(content="OK")
@@ -422,6 +450,9 @@ def test_connection_verification_maps_provider_errors_without_leaking_response(
     )
 
     class DeniedProvider:
+        async def aclose(self):
+            pass
+
         async def chat(self, **_kwargs):
             return LLMResponse(
                 content=f"provider payload contained {secret}",

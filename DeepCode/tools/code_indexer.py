@@ -727,10 +727,8 @@ class CodeIndexer:
             """
 
             # Get LLM analysis with configured parameters
-            # [local compat] 1000 tokens is the whole budget for a reasoning model's thinking plus the JSON
-            # answer: on Paratera-served DeepSeek-V4-Pro (2026-09-14 snse trial1) 20/51 files came back
-            # empty with finish_reason=length, the regex below found no JSON and the file was dropped from
-            # the index. Default stays upstream's; override with the environment variable.
+            # [local compat] env-overridable; upstream default 1000 truncates reasoning
+            # models (snse 2026-09-14: 20/51 analyses lost). run_trial.sh injects 16000.
             llm_response = await self._call_llm(
                 analysis_prompt, max_tokens=int(os.environ.get("DEEPCODE_ANALYSIS_MAX_TOKENS", "1000"))
             )
@@ -825,7 +823,7 @@ class CodeIndexer:
         """
 
         try:
-            # [local compat] same truncation as the per-file analysis above (1500 tokens, empty answers).
+            # [local compat] env-overridable; upstream default 1500 (snse: 91 length cuts).
             llm_response = await self._call_llm(
                 relationship_prompt, max_tokens=int(os.environ.get("DEEPCODE_RELATIONSHIP_MAX_TOKENS", "1500"))
             )

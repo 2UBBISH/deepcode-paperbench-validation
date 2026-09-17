@@ -233,6 +233,8 @@ class CodeImplementationAgent:
                         await self._track_file_implementation_with_summary(
                             tool_call, result
                         )
+                    elif tool_name == "write_multiple_files":
+                        self._track_batch_file_implementation(tool_call, result)
                     elif tool_name == "read_file":
                         self._track_dependency_analysis(tool_call, result)
 
@@ -544,6 +546,40 @@ class CodeImplementationAgent:
                 self.logger.info(
                     f"File implementation counted (emergency fallback): count={self.files_implemented_count}, file={file_path}"
                 )
+
+    def _track_batch_file_implementation(self, tool_call: Dict, result: Any):
+        """Count every file a ``write_multiple_files`` call wrote successfully.
+
+        The batch tool is part of the model-facing surface, but only
+        ``write_file`` used to feed the implemented-files bookkeeping, so a
+        run that wrote everything in batches reported ``0 files`` and never
+        reached the completion check.
+        """
+        text = result if isinstance(result, str) else str(getattr(result, "content", result))
+        paths: List[str] = []
+        try:
+            payload = json.loads(text)
+            files = payload.get("files") if isinstance(payload, dict) else None
+            if isinstance(files, dict):
+                paths = [
+                    str(path)
+                    for path, info in files.items()
+                    if isinstance(info, dict) and info.get("status") == "success"
+                ]
+        except (TypeError, ValueError):
+            paths = []
+        if not paths:
+            raw = tool_call.get("input", {}).get("file_implementations")
+            try:
+                mapping = json.loads(raw) if isinstance(raw, str) else raw
+                paths = [str(k) for k in mapping] if isinstance(mapping, dict) else []
+            except (TypeError, ValueError):
+                paths = []
+        for path in paths:
+            self._track_file_implementation(
+                {"input": {"file_path": path}},
+                {"status": "success", "file_path": path},
+            )
 
     def _track_dependency_analysis(self, tool_call: Dict, result: Any):
         """

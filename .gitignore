@@ -1,22 +1,17 @@
-# secrets
+# secrets — keys enter only through an env file (ENV_FILE=...) or DEEPCODE_HOME/credentials.json, never the repo
 .env
 .env.*
 !.env.example
 credentials.json
+*.env
 # local environments / runtime state
 __pycache__/
 *.pyc
 .venv/
 deepcode_lab/
-# PaperBench is cloned by setup.sh at a pinned commit (see patches/UPSTREAM_BASE.txt)
+.deepcode-home/
+# PaperBench is cloned by setup.sh at a pinned commit (patches/UPSTREAM_BASE.txt)
 frontier-evals/
+# every run's logs, inputs, task-directory archives, submission copies and grades live here, never in git
+runs/
 run.log
-# DeepCode task directory archives (hundreds of MB; the index and logs live in logs/ and grades/)
-deepcode_test/*/task_archives/
-# bare-run workspaces hold the paper and the provided repository snapshots (60 MB); the brief and the
-# graded submission copy are committed elsewhere
-deepcode_test/*/workspaces/*/paper/
-deepcode_test/*/workspaces/*/submission/
-deepcode_test/*/workspaces/*/submission_tilted/
-deepcode_test/*/workspaces/*/proxy_requests.log
-deepcode_test/*/workspaces/*/proxy_requests.log
