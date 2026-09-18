@@ -185,7 +185,7 @@ DeepEvol 线也不带 ①②：对比方法的覆盖交给计划审阅（`--ask`
 | `common/preparedness_turn_completer/.../utils.py` | 上下文长度表登记 `DeepSeek-V4-Pro` 与 `DeepSeek-V4-Flash`（各带/不带 `deepseek-ai/` 前缀；该表只认 OpenAI 模型名，换裁判模型要再加） |
 | `paperbench/judge/simple.py` | 结构化解析模型可由 `PB_STRUCTURED_PARSER_MODEL` 指定；叶子并发 `PB_JUDGE_CONCURRENCY`（默认 20，上游 100 会被 Paratera 打 429）；**选文件路径解析修复**（只做精确解析，允许带或不带唯一顶层目录，选不到就重问一次，仍空则记无效叶而不是判 0） |
 | `paperbench/grade.py` | 摆卷 tar 解开后若只有一个顶层目录就从里面判；每叶日志落到 `runs/<group>/<run>/judge_logs/` |
-| `paperbench/nano/eval.py` | `paper_split` 允许单篇 split（fre / rice / sequential-neural-score-estimation / bam / lite） |
+| `paperbench/nano/eval.py` | `paper_split` 允许单篇 split（fre / rice / sequential-neural-score-estimation / bam / sapg / pinn / lite） |
 | `paperbench/utils.py` | `is_docker_running` 走 `docker.from_env()`，尊重 `DOCKER_HOST`（macOS Docker Desktop 的 socket 不在 /var/run） |
 
 未改动裁判提示词与评分树。
