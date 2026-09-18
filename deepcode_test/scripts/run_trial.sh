@@ -50,6 +50,7 @@ case "$PAPER" in
   sequential-neural-score-estimation) TITLE_KEY="sequential neural"; BLOCK_REPO="jacksimons15327" ;;
   bam)  TITLE_KEY="batch and match";            BLOCK_REPO="modichirag/GSM-VI" ;;
   sapg) TITLE_KEY="sapg";                        BLOCK_REPO="jayeshs999/sapg" ;;
+  pinn) TITLE_KEY="training pinns";              BLOCK_REPO="pratikrathore8/opt_for_pinns" ;;
   *)
     [ -f "$PB/data/papers/$PAPER/paper.md" ] || { echo "❌ 未知 PAPER=$PAPER（PaperBench 里没有）"; exit 1; }
     TITLE_KEY="$(grep -m1 '^# ' "$PB/data/papers/$PAPER/paper.md" | sed 's/^# //' | tr 'A-Z' 'a-z' | awk '{print $1" "$2}')"
