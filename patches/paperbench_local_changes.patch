@@ -173,7 +173,7 @@ index 1fc0c2b..5e5d383 100644
                  if isinstance(content, BaseException):
                      raise content
 diff --git a/project/paperbench/paperbench/nano/eval.py b/project/paperbench/paperbench/nano/eval.py
-index 52d2e67..6f1b6df 100644
+index 52d2e67..9d94a5a 100644
 --- a/project/paperbench/paperbench/nano/eval.py
 +++ b/project/paperbench/paperbench/nano/eval.py
 @@ -55,10 +55,19 @@ class PaperBench(PythonCodingEval):
@@ -191,7 +191,7 @@ index 52d2e67..6f1b6df 100644
 +    # added so single-paper runs need no edit to debug.txt — overwriting that
 +    # file would silently re-point every historical "debug" run and destroy
 +    # the reproducibility of the rice baseline.
-+    paper_split: Literal["debug", "dev", "human", "testing", "all", "fre", "rice", "sequential-neural-score-estimation", "bam", "sapg", "lite"] = (
++    paper_split: Literal["debug", "dev", "human", "testing", "all", "fre", "rice", "sequential-neural-score-estimation", "bam", "sapg", "pinn", "lite"] = (
 +        chz.field(
 +            default="all",
 +            doc="Paper split to use. One of 'testing' (lca-on-the-line only), 'debug' (rice only), 'fre' (fre only), 'dev' (two papers), 'lite' (five papers), 'human' (papers used in human baseline), 'all' (full set)",
