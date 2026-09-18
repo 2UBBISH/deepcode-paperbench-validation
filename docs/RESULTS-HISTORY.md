@@ -82,6 +82,24 @@ DeepSeek-V4-Pro @ Paratera、`PB_JUDGE_CONCURRENCY=20`、裁判已修选文件�
 ⑤ 结论：基线 vs 本线、修复前后、图开关，所有差都在 ±0.03 内；**sapg 单篇单次分不出任何东西**，判据类的改进要用机械指标（G2 是否通过、diff 规模）验收，分数留给多篇多次积样本。
 判分：四份 7 分钟、T1 两份 5 分钟；Flash 每份 3.2–4.4M 入 / 0.28–0.34M 出，Pro 解析器每份 0.1M 入。`grade.json` 在 `runs/sapg/grades/`（不入库）；六份提交都已归档到 `~/pb_submissions_archive/sapg/`，`~/pb_submissions/sapg/` 为空。
 
+### 1.3 pinn（"Challenges in Training PINNs: A Loss Landscape Perspective"）成对首跑 T5（2026-09-18 晚，裁判 DeepSeek-V4-Flash，解析器 V4-Pro，code_only，126 个 Code-Dev 叶 / 1963 叶）
+
+口径同 §1.2（两边 Vision-Exp、思考关、32768、规划补丁开、同一份 paper.md + addendum、黑名单 `pratikrathore8/opt_for_pinns`）；论文 124k 字符、15 张图（LFS 指针从 HF 补齐）。
+本线两份是**修复前快照**（round-0，第 10 步没跑完就按 owner 的话先判了）；基线在本机。
+
+| 提交 | 总分 | 实验设置 | Fig.3 | NNCG | Fig.4/5 | Table 3 | 产物 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 基线 `vexp1` | **0.6700** | 0.58 | 0.78 | 1.00 | 0.16 | 1.00 | 28 文件；290 次调用 |
+| 本线 `pinn_off_pre`（图描述关） | **0.7083** | 0.75 | 0.78 | 1.00 | 0.16 | 1.00 | 32 文件；references 第一次 40 次迭代用尽，80 次重跑 |
+| 本线 `pinn_on_pre`（图描述开，15 张图） | **0.6696** | 0.72 | 0.89 | 0.75 | 0.16 | 1.00 | 25 文件 |
+
+叶级：基线 vs 图关 同过 72、只基线 9、只本线 17；图关 vs 图开 同过 74、各自独有 15 / 13；基线 vs 图开 同过 68、13 / 19。
+读法：① 三份都在 0.67–0.71，与 sapg 同一量级；② 本线图关比基线 +0.038，略大于 sapg 的噪声标尺 0.025，但 pinn 自己的运行间噪声未量（各一次），只能说"不输"；③ 图开 vs 图关 −0.039，和 sapg 一样看不出图描述的收益；④ Fig.4/5 子树两边都 0.16——画图/实验脚本这一类缺失是两篇论文的共性；
+⑤ **三份树里 `opt_for_pinns/src/pdes.py` 都是 0 字节**（基线也是；PDE 定义写到了顶层 `src/pdes.py`）——DeepCode 写码循环的系统性行为，两边公平，但值得本线加一道"零字节计划文件"检查（DeepEvol PLAN-3 T13）。
+第 10 步（本线，CPU 档，两段式，无 torch 预装镜像）：`off` 环境轮 7.8 min → 试跑 `ImportError get_pde`（就是那个空文件）→ 修复 ① 正确诊断、改 2 文件 +18−7 → 同签名 → 停；`on` 环境轮 12 min → 试跑 `ImportError PDE` → 修复 ① 后传代码到机器时 `GitDaemonError: connection lost`（本机网络）→ 停。两台机器均已释放，修复后的树未判。
+另：T4 预装 torch 的镜像让 RSA 伪证器把 pinn 的 G0 判为"裸镜像即过"而拒绝判据两次，已换回无 torch 镜像（DeepEvol PITFALLS §D）。
+判分：三份 9.5 分钟；`grade.json` 在 `runs/pinn/grades/`，提交归档在 `~/pb_submissions_archive/pinn/`。
+
 ## 2. sequential-neural-score-estimation（2026-09-14，对标前的数，裁判修 bug 前）
 
 裁判 DeepSeek-V4-Pro @ Paratera，67 叶，无效叶 0；**三份都是思考开的分数**（当时 `enable_thinking:false` 无效，49 次调用 reasoning 78.7 万 / completion 113 万 token）；
