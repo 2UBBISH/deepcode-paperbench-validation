@@ -62,7 +62,7 @@ class PaperBench(PythonCodingEval):
     # added so single-paper runs need no edit to debug.txt — overwriting that
     # file would silently re-point every historical "debug" run and destroy
     # the reproducibility of the rice baseline.
-    paper_split: Literal["debug", "dev", "human", "testing", "all", "fre", "rice", "sequential-neural-score-estimation", "bam", "sapg", "pinn", "robust-clip", "self-expansion", "test-time-model-adaptation", "adaptive-pruning", "stochastic-interpolants", "lite"] = (
+    paper_split: Literal["debug", "dev", "human", "testing", "all", "fre", "rice", "sequential-neural-score-estimation", "bam", "sapg", "pinn", "robust-clip", "self-expansion", "test-time-model-adaptation", "adaptive-pruning", "stochastic-interpolants", "mechanistic-understanding", "bridging-data-gaps", "all-in-one", "what-will-my-model-forget", "stay-on-topic-with-classifier-free-guidance", "sample-specific-masks", "lca-on-the-line", "bbox", "lbcs", "ftrl", "lite"] = (
         chz.field(
             default="all",
             doc="Paper split to use. One of 'testing' (lca-on-the-line only), 'debug' (rice only), 'fre' (fre only), 'dev' (two papers), 'lite' (five papers), 'human' (papers used in human baseline), 'all' (full set)",
