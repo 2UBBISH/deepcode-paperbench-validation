@@ -3,13 +3,17 @@
 > **是什么**：一套可 clone 即跑的脚手架，用来在 PaperBench Code-Dev 口径下跑 **DeepCode 的基线运行**（原装
 > [HKUDS/DeepCode](https://github.com/HKUDS/DeepCode) main `21ebc57f` + 一份逐条说明的补丁）并统一判分，
 > 作为 DeepEvol 复现线（同一引擎嵌入 DeepEvol 的 Paper2Code 线）的对照。
-> 仓库里**只有**验证脚手架、DeepCode 副本 + 补丁、PaperBench 补丁与判分脚本、文档；产物、日志、判分 JSON 都不入库。
-> 2026-08-25 → 09-15 的全部历史数字在 [`docs/RESULTS-HISTORY.md`](docs/RESULTS-HISTORY.md)（含作废标记）。
+> 仓库里**只有**验证脚手架、DeepCode 副本 + 补丁、vendored 的 PaperBench（裁判 + 数据）与判分脚本、裸跑臂的固定件、文档；产物、日志、判分 JSON 都不入库。
+> 2026-08-25 → 09-18 的全部历史数字在 [`docs/RESULTS-HISTORY.md`](docs/RESULTS-HISTORY.md)（含作废标记）。
+> **2026-09-19 起的批次**：四臂（DeepCode 基线 / Codex CLI / Claude Code CLI / DeepEvol 线 stage 9）× 五篇，同模型同 serving 同思考状态同输入同裁判，
+> 一页说明在 [`docs/CODEDEV-ARMS.md`](docs/CODEDEV-ARMS.md)，跑法在 [`deepcode_test/bare/README.md`](deepcode_test/bare/README.md)，本文 §2.1。
 
 **English.** Scaffolding for running upstream DeepCode (main `21ebc57f`, plus a fully itemised, env-gated patch)
-against PaperBench Code-Dev papers under one fixed caliber (DeepSeek-V4-Flash via Paratera, thinking off, same
-model for planning and coding, paper.md + addendum as the only input, blacklist enforced at git and MCP level), and
-grading submissions with a pinned, patched PaperBench judge. It is the baseline arm for DeepEvol's Paper2Code line.
+against PaperBench Code-Dev papers under one fixed caliber (DeepSeek V4 Flash — Paratera until 2026-09-18, api.deepseek.com
+since 09-19 — thinking off, same model for planning and coding, paper.md + addendum as the only input, blacklist enforced
+at git and MCP level), running the Codex CLI and Claude Code CLI as bare arms on the same input through a thinking-off
+proxy, and grading every submission with the vendored, pinned, patched PaperBench judge. It is the baseline arm for
+DeepEvol's Paper2Code line.
 All earlier results (Aug 25 – Sep 15) are kept in `docs/RESULTS-HISTORY.md` with their void status.
 
 ## 1. 用途
@@ -20,7 +24,8 @@ All earlier results (Aug 25 – Sep 15) are kept in `docs/RESULTS-HISTORY.md` wi
 | --- | --- | --- |
 | **DeepEvol 复现线** | DeepCode 的 Paper2Code 引擎嵌入 DeepEvol（`apps/v2/agent/paper2code/`），自己的 provider / 工具 / 执行端口 / 闸门 | DeepEvol 仓库，`scripts/paper2code_canary.py` |
 | **基线运行**（本仓库） | 原装 DeepCode + 本仓库补丁，`run_trial.sh` 一轮一摆卷 | 本仓库 |
-| 裸跑（bare） | Codex 桌面版 + 官方指令原文 + PaperBench 自己的 ADDITIONAL NOTES；代理注入思考关 | `deepcode_test/bare/`（`render_prompt.sh` 建目录出提示词；2026-09-19 起五篇 vs 基线运行，owner 手动跑 Codex） |
+| **裸跑臂 Codex CLI** | codex-cli（论文用的形态）+ 官方 `code_only_instructions.txt` + PaperBench 自己的 `ADDITIONAL NOTES`；本地代理注入思考关、换 User-Agent（DeepSeek 对 Codex 客户端无视 `effort=none`） | `deepcode_test/bare/run_bare.sh codex <paper>` |
+| **裸跑臂 Claude Code CLI** | `claude -p` + 同一份题面；代理注入 `thinking:{type:disabled}`（Claude Code 自带开关只是不发字段，DeepSeek 缺省开） | `deepcode_test/bare/run_bare.sh claude <paper>` |
 
 术语按 DeepEvol 根 `CONTEXT.md`：**对比方法**（论文里被比较的算法，rubric 里的 baseline）≠ **基线运行**（原装 DeepCode 在同口径下的一次运行）。本文不用裸的"基线"。
 
@@ -28,13 +33,26 @@ All earlier results (Aug 25 – Sep 15) are kept in `docs/RESULTS-HISTORY.md` wi
 
 | 项 | 值 | 谁保证 |
 | --- | --- | --- |
-| 模型 | `DeepSeek-V4-Flash` @ Paratera（`https://llmapi.paratera.com/v1`），规划与写码同一模型，无阶段覆盖；每次调用 `max_tokens` 32768（模板把它声明成带 `maxOutputTokens: 32768` 的手动模型条目，否则 DeepCode 的模型目录按 deepseek 家族缺省钳到 8192） | `config/deepcode_config.template.json`；`run_trial.sh` 口径闸 |
-| 思考 | **关**。每次请求带 `thinking: {"type": "disabled"}`（`compat.thinking=disabled`）；回包 `reasoning_tokens` 必须为 0（Paratera 忽略 `enable_thinking:false`，只认这一种写法） | 补丁 `core/providers/protocol_config.py`；跑完 `run_trial.sh` 汇总 llm 日志核验 |
-| 输入 | PaperBench 给 agent 的材料：`paper.md` 末尾并入 `# Addendum`（DeepCode 只吃一个 markdown）；不给 rubric/config | `run_trial.sh` [2/3]（与 DeepEvol 线 `intake.compose_input` 字节一致） |
+| 模型 | **09-19 起**：`deepseek-flash` @ api.deepseek.com（`deepcode_config` 的 `deepseek` 档，`DEEPCODE_CONNECTION=deepseek`），四臂同一 serving；**09-18 前**：`DeepSeek-V4-Flash` @ Paratera（`paratera` 档，`RESULTS-HISTORY` 里的数字）。规划与写码同一模型，无阶段覆盖；每次调用 `max_tokens` 32768（模板把它声明成带 `maxOutputTokens: 32768` 的手动模型条目） | 模板 + `run_trial.sh` 口径闸（`DEEPCODE_EXPECT_MODEL`） |
+| 思考 | **关**，四臂一致。DeepCode：每次请求带 `thinking: {"type": "disabled"}`（`compat.thinking=disabled`），回包 `reasoning_tokens` 必须为 0（Paratera / DeepSeek 都只认这一种写法，`enable_thinking:false` 无效）；Codex / Claude Code：CLI 自身关不掉，本地代理注入并逐请求记录 `reasoning_tokens` / `reasoning_items` / `thinking_blocks`（`AUDIT.txt` 全 0 才 `CALIBER_OK`，`bare/README.md` §3.1） | 补丁 + 代理 + 审计 |
+| 输入 | **四臂同一份字节**：`paper.md`（PaperBench 的 Mathpix 式 OCR）+ `addendum.md` + `blacklist.txt`；不给 PDF、不给 assets、不给 rubric/config。DeepCode / DeepEvol 线把 addendum 并进 md 末尾；CLI 臂拿目录 + 官方题面（题面里 "in both PDF and markdown format" 改成 "in markdown format"，除路径外唯一改字）。选论文前 `check_paper_md.py` 核 md 是否缺章（robust-clip 的官方 md 缺 §2–§3，剔除） | `run_trial.sh` [2/3] / `render_prompt.sh` / `check_paper_md.py` |
 | 黑名单 | `blacklist.txt` 在两层拦：git `insteadOf`（setup.sh）+ MCP 层 `DEEPCODE_URL_DENYLIST`（补丁） | setup.sh / run_trial.sh |
 | 预算 | 参考挖掘 40 轮 / 下载 12 轮；挖掘报告 32768、下载 16384、预筛 32000、分析 16000、关系 16000 token；规划限时 600 s；stall 7200 s；写码墙钟 21600 s；14 h 硬顶 | `run_trial.sh` 注入（补丁只把这些做成 env，默认全等于上游） |
 | 实验开关 | fix-①②③ **必须关**（§5.3） | `run_trial.sh` 拒绝 `=1` |
-| 判分 | PaperBench Code-Dev `code_only=True`，裁判 `DeepSeek-V4-Pro` @ Paratera（`PB_JUDGE_MODEL` 可换；Flash 当裁判在 JudgeEval rice/0 上准确率与 Pro 相同 0.719、偏向相反，见 RESULTS-HISTORY §7；解析器必须留 Pro），`PB_JUDGE_CONCURRENCY=20`，`num_invalid_leaf_nodes ≤ 2` 才有效 | `run_grade.sh` |
+| 判分 | PaperBench Code-Dev `code_only=True`（裁判只判 Code Development 叶，不执行代码），裁判 `PB_JUDGE_MODEL`：09-17 起 `DeepSeek-V4-Flash`，结构化解析器恒为 `DeepSeek-V4-Pro`（bam 批是 Pro 裁判）；`PB_JUDGE_CONCURRENCY=20`，`num_invalid_leaf_nodes ≤ 2` 才有效；四臂同一个裁判同一天判 | `run_grade.sh` |
+
+## 2.1 2026-09-19 批：四臂 × 五篇（当前进行中）
+
+| | |
+| --- | --- |
+| 问题 | 同一底座下，DeepCode 这套流程比裸跑的编码 agent 好多少——论文 Table 1 没做这件事（Codex 等用 Sonnet 4.5-thinking，DeepCode 用自己的配置，然后说 4.4×；bam 同底座对照下 Codex 是 0.73 不是 0.19） |
+| 臂 | DeepCode 基线（`run_trial.sh`）、Codex CLI、Claude Code CLI（`run_bare.sh`）、DeepEvol 线 stage 9（另一个仓库，`--until compute` 的树） |
+| 论文 | `sapg`（77 个 Code-Dev 叶）、`pinn`（126）、`adaptive-pruning`（86）、`self-expansion`（70）、`test-time-model-adaptation`（86）；`robust-clip` 因官方 `paper.md` 缺方法章剔除 |
+| 钉死的量 | 模型 `deepseek-flash` @ api.deepseek.com、思考关、输入同字节、无 rubric、黑名单、裁判 Flash + Pro 解析器；每篇每臂 1 份 |
+| 起跑 | `~/Documents/env/deepseek.env` 写 `DEEPSEEK_API_KEY=…` → `nohup bash deepcode_test/scripts/run_batch.sh > runs/batch_0919.log 2>&1 &`（基线串行、两个 CLI 臂并行，账本 `runs/batch_*.txt`） |
+| 判分 | 池子齐了按论文 `PAPER=<id> PB_JUDGE_MODEL=DeepSeek-V4-Flash bash deepcode_test/scripts/run_grade.sh`，数字回填 `RESULTS-HISTORY.md` |
+| 读法 | 单篇噪声 0.025（sapg 同份重跑）、历史组内摆动 0.09–0.19：五篇看方向和一致性，差值 < 0.03 的篇补一份；n < 5 不说"优于" |
+| 局限 | 思考关对围着推理模型设计的 CLI 可能更不利（三臂一视同仁，但结论限于这个底座）；三臂都在无 GPU 的 Mac 上，Code-Dev 不判执行 |
 
 ## 3. 快速开始（clone 即跑）
 
@@ -47,14 +65,14 @@ PAPERS=sapg bash setup.sh        # 校验 vendored 的 PaperBench（上游固定
                                  # 生成 .deepcode-home/deepcode_config.json（口径）、设 git 封锁、建 ~/pb_submissions/sapg
 ```
 
-key 只经环境变量进入：写一个文件（不进仓库），内容一行 `PARATERA_API_KEY=...`，然后：
+key 只经环境变量进入：写一个文件（不进仓库），内容一行 `DEEPSEEK_API_KEY=...`（`deepseek` 档）或 `PARATERA_API_KEY=...`（`paratera` 档），然后：
 
 ```bash
 PREFLIGHT_ONLY=1 PAPER=sapg ENV_FILE=~/my.env bash deepcode_test/scripts/run_trial.sh      # 免费自检，过口径闸
 PAPER=sapg TRIAL=trial1 ENV_FILE=~/my.env nohup bash deepcode_test/scripts/run_trial.sh > run.log 2>&1 &
 ```
 
-模型由 `$DEEPCODE_HOME/deepcode_config.json` 的 `agents.defaults.model` 决定（`setup.sh` 生成时按 `DEEPCODE_MODEL`，默认 `DeepSeek-V4-Flash`；
+连接与模型由 `$DEEPCODE_HOME/deepcode_config.json` 决定（`setup.sh` 生成时按 `DEEPCODE_CONNECTION`（`paratera` | `deepseek`）与 `DEEPCODE_MODEL`；换档：`DEEPCODE_REGEN_CONFIG=1 DEEPCODE_CONNECTION=deepseek DEEPCODE_MODEL=deepseek-flash bash setup.sh`，跑时 `DEEPCODE_EXPECT_MODEL=deepseek-flash`；
 `manualModels` 里 `DeepSeek-V4-Flash` 与 `DeepSeek-V4-Flash-Vision-Exp` 都是 32768 / 思考关）；`run_trial.sh` 的口径闸用
 `DEEPCODE_EXPECT_MODEL` 核对。**S9 成对重跑（2026-09-18 起）**：基线与 DeepEvol 线同模型 `DeepSeek-V4-Flash-Vision-Exp`、同两处规划补丁都开——
 
@@ -78,7 +96,9 @@ PAPER=sapg bash deepcode_test/scripts/run_grade.sh           # 真判，约 ¥38
 
 判 `~/pb_submissions/<paper>/` 下全部提交，脚本自动设 `paperbench.n_tries`；判完把提交移到 `~/pb_submissions_archive/`，否则重判白花钱。
 **判新论文前**：PaperBench 的 `paper_split` 是硬编码枚举，要在 `paperbench/nano/eval.py` 的 Literal 里加论文 id 并放一个
-`experiments/splits/<paper>.txt`（补丁里已有 fre / rice / sequential-neural-score-estimation / bam 的写法）。
+`experiments/splits/<paper>.txt`（已登记：fre / rice / sequential-neural-score-estimation / bam / sapg / pinn / robust-clip / self-expansion /
+test-time-model-adaptation / adaptive-pruning / stochastic-interpolants；改完重生成 `patches/paperbench_local_changes.patch` 并跑 `patches/verify_paperbench.sh`）。
+**选新论文前**：`DeepCode/.venv/bin/python deepcode_test/scripts/check_paper_md.py <ids>`，`SUSPECT` 的（官方 md 缺章）不进对比。
 
 跑自优化循环前先过泄漏闸：`bash deepcode_test/scripts/ci/check_no_rubric_leak.sh`（退出码 0 才可跑；扫描 DeepCode 提示词、补丁、裸跑固定件）。
 
@@ -94,14 +114,15 @@ PAPER=sapg bash deepcode_test/scripts/run_grade.sh           # 真判，约 ¥38
 │   ├── deepcode_local_changes.patch   DeepCode 全部改动（16 文件，+830/−70，§5）
 │   ├── deepcode_patched.sha256        打过补丁的 16 个文件的 sha256
 │   ├── verify_deepcode.sh             证明 DeepCode/ = 上游 + patch（setup.sh 自动跑）
-│   └── paperbench_local_changes.patch PaperBench 全部改动（5 文件，§5.4）
+│   ├── paperbench_local_changes.patch PaperBench 全部改动（5 文件，§5.4）
+│   └── verify_paperbench.sh           证明 frontier-evals/ = 上游 + patch + 新增文件，数据文件哈希 = 上游 LFS oid（联网）
 ├── config/                      ← deepcode_config.template.json（口径）、credentials.example.json、paperbench.env.example（无密钥）
 ├── deepcode_test/
-│   ├── scripts/                       run_trial.sh · run_grade.sh · stage_b_driver.py · run_all_trials.sh · paratera_key.sh
+│   ├── scripts/                       run_trial.sh · run_batch.sh（09-19 批一条命令）· run_grade.sh · stage_b_driver.py · run_all_trials.sh · check_paper_md.py · paratera_key.sh
 │   │   ├── gates/exec_level.py        执行级结构判据（确定性、零成本，给自优化循环当目标函数）
 │   │   ├── ci/check_no_rubric_leak.sh 评分知识泄漏扫描
 │   │   └── monitor/                   进度快照
-│   └── bare/                          裸跑臂固定件：bare_prompt_suffix.txt · paratera_proxy.py
+│   └── bare/                          裸跑臂：README.md（跑法 + 为什么必须有代理）· run_bare.sh · render_prompt.sh · additional_notes.txt · continue_message.txt · paratera_proxy.py · bare_prompt_suffix.txt（bam 批历史）
 ├── paperbench_changes/          ← PaperBench 改动文件副本 + 新增（单篇 split、裁判偏差分析脚本）
 ├── docs/
 │   ├── RESULTS-HISTORY.md             全部历史数字与结论（含作废标记）
@@ -186,10 +207,15 @@ DeepEvol 线也不带 ①②：对比方法的覆盖交给计划审阅（`--ask`
 | `common/preparedness_turn_completer/.../utils.py` | 上下文长度表登记 `DeepSeek-V4-Pro` 与 `DeepSeek-V4-Flash`（各带/不带 `deepseek-ai/` 前缀；该表只认 OpenAI 模型名，换裁判模型要再加） |
 | `paperbench/judge/simple.py` | 结构化解析模型可由 `PB_STRUCTURED_PARSER_MODEL` 指定；叶子并发 `PB_JUDGE_CONCURRENCY`（默认 20，上游 100 会被 Paratera 打 429）；**选文件路径解析修复**（只做精确解析，允许带或不带唯一顶层目录，选不到就重问一次，仍空则记无效叶而不是判 0） |
 | `paperbench/grade.py` | 摆卷 tar 解开后若只有一个顶层目录就从里面判；每叶日志落到 `runs/<group>/<run>/judge_logs/` |
-| `paperbench/nano/eval.py` | `paper_split` 允许单篇 split（fre / rice / sequential-neural-score-estimation / bam / sapg / pinn / lite） |
+| `paperbench/nano/eval.py` | `paper_split` 允许单篇 split（fre / rice / sequential-neural-score-estimation / bam / sapg / pinn / robust-clip / self-expansion / test-time-model-adaptation / adaptive-pruning / stochastic-interpolants / lite） |
 | `paperbench/utils.py` | `is_docker_running` 走 `docker.from_env()`，尊重 `DOCKER_HOST`（macOS Docker Desktop 的 socket 不在 /var/run） |
 
 未改动裁判提示词与评分树。
+
+**PaperBench 在本仓库里的形态（09-19 起）**：`frontier-evals/`（上游 `openai/frontier-evals @ UPSTREAM_BASE.txt` 的 `project/paperbench` + `project/common`）
+以普通文件 vendored 入库，补丁已打，用过的论文的 LFS 资产已水合（其余仍是指针文本，`PAPERS=<id> bash setup.sh` 按需补）；`.venv/`、`runs/`、`nanoeval/records/` 不入库。
+`patches/verify_paperbench.sh` 联网把上游拉到临时目录逐文件比：源码 = 上游 + patch + `paperbench_changes/` 的新增文件，数据文件要么相同、要么哈希等于上游 LFS 指针的 oid。
+上游 `.gitattributes` 改名 `.gitattributes.upstream`，数据以真实字节存。这样文档能指着仓库里的文件和行号，同事 clone 即有裁判和题面。
 
 ## 6. 坑（先读这一节再开跑；全表 60 余条在 `docs/PITFALLS.md`）
 
