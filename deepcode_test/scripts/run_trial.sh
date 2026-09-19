@@ -58,6 +58,18 @@ case "$PAPER" in
   test-time-model-adaptation) TITLE_KEY="test-time model adaptation"; BLOCK_REPO="mr-eggplant/FOA" ;;
   adaptive-pruning) TITLE_KEY="adaptive pruning"; BLOCK_REPO="ROIM1998/APT" ;;
   stochastic-interpolants) TITLE_KEY="stochastic interpolants"; BLOCK_REPO="interpolants/couplings" ;;
+  fre) TITLE_KEY="unsupervised zero"; BLOCK_REPO="kvfrans/fre" ;;
+  mechanistic-understanding) TITLE_KEY="a mechanistic"; BLOCK_REPO="ajyl/dpo_toxic" ;;
+  bridging-data-gaps) TITLE_KEY="bridging data"; BLOCK_REPO="ShinyGua/DPMs-ANT" ;;
+  all-in-one) TITLE_KEY="all in"; BLOCK_REPO="mackelab/simformer" ;;
+  what-will-my-model-forget) TITLE_KEY="what will"; BLOCK_REPO="AuCson/icml-24-wwmf-temp" ;;
+  stay-on-topic-with-classifier-free-guidance) TITLE_KEY="stay on"; BLOCK_REPO="Vermeille/lm-evaluation-harness-cfg" ;;
+  sample-specific-masks) TITLE_KEY="sample specific"; BLOCK_REPO="tmlr-group/SMM" ;;
+  lca-on-the-line) TITLE_KEY="lca on"; BLOCK_REPO="ElvishElvis/LCA-on-the-line" ;;
+  bbox) TITLE_KEY="bbox adapter"; BLOCK_REPO="haotiansun14/BBox-Adapter" ;;
+  lbcs) TITLE_KEY="refined coreset"; BLOCK_REPO="xiaoboxia/LBCS" ;;
+  bam) TITLE_KEY="batch and"; BLOCK_REPO="modichirag/GSM-VI" ;;
+  ftrl) TITLE_KEY="fine tuning"; BLOCK_REPO="BartekCupial/finetuning-RL-as-CL" ;;
   *)
     [ -f "$PB/data/papers/$PAPER/paper.md" ] || { echo "❌ 未知 PAPER=$PAPER（PaperBench 里没有）"; exit 1; }
     TITLE_KEY="$(grep -m1 '^# ' "$PB/data/papers/$PAPER/paper.md" | sed 's/^# //' | tr 'A-Z' 'a-z' | awk '{print $1" "$2}')"
