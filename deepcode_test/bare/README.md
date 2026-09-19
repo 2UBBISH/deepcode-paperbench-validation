@@ -26,30 +26,28 @@
 | 裁判 | `DeepSeek-V4-Flash` + `DeepSeek-V4-Pro` 结构化解析器（`PB_JUDGE_MODEL=DeepSeek-V4-Flash bash run_grade.sh`），两臂同一个 | bam 是 V4-Pro |
 | 样本 | 每篇每臂 1 份先看方向；差值 < 0.1 的论文再各补 1 份。单篇噪声 0.025（sapg 同份重跑），历史组内摆动 0.09–0.19，n < 5 不说"优于" | 同 |
 
-## 3. Codex 臂怎么跑（owner 手动，每篇 15–30 分钟）
+## 3. 裸跑臂怎么跑（Codex CLI / Claude Code CLI，一篇一条命令）
+
+两个 CLI 都装在 `~/.local/node-v24.21.0/bin`（npm -g 的前缀，不在默认 PATH；脚本自己加）。版本：codex-cli 0.155.1、Claude Code 2.1.278。
 
 ```bash
-V=~/Documents/env/paperbench-judge/validation; B=~/Documents/env/bare-0919      # 本批工作目录根，不入库
-PAPER=robust-clip                                                                # 五篇之一
-bash $V/deepcode_test/bare/render_prompt.sh $PAPER $B/$PAPER                     # 看到 PROMPT_OK + 四行 "2 <sha>" 才继续
-cd $B/$PAPER && PROXY_THINKING=disabled nohup python3 $V/deepcode_test/bare/paratera_proxy.py 8787 proxy_requests.log > proxy_stdout.log 2>&1 &
-cat $B/$PAPER/PROMPT.txt | pbcopy
+V=~/Documents/env/paperbench-judge/validation
+bash $V/deepcode_test/bare/run_bare.sh codex  robust-clip          # 工作目录 ~/Documents/env/bare-0919/robust-clip-codex
+bash $V/deepcode_test/bare/run_bare.sh claude robust-clip          # 同一篇的 Claude Code 臂，端口不同，可以同时跑
+#   [--hours 12] 时限句用 time_limit_template；[--no-pool] 不拷进判分池；[--root DIR] [--pool DIR] [--max-continues N]
 ```
 
-`~/.codex/config.toml`：`model = "DeepSeek-V4-Flash"`；`[model_providers.custom]` 的 `base_url = "http://127.0.0.1:8787"`，
-**`wire_api = "chat"`**（注入 `thinking` 在 chat 线上验过：`reasoning_tokens: 0`；responses 线是否认这个字段没验，别用）。
-`~/.codex/AGENTS.md` 0 字节；工作目录里没有 AGENTS.md；关掉 browser / chrome / computer-use 插件（或把开着的插件抄进 `RUN_NOTES.md`）；
-工作目录选 `$B/$PAPER`，审批全自动。**粘贴 `PROMPT.txt` 全文，一个字不加不减**——不加"你好/请开始"，不先让它 `ls`。
+脚本做的事（`run_bare.sh`）：`render_prompt.sh` 建目录出 `PROMPT.txt` → 卫生检查（`~/.codex/AGENTS.md` 为空、`~/.claude/CLAUDE.md` 不存在、工作目录里没有 AGENTS.md / CLAUDE.md）
+→ 起代理（`PROXY_THINKING=disabled`，`PROXY_UPSTREAM_KEY_ENV=PARATERA_API_KEY`：**key 只在代理的子 shell 里 source，CLI 自己的鉴权被代理替换**，所以 cc-switch 当前切在哪个档都不影响）
+→ 非交互跑到底（`codex exec` / `claude -p`，stdin 关闭）→ `submission/` 里没有 commit 就用官方 `DEFAULT_CONTINUE_MESSAGE` 续跑（`codex exec resume --last` / `claude --resume`），最多 5 次，记 `interactions.log`
+→ 审计写 `AUDIT.txt`（`CALIBER_OK` / `CALIBER_BROKEN: …`）+ 黑名单 grep + 文件数 → 拷进 `~/pb_submissions/<paper>/<arm>N/`。
 
-跑完：
-```bash
-head -1 $B/$PAPER/proxy_requests.log | python3 -c "import json,sys; d=json.loads(sys.stdin.readline()); print(d['model'], d.get('injected'), d['usage'])"
-python3 -c "import json,sys; rs=[json.loads(l) for l in open('$B/$PAPER/proxy_requests.log')]; print(len(rs),'requests; models',{r.get('model') for r in rs}); print('reasoning_tokens>0 lines:', sum(1 for r in rs if (r.get('usage') or {}).get('reasoning_tokens')))"
-grep -rIl "$(grep -vE '^\s*(#|$)' $B/$PAPER/paper/blacklist.txt | head -1 | sed 's#https://github.com/##')" $B/$PAPER/submission | grep -v '^.*README' || echo BLACKLIST_CLEAN
-(cd $B/$PAPER/submission && git status --short | head -3 && git clean -fdn | head -3)   # 未提交 / 未跟踪的文件会在判分前被清掉
-mkdir -p ~/pb_submissions/$PAPER && cp -R $B/$PAPER/submission ~/pb_submissions/$PAPER/codex1    # 交给判分池（和主会话说一声）
-```
-口径破坏 = 任一行 `model` 不是 `DeepSeek-V4-Flash`、任一行 `reasoning_tokens > 0`（Codex）或 `thinking_blocks > 0`（Claude Code）、`injected` 缺失、黑名单仓库有克隆/拷贝痕迹。
+| 臂 | 怎么接 | 09-19 实测 |
+| --- | --- | --- |
+| Codex | `codex exec -C $WS --approve-for-me -c sandbox_workspace_write.network_access=true -c model=DeepSeek-V4-Flash -c model_provider=custom -c model_providers.custom.base_url=http://127.0.0.1:8787/v1 --json`；**不改 `~/.codex/config.toml`**，`-c` 只对本进程生效；`--approve-for-me` = workspace-write 沙箱 + 自动审批（论文的 auto approval） | 0.155 已**删掉 `wire_api = "chat"`**，只剩 responses 线；代理在 `/v1/responses` 上注入 `thinking:{type:disabled}` 验过：注入 → `reasoning_tokens 0, reasoning_items 0`；不注入 → 14 / 14（Codex 自己发 `reasoning.effort=high`，记在 `thinking_fields`）。base_url 必须带 `/v1`（Codex 只追加 `/responses`） |
+| Claude Code | `claude -p … --setting-sources project --dangerously-skip-permissions --output-format stream-json --disable-slash-commands --strict-mcp-config --no-chrome`，env：`ANTHROPIC_BASE_URL=http://127.0.0.1:8788`、`ANTHROPIC_MODEL` + 三个 `ANTHROPIC_DEFAULT_*_MODEL` + `CLAUDE_CODE_SUBAGENT_MODEL` 全 V4-Flash、`ANTHROPIC_AUTH_TOKEN` 占位、去掉 `CLAUDECODE`（本机是从 Claude Code 会话里起的） | **`--setting-sources project` 不能少**：这台机的 `~/.claude/settings.json`（cc-switch 写的）有 env 块指向 `api.deepseek.com/anthropic` + deepseek-v4-pro，会盖过进程 env——第一次冒烟就这样直连了 DeepSeek 官方（花了那边约 0.1 USD，未经代理、思考未关）。加了之后走代理：`thinking_blocks 0`，Claude 自己发的 `thinking:{type:adaptive}` 被替换 |
+
+审计规则（`AUDIT.txt`）：每行 `model=DeepSeek-V4-Flash`、每行有 `injected` 和 `auth=proxy:PARATERA_API_KEY`、每行 `reasoning_tokens`=0 且 Codex `reasoning_items`=0 / Claude `thinking_blocks`=0，否则 `CALIBER_BROKEN`；黑名单仓库在提交里只允许出现在引用文字里。
 
 ## 4. DeepCode 臂（本仓库基线运行）与判分
 

@@ -12,12 +12,19 @@ block of the response (prompt/completion/reasoning tokens), so the run's model a
 records `thinking_blocks` (documents: blocks of type thinking / redacted_thinking; streams: content_block_start
 events of that type) — the same must-be-0 audit. The key is never logged.
 
-Usage:  [PROXY_THINKING=disabled] python3 paratera_proxy.py [port] [logfile]      (default 8787, ./proxy_requests.log)
+Usage:  [PROXY_THINKING=disabled] [PROXY_UPSTREAM_KEY_ENV=PARATERA_API_KEY] python3 paratera_proxy.py [port] [logfile]
+        (default 8787, ./proxy_requests.log). With PROXY_UPSTREAM_KEY_ENV the proxy authenticates upstream itself
+        (Authorization + x-api-key from that variable, logged as auth=proxy:<var>); the CLI may then hold any placeholder.
 Codex:  ~/.codex/config.toml  model_providers.<name>.base_url = "http://127.0.0.1:8787" (keep the wire_api and the
         rest of the provider block as they are; the path is forwarded untouched)."""
 import http.server, json, os, sys, time, urllib.request, urllib.error
 
 THINKING = os.environ.get("PROXY_THINKING", "")  # "" = pass through; "disabled" = force thinking off
+#: name of the environment variable holding the upstream key; when set, the proxy replaces the client's
+#: Authorization / x-api-key headers with it, so the CLI's own auth config (cc-switch profiles, config.toml tokens,
+#: ANTHROPIC_AUTH_TOKEN) can hold a placeholder and the real key lives only in the env file sourced for the proxy
+UPSTREAM_KEY_ENV = os.environ.get("PROXY_UPSTREAM_KEY_ENV", "")
+UPSTREAM_KEY = os.environ.get(UPSTREAM_KEY_ENV, "") if UPSTREAM_KEY_ENV else ""
 PORT = int(sys.argv[1]) if len(sys.argv) > 1 else 8787
 LOG = sys.argv[2] if len(sys.argv) > 2 else "proxy_requests.log"
 UPSTREAM = "https://llmapi.paratera.com"
@@ -51,6 +58,21 @@ def merge_usage(acc, u):
 THINKING_BLOCK_TYPES = ("thinking", "redacted_thinking")
 
 
+def reasoning_items_of(chunk):
+    """Responses wire (Codex): reasoning shows up as output items of type `reasoning` (documents) or as
+    `response.reasoning*` events (streams: reasoning_summary_text.delta …) besides usage.reasoning_tokens; the count
+    is the second, usage-independent thinking-off evidence on that wire."""
+    t = str(chunk.get("type") or "")
+    if t.startswith("response.reasoning"):
+        return 1
+    if t == "response.output_item.added" and (chunk.get("item") or {}).get("type") == "reasoning":
+        return 1
+    output = chunk.get("output")
+    if isinstance(output, list):
+        return sum(1 for o in output if isinstance(o, dict) and o.get("type") == "reasoning")
+    return 0
+
+
 def thinking_blocks_of(chunk):
     """Anthropic Messages: thinking shows up as content blocks, not in usage — a `content` array with blocks of
     type thinking / redacted_thinking (documents) or a `content_block_start` event whose block has that type (streams).
@@ -82,12 +104,22 @@ class Handler(http.server.BaseHTTPRequestHandler):
             rec["note"] = "non-json body passed through"
         req = urllib.request.Request(UPSTREAM + self.path, data=body, method="POST")
         for k, v in self.headers.items():
-            if k.lower() not in ("host", "content-length", "accept-encoding"):
-                req.add_header(k, v)
+            if k.lower() in ("host", "content-length", "accept-encoding"):
+                continue
+            if UPSTREAM_KEY and k.lower() in ("authorization", "x-api-key"):
+                continue  # replaced below
+            req.add_header(k, v)
+        if UPSTREAM_KEY:
+            req.add_header("authorization", f"Bearer {UPSTREAM_KEY}")
+            req.add_header("x-api-key", UPSTREAM_KEY)
+            rec["auth"] = f"proxy:{UPSTREAM_KEY_ENV}"
         req.add_header("content-length", str(len(body)))
         usage = None
-        anthropic = self.path.rstrip("/").endswith("/messages")  # Claude Code's wire: /v1/messages
+        route = self.path.split("?", 1)[0].rstrip("/")  # Claude Code appends ?beta=true
+        anthropic = route.endswith("/messages")  # Claude Code's wire: /v1/messages
+        responses = route.endswith("/responses")  # Codex's wire: /v1/responses
         thinking_blocks = 0 if anthropic else None
+        reasoning_items = 0 if responses else None
         try:
             with urllib.request.urlopen(req, timeout=900) as r:
                 self.send_response(r.status)
@@ -112,11 +144,15 @@ class Handler(http.server.BaseHTTPRequestHandler):
                                 usage = merge_usage(usage, usage_of(ev))
                                 if anthropic:
                                     thinking_blocks += thinking_blocks_of(ev)
+                                if responses:
+                                    reasoning_items += reasoning_items_of(ev)
                     else:
                         doc = json.loads(collected)
                         usage = usage_of(doc)
                         if anthropic:
                             thinking_blocks = thinking_blocks_of(doc)
+                        if responses:
+                            reasoning_items = reasoning_items_of(doc)
                 except Exception as e:
                     rec["usage_parse_error"] = str(e)
                 rec["status"] = r.status
@@ -133,6 +169,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
         rec["usage"] = usage
         if anthropic:
             rec["thinking_blocks"] = thinking_blocks  # must be 0 on every line of a thinking-off run
+        if responses:
+            rec["reasoning_items"] = reasoning_items  # same audit on Codex's wire (reasoning output items / events)
         with open(LOG, "a") as f:
             f.write(json.dumps(rec, ensure_ascii=False) + "\n")
 
