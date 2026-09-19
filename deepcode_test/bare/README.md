@@ -7,7 +7,7 @@
 
 | 文件 | 作用 |
 | --- | --- |
-| `render_prompt.sh <paper> <workspace> [--hours N]` | 建一篇论文的工作目录并生成 `PROMPT.txt`：官方 `code_only_instructions.txt`（字节级同源，只替换 `/home/paper`、`/home/submission` 两处路径）+ `additional_notes.txt`；目录里放基准给 agent 的那几样（`paper/` 五件、空 `agent.env`、`git init` 过的空 `submission/`），**不放 rubric.json / config.yaml**；末尾自检打印 `PROMPT_OK` 和四件材料的 sha256 |
+| `render_prompt.sh <paper> <workspace> [--hours N] [--full]` | 建一篇论文的工作目录并生成 `PROMPT.txt`：官方 `code_only_instructions.txt`（字节级同源，替换 `/home/paper`、`/home/submission` 两处路径，以及 md-only 时 "in both PDF and markdown format"→"in markdown format"）+ `additional_notes.txt`；目录里默认只放 `paper.md`、`addendum.md`、`blacklist.txt`（与 DeepCode 臂同一份字节；`--full` 才放 PDF + assets），空 `agent.env`，`git init` 过的空 `submission/`，**不放 rubric.json / config.yaml**；LFS 指针直接拒绝；末尾自检打印 `PROMPT_OK` 和材料 sha256 |
 | `additional_notes.txt` | PaperBench 自己的 `ADDITIONAL NOTES` 段（`paperbench/solvers/basicagent/prompts/templates.py` 的 `additional_notes_template`），按基准的填法填：Compute = `no_gpu_template`（这台 Mac 没有 GPU），Total Runtime = `no_time_limit_template`（不加 `--hours`）或 `time_limit_template`（`--hours N`），API keys 指向工作目录里的 `agent.env`（空文件，句子字面成立）。逐字来自基准，我们一个字不加 |
 | `continue_message.txt` | Codex 停下来问 / 停下来没提交时人回的那一句 = PaperBench `DEFAULT_CONTINUE_MESSAGE`，原文。每回一次在工作目录 `interactions.log` 记一行 |
 | `paratera_proxy.py` | 直通代理 `127.0.0.1:8787 → llmapi.paratera.com`，逐请求记 model / thinking 字段 / usage（含 `reasoning_tokens`）。`PROXY_THINKING=disabled` 时给每个请求体加 `thinking:{type:disabled}`（Paratera 只认这种写法）并记 `injected`——这是"思考关"口径的旋钮，别的不动。回包侧证据：OpenAI 线（Codex）看 `usage.reasoning_tokens`；Anthropic 线（Claude Code，`/v1/messages`）usage 里没有这个数，思考以 `type: thinking` 的内容块出现，代理逐回包数出 `thinking_blocks`（文档：content 里的 thinking / redacted_thinking 块；流：`content_block_start` 事件）。09-19 实测 V4-Flash：不注入 → `thinking_blocks: 1`（Paratera 在 Anthropic 线上默认思考开），注入 → 0，文档与流都对。两个数都必须全程为 0。key 不落日志 |
@@ -22,7 +22,7 @@
 | 时限句 | 默认 `no_time_limit_template`："work until you have reproduced all the core contributions"——另两臂也没被告知任何小时数 | 要对齐 PaperBench 官方跑法的小时数就 `--hours 12`，三臂口径记录里写明 |
 | 续跑 | Codex 停下来（问问题、或说完了但没提交）→ 回 `CONTINUE.txt` 原文，**最多 5 次**，每次记 `interactions.log`；它说完了且已 `git commit` 就停 | bam 是 "Continue; no further input will be provided." |
 | 论文 | `sapg`（77 叶）、`pinn`（126）、`adaptive-pruning`（86）、`self-expansion`（70）、`test-time-model-adaptation`（86）——Code-Dev 叶数 70–130 的中等篇，`paper.md` 都经 `check_paper_md.py` 核过完整；**robust-clip 剔除**（官方 md 缺 §2–§3，见 PITFALLS §E）；sapg / pinn 的基线分已有但那是 Paratera serving，本批重跑 | bam 单篇 |
-| 图 | Codex 能读目录里的 assets，但 PaperBench 数据集里的 jpg 是 LFS 指针（`render_prompt.sh` 会提示）。**不补图**：DeepCode 臂本批关图，两臂都不看图 | bam 的图是真字节 |
+| 输入 | **三臂同一份字节**（owner 09-19）：CLI 工作目录里只有 `paper.md`、`addendum.md`、`blacklist.txt`，**不放 PDF 和 assets**——DeepCode / 本线本来就只读 md + addendum；官方题面里 "in both PDF and markdown format" 那一句改成 "in markdown format"（除两处路径外唯一的改字，`render_prompt.sh` 的自检把它算进去）。`--full` 可恢复官方目录 | bam 给了 PDF 和真图（偏帮裸跑，当时记为保守方向） |
 | 裁判 | `DeepSeek-V4-Flash` + `DeepSeek-V4-Pro` 结构化解析器（`PB_JUDGE_MODEL=DeepSeek-V4-Flash bash run_grade.sh`），两臂同一个 | bam 是 V4-Pro |
 | 样本 | 每篇每臂 1 份先看方向；差值 < 0.1 的论文再各补 1 份。单篇噪声 0.025（sapg 同份重跑），历史组内摆动 0.09–0.19，n < 5 不说"优于" | 同 |
 
