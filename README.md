@@ -20,7 +20,7 @@ All earlier results (Aug 25 – Sep 15) are kept in `docs/RESULTS-HISTORY.md` wi
 | --- | --- | --- |
 | **DeepEvol 复现线** | DeepCode 的 Paper2Code 引擎嵌入 DeepEvol（`apps/v2/agent/paper2code/`），自己的 provider / 工具 / 执行端口 / 闸门 | DeepEvol 仓库，`scripts/paper2code_canary.py` |
 | **基线运行**（本仓库） | 原装 DeepCode + 本仓库补丁，`run_trial.sh` 一轮一摆卷 | 本仓库 |
-| 裸跑（bare） | Codex 桌面版 + 官方指令原文 + 冻结后缀 | `deepcode_test/bare/`，本批暂不起 |
+| 裸跑（bare） | Codex 桌面版 + 官方指令原文 + PaperBench 自己的 ADDITIONAL NOTES；代理注入思考关 | `deepcode_test/bare/`（`render_prompt.sh` 建目录出提示词；2026-09-19 起五篇 vs 基线运行，owner 手动跑 Codex） |
 
 术语按 DeepEvol 根 `CONTEXT.md`：**对比方法**（论文里被比较的算法，rubric 里的 baseline）≠ **基线运行**（原装 DeepCode 在同口径下的一次运行）。本文不用裸的"基线"。
 
