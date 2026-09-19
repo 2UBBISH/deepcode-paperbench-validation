@@ -27,6 +27,10 @@ WS="$(mkdir -p "$WS" && cd "$WS" && pwd)"
 mkdir -p "$WS/paper" "$WS/submission"
 for f in paper.pdf paper.md addendum.md blacklist.txt; do [ -f "$SRC/$f" ] && cp "$SRC/$f" "$WS/paper/$f"; done
 [ -d "$SRC/assets" ] && cp -R "$SRC/assets" "$WS/paper/assets"
+for f in paper.md paper.pdf addendum.md blacklist.txt; do   # a pointer here = the agent would "reproduce" a 130-byte stub
+  [ -f "$WS/paper/$f" ] && head -c 40 "$WS/paper/$f" | grep -q '^version https://git-lfs' \
+    && { echo "❌ $SRC/$f is an LFS pointer, not the paper; hydrate first: PAPERS=$PAPER bash $REPO/setup.sh"; rm -rf "$WS"; exit 1; }
+done
 if grep -rlq "^version https://git-lfs" "$WS/paper/assets" 2>/dev/null; then
   echo "  ⚠️ assets are LFS pointers (Codex can read them but not view the figures); hydrate from HF if figures should count"
 fi

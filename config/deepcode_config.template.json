@@ -17,12 +17,27 @@
           { "id": "DeepSeek-V4-Flash-Vision-Exp", "contextWindow": 128000, "maxOutputTokens": 32768 }
         ],
         "enabled": true
+      },
+      "deepseek": {
+        "label": "DeepSeek (official)",
+        "template": "custom",
+        "protocol": "openai_chat",
+        "auth": "api_key",
+        "compat": { "thinking": "disabled" },
+        "apiBase": "https://api.deepseek.com/v1",
+        "apiKeyEnv": "DEEPSEEK_API_KEY",
+        "extraHeaders": {},
+        "modelCatalog": "manual",
+        "manualModels": [
+          { "id": "deepseek-flash", "contextWindow": 128000, "maxOutputTokens": 32768 }
+        ],
+        "enabled": true
       }
     }
   },
   "agents": {
     "defaults": {
-      "connection": "paratera",
+      "connection": "__CONNECTION__",
       "model": "__MODEL__",
       "temperature": 0.1,
       "maxTokens": 32768
