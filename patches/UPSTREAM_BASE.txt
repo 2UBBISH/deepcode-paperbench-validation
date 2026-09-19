@@ -1,2 +1,0 @@
-DeepCode upstream: https://github.com/HKUDS/DeepCode.git @ 21ebc57fbcab3e3a238976771a0e06115aa30da6
-frontier-evals upstream: https://github.com/openai/frontier-evals.git @ 51052cede8cc608f95bb00346635e03759013e5a
