@@ -7,7 +7,10 @@ JSON body (the only form Paratera honours; `enable_thinking:false` is ignored) a
 V4-Flash thinking-off caliber the DeepCode and DeepEvol arms run with since 2026-09-17; nothing else in the body is
 touched. One JSON line per request goes to the log: path, model, stream, the thinking fields as sent, and the usage
 block of the response (prompt/completion/reasoning tokens), so the run's model and thinking state are on record
-(`reasoning_tokens` must be 0 on every line of a thinking-off run). The key is never logged.
+(`reasoning_tokens` must be 0 on every line of a thinking-off run). On the Anthropic Messages wire (Claude Code,
+`/v1/messages`) usage carries no reasoning counter; thinking appears as content blocks, so each such line also
+records `thinking_blocks` (documents: blocks of type thinking / redacted_thinking; streams: content_block_start
+events of that type) — the same must-be-0 audit. The key is never logged.
 
 Usage:  [PROXY_THINKING=disabled] python3 paratera_proxy.py [port] [logfile]      (default 8787, ./proxy_requests.log)
 Codex:  ~/.codex/config.toml  model_providers.<name>.base_url = "http://127.0.0.1:8787" (keep the wire_api and the
@@ -21,16 +24,43 @@ UPSTREAM = "https://llmapi.paratera.com"
 
 
 def usage_of(chunk):
-    """The usage block of a completion document, a Responses-API document/event (`response.usage`), or an SSE
-    chunk, flattened: reasoning tokens live under completion_tokens_details (chat) or output_tokens_details
-    (responses) on OpenAI-compatible routes."""
-    u = chunk.get("usage") or (chunk.get("response") or {}).get("usage") or {}
+    """The usage block of a completion document, a Responses-API document/event (`response.usage`), an Anthropic
+    Messages document or its `message_start` / `message_delta` events, or an SSE chunk, flattened: reasoning tokens
+    live under completion_tokens_details (chat) or output_tokens_details (responses) on OpenAI-compatible routes;
+    the Anthropic wire has no such counter (see thinking_blocks_of)."""
+    u = chunk.get("usage") or (chunk.get("response") or {}).get("usage") or (chunk.get("message") or {}).get("usage") or {}
     if not u:
         return None
     details = u.get("completion_tokens_details") or u.get("output_tokens_details") or {}
     return {"prompt_tokens": u.get("prompt_tokens", u.get("input_tokens")),
             "completion_tokens": u.get("completion_tokens", u.get("output_tokens")),
             "reasoning_tokens": u.get("reasoning_tokens", details.get("reasoning_tokens"))}
+
+
+def merge_usage(acc, u):
+    """Anthropic streams split the usage over message_start (input) and message_delta (output); keep the non-None parts."""
+    if u is None:
+        return acc
+    acc = dict(acc or {})
+    for k, v in u.items():
+        if v is not None:
+            acc[k] = v
+    return acc
+
+
+THINKING_BLOCK_TYPES = ("thinking", "redacted_thinking")
+
+
+def thinking_blocks_of(chunk):
+    """Anthropic Messages: thinking shows up as content blocks, not in usage — a `content` array with blocks of
+    type thinking / redacted_thinking (documents) or a `content_block_start` event whose block has that type (streams).
+    This count is the thinking-off evidence on that wire (reasoning_tokens is on the OpenAI wires)."""
+    if chunk.get("type") == "content_block_start":
+        return 1 if (chunk.get("content_block") or {}).get("type") in THINKING_BLOCK_TYPES else 0
+    content = chunk.get("content")
+    if isinstance(content, list):
+        return sum(1 for b in content if isinstance(b, dict) and b.get("type") in THINKING_BLOCK_TYPES)
+    return 0
 
 
 class Handler(http.server.BaseHTTPRequestHandler):
@@ -56,6 +86,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 req.add_header(k, v)
         req.add_header("content-length", str(len(body)))
         usage = None
+        anthropic = self.path.rstrip("/").endswith("/messages")  # Claude Code's wire: /v1/messages
+        thinking_blocks = 0 if anthropic else None
         try:
             with urllib.request.urlopen(req, timeout=900) as r:
                 self.send_response(r.status)
@@ -76,11 +108,15 @@ class Handler(http.server.BaseHTTPRequestHandler):
                     if streaming:
                         for line in collected.decode("utf-8", "replace").splitlines():
                             if line.startswith("data: ") and line[6:].strip() not in ("", "[DONE]"):
-                                u = usage_of(json.loads(line[6:]))
-                                if u:
-                                    usage = u
+                                ev = json.loads(line[6:])
+                                usage = merge_usage(usage, usage_of(ev))
+                                if anthropic:
+                                    thinking_blocks += thinking_blocks_of(ev)
                     else:
-                        usage = usage_of(json.loads(collected))
+                        doc = json.loads(collected)
+                        usage = usage_of(doc)
+                        if anthropic:
+                            thinking_blocks = thinking_blocks_of(doc)
                 except Exception as e:
                     rec["usage_parse_error"] = str(e)
                 rec["status"] = r.status
@@ -95,6 +131,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
             rec["status"] = 502
             rec["error"] = str(e)
         rec["usage"] = usage
+        if anthropic:
+            rec["thinking_blocks"] = thinking_blocks  # must be 0 on every line of a thinking-off run
         with open(LOG, "a") as f:
             f.write(json.dumps(rec, ensure_ascii=False) + "\n")
 

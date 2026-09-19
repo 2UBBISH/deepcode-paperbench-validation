@@ -10,7 +10,7 @@
 | `render_prompt.sh <paper> <workspace> [--hours N]` | 建一篇论文的工作目录并生成 `PROMPT.txt`：官方 `code_only_instructions.txt`（字节级同源，只替换 `/home/paper`、`/home/submission` 两处路径）+ `additional_notes.txt`；目录里放基准给 agent 的那几样（`paper/` 五件、空 `agent.env`、`git init` 过的空 `submission/`），**不放 rubric.json / config.yaml**；末尾自检打印 `PROMPT_OK` 和四件材料的 sha256 |
 | `additional_notes.txt` | PaperBench 自己的 `ADDITIONAL NOTES` 段（`paperbench/solvers/basicagent/prompts/templates.py` 的 `additional_notes_template`），按基准的填法填：Compute = `no_gpu_template`（这台 Mac 没有 GPU），Total Runtime = `no_time_limit_template`（不加 `--hours`）或 `time_limit_template`（`--hours N`），API keys 指向工作目录里的 `agent.env`（空文件，句子字面成立）。逐字来自基准，我们一个字不加 |
 | `continue_message.txt` | Codex 停下来问 / 停下来没提交时人回的那一句 = PaperBench `DEFAULT_CONTINUE_MESSAGE`，原文。每回一次在工作目录 `interactions.log` 记一行 |
-| `paratera_proxy.py` | 直通代理 `127.0.0.1:8787 → llmapi.paratera.com`，逐请求记 model / thinking 字段 / usage（含 `reasoning_tokens`）。`PROXY_THINKING=disabled` 时给每个请求体加 `thinking:{type:disabled}`（Paratera 只认这种写法）并记 `injected`——这是"思考关"口径的旋钮，别的不动。key 不落日志 |
+| `paratera_proxy.py` | 直通代理 `127.0.0.1:8787 → llmapi.paratera.com`，逐请求记 model / thinking 字段 / usage（含 `reasoning_tokens`）。`PROXY_THINKING=disabled` 时给每个请求体加 `thinking:{type:disabled}`（Paratera 只认这种写法）并记 `injected`——这是"思考关"口径的旋钮，别的不动。回包侧证据：OpenAI 线（Codex）看 `usage.reasoning_tokens`；Anthropic 线（Claude Code，`/v1/messages`）usage 里没有这个数，思考以 `type: thinking` 的内容块出现，代理逐回包数出 `thinking_blocks`（文档：content 里的 thinking / redacted_thinking 块；流：`content_block_start` 事件）。09-19 实测 V4-Flash：不注入 → `thinking_blocks: 1`（Paratera 在 Anthropic 线上默认思考开），注入 → 0，文档与流都对。两个数都必须全程为 0。key 不落日志 |
 | `bare_prompt_suffix.txt` | bam 那批（09-15）用的两句自写后缀；**本批不用**（被基准自己的附注取代），留作历史 |
 
 ## 2. 2026-09-19 批：Flash 思考关，5 篇，Codex 臂 vs DeepCode 基线运行
@@ -49,7 +49,7 @@ grep -rIl "$(grep -vE '^\s*(#|$)' $B/$PAPER/paper/blacklist.txt | head -1 | sed 
 (cd $B/$PAPER/submission && git status --short | head -3 && git clean -fdn | head -3)   # 未提交 / 未跟踪的文件会在判分前被清掉
 mkdir -p ~/pb_submissions/$PAPER && cp -R $B/$PAPER/submission ~/pb_submissions/$PAPER/codex1    # 交给判分池（和主会话说一声）
 ```
-口径破坏 = 任一行 `model` 不是 `DeepSeek-V4-Flash`、任一行 `reasoning_tokens > 0`、`injected` 缺失、黑名单仓库有克隆/拷贝痕迹。
+口径破坏 = 任一行 `model` 不是 `DeepSeek-V4-Flash`、任一行 `reasoning_tokens > 0`（Codex）或 `thinking_blocks > 0`（Claude Code）、`injected` 缺失、黑名单仓库有克隆/拷贝痕迹。
 
 ## 4. DeepCode 臂（本仓库基线运行）与判分
 
