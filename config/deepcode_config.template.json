@@ -23,13 +23,13 @@
         "template": "custom",
         "protocol": "openai_chat",
         "auth": "api_key",
-        "compat": { "thinking": "disabled" },
+        "compat": { "thinking": "enabled" },
         "apiBase": "https://api.deepseek.com/v1",
         "apiKeyEnv": "DEEPSEEK_API_KEY",
         "extraHeaders": {},
         "modelCatalog": "manual",
         "manualModels": [
-          { "id": "deepseek-flash", "contextWindow": 128000, "maxOutputTokens": 32768 }
+          { "id": "deepseek-flash", "contextWindow": 1000000, "maxOutputTokens": 32768 }
         ],
         "enabled": true
       }
