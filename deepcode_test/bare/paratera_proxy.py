@@ -23,6 +23,7 @@ THINKING = os.environ.get("PROXY_THINKING", "")  # "" = pass through; "disabled"
 #: name of the environment variable holding the upstream key; when set, the proxy replaces the client's
 #: Authorization / x-api-key headers with it, so the CLI's own auth config (cc-switch profiles, config.toml tokens,
 #: ANTHROPIC_AUTH_TOKEN) can hold a placeholder and the real key lives only in the env file sourced for the proxy
+FORCE_MODEL = os.environ.get("PROXY_FORCE_MODEL", "")  # rewrite every request's model to this id (desktop apps choose their own); logs model_in
 USER_AGENT = os.environ.get("PROXY_USER_AGENT", "")  # e.g. "paperbench-bare/1"; replaces the client's User-Agent upstream
 UPSTREAM_KEY_ENV = os.environ.get("PROXY_UPSTREAM_KEY_ENV", "")
 UPSTREAM_KEY = os.environ.get(UPSTREAM_KEY_ENV, "") if UPSTREAM_KEY_ENV else ""
@@ -109,6 +110,11 @@ class Handler(http.server.BaseHTTPRequestHandler):
                     fh.write(body)
                 with open(stem + ".headers.json", "w") as fh:  # request headers, auth values redacted
                     json.dump({k: ("…" if k.lower() in ("authorization", "x-api-key") else v) for k, v in self.headers.items()}, fh, indent=1)
+            if FORCE_MODEL and d.get("model") != FORCE_MODEL:
+                rec["model_in"] = d.get("model")
+                d["model"] = FORCE_MODEL
+                rec["model"] = FORCE_MODEL
+                body = json.dumps(d).encode("utf-8")
             if THINKING == "disabled":
                 if self.path.split("?", 1)[0].rstrip("/").endswith("/responses"):
                     # Responses API: the documented off switch is reasoning.effort=none (api-docs.deepseek.com, thinking_mode)

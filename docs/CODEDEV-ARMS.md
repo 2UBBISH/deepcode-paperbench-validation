@@ -47,6 +47,13 @@ README 第 90 行 "the agent is informed of this file in our default instruction
 
 官方式接入（写一个 `BasePBSolver` 子类实现 `_run_agent`，`frontier-evals/project/paperbench/paperbench/solvers/base.py:46-70`）比上面多的只有：alcatraz 容器沙箱、`agent.log` 给 monitor 步查黑名单。我们用干净工作目录 + 代理日志 + 事后 `grep` 黑名单代替，判分走官方 `PBDirectSubmissionSolver`（`run_grade.sh`，池子 `~/pb_submissions/<paper>/<trial>/`）。
 
+## 3.1 桌面版（本批最终口径，owner 09-19）
+
+论文的三个对照里 Cursor 是桌面 IDE，Claude Code 2.0.22 和 codex-cli 0.47.0 都是终端 CLI；owner 决定本批用 **Codex 桌面版 + Claude 桌面版（Code 标签）** 对 DeepCode，
+不做 Cursor、不做论文底座复现。桌面版没有命令行覆盖，模型路由来自各自配置（cc-switch 写），所以用 cc-switch 各建一个指向本机代理的档；
+代理钉模型（`PROXY_FORCE_MODEL`，记 `model_in`）、注入思考关、换 UA、丢 `x-codex-*`、带 key、逐请求记录——`desktop_prep.sh` 起代理并出题面，人驱动 app，`desktop_finish.sh` 审计并收进 `results/`。
+输入与 CLI 臂完全相同（md + addendum + blacklist，官方题面 + 官方附注，官方续跑语 ≤5 次）。桌面版多出的插件（browser / computer-use / chrome、skills / MCP）关掉并记进 `RUN_NOTES.md`。
+
 ## 4. 本批（09-19）口径
 
 deepseek-flash（api.deepseek.com，owner 的 cc-switch 路由；基线仍在 Paratera，见 bare/README §3 末）思考关；5 篇：sapg、pinn、adaptive-pruning、self-expansion、test-time-model-adaptation（Code-Dev 叶 70–130；robust-clip 因官方 paper.md 缺方法章被剔除，`check_paper_md.py`）；两臂裸跑 + DeepCode 基线（+ 本线 stage 9）；全部关图；裁判 V4-Flash + V4-Pro 解析器；每篇每臂 1 份先看方向，差值 < 0.1 再补；单篇噪声 0.025、历史组内摆动 0.09–0.19，n < 5 不说"优于"。跑法见 `deepcode_test/bare/README.md`。
