@@ -23,7 +23,7 @@
         "template": "custom",
         "protocol": "openai_chat",
         "auth": "api_key",
-        "compat": { "thinking": "disabled" },
+        "compat": { "thinking": "enabled" },
         "apiBase": "https://api.deepseek.com/v1",
         "apiKeyEnv": "DEEPSEEK_API_KEY",
         "extraHeaders": {},

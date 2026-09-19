@@ -50,13 +50,13 @@ README 第 90 行 "the agent is informed of this file in our default instruction
 ## 3.1 桌面版（本批最终口径，owner 09-19）
 
 论文的三个对照里 Cursor 是桌面 IDE，Claude Code 2.0.22 和 codex-cli 0.47.0 都是终端 CLI；owner 决定本批用 **Codex 桌面版 + Claude 桌面版（Code 标签）** 对 DeepCode，
-不做 Cursor、不做论文底座复现。桌面版没有命令行覆盖，模型路由来自各自配置（cc-switch 写），所以用 cc-switch 各建一个指向本机代理的档；
-代理钉模型（`PROXY_FORCE_MODEL`，记 `model_in`）、注入思考关、换 UA、丢 `x-codex-*`、带 key、逐请求记录——`desktop_prep.sh` 起代理并出题面，人驱动 app，`desktop_finish.sh` 审计并收进 `results/`。
+不做 Cursor、不做论文底座复现。桌面版没有命令行覆盖，模型路由来自各自配置（cc-switch 写）。owner 09-19 定**思考开**（DeepSeek 缺省，论文的对照也都是 -thinking），于是不需要代理：cc-switch 的 DeepSeek 档直连 api.deepseek.com，
+Claude 桌面档要把模型环境变量都设成 deepseek-flash；`desktop_prep.sh` 出题面、记开始时间和 **3 小时硬上限**，人驱动 app，`desktop_finish.sh` 从 app 自己的会话日志（`~/.codex/sessions`、`~/.claude/projects`）审计每轮的 model 与思考 token 并收进 `results/`。DeepCode 臂同样思考开（`compat.thinking=enabled`，跑完核 reasoning_tokens > 0）。
 输入与 CLI 臂完全相同（md + addendum + blacklist，官方题面 + 官方附注，官方续跑语 ≤5 次）。桌面版多出的插件（browser / computer-use / chrome、skills / MCP）关掉并记进 `RUN_NOTES.md`。
 
 ## 4. 本批（09-19）口径
 
-deepseek-flash（api.deepseek.com，owner 的 cc-switch 路由；基线仍在 Paratera，见 bare/README §3 末）思考关；5 篇：sapg、pinn、adaptive-pruning、self-expansion、test-time-model-adaptation（Code-Dev 叶 70–130；robust-clip 因官方 paper.md 缺方法章被剔除，`check_paper_md.py`）；两臂裸跑 + DeepCode 基线（+ 本线 stage 9）；全部关图；裁判 V4-Flash + V4-Pro 解析器；每篇每臂 1 份先看方向，差值 < 0.1 再补；单篇噪声 0.025、历史组内摆动 0.09–0.19，n < 5 不说"优于"。跑法见 `deepcode_test/bare/README.md`。
+deepseek-flash（api.deepseek.com，owner 的 cc-switch 路由；基线仍在 Paratera，见 bare/README §3 末）**思考开**（09-19 晚 owner 改定；之前的关思考版本靠代理，留作 CLI 参考）；5 篇：sapg、pinn、adaptive-pruning、self-expansion、test-time-model-adaptation（Code-Dev 叶 70–130；robust-clip 因官方 paper.md 缺方法章被剔除，`check_paper_md.py`）；两臂裸跑 + DeepCode 基线（+ 本线 stage 9）；全部关图；裁判 V4-Flash + V4-Pro 解析器；每篇每臂 1 份先看方向，差值 < 0.1 再补；单篇噪声 0.025、历史组内摆动 0.09–0.19，n < 5 不说"优于"。跑法见 `deepcode_test/bare/README.md`。
 
 与 bam 批（`INPUT_STANDARD.md`）的三处差别：Flash 关（bam 是 Pro 开）；题面后接**官方附注**（bam 接的是我们自写的两句后缀——owner 09-19 指出时间和运行要求被去掉了，改回基准原文）；续跑语用官方 `DEFAULT_CONTINUE_MESSAGE`（CLI 非交互跑基本用不上）。
 
