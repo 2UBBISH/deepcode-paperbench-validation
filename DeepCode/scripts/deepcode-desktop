@@ -1,3 +1,0 @@
-#!/bin/sh
-# Delegate to the common CLI; all Desktop launch logic lives there.
-exec deepcode desktop "$@"

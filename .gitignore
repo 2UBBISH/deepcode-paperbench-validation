@@ -1,20 +1,6 @@
-# secrets — keys enter only through an env file (ENV_FILE=...) or DEEPCODE_HOME/credentials.json, never the repo
-.env
-.env.*
-!.env.example
-credentials.json
-*.env
-# local environments / runtime state
-__pycache__/
-*.pyc
-.venv/
-deepcode_lab/
-.deepcode-home/
-.mcp-node/
-# results/ is what you hand back (tar it); work/ holds the bare arms' workspaces; neither is committed
 results/
 work/
-*.egg-info/
-# every run's logs, inputs, task-directory archives, submission copies and grades live here, never in git
 runs/
-run.log
+__pycache__/
+*.pyc
+.DS_Store
