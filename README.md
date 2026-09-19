@@ -1,7 +1,6 @@
 # 0919 test：Codex 桌面版 vs Claude 桌面版，PaperBench 20 篇
 
-分支 `0919-test`。你要做的事：用 **Codex 桌面版**和 **Claude 桌面版**各把 20 篇论文"复现成代码仓库"，
-把产物交回给 owner 统一判分。DeepCode 那一臂由 owner 自己跑，不在这个分支里。评分标准（rubric）也不在这里，别去找。
+分支 `0919-test`。用  **Claude 桌面版**各把 20 篇论文"复现成代码仓库"，
 
 ## 0. 先弄懂在比什么
 
