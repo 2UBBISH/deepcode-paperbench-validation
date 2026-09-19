@@ -19,9 +19,12 @@ log(){ echo "[$(date '+%m-%d %H:%M:%S')] $*" | tee -a "$LEDGER"; }
 has(){ case " $ARMS " in *" $1 "*) return 0;; *) return 1;; esac; }
 has baseline && { [ -f "$ENV_FILE" ] || { echo "❌ $ENV_FILE missing (DEEPSEEK_API_KEY=… for the baseline)"; exit 1; }; }
 
+RES="${RESULTS_ROOT:-}"   # set → collaboration layout RESULTS_ROOT/<paper>/<arm>/…; unset → the judge's pool ~/pb_submissions
+done_baseline() { if [ -n "$RES" ]; then [ -d "$RES/$1/deepcode/submission" ]; else [ -d "$HOME/pb_submissions/$1/trial1" ]; fi; }
+done_bare() { if [ -n "$RES" ]; then [ -d "$RES/$1/$2/submission" ]; else ls -d "$HOME/pb_submissions/$1/$2"[0-9]* >/dev/null 2>&1; fi; }
 baseline_chain() {  # sequential over papers
   for p in $PAPERS; do
-    if [ -d "$HOME/pb_submissions/$p/trial1" ]; then log "baseline $p: trial1 already in the pool, skipping"; continue; fi
+    if done_baseline "$p"; then log "baseline $p: already done, skipping"; continue; fi
     log "baseline $p: start"
     PAPER="$p" TRIAL=trial1 ENV_FILE="$ENV_FILE" DEEPCODE_EXPECT_MODEL="$MODEL" \
       bash "$HERE/run_trial.sh" > "$REPO/runs/${p}_trial1_batch.log" 2>&1
@@ -33,7 +36,7 @@ bare_chain() {  # per paper: codex and claude in parallel, then the next paper
     pids=()
     for arm in codex claude; do
       has "$arm" || continue
-      if ls -d "$HOME/pb_submissions/$p/${arm}"[0-9]* >/dev/null 2>&1; then log "$arm $p: already in the pool, skipping"; continue; fi
+      if done_bare "$p" "$arm"; then log "$arm $p: already done, skipping"; continue; fi
       log "$arm $p: start"
       ( bash "$HERE/../bare/run_bare.sh" "$arm" "$p" > "$REPO/runs/${p}_${arm}_batch.log" 2>&1; echo "$?" > "$REPO/runs/${p}_${arm}_batch.exit" ) &
       pids+=($!)
@@ -46,5 +49,10 @@ log "batch start: papers [$PAPERS] arms [$ARMS] model $MODEL"
 has baseline && { baseline_chain & BPID=$!; }
 { has codex || has claude; } && { bare_chain & CPID=$!; }
 [ -n "${BPID:-}" ] && wait "$BPID"; [ -n "${CPID:-}" ] && wait "$CPID"
-log "batch done. pool:"; for p in $PAPERS; do log "  $p: $(ls "$HOME/pb_submissions/$p" 2>/dev/null | tr '\n' ' ')"; done
-log "grade: for p in $PAPERS; do PAPER=\$p PB_JUDGE_MODEL=DeepSeek-V4-Flash bash deepcode_test/scripts/run_grade.sh; done"
+if [ -n "$RES" ]; then
+  log "batch done. results:"; for p in $PAPERS; do log "  $p: $(ls "$RES/$p" 2>/dev/null | tr '\n' ' ')"; done
+  log "hand back: tar czf results_$(whoami)_$(date +%m%d).tgz -C $(dirname "$RES") $(basename "$RES")"
+else
+  log "batch done. pool:"; for p in $PAPERS; do log "  $p: $(ls "$HOME/pb_submissions/$p" 2>/dev/null | tr '\n' ' ')"; done
+  log "grade: for p in $PAPERS; do PAPER=\$p PB_JUDGE_MODEL=DeepSeek-V4-Flash bash deepcode_test/scripts/run_grade.sh; done"
+fi

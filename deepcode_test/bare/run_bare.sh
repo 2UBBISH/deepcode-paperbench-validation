@@ -20,7 +20,7 @@
 set -euo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
 ARM="${1:?codex|claude}"; PAPER="${2:?paper id}"; shift 2
-HOURS=""; ROOT="$HOME/Documents/env/bare-0919"; POOL="$HOME/pb_submissions"; MAX_CONT=5; TO_POOL=1
+HOURS=""; ROOT="${BARE_ROOT:-$HOME/Documents/env/bare-0919}"; POOL="${RESULTS_ROOT:-$HOME/pb_submissions}"; MAX_CONT=5; TO_POOL=1
 while [ $# -gt 0 ]; do case "$1" in
   --hours) HOURS="$2"; shift 2 ;; --root) ROOT="$2"; shift 2 ;; --pool) POOL="$2"; shift 2 ;;
   --max-continues) MAX_CONT="$2"; shift 2 ;; --no-pool) TO_POOL=0; shift ;; *) echo "unknown arg $1"; exit 2 ;; esac; done
@@ -131,7 +131,14 @@ untracked=$(git -C "$WS/submission" status --porcelain | wc -l | tr -d ' ')
 log "- submission: $n_files tracked files ($n_py .py), $untracked uncommitted/untracked (git clean -fd drops them at grading)"
 
 # ---- 6. into the pool ----
-if [ "$TO_POOL" = 1 ] && committed; then
+if [ "$TO_POOL" = 1 ] && committed && [ -n "${RESULTS_ROOT:-}" ]; then
+  # collaboration layout: RESULTS_ROOT/<paper>/<arm>/{submission/, RUN_NOTES.md, AUDIT.txt, proxy_requests.log, agent_events.jsonl, …}
+  DEST="$POOL/$PAPER/$ARM"; rm -rf "$DEST"; mkdir -p "$DEST"
+  cp -R "$WS/submission" "$DEST/submission"
+  for f in RUN_NOTES.md AUDIT.txt proxy_requests.log agent_events.jsonl agent_stderr.log interactions.log PROMPT.txt render.log; do [ -f "$WS/$f" ] && cp "$WS/$f" "$DEST/$f"; done
+  cp "$WS"/last_message.*.txt "$DEST/" 2>/dev/null || true
+  log "- results in $DEST (submission/ + run records)"
+elif [ "$TO_POOL" = 1 ] && committed; then
   n=1; while [ -e "$POOL/$PAPER/$ARM$n" ]; do n=$((n+1)); done
   mkdir -p "$POOL/$PAPER" && cp -R "$WS/submission" "$POOL/$PAPER/$ARM$n"
   log "- copied to $POOL/$PAPER/$ARM$n (grade: PAPER=$PAPER PB_JUDGE_MODEL=DeepSeek-V4-Flash bash deepcode_test/scripts/run_grade.sh)"
