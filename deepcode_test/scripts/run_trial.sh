@@ -51,6 +51,9 @@ case "$PAPER" in
   bam)  TITLE_KEY="batch and match";            BLOCK_REPO="modichirag/GSM-VI" ;;
   sapg) TITLE_KEY="sapg";                        BLOCK_REPO="jayeshs999/sapg" ;;
   pinn) TITLE_KEY="training pinns";              BLOCK_REPO="pratikrathore8/opt_for_pinns" ;;
+  robust-clip) TITLE_KEY="robust clip";          BLOCK_REPO="chs20/RobustVLM" ;;
+  self-expansion) TITLE_KEY="self-expansion";    BLOCK_REPO="" ;;                     # blacklist.txt says "none"
+  test-time-model-adaptation) TITLE_KEY="test-time model adaptation"; BLOCK_REPO="mr-eggplant/FOA" ;;
   *)
     [ -f "$PB/data/papers/$PAPER/paper.md" ] || { echo "❌ 未知 PAPER=$PAPER（PaperBench 里没有）"; exit 1; }
     TITLE_KEY="$(grep -m1 '^# ' "$PB/data/papers/$PAPER/paper.md" | sed 's/^# //' | tr 'A-Z' 'a-z' | awk '{print $1" "$2}')"
@@ -112,9 +115,13 @@ print(f"  ✅ 口径：连接={conn} 模型=全程 {want}，思考={th}，maxTok
 PY
 
 BL=$(git config --global --get-regexp 'insteadof' || true)
-echo "$BL" | grep -qi "$BLOCK_REPO" \
-  || { echo "  ❌ $PAPER 的 git 反抄袭封锁缺失（应封锁 $BLOCK_REPO）；先 PAPERS=$PAPER bash setup.sh"; exit 1; }
-echo "  ✅ $PAPER git 封锁在位（$BLOCK_REPO）"
+if [ -n "$BLOCK_REPO" ]; then
+  echo "$BL" | grep -qi "$BLOCK_REPO" \
+    || { echo "  ❌ $PAPER 的 git 反抄袭封锁缺失（应封锁 $BLOCK_REPO）；先 PAPERS=$PAPER bash setup.sh"; exit 1; }
+  echo "  ✅ $PAPER git 封锁在位（$BLOCK_REPO）"
+else
+  echo "  ℹ️ $PAPER 的 blacklist.txt 为 none，无仓库可封锁"
+fi
 
 [ -f "$PB/data/papers/$PAPER/paper.md" ] || { echo "  ❌ 找不到 $PAPER/paper.md（先 PAPERS=$PAPER bash setup.sh）"; exit 1; }
 [ "$(wc -l < "$PB/data/papers/$PAPER/paper.md")" -gt 5 ] \
