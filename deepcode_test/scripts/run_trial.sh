@@ -54,6 +54,8 @@ case "$PAPER" in
   robust-clip) TITLE_KEY="robust clip";          BLOCK_REPO="chs20/RobustVLM" ;;
   self-expansion) TITLE_KEY="self-expansion";    BLOCK_REPO="" ;;                     # blacklist.txt says "none"
   test-time-model-adaptation) TITLE_KEY="test-time model adaptation"; BLOCK_REPO="mr-eggplant/FOA" ;;
+  adaptive-pruning) TITLE_KEY="adaptive pruning"; BLOCK_REPO="ROIM1998/APT" ;;
+  stochastic-interpolants) TITLE_KEY="stochastic interpolants"; BLOCK_REPO="interpolants/couplings" ;;
   *)
     [ -f "$PB/data/papers/$PAPER/paper.md" ] || { echo "❌ 未知 PAPER=$PAPER（PaperBench 里没有）"; exit 1; }
     TITLE_KEY="$(grep -m1 '^# ' "$PB/data/papers/$PAPER/paper.md" | sed 's/^# //' | tr 'A-Z' 'a-z' | awk '{print $1" "$2}')"

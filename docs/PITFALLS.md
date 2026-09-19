@@ -77,6 +77,7 @@
 | 修复提示词里写了 "Graders assign separate credit to each baseline" | 两轮 ¥45 + 判分全部作废(评分元知识泄漏) | rubric 物理不进工作区;CI grep `grader|rubric|forfeit|credit|paperbench|judge|weight`;重要性只来自论文自身 |
 | 按评分表权重规划/校验 | 过拟合 fre/rice | 标准从 paper.md + addendum 编译 |
 | 反事实推算"补基线 → 1.35×"假设维度可加 | 实测基线有分、主方法下滑,总分未升 | 反事实只作假设,必须实验验证 |
+| 论文的官方 `paper.md` 缺章：robust-clip 的 md（与上游 LFS oid 一致，不是我们弄坏的）没有 §2 Related Work、§3 方法（Unsupervised Adversarial Fine-Tuning for CLIP，核心贡献）和 §4 开头，正文从引言直接跳到 Table 1 / §4.1，旋转表头是 OCR 乱码；md/pdf 词数 0.78 | PaperBench 的 md 是 Mathpix 式 OCR，个别论文丢页；只读 md 的臂（DeepCode、本线）看不到方法，读 PDF 的臂（Codex / Claude Code）看得到——同一篇论文上臂间不对称 | 选论文前先 `DeepCode/.venv/bin/python deepcode_test/scripts/check_paper_md.py <ids>`（词数比 + PDF 编号章节在 md 里是否存在），`SUSPECT` 的不进对比；09-19 批把 robust-clip 换成 adaptive-pruning（86 叶，md 完整） |
 | 每组 2 轮就下结论 | 组内摆动 0.13~0.16,组间 0.01~0.02,全在噪声里 | n≥5 才说"优于";预注册;留出集 |
 | "官方默认值一字未改"的表述 | 独立审查发现 15 处未门控改动 | 每个改动 env 门控 + 默认等于上游,或如实列出 |
 | 只用一个裁判 | 结论随 serving 翻转 | 双模型/双 serving 并列,或执行级主指标 |
