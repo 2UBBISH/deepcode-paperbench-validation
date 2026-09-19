@@ -31,7 +31,9 @@ TASKS="$REPO/DeepCode/deepcode_lab/tasks"
 PB="$REPO/frontier-evals/project/paperbench"
 CODE_DIR_FILE="/tmp/stage_b_code_dir_${PAPER}.txt"
 STATUS_FILE="/tmp/stage_b_status_${PAPER}.txt"
-SUB_ROOT="$HOME/pb_submissions/$PAPER"
+# where the submission lands: the judge's pool (default) or, with RESULTS_ROOT set, the collaboration layout
+# RESULTS_ROOT/<paper>/deepcode/{submission/, RUN_LOG.txt} (the 0919-test branch; the owner copies submission/ into the pool to grade)
+if [ -n "${RESULTS_ROOT:-}" ]; then SUB_ROOT="$RESULTS_ROOT/$PAPER/deepcode"; TRIAL="submission"; else SUB_ROOT="$HOME/pb_submissions/$PAPER"; fi
 export DEEPCODE_HOME="${DEEPCODE_HOME:-$REPO/.deepcode-home}"
 # 工作区 = <cwd>/deepcode_lab（脚本在 DeepCode/ 里起 driver）。不要 export DEEPCODE_WORKSPACE：
 # 上游 DeepCodeConfig 用 pydantic-settings 前缀 DEEPCODE_ 读环境变量，会把它当 workspace 配置对象解析而报错。
@@ -312,6 +314,7 @@ mkdir -p "$OUT/submissions"
 rm -rf "$OUT/submissions/$TRIAL"
 cp -r "$CODE_DIR" "$OUT/submissions/$TRIAL"
 ls "$SUB_ROOT/$TRIAL" | head
+if [ -n "${RESULTS_ROOT:-}" ]; then cp "$LOG" "$SUB_ROOT/RUN_LOG.txt"; echo "  日志副本: $SUB_ROOT/RUN_LOG.txt"; fi
 echo ""
 echo "==== $TRIAL 完成 $(date +%F\ %T)。当前 $PAPER 已就绪的提交: ===="
 ls "$SUB_ROOT"
