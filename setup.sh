@@ -7,7 +7,7 @@
 #
 # 做的事：
 #   1. 检查 git / curl / uv / node / npm / patch / docker
-#   2. 稀疏克隆 openai/frontier-evals（固定 commit），打 patches/paperbench_local_changes.patch，
+#   2. 校验 vendored 的 frontier-evals/（PaperBench，上游固定 commit + patches/paperbench_local_changes.patch），
 #      复制我们新增的 split 等文件，按 $PAPERS 下载论文资产（LFS 直链）
 #   3. 校验 DeepCode/ = 上游 21ebc57f + patches/deepcode_local_changes.patch，然后 uv venv + uv pip install -r requirements.txt（Python 3.12）
 #   4. 生成 $DEEPCODE_HOME/deepcode_config.json（口径：DeepSeek-V4-Flash、思考关、无阶段覆盖）与 paperbench/.env 模板
@@ -40,31 +40,14 @@ need npm   "随 Node 一起；setup 把 @modelcontextprotocol/server-filesystem 
 need patch "GNU/BSD patch，校验 DeepCode/ 用"
 if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then echo "  ✅ docker daemon 在跑（判分要用）"; else echo "  ⚠️ docker 未运行（复现不需要，判分前再启动）"; fi
 
-echo "==== [2/6] frontier-evals（PaperBench）@ ${FE_COMMIT:0:10} ===="
-# 不能用 --filter=blob:none 部分克隆：git-lfs 在缺 blob 的仓库里逐个懒取指针，实测挂死 3 分钟以上。
-# 改为「按 commit 浅取（depth 1）+ 稀疏检出」，只下载 paperbench 与 common 两个目录。
-if [ ! -d "$ROOT/frontier-evals/.git" ]; then
-  git init -q "$ROOT/frontier-evals"
-  git -C "$ROOT/frontier-evals" remote add origin "$FE_REPO"
-  git -C "$ROOT/frontier-evals" sparse-checkout init --cone
-  git -C "$ROOT/frontier-evals" sparse-checkout set project/paperbench project/common
-  git -C "$ROOT/frontier-evals" fetch -q --depth 1 origin "$FE_COMMIT"
-  # checkout 时跳过 LFS smudge（否则把全部 20 余篇论文约 300MB 资产都拉下来），稍后只按需拉 $PAPERS
-  GIT_LFS_SKIP_SMUDGE=1 git -C "$ROOT/frontier-evals" checkout -q FETCH_HEAD
-  git -C "$ROOT/frontier-evals" lfs install --local --skip-smudge >/dev/null 2>&1 || true
-  echo "  ✅ 稀疏检出完成（paperbench + common）"
-else
-  echo "  ⏭ 已存在，跳过克隆"
-fi
-if ! git -C "$ROOT/frontier-evals" apply --check "$ROOT/patches/paperbench_local_changes.patch" >/dev/null 2>&1; then
-  git -C "$ROOT/frontier-evals" apply --reverse --check "$ROOT/patches/paperbench_local_changes.patch" >/dev/null 2>&1 \
-    && echo "  ⏭ paperbench patch 已打过" || { echo "  ❌ paperbench patch 无法应用（上游 commit 不符？）"; exit 1; }
-else
-  git -C "$ROOT/frontier-evals" apply "$ROOT/patches/paperbench_local_changes.patch"; echo "  ✅ 已打 paperbench patch（5 文件）"
-fi
-cp "$ROOT/paperbench_changes/experiments/splits/"*.txt "$PB/experiments/splits/"
-cp "$ROOT/paperbench_changes/analyze_judge_eval_bias.py" "$PB/"
-echo "  ✅ 已复制新增文件（单篇 split、裁判偏差分析脚本）"
+echo "==== [2/6] frontier-evals（PaperBench）@ ${FE_COMMIT:0:10} —— 已 vendored ===="
+# 2026-09-19 起 PaperBench 不再由本脚本克隆：openai/frontier-evals 的 project/paperbench + project/common 两个目录按
+# UPSTREAM_BASE.txt 的 commit 以普通文件进了本仓库（patches/paperbench_local_changes.patch 已打，新增文件已在位，
+# 用过的论文的 LFS 资产已水合）。要对照上游核验：bash patches/verify_paperbench.sh（联网，拉上游到临时目录逐文件比）。
+[ -f "$PB/paperbench/nano/eval.py" ] || { echo "  ❌ $PB 不完整（仓库检出有问题？）"; exit 1; }
+git -C "$ROOT" apply --reverse --check --directory=frontier-evals "$ROOT/patches/paperbench_local_changes.patch" >/dev/null 2>&1 \
+  && echo "  ✅ vendored 树 = 上游 ${FE_COMMIT:0:10} + paperbench patch（5 文件）" \
+  || echo "  ⚠️ paperbench patch 与 vendored 树不完全对应（本地改过？bash patches/verify_paperbench.sh 看细节）"
 # 论文资产在上游是 LFS 对象。稀疏+浅克隆下 `git lfs pull --include` 实测拿不到对象（退出 0 但仍是指针），
 # 改为直接从 GitHub 的 LFS 媒体直链按固定 commit 下载，只取 $PAPERS，不依赖 git-lfs 客户端。
 for p in $PAPERS; do

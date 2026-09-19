@@ -43,7 +43,7 @@ All earlier results (Aug 25 – Sep 15) are kept in `docs/RESULTS-HISTORY.md` wi
 
 ```bash
 git clone git@github.com:2UBBISH/deepcode-paperbench-validation.git && cd deepcode-paperbench-validation
-PAPERS=sapg bash setup.sh        # 稀疏克隆 PaperBench@固定 commit 并打补丁、水合 sapg 资产、校验 DeepCode/、uv sync、
+PAPERS=sapg bash setup.sh        # 校验 vendored 的 PaperBench（上游固定 commit + patch）、水合 sapg 资产、校验 DeepCode/、uv sync、
                                  # 生成 .deepcode-home/deepcode_config.json（口径）、设 git 封锁、建 ~/pb_submissions/sapg
 ```
 
@@ -106,11 +106,12 @@ PAPER=sapg bash deepcode_test/scripts/run_grade.sh           # 真判，约 ¥38
 ├── docs/
 │   ├── RESULTS-HISTORY.md             全部历史数字与结论（含作废标记）
 │   ├── INPUT_STANDARD.md              三方输入标准（依据、三层规则、起跑前核验）
-│   └── PITFALLS.md                    踩坑总表（60 余条）
+│   ├── PITFALLS.md                    踩坑总表（60 余条）
+│   └── CODEDEV-ARMS.md                Code-Dev 口径一页：题面 vs 答案卡、四臂怎么接、为什么 vendored PaperBench（2026-09-19）
 ├── runs/                        ← 每轮的日志 / 输入 / 任务归档 / 摆卷副本 / 判分 JSON（gitignore）
 ├── .deepcode-home/              ← setup.sh 生成的 DeepCode 配置目录（gitignore；与你机器上其它 DeepCode 完全隔离）
 ├── .mcp-node/                   ← setup.sh 装的 filesystem MCP 服务器（gitignore）
-└── frontier-evals/              ← setup.sh 稀疏克隆的 PaperBench（gitignore）
+└── frontier-evals/              ← PaperBench（openai/frontier-evals @ UPSTREAM_BASE.txt，project/paperbench + project/common）**vendored**，patch 已打；核验 patches/verify_paperbench.sh；.venv/ runs/ 仍 gitignore
 ```
 
 `~/pb_submissions/<paper>/<trial>/` 是判分器硬性要求的提交池，根目录下每个子目录名必须是合法 paper id。

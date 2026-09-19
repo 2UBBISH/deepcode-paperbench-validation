@@ -11,8 +11,14 @@ __pycache__/
 deepcode_lab/
 .deepcode-home/
 .mcp-node/
-# PaperBench is cloned by setup.sh at a pinned commit (patches/UPSTREAM_BASE.txt)
-frontier-evals/
+# PaperBench (openai/frontier-evals @ patches/UPSTREAM_BASE.txt, sparse: project/paperbench + project/common) is VENDORED
+# under frontier-evals/ since 2026-09-19 (plain files, patch applied, LFS assets hydrated for the papers in use);
+# only its runtime state stays out
+frontier-evals/project/paperbench/.venv/
+frontier-evals/project/paperbench/runs/
+frontier-evals/project/paperbench/run_eval.log
+frontier-evals/project/common/nanoeval/records/
+*.egg-info/
 # every run's logs, inputs, task-directory archives, submission copies and grades live here, never in git
 runs/
 run.log
