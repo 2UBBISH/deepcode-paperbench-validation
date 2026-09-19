@@ -29,6 +29,7 @@
 ## 3. 裸跑臂怎么跑（Codex CLI / Claude Code CLI，一篇一条命令）
 
 两个 CLI 都装在 `~/.local/node-v24.21.0/bin`（npm -g 的前缀，不在默认 PATH；脚本自己加）。版本：codex-cli 0.155.1、Claude Code 2.1.278。
+两个 CLI 由 owner 的 cc-switch 指向 **api.deepseek.com / `deepseek-flash`**（Codex：`~/.codex/config.toml`；Claude Code：`~/.claude/settings.json` 的 env 块），key 是他们自己的，脚本不碰、不打印。
 
 ```bash
 V=~/Documents/env/paperbench-judge/validation
@@ -38,16 +39,29 @@ bash $V/deepcode_test/bare/run_bare.sh claude robust-clip          # 同一篇�
 ```
 
 脚本做的事（`run_bare.sh`）：`render_prompt.sh` 建目录出 `PROMPT.txt` → 卫生检查（`~/.codex/AGENTS.md` 为空、`~/.claude/CLAUDE.md` 不存在、工作目录里没有 AGENTS.md / CLAUDE.md）
-→ 起代理（`PROXY_THINKING=disabled`，`PROXY_UPSTREAM_KEY_ENV=PARATERA_API_KEY`：**key 只在代理的子 shell 里 source，CLI 自己的鉴权被代理替换**，所以 cc-switch 当前切在哪个档都不影响）
+→ 起本地代理（`PROXY_UPSTREAM=https://api.deepseek.com PROXY_THINKING=disabled PROXY_USER_AGENT=paperbench-bare/1`，鉴权头原样透传）
 → 非交互跑到底（`codex exec` / `claude -p`，stdin 关闭）→ `submission/` 里没有 commit 就用官方 `DEFAULT_CONTINUE_MESSAGE` 续跑（`codex exec resume --last` / `claude --resume`），最多 5 次，记 `interactions.log`
 → 审计写 `AUDIT.txt`（`CALIBER_OK` / `CALIBER_BROKEN: …`）+ 黑名单 grep + 文件数 → 拷进 `~/pb_submissions/<paper>/<arm>N/`。
 
-| 臂 | 怎么接 | 09-19 实测 |
-| --- | --- | --- |
-| Codex | `codex exec -C $WS --approve-for-me -c sandbox_workspace_write.network_access=true -c model=DeepSeek-V4-Flash -c model_provider=custom -c model_providers.custom.base_url=http://127.0.0.1:8787/v1 --json`；**不改 `~/.codex/config.toml`**，`-c` 只对本进程生效；`--approve-for-me` = workspace-write 沙箱 + 自动审批（论文的 auto approval） | 0.155 已**删掉 `wire_api = "chat"`**，只剩 responses 线；代理在 `/v1/responses` 上注入 `thinking:{type:disabled}` 验过：注入 → `reasoning_tokens 0, reasoning_items 0`；不注入 → 14 / 14（Codex 自己发 `reasoning.effort=high`，记在 `thinking_fields`）。base_url 必须带 `/v1`（Codex 只追加 `/responses`） |
-| Claude Code | `claude -p … --setting-sources project --dangerously-skip-permissions --output-format stream-json --disable-slash-commands --strict-mcp-config --no-chrome`，env：`ANTHROPIC_BASE_URL=http://127.0.0.1:8788`、`ANTHROPIC_MODEL` + 三个 `ANTHROPIC_DEFAULT_*_MODEL` + `CLAUDE_CODE_SUBAGENT_MODEL` 全 V4-Flash、`ANTHROPIC_AUTH_TOKEN` 占位、去掉 `CLAUDECODE`（本机是从 Claude Code 会话里起的） | **`--setting-sources project` 不能少**：这台机的 `~/.claude/settings.json`（cc-switch 写的）有 env 块指向 `api.deepseek.com/anthropic` + deepseek-v4-pro，会盖过进程 env——第一次冒烟就这样直连了 DeepSeek 官方（花了那边约 0.1 USD，未经代理、思考未关）。加了之后走代理：`thinking_blocks 0`，Claude 自己发的 `thinking:{type:adaptive}` 被替换 |
+### 3.1 为什么必须有这层代理：直连 DeepSeek 时两个 CLI 都关不掉思考（09-19 实测）
 
-审计规则（`AUDIT.txt`）：每行 `model=DeepSeek-V4-Flash`、每行有 `injected` 和 `auth=proxy:PARATERA_API_KEY`、每行 `reasoning_tokens`=0 且 Codex `reasoning_items`=0 / Claude `thinking_blocks`=0，否则 `CALIBER_BROKEN`；黑名单仓库在提交里只允许出现在引用文字里。
+DeepSeek 文档（api-docs.deepseek.com/zh-cn/guides/thinking_mode）：OpenAI / Anthropic 格式的开关是 `thinking:{type:enabled|disabled}`，Responses API 的开关是 `reasoning:{effort:none}`（none = 关）；**默认开，effort 默认 high**。
+
+| CLI | 试过的原生开关 | 请求里实际发的 | DeepSeek 回包 |
+| --- | --- | --- | --- |
+| Claude Code | `CLAUDE_CODE_DISABLE_THINKING=1`、`MAX_THINKING_TOKENS=0`、`CLAUDE_CODE_DISABLE_ADAPTIVE_THINKING=1`、`CLAUDE_CODE_EFFORT_LEVEL=low` | 前三个 = **不发 thinking 字段**；默认和 effort=low 发 `thinking:{type:adaptive}` | 全部仍有 1 个 thinking 块——缺省即开，没有能发 `disabled` 的开关 |
+| Codex | `-c model_reasoning_effort=none` | `reasoning:{effort:none}`（正确） | 仍有 reasoning（11–124 token）。**同一个请求体用 curl 重放 → 0**；逐个加回 Codex 的请求头：`User-Agent: codex_exec/0.155.1` 或 `x-codex-turn-metadata` 任一存在 → 14；`originator` / `session-id` / `thread-id` / 其它 `x-codex-*` → 0。即 DeepSeek 对 Codex 客户端有专门档位，无视 effort=none |
+
+代理因此做三件事：Anthropic / chat 线注入 `thinking:{type:disabled}`，responses 线注入 `reasoning.effort=none`；把 User-Agent 换成 `paperbench-bare/1`；丢掉 `x-codex-*` 头。验证：Codex 连跑 3 次 `reasoning_tokens 0 / reasoning_items 0`（不做 UA/头替换时同样注入仍为 14–96）；Claude Code 2 次 `thinking_blocks 0`。真实运行 robust-clip 前 49 个请求全部 0。
+
+| 臂 | 怎么接 | 备注 |
+| --- | --- | --- |
+| Codex | `codex exec -C $WS --approve-for-me -c sandbox_workspace_write.network_access=true -c model=deepseek-flash -c model_provider=custom -c model_providers.custom.base_url=http://127.0.0.1:8787/v1 --json`；**不改 `~/.codex/config.toml`**，`-c` 只对本进程生效；`--approve-for-me` = workspace-write 沙箱 + 自动审批（论文的 auto approval） | 0.155 已删掉 `wire_api = "chat"`，只剩 responses；base_url 必须带 `/v1`（Codex 只追加 `/responses`）；stdin 必须关（否则 "Reading additional input from stdin" 挂住）；Codex 自己发 `reasoning.effort=high`，记在 `thinking_fields` |
+| Claude Code | `claude -p … --setting-sources project --session-id <uuid> --dangerously-skip-permissions --output-format stream-json --disable-slash-commands --strict-mcp-config --no-chrome`，env：`ANTHROPIC_BASE_URL=http://127.0.0.1:8788/anthropic`、`ANTHROPIC_MODEL` + 三个 `ANTHROPIC_DEFAULT_*_MODEL` + `CLAUDE_CODE_SUBAGENT_MODEL` 全 deepseek-flash、`ANTHROPIC_AUTH_TOKEN` = settings.json 里那把（脚本进程内读，不打印）、去掉 `CLAUDECODE` | **`--setting-sources project` 不能少**：`~/.claude/settings.json` 的 env 块会盖过进程 env（第一次冒烟因此直连了官方、思考未关）；Claude 自己发 `thinking:{type:adaptive}` 被替换 |
+
+审计规则（`AUDIT.txt`）：每行 `model=deepseek-flash`、每行有 `injected`、Codex 每行有 `user_agent`、每行 `reasoning_tokens`=0 且 Codex `reasoning_items`=0 / Claude `thinking_blocks`=0，否则 `CALIBER_BROKEN`；黑名单仓库在提交里只允许出现在引用文字里。
+
+**未定**：DeepCode 基线现在走 Paratera 的 `DeepSeek-V4-Flash`，两个裸跑臂走 api.deepseek.com 的 `deepseek-flash`——同一模型、不同 serving。要严格同口径，基线的 ENV_FILE 也指到 api.deepseek.com。
 
 ## 4. DeepCode 臂（本仓库基线运行）与判分
 

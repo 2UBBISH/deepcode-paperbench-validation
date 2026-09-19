@@ -23,11 +23,12 @@ THINKING = os.environ.get("PROXY_THINKING", "")  # "" = pass through; "disabled"
 #: name of the environment variable holding the upstream key; when set, the proxy replaces the client's
 #: Authorization / x-api-key headers with it, so the CLI's own auth config (cc-switch profiles, config.toml tokens,
 #: ANTHROPIC_AUTH_TOKEN) can hold a placeholder and the real key lives only in the env file sourced for the proxy
+USER_AGENT = os.environ.get("PROXY_USER_AGENT", "")  # e.g. "paperbench-bare/1"; replaces the client's User-Agent upstream
 UPSTREAM_KEY_ENV = os.environ.get("PROXY_UPSTREAM_KEY_ENV", "")
 UPSTREAM_KEY = os.environ.get(UPSTREAM_KEY_ENV, "") if UPSTREAM_KEY_ENV else ""
 PORT = int(sys.argv[1]) if len(sys.argv) > 1 else 8787
 LOG = sys.argv[2] if len(sys.argv) > 2 else "proxy_requests.log"
-UPSTREAM = "https://llmapi.paratera.com"
+UPSTREAM = os.environ.get("PROXY_UPSTREAM", "https://llmapi.paratera.com").rstrip("/")  # e.g. https://api.deepseek.com
 
 
 def usage_of(chunk):
@@ -96,10 +97,27 @@ class Handler(http.server.BaseHTTPRequestHandler):
             d = json.loads(body)
             rec.update({"model": d.get("model"), "stream": d.get("stream"), "max_tokens": d.get("max_tokens"),
                         "thinking_fields": {k: d[k] for k in ("thinking", "enable_thinking", "reasoning_effort", "reasoning", "reasoning_effort_level") if k in d}})
+            if os.environ.get("PROXY_LOG_KEYS") == "1":  # debugging a client's request shape: keys only, never content
+                rec["body_keys"] = sorted(d.keys())
+                rec["include"] = d.get("include")
+                rec["stream"] = d.get("stream")
+            dump_dir = os.environ.get("PROXY_DUMP_DIR")  # debugging only: full request bodies (prompts, no key) to files
+            if dump_dir:
+                os.makedirs(dump_dir, exist_ok=True)
+                stem = os.path.join(dump_dir, f"{time.strftime('%H%M%S')}_{os.getpid()}_{id(self)}")
+                with open(stem + ".json", "wb") as fh:
+                    fh.write(body)
+                with open(stem + ".headers.json", "w") as fh:  # request headers, auth values redacted
+                    json.dump({k: ("…" if k.lower() in ("authorization", "x-api-key") else v) for k, v in self.headers.items()}, fh, indent=1)
             if THINKING == "disabled":
-                d["thinking"] = {"type": "disabled"}
+                if self.path.split("?", 1)[0].rstrip("/").endswith("/responses"):
+                    # Responses API: the documented off switch is reasoning.effort=none (api-docs.deepseek.com, thinking_mode)
+                    d["reasoning"] = {**(d.get("reasoning") or {}), "effort": "none"}
+                    rec["injected"] = {"reasoning": d["reasoning"]}
+                else:
+                    d["thinking"] = {"type": "disabled"}  # chat completions and Anthropic Messages
+                    rec["injected"] = {"thinking": d["thinking"]}
                 body = json.dumps(d).encode("utf-8")
-                rec["injected"] = {"thinking": d["thinking"]}
         except Exception:
             rec["note"] = "non-json body passed through"
         req = urllib.request.Request(UPSTREAM + self.path, data=body, method="POST")
@@ -108,7 +126,17 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 continue
             if UPSTREAM_KEY and k.lower() in ("authorization", "x-api-key"):
                 continue  # replaced below
+            if USER_AGENT and (k.lower() == "user-agent" or k.lower().startswith("x-codex-")):
+                continue  # replaced / dropped below: DeepSeek keys its Codex profile on either
             req.add_header(k, v)
+        if USER_AGENT:
+            # DeepSeek serves a Codex-specific profile keyed on Codex's User-Agent (codex_exec/…) OR its x-codex-turn-metadata
+            # header: reasoning.effort=none is then ignored and thinking stays on (measured 2026-09-19 with the identical
+            # body: plain curl → 0 reasoning tokens; + UA codex_exec/0.155.1 → 14; + x-codex-turn-metadata alone → 14; the
+            # other x-codex-* / session-id / thread-id / originator headers alone → 0). A neutral UA and no x-codex-*
+            # headers restore the documented behaviour.
+            req.add_header("user-agent", USER_AGENT)
+            rec["user_agent"] = USER_AGENT
         if UPSTREAM_KEY:
             req.add_header("authorization", f"Bearer {UPSTREAM_KEY}")
             req.add_header("x-api-key", UPSTREAM_KEY)

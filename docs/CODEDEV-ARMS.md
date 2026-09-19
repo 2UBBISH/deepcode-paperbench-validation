@@ -40,8 +40,8 @@ README 第 90 行 "the agent is informed of this file in our default instruction
 
 | 臂 | 输入 | 接法 | harness 条件 | 记录 |
 | --- | --- | --- | --- | --- |
-| **Codex CLI** | 题面 + 官方附注（`deepcode_test/bare/render_prompt.sh` 生成的 `PROMPT.txt`）+ 论文四件 + assets | `deepcode_test/bare/run_bare.sh codex <paper>`：`codex exec -C $WS --approve-for-me …`，模型 / provider / base_url 用 `-c` 只对本进程覆盖，Paratera 走 `paratera_proxy.py`（`PROXY_THINKING=disabled`，代理自己鉴权；codex 0.155 只有 responses 线，注入验过）。论文用的就是 codex-cli，不是桌面版 | 非交互一跑到底，无需续跑语；工作目录里只有 `paper/ submission/ PROMPT.txt agent.env`，无 AGENTS.md | 代理日志：每行 `model=DeepSeek-V4-Flash`、`injected`、`auth=proxy:…`、`reasoning_tokens=0`、`reasoning_items=0` |
-| **Claude Code** | 同上 | `ANTHROPIC_BASE_URL=http://127.0.0.1:<port>` 指到同一个代理（Anthropic Messages 格式，Paratera 直接支持；snse 批就是这样接的），`ANTHROPIC_MODEL` / `ANTHROPIC_DEFAULT_{HAIKU,SONNET}_MODEL` 全指 V4-Flash，`claude -p … --setting-sources project --dangerously-skip-permissions`（不加 `--setting-sources project` 会被 `~/.claude/settings.json` 里 cc-switch 的 env 块劫持到 DeepSeek 官方）；`run_bare.sh claude <paper>` | 无 `~/.claude/CLAUDE.md`、无工作目录 CLAUDE.md、MCP / skills 关；论文的 Claude Code 是 2.0.22 | 代理日志：Anthropic 回包无 `reasoning_tokens`，看 `thinking_blocks=0`（09-19 验过：不注入时 V4-Flash 在这条线上默认出 thinking 块，注入后 0） |
+| **Codex CLI** | 题面 + 官方附注（`deepcode_test/bare/render_prompt.sh` 生成的 `PROMPT.txt`）+ 论文四件 + assets | `deepcode_test/bare/run_bare.sh codex <paper>`：`codex exec -C $WS --approve-for-me …`，模型 / provider / base_url 用 `-c` 只对本进程覆盖，经本地代理到 api.deepseek.com（`PROXY_THINKING=disabled` 注入 `reasoning.effort=none` + 换 User-Agent + 丢 `x-codex-*`——DeepSeek 对 Codex 客户端无视 effort=none，见 bare/README §3.1）。论文用的就是 codex-cli，不是桌面版 | 非交互一跑到底，无需续跑语；工作目录里只有 `paper/ submission/ PROMPT.txt agent.env`，无 AGENTS.md | 代理日志：每行 `model=deepseek-flash`、`injected`、`user_agent`、`reasoning_tokens=0`、`reasoning_items=0` |
+| **Claude Code** | 同上 | `ANTHROPIC_BASE_URL=http://127.0.0.1:<port>` 指到同一个代理（Anthropic Messages 格式，Paratera 直接支持；snse 批就是这样接的），`ANTHROPIC_MODEL` / `ANTHROPIC_DEFAULT_{HAIKU,SONNET}_MODEL` 全指 V4-Flash，`claude -p … --setting-sources project --dangerously-skip-permissions`（不加 `--setting-sources project` 会被 `~/.claude/settings.json` 里 cc-switch 的 env 块劫持到 DeepSeek 官方）；`run_bare.sh claude <paper>` | 无 `~/.claude/CLAUDE.md`、无工作目录 CLAUDE.md、MCP / skills 关；论文的 Claude Code 是 2.0.22 | 代理日志：Anthropic 回包无 `reasoning_tokens`，看 `thinking_blocks=0`（09-19 验过：Claude Code 的关思考开关只是不发字段，DeepSeek 缺省开；注入 disabled 后 0） |
 | **DeepCode 基线运行**（本仓库） | 论文（paper.md + addendum 并稿）；**不读题面**——DeepCode 自带任务描述 | `deepcode_test/scripts/run_trial.sh`（原装 21ebc57f + 16 文件补丁，Flash 思考关） | 自己跑到底 | `runs/<paper>/logs/` |
 | **DeepEvol Paper2Code 线** | 论文；不读题面 | `scripts/paper2code_canary.py … run --until compute`，第 9 步的树 `submit --dest-root` | 自己跑到底；不租机 | DeepEvol 仓库 `apps/v2/agent/paper2code/README.md` |
 
@@ -49,7 +49,7 @@ README 第 90 行 "the agent is informed of this file in our default instruction
 
 ## 4. 本批（09-19）口径
 
-V4-Flash 思考关；5 篇：sapg、pinn、robust-clip、self-expansion、test-time-model-adaptation（Code-Dev 叶 70–130）；两臂裸跑 + DeepCode 基线（+ 本线 stage 9）；全部关图；裁判 V4-Flash + V4-Pro 解析器；每篇每臂 1 份先看方向，差值 < 0.1 再补；单篇噪声 0.025、历史组内摆动 0.09–0.19，n < 5 不说"优于"。跑法见 `deepcode_test/bare/README.md`。
+deepseek-flash（api.deepseek.com，owner 的 cc-switch 路由；基线仍在 Paratera，见 bare/README §3 末）思考关；5 篇：sapg、pinn、robust-clip、self-expansion、test-time-model-adaptation（Code-Dev 叶 70–130）；两臂裸跑 + DeepCode 基线（+ 本线 stage 9）；全部关图；裁判 V4-Flash + V4-Pro 解析器；每篇每臂 1 份先看方向，差值 < 0.1 再补；单篇噪声 0.025、历史组内摆动 0.09–0.19，n < 5 不说"优于"。跑法见 `deepcode_test/bare/README.md`。
 
 与 bam 批（`INPUT_STANDARD.md`）的三处差别：Flash 关（bam 是 Pro 开）；题面后接**官方附注**（bam 接的是我们自写的两句后缀——owner 09-19 指出时间和运行要求被去掉了，改回基准原文）；续跑语用官方 `DEFAULT_CONTINUE_MESSAGE`（CLI 非交互跑基本用不上）。
 
