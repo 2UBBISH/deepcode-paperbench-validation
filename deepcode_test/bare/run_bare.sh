@@ -4,12 +4,19 @@
 #
 #   bash run_bare.sh <codex|claude> <paper-id> [--hours N] [--root DIR] [--pool DIR] [--max-continues N] [--no-pool]
 #
-# Caliber (docs/CODEDEV-ARMS.md §4): DeepSeek-V4-Flash, thinking off (the proxy injects thinking:{type:disabled} and the
-# log proves it: reasoning_tokens / reasoning_items (Codex) or thinking_blocks (Claude Code) are 0 on every line),
-# PaperBench's official Code-Dev instructions + its ADDITIONAL NOTES, no rubric, blacklist audited afterwards.
-# The CLIs' own auth is bypassed: the proxy authenticates upstream from PARATERA_API_KEY in ~/Documents/env/paratera.env
-# (sourced only in the proxy's subshell; never printed). Codex's config.toml is left alone — model / provider / base_url
-# are overridden on the command line (-c) for this process only; Claude Code gets everything via env vars.
+# Caliber (docs/CODEDEV-ARMS.md §4): deepseek-flash on api.deepseek.com (the owner's cc-switch profile; the CLIs' own
+# keys pass through untouched), thinking OFF, PaperBench's official Code-Dev instructions + its ADDITIONAL NOTES, no
+# rubric, blacklist audited afterwards.
+# Thinking off needs the local proxy in between — neither CLI can do it alone against DeepSeek (measured 2026-09-19):
+#   · Claude Code's switches (CLAUDE_CODE_DISABLE_THINKING, MAX_THINKING_TOKENS=0) only OMIT the thinking field, and
+#     DeepSeek's Anthropic endpoint then defaults to thinking on; the off switch is an explicit thinking:{type:disabled}.
+#   · Codex sends reasoning.effort (the documented Responses-API switch, none = off), but DeepSeek serves a Codex
+#     profile keyed on the User-Agent codex_exec/… or the x-codex-turn-metadata header that ignores effort=none.
+# So the proxy injects (thinking disabled / effort none), replaces the User-Agent, drops x-codex-* headers, and its
+# log proves the result: reasoning_tokens + reasoning_items (Codex) or thinking_blocks (Claude Code) are 0 on every
+# line. Codex's config.toml is not modified (base_url / model overridden with -c for this process only); Claude Code
+# runs with --setting-sources project (cc-switch's env block in ~/.claude/settings.json would otherwise override the
+# process env) and gets the token from that same block in-process, never printed.
 set -euo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
 ARM="${1:?codex|claude}"; PAPER="${2:?paper id}"; shift 2
@@ -18,18 +25,20 @@ while [ $# -gt 0 ]; do case "$1" in
   --hours) HOURS="$2"; shift 2 ;; --root) ROOT="$2"; shift 2 ;; --pool) POOL="$2"; shift 2 ;;
   --max-continues) MAX_CONT="$2"; shift 2 ;; --no-pool) TO_POOL=0; shift ;; *) echo "unknown arg $1"; exit 2 ;; esac; done
 [ "$ARM" = codex ] || [ "$ARM" = claude ] || { echo "arm must be codex or claude"; exit 2; }
-ENV_FILE="$HOME/Documents/env/paratera.env"; [ -f "$ENV_FILE" ] || { echo "❌ $ENV_FILE missing"; exit 1; }
 export PATH="$HOME/.local/node-v24.21.0/bin:$PATH"   # where npm -g put codex / claude on this Mac
 command -v "$ARM" >/dev/null || { echo "❌ $ARM CLI not on PATH"; exit 1; }
-MODEL="DeepSeek-V4-Flash"
+MODEL="${BARE_MODEL:-deepseek-flash}"                 # DeepSeek's own id for V4 Flash
+UPSTREAM="${BARE_UPSTREAM:-https://api.deepseek.com}"
+UA="paperbench-bare/1"
 PORT=$([ "$ARM" = codex ] && echo 8787 || echo 8788)
 WS="$ROOT/$PAPER-$ARM"
 log() { echo "[$(date +%H:%M:%S)] $*" | tee -a "$WS/RUN_NOTES.md"; }
 
 # ---- 1. workspace + prompt (refuses a non-empty directory: one workspace per run) ----
-mkdir -p "$ROOT"
-bash "$HERE/render_prompt.sh" "$PAPER" "$WS" ${HOURS:+--hours "$HOURS"} | tee "$WS/render.log"
-grep -q PROMPT_OK "$WS/render.log" || { echo "❌ prompt not rendered"; exit 1; }
+mkdir -p "$ROOT"; RLOG="$(mktemp)"   # render_prompt.sh refuses a non-empty workspace, so its log lands there afterwards
+bash "$HERE/render_prompt.sh" "$PAPER" "$WS" ${HOURS:+--hours "$HOURS"} | tee "$RLOG"
+grep -q PROMPT_OK "$RLOG" || { echo "❌ prompt not rendered"; exit 1; }
+mv "$RLOG" "$WS/render.log"
 { echo "# $PAPER / $ARM — $(date '+%F %T')"; echo "- cli: $($ARM --version 2>&1 | head -1)"; echo "- model: $MODEL, thinking off via proxy :$PORT"; echo "- validation repo: $(git -C "$HERE" rev-parse --short HEAD)"; echo "- time limit in prompt: ${HOURS:-none (no_time_limit_template)}"; } > "$WS/RUN_NOTES.md"
 
 # ---- 2. harness hygiene: nothing but the benchmark's input may reach the agent ----
@@ -42,13 +51,16 @@ fi
 [ ! -f "$WS/AGENTS.md" ] && [ ! -f "$WS/CLAUDE.md" ] || { echo "❌ instruction files in the workspace"; exit 1; }
 
 # ---- 3. proxy ----
-( set -a; . "$ENV_FILE"; set +a
-  PROXY_THINKING=disabled PROXY_UPSTREAM_KEY_ENV=PARATERA_API_KEY \
+( PROXY_THINKING=disabled PROXY_UPSTREAM="$UPSTREAM" PROXY_USER_AGENT="$UA" \
   exec python3 "$HERE/paratera_proxy.py" "$PORT" "$WS/proxy_requests.log" > "$WS/proxy_stdout.log" 2>&1 ) &
 PROXY_PID=$!
 trap 'kill $PROXY_PID 2>/dev/null || true' EXIT
 sleep 1; kill -0 $PROXY_PID 2>/dev/null || { echo "❌ proxy did not start (port $PORT busy?)"; cat "$WS/proxy_stdout.log"; exit 1; }
-log "- proxy pid $PROXY_PID on :$PORT"
+log "- proxy pid $PROXY_PID on :$PORT → $UPSTREAM (thinking off injected, UA $UA, auth passed through)"
+if [ "$ARM" = claude ]; then  # the token cc-switch put in ~/.claude/settings.json, read in-process (never printed)
+  CLAUDE_TOKEN="$(python3 -c 'import json,os; print(json.load(open(os.path.expanduser("~/.claude/settings.json")))["env"]["ANTHROPIC_AUTH_TOKEN"])')"
+  [ -n "$CLAUDE_TOKEN" ] || { echo "❌ no ANTHROPIC_AUTH_TOKEN in ~/.claude/settings.json env block"; exit 1; }
+fi
 
 # ---- 4. the run, then continue rounds while nothing is committed ----
 PROMPT="$(cat "$WS/PROMPT.txt")"
@@ -67,7 +79,7 @@ run_codex() {  # $1 = round (0 = first), $2 = prompt
 run_claude() {
   local extra=(); [ "$1" = 0 ] && extra=(--session-id "$SESSION") || extra=(--resume "$SESSION")
   ( cd "$WS" && env -u CLAUDECODE -u CLAUDE_CODE_ENTRYPOINT -u ANTHROPIC_API_KEY \
-      ANTHROPIC_BASE_URL="http://127.0.0.1:$PORT" ANTHROPIC_AUTH_TOKEN=proxy-authenticates \
+      ANTHROPIC_BASE_URL="http://127.0.0.1:$PORT/anthropic" ANTHROPIC_AUTH_TOKEN="$CLAUDE_TOKEN" \
       ANTHROPIC_MODEL="$MODEL" ANTHROPIC_DEFAULT_HAIKU_MODEL="$MODEL" ANTHROPIC_DEFAULT_SONNET_MODEL="$MODEL" ANTHROPIC_DEFAULT_OPUS_MODEL="$MODEL" \
       CLAUDE_CODE_SUBAGENT_MODEL="$MODEL" CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1 \
       claude -p "$2" "${extra[@]}" --setting-sources project --dangerously-skip-permissions --output-format stream-json --verbose \
@@ -99,7 +111,7 @@ bad = []
 models = {r.get("model") for r in rows}
 if models != {model}: bad.append(f"model(s) {models}")
 if not all(r.get("injected") for r in rows): bad.append("a request without the thinking injection")
-if not all((r.get("auth") or "").startswith("proxy:") for r in rows): bad.append("a request not authenticated by the proxy")
+if arm == "codex" and not all(r.get("user_agent") for r in rows): bad.append("a Codex request without the User-Agent replacement (DeepSeek would force thinking on)")
 key = "thinking_blocks" if arm == "claude" else "reasoning_items"
 over = [r for r in rows if ((r.get("usage") or {}).get("reasoning_tokens") or 0) > 0 or (r.get(key) or 0) > 0]
 if over: bad.append(f"{len(over)} responses with reasoning ({key} / reasoning_tokens > 0)")
