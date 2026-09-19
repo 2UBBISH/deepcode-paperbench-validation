@@ -1,16 +1,20 @@
 #!/usr/bin/env python3
 """Logging pass-through for the bare-run arm: Codex (OpenAI chat or responses wire) -> https://llmapi.paratera.com.
 
-The request body is forwarded UNCHANGED (thinking stays at the provider's default, which is on - the same setting
-the DeepCode and DeepEvol arms run with). One JSON line per request goes to the log: path, model, stream, and the
-usage block of the response (prompt/completion/reasoning tokens), so the run's model and thinking state are on
-record. The key is never logged.
+The request body is forwarded UNCHANGED by default (thinking stays at the provider's default, which is on - the
+bam three-way of 2026-09-15). With PROXY_THINKING=disabled the proxy sets `thinking: {"type": "disabled"}` on every
+JSON body (the only form Paratera honours; `enable_thinking:false` is ignored) and logs `injected` - the knob of the
+V4-Flash thinking-off caliber the DeepCode and DeepEvol arms run with since 2026-09-17; nothing else in the body is
+touched. One JSON line per request goes to the log: path, model, stream, the thinking fields as sent, and the usage
+block of the response (prompt/completion/reasoning tokens), so the run's model and thinking state are on record
+(`reasoning_tokens` must be 0 on every line of a thinking-off run). The key is never logged.
 
-Usage:  python3 paratera_proxy.py [port] [logfile]      (default 8787, ./proxy_requests.log)
+Usage:  [PROXY_THINKING=disabled] python3 paratera_proxy.py [port] [logfile]      (default 8787, ./proxy_requests.log)
 Codex:  ~/.codex/config.toml  model_providers.<name>.base_url = "http://127.0.0.1:8787" (keep the wire_api and the
         rest of the provider block as they are; the path is forwarded untouched)."""
-import http.server, json, sys, time, urllib.request, urllib.error
+import http.server, json, os, sys, time, urllib.request, urllib.error
 
+THINKING = os.environ.get("PROXY_THINKING", "")  # "" = pass through; "disabled" = force thinking off
 PORT = int(sys.argv[1]) if len(sys.argv) > 1 else 8787
 LOG = sys.argv[2] if len(sys.argv) > 2 else "proxy_requests.log"
 UPSTREAM = "https://llmapi.paratera.com"
@@ -40,6 +44,10 @@ class Handler(http.server.BaseHTTPRequestHandler):
             d = json.loads(body)
             rec.update({"model": d.get("model"), "stream": d.get("stream"), "max_tokens": d.get("max_tokens"),
                         "thinking_fields": {k: d[k] for k in ("thinking", "enable_thinking", "reasoning_effort", "reasoning", "reasoning_effort_level") if k in d}})
+            if THINKING == "disabled":
+                d["thinking"] = {"type": "disabled"}
+                body = json.dumps(d).encode("utf-8")
+                rec["injected"] = {"thinking": d["thinking"]}
         except Exception:
             rec["note"] = "non-json body passed through"
         req = urllib.request.Request(UPSTREAM + self.path, data=body, method="POST")
@@ -92,5 +100,5 @@ class Handler(http.server.BaseHTTPRequestHandler):
 
 
 if __name__ == "__main__":
-    print(f"paratera pass-through on http://127.0.0.1:{PORT} -> {UPSTREAM}; log: {LOG}")
+    print(f"paratera pass-through on http://127.0.0.1:{PORT} -> {UPSTREAM}; log: {LOG}; thinking: {THINKING or 'as sent (provider default = on)'}")
     http.server.ThreadingHTTPServer(("127.0.0.1", PORT), Handler).serve_forever()

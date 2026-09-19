@@ -1,11 +1,58 @@
-# 裸跑臂（bare）的两个固定件
+# 裸跑臂（bare）：Codex 桌面版，PaperBench 官方指令 + 官方附注
 
-三方对照的第三臂是「编码 agent 裸跑」：Codex 桌面版 + 同底座模型，提示词 = PaperBench 官方
-`code_only_instructions.txt` 原文 + 本目录的冻结后缀，只替换两处路径（`/home/paper`、`/home/submission`）。
-完整口径与起跑前的三条核验命令见 `docs/INPUT_STANDARD.md`。
+三方对照的第三臂是「编码 agent 裸跑」：Codex 桌面版 + 同底座模型。这里放的是它的固定件和跑法；口径的
+来龙去脉在 `docs/INPUT_STANDARD.md`（bam 那批），本文 §2 只写 2026-09-19 这批与之不同的地方。
 
-- `bare_prompt_suffix.txt`：冻结的两句后缀（不要停下来问；产物只放 submission/）。补的是 harness 条件，不含论文或判分信息。
-- `paratera_proxy.py`：直通代理，请求体原样转发到 Paratera，只记录每次请求的 model 与 usage（含 `reasoning_tokens`），
-  证明裸跑臂用的是哪个模型、思考开没开。key 不落日志。
+## 1. 文件
 
-本批（2026-09-17 起）先只做 DeepEvol 复现线 vs DeepCode 基线运行，裸跑臂暂不起；文件保留以便三方口径不变。
+| 文件 | 作用 |
+| --- | --- |
+| `render_prompt.sh <paper> <workspace> [--hours N]` | 建一篇论文的工作目录并生成 `PROMPT.txt`：官方 `code_only_instructions.txt`（字节级同源，只替换 `/home/paper`、`/home/submission` 两处路径）+ `additional_notes.txt`；目录里放基准给 agent 的那几样（`paper/` 五件、空 `agent.env`、`git init` 过的空 `submission/`），**不放 rubric.json / config.yaml**；末尾自检打印 `PROMPT_OK` 和四件材料的 sha256 |
+| `additional_notes.txt` | PaperBench 自己的 `ADDITIONAL NOTES` 段（`paperbench/solvers/basicagent/prompts/templates.py` 的 `additional_notes_template`），按基准的填法填：Compute = `no_gpu_template`（这台 Mac 没有 GPU），Total Runtime = `no_time_limit_template`（不加 `--hours`）或 `time_limit_template`（`--hours N`），API keys 指向工作目录里的 `agent.env`（空文件，句子字面成立）。逐字来自基准，我们一个字不加 |
+| `continue_message.txt` | Codex 停下来问 / 停下来没提交时人回的那一句 = PaperBench `DEFAULT_CONTINUE_MESSAGE`，原文。每回一次在工作目录 `interactions.log` 记一行 |
+| `paratera_proxy.py` | 直通代理 `127.0.0.1:8787 → llmapi.paratera.com`，逐请求记 model / thinking 字段 / usage（含 `reasoning_tokens`）。`PROXY_THINKING=disabled` 时给每个请求体加 `thinking:{type:disabled}`（Paratera 只认这种写法）并记 `injected`——这是"思考关"口径的旋钮，别的不动。key 不落日志 |
+| `bare_prompt_suffix.txt` | bam 那批（09-15）用的两句自写后缀；**本批不用**（被基准自己的附注取代），留作历史 |
+
+## 2. 2026-09-19 批：Flash 思考关，5 篇，Codex 臂 vs DeepCode 基线运行
+
+| 项 | 本批 | 与 bam 批（INPUT_STANDARD）的差别 |
+| --- | --- | --- |
+| 底座 / 思考 | `DeepSeek-V4-Flash`，**思考关**（代理注入；日志每行 `reasoning_tokens` 必须为 0） | bam 是 V4-Pro 思考开 |
+| 提示词 | 官方 Code-Dev 指令原文 + **基准自己的 `ADDITIONAL NOTES`**（无 GPU、无时限数字、agent.env、root、"用满时间/不要只写计划"） | bam 用的是我们自写的两句后缀，没有附注段——owner 09-19 指出"时间和运行要求被去掉了"，改回基准原文 |
+| 时限句 | 默认 `no_time_limit_template`："work until you have reproduced all the core contributions"——另两臂也没被告知任何小时数 | 要对齐 PaperBench 官方跑法的小时数就 `--hours 12`，三臂口径记录里写明 |
+| 续跑 | Codex 停下来（问问题、或说完了但没提交）→ 回 `CONTINUE.txt` 原文，**最多 5 次**，每次记 `interactions.log`；它说完了且已 `git commit` 就停 | bam 是 "Continue; no further input will be provided." |
+| 论文 | `sapg`（77 叶）、`pinn`（126）、`robust-clip`（70）、`self-expansion`（70）、`test-time-model-adaptation`（86）——Code-Dev 叶数 70–130 的中等篇；sapg / pinn 的基线运行分数已有（0.716 / 0.691、0.670） | bam 单篇 |
+| 图 | Codex 能读目录里的 assets，但 PaperBench 数据集里的 jpg 是 LFS 指针（`render_prompt.sh` 会提示）。**不补图**：DeepCode 臂本批关图，两臂都不看图 | bam 的图是真字节 |
+| 裁判 | `DeepSeek-V4-Flash` + `DeepSeek-V4-Pro` 结构化解析器（`PB_JUDGE_MODEL=DeepSeek-V4-Flash bash run_grade.sh`），两臂同一个 | bam 是 V4-Pro |
+| 样本 | 每篇每臂 1 份先看方向；差值 < 0.1 的论文再各补 1 份。单篇噪声 0.025（sapg 同份重跑），历史组内摆动 0.09–0.19，n < 5 不说"优于" | 同 |
+
+## 3. Codex 臂怎么跑（owner 手动，每篇 15–30 分钟）
+
+```bash
+V=~/Documents/env/paperbench-judge/validation; B=~/Documents/env/bare-0919      # 本批工作目录根，不入库
+PAPER=robust-clip                                                                # 五篇之一
+bash $V/deepcode_test/bare/render_prompt.sh $PAPER $B/$PAPER                     # 看到 PROMPT_OK + 四行 "2 <sha>" 才继续
+cd $B/$PAPER && PROXY_THINKING=disabled nohup python3 $V/deepcode_test/bare/paratera_proxy.py 8787 proxy_requests.log > proxy_stdout.log 2>&1 &
+cat $B/$PAPER/PROMPT.txt | pbcopy
+```
+
+`~/.codex/config.toml`：`model = "DeepSeek-V4-Flash"`；`[model_providers.custom]` 的 `base_url = "http://127.0.0.1:8787"`，
+**`wire_api = "chat"`**（注入 `thinking` 在 chat 线上验过：`reasoning_tokens: 0`；responses 线是否认这个字段没验，别用）。
+`~/.codex/AGENTS.md` 0 字节；工作目录里没有 AGENTS.md；关掉 browser / chrome / computer-use 插件（或把开着的插件抄进 `RUN_NOTES.md`）；
+工作目录选 `$B/$PAPER`，审批全自动。**粘贴 `PROMPT.txt` 全文，一个字不加不减**——不加"你好/请开始"，不先让它 `ls`。
+
+跑完：
+```bash
+head -1 $B/$PAPER/proxy_requests.log | python3 -c "import json,sys; d=json.loads(sys.stdin.readline()); print(d['model'], d.get('injected'), d['usage'])"
+python3 -c "import json,sys; rs=[json.loads(l) for l in open('$B/$PAPER/proxy_requests.log')]; print(len(rs),'requests; models',{r.get('model') for r in rs}); print('reasoning_tokens>0 lines:', sum(1 for r in rs if (r.get('usage') or {}).get('reasoning_tokens')))"
+grep -rIl "$(grep -vE '^\s*(#|$)' $B/$PAPER/paper/blacklist.txt | head -1 | sed 's#https://github.com/##')" $B/$PAPER/submission | grep -v '^.*README' || echo BLACKLIST_CLEAN
+(cd $B/$PAPER/submission && git status --short | head -3 && git clean -fdn | head -3)   # 未提交 / 未跟踪的文件会在判分前被清掉
+mkdir -p ~/pb_submissions/$PAPER && cp -R $B/$PAPER/submission ~/pb_submissions/$PAPER/codex1    # 交给判分池（和主会话说一声）
+```
+口径破坏 = 任一行 `model` 不是 `DeepSeek-V4-Flash`、任一行 `reasoning_tokens > 0`、`injected` 缺失、黑名单仓库有克隆/拷贝痕迹。
+
+## 4. DeepCode 臂（本仓库基线运行）与判分
+
+基线运行照旧：`PAPER=<id> TRIAL=trial1 ENV_FILE=… nohup bash deepcode_test/scripts/run_trial.sh`（Flash 思考关，`run_trial.sh` 里已是这个口径；
+未登记的论文会自动推导 `TITLE_KEY` / `BLOCK_REPO`）。三篇新论文判分前要在裁判里登记（`nano/eval.py` 的 `paper_split` Literal +
+`experiments/splits/<id>.txt`，补丁里 pinn 的写法），这一步由维护本仓库的会话做。分数回填 `docs/RESULTS-HISTORY.md` 新节。
