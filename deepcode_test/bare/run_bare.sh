@@ -108,26 +108,9 @@ while :; do
 done
 
 # ---- 5. audit ----
-python3 - "$WS" "$ARM" "$MODEL" > "$WS/AUDIT.txt" <<'PY'
-import json, sys
-ws, arm, model = sys.argv[1:4]
-rows = [json.loads(l) for l in open(f"{ws}/proxy_requests.log") if l.strip()]
-bad = []
-models = {r.get("model") for r in rows}
-if models != {model}: bad.append(f"model(s) {models}")
-if not all(r.get("injected") for r in rows): bad.append("a request without the thinking injection")
-if arm == "codex" and not all(r.get("user_agent") for r in rows): bad.append("a Codex request without the User-Agent replacement (DeepSeek would force thinking on)")
-if not all((r.get("auth") or "").startswith("proxy:") for r in rows): bad.append("a request not authenticated by the proxy")
-key = "thinking_blocks" if arm == "claude" else "reasoning_items"
-over = [r for r in rows if ((r.get("usage") or {}).get("reasoning_tokens") or 0) > 0 or (r.get(key) or 0) > 0]
-if over: bad.append(f"{len(over)} responses with reasoning ({key} / reasoning_tokens > 0)")
-errs = [r for r in rows if r.get("status") != 200]
-tok = sum((r.get("usage") or {}).get("prompt_tokens") or 0 for r in rows), sum((r.get("usage") or {}).get("completion_tokens") or 0 for r in rows)
-print(f"requests {len(rows)}  models {sorted(m or '?' for m in models)}  non-200 {len(errs)}  prompt/completion tokens {tok[0]}/{tok[1]}")
-print("CALIBER_OK" if not bad else "CALIBER_BROKEN: " + "; ".join(bad))
-PY
+python3 "$HERE/audit.py" "$WS" "$ARM" "$MODEL" > "$WS/AUDIT.txt" || true
 cat "$WS/AUDIT.txt" | tee -a "$WS/RUN_NOTES.md"
-BL="$(grep -vE '^\s*(#|$)' "$WS/paper/blacklist.txt" | head -1 | sed 's#https\?://github.com/##; s#/$##')"
+BL="$(grep -vE '^\s*(#|$)' "$WS/paper/blacklist.txt" | head -1 | sed -e 's#https://github.com/##' -e 's#http://github.com/##' -e 's#/$##' -e 's#\.git$##')"
 if [ -n "$BL" ]; then
   hits="$(grep -rIl "$BL" "$WS/submission" 2>/dev/null | grep -v '/\.git/' || true)"
   [ -z "$hits" ] && log "- blacklist ($BL): no mention in the submission" || log "- ⚠️ blacklist ($BL) mentioned in: $(echo "$hits" | tr '\n' ' ') — check it is a citation, not copied code"
