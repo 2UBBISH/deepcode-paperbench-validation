@@ -2,7 +2,7 @@
 # Desktop arm, step 1 of 2: build the workspace + PROMPT.txt, record the start time, put the prompt on the clipboard,
 # print the checklist. Then you drive the desktop app; finish with desktop_finish.sh.
 #
-#   bash desktop_prep.sh <codex|claude> <paper-id> [--hours N]
+#   bash desktop_prep.sh <codex|claude> <paper-id> [--hours N]      (default 3: the official time_limit_template sentence)
 #
 # Caliber of this batch: deepseek-flash @ api.deepseek.com, thinking ON (DeepSeek's default — nothing to inject, so no proxy;
 # the apps talk to DeepSeek through the cc-switch profile you set once: Codex → provider base_url https://api.deepseek.com/v1,
@@ -12,7 +12,7 @@
 set -euo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"; REPO="$(cd "$HERE/.." && pwd)"
 ARM="${1:?codex|claude}"; PAPER="${2:?paper id}"; shift 2
-HOURS=""; while [ $# -gt 0 ]; do case "$1" in --hours) HOURS="$2"; shift 2 ;; *) echo "unknown arg $1"; exit 2 ;; esac; done
+HOURS="${BARE_HOURS:-3}"; while [ $# -gt 0 ]; do case "$1" in --hours) HOURS="$2"; shift 2 ;; *) echo "unknown arg $1"; exit 2 ;; esac; done
 [ "$ARM" = codex ] || [ "$ARM" = claude ] || { echo "arm must be codex or claude"; exit 2; }
 ROOT="${BARE_ROOT:-$REPO/work}"; WS="$ROOT/$PAPER-$ARM-desktop"
 if [ "$ARM" = codex ]; then [ ! -s "$HOME/.codex/AGENTS.md" ] || { echo "❌ ~/.codex/AGENTS.md is not empty"; exit 1; }
@@ -24,7 +24,7 @@ START=$(date +%s); echo "$START" > "$WS/START_EPOCH"
 { echo "# $PAPER / $ARM desktop — $(date '+%F %T')"
   echo "- caliber: deepseek-flash @ api.deepseek.com via the app's cc-switch profile, thinking ON (DeepSeek default)"
   echo "- validation repo: $(git -C "$HERE" rev-parse --short HEAD)"
-  echo "- time limit in prompt: ${HOURS:-none (no_time_limit_template)}"
+  echo "- time limit in prompt: $HOURS h (official time_limit_template); stop the app and run desktop_finish.sh at $(date -r $((START + HOURS*3600)) '+%H:%M' 2>/dev/null || date -d "@$((START + HOURS*3600))" '+%H:%M') at the latest"
   echo "- app version: (fill in: Codex app / Claude desktop 'About')"
   echo "- plugins / skills / MCP left on: (fill in, ideally 'none')"
   echo "- approval mode: (fill in: full auto)"
@@ -33,7 +33,7 @@ START=$(date +%s); echo "$START" > "$WS/START_EPOCH"
 cat "$WS/PROMPT.txt" | pbcopy 2>/dev/null && CLIP="(already on the clipboard)" || CLIP=""
 cat <<TXT
 
-READY  $WS      started $(date '+%H:%M')
+READY  $WS      started $(date '+%H:%M'), time limit $HOURS h → stop by $(date -r $((START + HOURS*3600)) '+%H:%M' 2>/dev/null || date -d "@$((START + HOURS*3600))" '+%H:%M')
 
 In the $([ "$ARM" = codex ] && echo "Codex app" || echo "Claude desktop app (Code tab)"):
   1. cc-switch: the DeepSeek profile (deepseek-flash) must be current; restart the app after switching.
@@ -41,6 +41,7 @@ In the $([ "$ARM" = codex ] && echo "Codex app" || echo "Claude desktop app (Cod
   3. Paste PROMPT.txt as the first message, verbatim $CLIP — nothing before or after it.
   4. If it stops and asks, or stops without committing: reply with CONTINUE.txt verbatim (max 5 times) and add a line to
      $WS/interactions.log  (time, what it asked). Never answer a question with information.
-  5. When it says it is done and submission/ has a commit:
+  5. When it says it is done and submission/ has a commit — or when the $HOURS h are up, whichever first
+     (stop the app's turn if it is still running; the prompt told it program runtime counts):
         bash $HERE/desktop_finish.sh $ARM $PAPER
 TXT
