@@ -101,7 +101,7 @@ else
       -e "s#__WORKSPACE__#$ROOT/DeepCode/deepcode_lab#g" \
       "$ROOT/config/deepcode_config.template.json" > "$DEEPCODE_HOME/deepcode_config.json"
   chmod 600 "$DEEPCODE_HOME/deepcode_config.json"
-  echo "  ✅ 写入 deepcode_config.json（${DEEPCODE_MODEL:-DeepSeek-V4-Flash} @ ${DEEPCODE_CONNECTION:-paratera}，compat.thinking=disabled，maxTokens 32768，7 个 MCP 服务器）"
+  echo "  ✅ 写入 deepcode_config.json（${DEEPCODE_MODEL:-DeepSeek-V4-Flash} @ ${DEEPCODE_CONNECTION:-paratera}，compat.thinking=$([ "${DEEPCODE_CONNECTION:-paratera}" = deepseek ] && echo enabled || echo disabled)，maxTokens 32768，7 个 MCP 服务器）"
 fi
 echo "  ✏️  key：跑 run_trial.sh 时传 ENV_FILE=<文件>（内容一行 PARATERA_API_KEY=...），"
 echo "      或写 $DEEPCODE_HOME/credentials.json（模板 config/credentials.example.json，chmod 600）。两处都不进仓库。"
