@@ -63,8 +63,19 @@ DeepSeek 文档（api-docs.deepseek.com/zh-cn/guides/thinking_mode）：OpenAI /
 
 **未定**：DeepCode 基线现在走 Paratera 的 `DeepSeek-V4-Flash`，两个裸跑臂走 api.deepseek.com 的 `deepseek-flash`——同一模型、不同 serving。要严格同口径，基线的 ENV_FILE 也指到 api.deepseek.com。
 
+### 3.2 一条命令跑完整批（基线 + 两个裸跑臂 × 五篇）
+
+```bash
+cd ~/Documents/env/paperbench-judge/validation
+nohup bash deepcode_test/scripts/run_batch.sh > runs/batch_0919.log 2>&1 &      # PAPERS="…" ARMS="baseline codex claude" 可缩
+tail -f runs/batch_*.txt                                                          # 账本：每臂每篇 start / exit / CALIBER_OK
+```
+基线串行（一次一篇，3–4 h/篇，`ENV_FILE=~/Documents/env/deepseek.env` 里放 `DEEPSEEK_API_KEY`），两个裸跑臂与之并行、按篇推进；池子里已有的臂自动跳过。
+
+### 3.3 能不能靠 cc-switch 关思考
+
+不能：cc-switch 的本地代理（`enableLocalProxy`）只做转发 / 记账 / 故障切换，没有改请求体的能力；关思考需要请求体里的字段。能做的是在 cc-switch 里各建一个"DeepSeek (thinking off)"档，base_url 指到本地代理（Codex `http://127.0.0.1:8787/v1`，Claude `http://127.0.0.1:8788/anthropic`），key 不变——切到这个档后 `codex exec` / `claude -p` 裸命令就是关思考的，代理需常驻（`PROXY_UPSTREAM=https://api.deepseek.com PROXY_THINKING=disabled PROXY_USER_AGENT=paperbench-bare/1`）。`run_bare.sh` 不依赖这个：它自己起代理、用 `-c` / env 只对本进程覆盖 base_url，cc-switch 保持原样即可。
+
 ## 4. DeepCode 臂（本仓库基线运行）与判分
 
-基线运行照旧：`PAPER=<id> TRIAL=trial1 ENV_FILE=… nohup bash deepcode_test/scripts/run_trial.sh`（Flash 思考关，`run_trial.sh` 里已是这个口径；
-未登记的论文会自动推导 `TITLE_KEY` / `BLOCK_REPO`）。三篇新论文判分前要在裁判里登记（`nano/eval.py` 的 `paper_split` Literal +
-`experiments/splits/<id>.txt`，补丁里 pinn 的写法），这一步由维护本仓库的会话做。分数回填 `docs/RESULTS-HISTORY.md` 新节。
+基线运行：`PAPER=<id> TRIAL=trial1 ENV_FILE=~/Documents/env/deepseek.env DEEPCODE_EXPECT_MODEL=deepseek-flash nohup bash deepcode_test/scripts/run_trial.sh`（09-19 起 `deepcode_config` 在 `deepseek` 档：api.deepseek.com、deepseek-flash、每次请求 `thinking:{type:disabled}`；换回 Paratera：`DEEPCODE_REGEN_CONFIG=1 DEEPCODE_CONNECTION=paratera bash setup.sh`）。五篇都已登记（`run_trial.sh` 的表 + 裁判 `paper_split`）。上游 DeepCode 仓库本身没有 PaperBench 入口（论文没放评测脚手架），`run_trial.sh` / `run_batch.sh` 就是入口。分数回填 `docs/RESULTS-HISTORY.md` 新节。
