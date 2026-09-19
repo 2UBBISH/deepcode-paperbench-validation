@@ -72,7 +72,7 @@ echo "==== [0/3] 预飞自检 · paper=$PAPER trial=$TRIAL home=$DEEPCODE_HOME $
 
 # ① 口径闸
 DEEPCODE_EXPECT_MODEL="${DEEPCODE_EXPECT_MODEL:-deepseek-flash}" \
-DEEPCODE_EXPECT_THINKING="${DEEPCODE_EXPECT_THINKING:-disabled}" \
+export DEEPCODE_EXPECT_THINKING="${DEEPCODE_EXPECT_THINKING:-enabled}"; DEEPCODE_EXPECT_THINKING="$DEEPCODE_EXPECT_THINKING" \
 python3 - <<'PY'
 import json, os, sys
 home = os.environ["DEEPCODE_HOME"]
@@ -100,7 +100,7 @@ if prof.get("modelCatalog") == "manual":
 want_th = os.environ["DEEPCODE_EXPECT_THINKING"]
 th = (prof.get("compat") or {}).get("thinking")
 if want_th != "any":
-    assert th == want_th, f"providers.profiles.{conn}.compat.thinking={th!r} != {want_th!r}（口径：思考关，每次请求带 thinking:{{type:disabled}}）"
+    assert th == want_th, f"providers.profiles.{conn}.compat.thinking={th!r} != {want_th!r}（本批口径：思考开，每次请求带 thinking:{{type:enabled}}）"
 need = {"code-implementation", "code-reference-indexer", "document-segmentation", "filesystem", "fetch", "github-downloader", "command-executor"}
 missing = need - set((c.get("tools", {}).get("mcpServers") or {}))
 assert not missing, f"缺 MCP: {missing}"
@@ -207,7 +207,7 @@ export DEEPCODE_MAX_WALL_SECONDS="${DEEPCODE_MAX_WALL_SECONDS:-21600}"
 # 写码单次调用输出上限（上游 8192：一个 30 KB 的文件把 write_file 的 JSON 截断，整轮写码中止；2026-09-18 sapg Vision-Exp）
 export DEEPCODE_IMPLEMENT_MAX_TOKENS="${DEEPCODE_IMPLEMENT_MAX_TOKENS:-32768}"
 echo "  ⏱️  stall=${DEEPCODE_STALL_THRESHOLD}s 写码墙钟=${DEEPCODE_MAX_WALL_SECONDS}s 写码单次输出上限=${DEEPCODE_IMPLEMENT_MAX_TOKENS}"
-echo "  🧠 思考=关（配置 compat.thinking=disabled；跑完核对 llm 日志 reasoning_tokens）"
+echo "  🧠 思考=${DEEPCODE_EXPECT_THINKING}（配置 compat.thinking；跑完核对 llm 日志 reasoning_tokens）"
 # 实验开关（fix-①②③）必须关：①② 的提示词就是评分维度，开着跑出来的分数不是基线（README §对上游的改动）
 for x in DEEPCODE_PLAN_COVERAGE_CHECK DEEPCODE_ALLOW_PLAN_EXTENSION DEEPCODE_POSTWRITE_COMPILE; do
   [ "${!x:-0}" = "1" ] && { echo "  ❌ $x=1：基线运行不允许开实验开关"; exit 1; }
@@ -301,8 +301,10 @@ for f in sorted(set(files)):
         c = x.get("completion_tokens") or (x.get("usage") or {}).get("completion_tokens") or 0
         completion += int(c) if isinstance(c, (int, float)) else 0
 if calls:
-    flag = "✅" if reasoning == 0 else "❌ 思考没关！"
-    print(f"  {flag} 口径核验：{calls} 次调用，reasoning_tokens 合计 {reasoning}（completion {completion}）")
+    want = os.environ.get("DEEPCODE_EXPECT_THINKING", "enabled")
+    ok = (reasoning > 0) if want == "enabled" else (reasoning == 0) if want == "disabled" else True
+    flag = "✅" if ok else ("❌ 思考没开！" if want == "enabled" else "❌ 思考没关！")
+    print(f"  {flag} 口径核验（思考={want}）：{calls} 次调用，reasoning_tokens 合计 {reasoning}（completion {completion}）")
 else:
     print("  ⚠️ 没找到带 usage 的 llm 日志，无法核验 reasoning_tokens（请查 DeepCode 的 llm 日志位置）")
 PY
