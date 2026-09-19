@@ -21,7 +21,7 @@
 | 提示词 | 官方 Code-Dev 指令原文 + **基准自己的 `ADDITIONAL NOTES`**（无 GPU、无时限数字、agent.env、root、"用满时间/不要只写计划"） | bam 用的是我们自写的两句后缀，没有附注段——owner 09-19 指出"时间和运行要求被去掉了"，改回基准原文 |
 | 时限句 | 默认 `no_time_limit_template`："work until you have reproduced all the core contributions"——另两臂也没被告知任何小时数 | 要对齐 PaperBench 官方跑法的小时数就 `--hours 12`，三臂口径记录里写明 |
 | 续跑 | Codex 停下来（问问题、或说完了但没提交）→ 回 `CONTINUE.txt` 原文，**最多 5 次**，每次记 `interactions.log`；它说完了且已 `git commit` 就停 | bam 是 "Continue; no further input will be provided." |
-| 论文 | `sapg`（77 叶）、`pinn`（126）、`robust-clip`（70）、`self-expansion`（70）、`test-time-model-adaptation`（86）——Code-Dev 叶数 70–130 的中等篇；sapg / pinn 的基线运行分数已有（0.716 / 0.691、0.670） | bam 单篇 |
+| 论文 | `sapg`（77 叶）、`pinn`（126）、`adaptive-pruning`（86）、`self-expansion`（70）、`test-time-model-adaptation`（86）——Code-Dev 叶数 70–130 的中等篇，`paper.md` 都经 `check_paper_md.py` 核过完整；**robust-clip 剔除**（官方 md 缺 §2–§3，见 PITFALLS §E）；sapg / pinn 的基线分已有但那是 Paratera serving，本批重跑 | bam 单篇 |
 | 图 | Codex 能读目录里的 assets，但 PaperBench 数据集里的 jpg 是 LFS 指针（`render_prompt.sh` 会提示）。**不补图**：DeepCode 臂本批关图，两臂都不看图 | bam 的图是真字节 |
 | 裁判 | `DeepSeek-V4-Flash` + `DeepSeek-V4-Pro` 结构化解析器（`PB_JUDGE_MODEL=DeepSeek-V4-Flash bash run_grade.sh`），两臂同一个 | bam 是 V4-Pro |
 | 样本 | 每篇每臂 1 份先看方向；差值 < 0.1 的论文再各补 1 份。单篇噪声 0.025（sapg 同份重跑），历史组内摆动 0.09–0.19，n < 5 不说"优于" | 同 |

@@ -49,7 +49,7 @@ README 第 90 行 "the agent is informed of this file in our default instruction
 
 ## 4. 本批（09-19）口径
 
-deepseek-flash（api.deepseek.com，owner 的 cc-switch 路由；基线仍在 Paratera，见 bare/README §3 末）思考关；5 篇：sapg、pinn、robust-clip、self-expansion、test-time-model-adaptation（Code-Dev 叶 70–130）；两臂裸跑 + DeepCode 基线（+ 本线 stage 9）；全部关图；裁判 V4-Flash + V4-Pro 解析器；每篇每臂 1 份先看方向，差值 < 0.1 再补；单篇噪声 0.025、历史组内摆动 0.09–0.19，n < 5 不说"优于"。跑法见 `deepcode_test/bare/README.md`。
+deepseek-flash（api.deepseek.com，owner 的 cc-switch 路由；基线仍在 Paratera，见 bare/README §3 末）思考关；5 篇：sapg、pinn、adaptive-pruning、self-expansion、test-time-model-adaptation（Code-Dev 叶 70–130；robust-clip 因官方 paper.md 缺方法章被剔除，`check_paper_md.py`）；两臂裸跑 + DeepCode 基线（+ 本线 stage 9）；全部关图；裁判 V4-Flash + V4-Pro 解析器；每篇每臂 1 份先看方向，差值 < 0.1 再补；单篇噪声 0.025、历史组内摆动 0.09–0.19，n < 5 不说"优于"。跑法见 `deepcode_test/bare/README.md`。
 
 与 bam 批（`INPUT_STANDARD.md`）的三处差别：Flash 关（bam 是 Pro 开）；题面后接**官方附注**（bam 接的是我们自写的两句后缀——owner 09-19 指出时间和运行要求被去掉了，改回基准原文）；续跑语用官方 `DEFAULT_CONTINUE_MESSAGE`（CLI 非交互跑基本用不上）。
 

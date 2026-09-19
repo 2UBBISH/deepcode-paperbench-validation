@@ -10,7 +10,7 @@
 # the CLIs installed, PAPERS hydrated (setup.sh), deepcode_config on the deepseek profile (DEEPCODE_CONNECTION=deepseek).
 set -uo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; REPO="$(cd "$HERE/../.." && pwd)"
-PAPERS="${PAPERS:-sapg pinn robust-clip self-expansion test-time-model-adaptation}"
+PAPERS="${PAPERS:-sapg pinn adaptive-pruning self-expansion test-time-model-adaptation}"   # robust-clip dropped: its official paper.md lacks §2–§3 (check_paper_md.py)
 ARMS="${ARMS:-baseline codex claude}"
 ENV_FILE="${ENV_FILE:-$HOME/Documents/env/deepseek.env}"
 MODEL="${DEEPCODE_EXPECT_MODEL:-deepseek-flash}"
