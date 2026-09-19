@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # The 2026-09-19 batch in one command: for each paper, the DeepCode baseline run (run_trial.sh, sequential — its
 # task directory and /tmp state files allow one at a time) and the two bare arms (run_bare.sh codex / claude, run in
-# parallel with the baseline, each on its own proxy port). Everything ends in ~/pb_submissions/<paper>/{trial1,codex1,claude1}.
+# parallel with the baseline, each on its own proxy port). Everything ends in results/<paper>/<arm>/ (this branch){trial1,codex1,claude1}.
 #
 #   nohup bash run_batch.sh > runs/batch_0919.log 2>&1 &
 #   PAPERS="sapg pinn" ARMS="baseline codex" bash run_batch.sh          # subsets
@@ -13,6 +13,7 @@ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; REPO="$(cd "$HERE/../.." &
 PAPERS="${PAPERS:-sapg pinn adaptive-pruning self-expansion test-time-model-adaptation}"   # robust-clip dropped: its official paper.md lacks §2–§3 (check_paper_md.py)
 ARMS="${ARMS:-baseline codex claude}"
 ENV_FILE="${ENV_FILE:-$HOME/Documents/env/deepseek.env}"
+export RESULTS_ROOT="${RESULTS_ROOT:-$REPO/results}"   # this branch: results/<paper>/<arm>/ under the repo
 MODEL="${DEEPCODE_EXPECT_MODEL:-deepseek-flash}"
 LEDGER="$REPO/runs/batch_$(date +%m%d_%H%M).txt"; mkdir -p "$REPO/runs"
 log(){ echo "[$(date '+%m-%d %H:%M:%S')] $*" | tee -a "$LEDGER"; }
@@ -28,7 +29,7 @@ baseline_chain() {  # sequential over papers
     log "baseline $p: start"
     PAPER="$p" TRIAL=trial1 ENV_FILE="$ENV_FILE" DEEPCODE_EXPECT_MODEL="$MODEL" \
       bash "$HERE/run_trial.sh" > "$REPO/runs/${p}_trial1_batch.log" 2>&1
-    log "baseline $p: exit=$? ($(ls "$HOME/pb_submissions/$p" 2>/dev/null | tr '\n' ' '))"
+    log "baseline $p: exit=$? ($(ls "$RESULTS_ROOT/$p" 2>/dev/null | tr '\n' ' '))"
   done
 }
 bare_chain() {  # per paper: codex and claude in parallel, then the next paper
@@ -42,7 +43,7 @@ bare_chain() {  # per paper: codex and claude in parallel, then the next paper
       pids+=($!)
     done
     for pid in "${pids[@]:-}"; do [ -n "$pid" ] && wait "$pid"; done
-    for arm in codex claude; do has "$arm" && [ -f "$REPO/runs/${p}_${arm}_batch.exit" ] && log "$arm $p: exit=$(cat "$REPO/runs/${p}_${arm}_batch.exit") $(grep -h 'CALIBER_' "$HOME/Documents/env/bare-0919/$p-$arm/AUDIT.txt" 2>/dev/null | head -1)"; done
+    for arm in codex claude; do has "$arm" && [ -f "$REPO/runs/${p}_${arm}_batch.exit" ] && log "$arm $p: exit=$(cat "$REPO/runs/${p}_${arm}_batch.exit") $(grep -h 'CALIBER_' "$RESULTS_ROOT/$p/$arm/AUDIT.txt" 2>/dev/null | head -1)"; done
   done
 }
 log "batch start: papers [$PAPERS] arms [$ARMS] model $MODEL"

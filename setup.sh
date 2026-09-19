@@ -12,7 +12,7 @@
 #   3. 校验 DeepCode/ = 上游 21ebc57f + patches/deepcode_local_changes.patch，然后 uv venv + uv pip install -r requirements.txt（Python 3.12）
 #   4. 生成 $DEEPCODE_HOME/deepcode_config.json（口径：DeepSeek-V4-Flash、思考关、无阶段覆盖）与 paperbench/.env 模板
 #   5. 按各论文 blacklist.txt 设 git insteadOf 封锁（复现时禁止克隆论文官方实现）
-#   6. 建 ~/pb_submissions/<paper>/ 判分提交池
+#   6. 建 results/（交回用）与 work/
 #
 # 环境变量：
 #   PAPERS         要准备的论文 id，空格分隔（默认 sapg）
@@ -22,7 +22,7 @@
 # ============================================================
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PAPERS="${PAPERS:-sapg}"
+PAPERS="${PAPERS:-sapg pinn adaptive-pruning self-expansion test-time-model-adaptation}"
 DEEPCODE_HOME="${DEEPCODE_HOME:-$ROOT/.deepcode-home}"
 PYTHON_VERSION="${PYTHON_VERSION:-3.12}"
 FE_REPO="https://github.com/openai/frontier-evals.git"
@@ -40,27 +40,13 @@ need npm   "随 Node 一起；setup 把 @modelcontextprotocol/server-filesystem 
 need patch "GNU/BSD patch，校验 DeepCode/ 用"
 if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then echo "  ✅ docker daemon 在跑（判分要用）"; else echo "  ⚠️ docker 未运行（复现不需要，判分前再启动）"; fi
 
-echo "==== [2/6] frontier-evals（PaperBench）@ ${FE_COMMIT:0:10} —— 已 vendored ===="
-# 2026-09-19 起 PaperBench 不再由本脚本克隆：openai/frontier-evals 的 project/paperbench + project/common 两个目录按
-# UPSTREAM_BASE.txt 的 commit 以普通文件进了本仓库（patches/paperbench_local_changes.patch 已打，新增文件已在位，
-# 用过的论文的 LFS 资产已水合）。要对照上游核验：bash patches/verify_paperbench.sh（联网，拉上游到临时目录逐文件比）。
-[ -f "$PB/paperbench/nano/eval.py" ] || { echo "  ❌ $PB 不完整（仓库检出有问题？）"; exit 1; }
-git -C "$ROOT" apply --reverse --check --directory=frontier-evals "$ROOT/patches/paperbench_local_changes.patch" >/dev/null 2>&1 \
-  && echo "  ✅ vendored 树 = 上游 ${FE_COMMIT:0:10} + paperbench patch（5 文件）" \
-  || echo "  ⚠️ paperbench patch 与 vendored 树不完全对应（本地改过？bash patches/verify_paperbench.sh 看细节）"
-# 论文资产在上游是 LFS 对象。稀疏+浅克隆下 `git lfs pull --include` 实测拿不到对象（退出 0 但仍是指针），
-# 改为直接从 GitHub 的 LFS 媒体直链按固定 commit 下载，只取 $PAPERS，不依赖 git-lfs 客户端。
+echo "==== [2/6] 数据集（本分支只带五篇论文的 paper.md / addendum.md / blacklist.txt + 官方 Code-Dev 题面）===="
 for p in $PAPERS; do
-  [ -d "$PB/data/papers/$p" ] || { echo "  ❌ PaperBench 没有论文 id '$p'（见 $PB/data/papers/）"; exit 1; }
-  n=0
-  while read -r f; do
-    rel="${f#$ROOT/frontier-evals/}"
-    curl -sfL --retry 3 -o "$f" "https://media.githubusercontent.com/media/openai/frontier-evals/$FE_COMMIT/$rel" \
-      || { echo "  ❌ 下载失败: $rel"; exit 1; }
-    n=$((n+1))
-  done < <(grep -rl '^version https://git-lfs' "$PB/data/papers/$p" 2>/dev/null || true)
-  [ "$(wc -l < "$PB/data/papers/$p/paper.md")" -gt 5 ] && echo "  ✅ $p 论文资产已水合（本次下载 $n 个文件）" || { echo "  ❌ $p/paper.md 仍是 LFS 指针"; exit 1; }
+  [ -f "$PB/data/papers/$p/paper.md" ] || { echo "  ❌ 没有 $p（本分支只有: $(ls "$PB/data/papers" | tr '\n' ' ')）"; exit 1; }
+  head -c 30 "$PB/data/papers/$p/paper.md" | grep -q git-lfs && { echo "  ❌ $p/paper.md 是 LFS 指针"; exit 1; }
 done
+[ -f "$PB/paperbench/instructions/code_only_instructions.txt" ] || { echo "  ❌ 缺官方题面文件"; exit 1; }
+echo "  ✅ 五篇就绪，无 PDF / assets / rubric（四臂同一份字节）"
 
 echo "==== [3/6] DeepCode = HKUDS/DeepCode@${DC_COMMIT:0:8} + patch；venv（Python $PYTHON_VERSION）+ requirements.txt ===="
 bash "$ROOT/patches/verify_deepcode.sh"
@@ -80,7 +66,6 @@ if [ ! -f "$FS_JS" ]; then
 fi
 [ -f "$FS_JS" ] && echo "  ✅ filesystem MCP: $FS_JS" || { echo "  ❌ 装不上 @modelcontextprotocol/server-filesystem"; exit 1; }
 [ -x "$ROOT/DeepCode/.venv/bin/mcp-server-fetch" ] && echo "  ✅ fetch MCP: DeepCode/.venv/bin/mcp-server-fetch" || { echo "  ❌ DeepCode/.venv/bin/mcp-server-fetch 不存在"; exit 1; }
-( cd "$PB" && uv sync >/dev/null && echo "  ✅ paperbench .venv" )
 
 echo "==== [4/6] 配置：DEEPCODE_HOME=$DEEPCODE_HOME ===="
 mkdir -p "$DEEPCODE_HOME"; chmod 700 "$DEEPCODE_HOME"
@@ -92,8 +77,8 @@ else
   # DEEPCODE_CONNECTION picks the provider profile: paratera (DeepSeek-V4-Flash via llmapi.paratera.com, the runs up to
   # 2026-09-18) or deepseek (deepseek-flash via api.deepseek.com, key DEEPSEEK_API_KEY — the 09-19 five-paper batch, same
   # serving as the Codex / Claude Code arms). Both profiles send thinking:{type:disabled} on every call.
-  sed -e "s#__MODEL__#${DEEPCODE_MODEL:-DeepSeek-V4-Flash}#g" \
-      -e "s#__CONNECTION__#${DEEPCODE_CONNECTION:-paratera}#g" \
+  sed -e "s#__MODEL__#${DEEPCODE_MODEL:-deepseek-flash}#g" \
+      -e "s#__CONNECTION__#${DEEPCODE_CONNECTION:-deepseek}#g" \
       -e "s#__PY__#$ROOT/DeepCode/.venv/bin/python#g" \
       -e "s#__NODE__#$(command -v node)#g" \
       -e "s#__FS_JS__#$ROOT/.mcp-node/node_modules/@modelcontextprotocol/server-filesystem/dist/index.js#g" \
@@ -101,7 +86,7 @@ else
       -e "s#__WORKSPACE__#$ROOT/DeepCode/deepcode_lab#g" \
       "$ROOT/config/deepcode_config.template.json" > "$DEEPCODE_HOME/deepcode_config.json"
   chmod 600 "$DEEPCODE_HOME/deepcode_config.json"
-  echo "  ✅ 写入 deepcode_config.json（${DEEPCODE_MODEL:-DeepSeek-V4-Flash} @ ${DEEPCODE_CONNECTION:-paratera}，compat.thinking=disabled，maxTokens 32768，7 个 MCP 服务器）"
+  echo "  ✅ 写入 deepcode_config.json（${DEEPCODE_MODEL:-deepseek-flash} @ ${DEEPCODE_CONNECTION:-deepseek}，compat.thinking=disabled，maxTokens 32768，7 个 MCP 服务器）"
 fi
 echo "  ✏️  key：跑 run_trial.sh 时传 ENV_FILE=<文件>（内容一行 PARATERA_API_KEY=...），"
 echo "      或写 $DEEPCODE_HOME/credentials.json（模板 config/credentials.example.json，chmod 600）。两处都不进仓库。"
@@ -124,13 +109,10 @@ for p in $PAPERS; do
 done
 echo "  （git insteadOf 只挡 git 协议；HTTP 抓取由 run_trial.sh 注入的 DEEPCODE_URL_DENYLIST 在 MCP 层拦）"
 
-echo "==== [6/6] 判分提交池 ===="
-for p in $PAPERS; do mkdir -p "$HOME/pb_submissions/$p"; done
-mkdir -p "$HOME/pb_submissions_archive"
-echo "  ✅ ~/pb_submissions/{$(echo $PAPERS | tr ' ' ',')}/"
-
-echo
-echo "全部就绪。下一步："
-echo "  1) 免费自检：PREFLIGHT_ONLY=1 PAPER=sapg ENV_FILE=~/my.env bash deepcode_test/scripts/run_trial.sh"
-echo "  2) 跑一轮基线运行：PAPER=sapg TRIAL=trial1 ENV_FILE=~/my.env nohup bash deepcode_test/scripts/run_trial.sh > run.log 2>&1 &"
-echo "  3) 判分（先 DRY 看报价）：PAPER=sapg DRY=1 bash deepcode_test/scripts/run_grade.sh"
+echo "==== [6/6] 结果目录 ===="
+mkdir -p "$ROOT/results" "$ROOT/work" && echo "  ✅ $ROOT/results/<paper>/<arm>/（交回用）· $ROOT/work/（裸跑臂工作目录，不用交）"
+echo "全部就绪。下一步：
+  1) 写 ~/Documents/env/deepseek.env，一行 DEEPSEEK_API_KEY=...
+  2) 免费自检：PREFLIGHT_ONLY=1 PAPER=sapg ENV_FILE=~/Documents/env/deepseek.env bash deepcode_test/scripts/run_trial.sh
+  3) 整批：nohup bash deepcode_test/scripts/run_batch.sh > runs/batch.log 2>&1 &   （账本 runs/batch_*.txt）
+  4) 交回：tar czf results_<你的名字>_$(date +%m%d).tgz results/"

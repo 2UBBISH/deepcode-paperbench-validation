@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # ============================================================
 # PaperBench 基线运行 · 单轮复现器（论文无关）
-# 只做「复现 + 摆卷」，**不判分** —— 判分由 run_grade.sh 统一跑。
+# 只做「复现 + 摆卷」，**不判分** —— 判分由 owner 在主分支的裁判上做。
 #
-# 用法: PAPER=sapg TRIAL=trial1 ENV_FILE=~/my.env nohup bash run_trial.sh > <日志> 2>&1 &
-#       PAPER 决定论文（PaperBench id）；TRIAL 决定摆卷子目录名（~/pb_submissions/<PAPER>/<TRIAL>/）
-#       ENV_FILE  含 PARATERA_API_KEY=... 的文件（只 source，不打印；也可改用 $DEEPCODE_HOME/credentials.json）
+# 用法: PAPER=sapg TRIAL=trial1 ENV_FILE=~/Documents/env/deepseek.env nohup bash run_trial.sh > <日志> 2>&1 &
+#       PAPER 决定论文（PaperBench id）；产物固定落到 results/<PAPER>/deepcode/submission/（+ RUN_LOG.txt）
+#       ENV_FILE  含 DEEPSEEK_API_KEY=... 的文件（只 source，不打印；也可改用 $DEEPCODE_HOME/credentials.json）
 #       PREFLIGHT_ONLY=1  只验环境不花钱
 #       DEEPCODE_HOME     默认 <仓库>/.deepcode-home（setup.sh 生成的口径配置）
 #
@@ -33,12 +33,14 @@ CODE_DIR_FILE="/tmp/stage_b_code_dir_${PAPER}.txt"
 STATUS_FILE="/tmp/stage_b_status_${PAPER}.txt"
 # where the submission lands: the judge's pool (default) or, with RESULTS_ROOT set, the collaboration layout
 # RESULTS_ROOT/<paper>/deepcode/{submission/, RUN_LOG.txt} (the 0919-test branch; the owner copies submission/ into the pool to grade)
-if [ -n "${RESULTS_ROOT:-}" ]; then SUB_ROOT="$RESULTS_ROOT/$PAPER/deepcode"; TRIAL="submission"; else SUB_ROOT="$HOME/pb_submissions/$PAPER"; fi
+RESULTS_ROOT="${RESULTS_ROOT:-$REPO/results}"   # this branch: always the collaboration layout
+SUB_ROOT="$RESULTS_ROOT/$PAPER/deepcode"; TRIAL="submission"
 export DEEPCODE_HOME="${DEEPCODE_HOME:-$REPO/.deepcode-home}"
 # 工作区 = <cwd>/deepcode_lab（脚本在 DeepCode/ 里起 driver）。不要 export DEEPCODE_WORKSPACE：
 # 上游 DeepCodeConfig 用 pydantic-settings 前缀 DEEPCODE_ 读环境变量，会把它当 workspace 配置对象解析而报错。
 
 # key 只经环境变量进入；文件内容不回显
+ENV_FILE="${ENV_FILE:-$HOME/Documents/env/deepseek.env}"
 if [ -n "${ENV_FILE:-}" ]; then
   [ -f "$ENV_FILE" ] || { echo "❌ ENV_FILE 不存在: $ENV_FILE"; exit 1; }
   set -a; . "$ENV_FILE"; set +a
@@ -69,7 +71,7 @@ mkdir -p "$OUT/logs"
 echo "==== [0/3] 预飞自检 · paper=$PAPER trial=$TRIAL home=$DEEPCODE_HOME $(date +%F\ %T) ===="
 
 # ① 口径闸
-DEEPCODE_EXPECT_MODEL="${DEEPCODE_EXPECT_MODEL:-DeepSeek-V4-Flash}" \
+DEEPCODE_EXPECT_MODEL="${DEEPCODE_EXPECT_MODEL:-deepseek-flash}" \
 DEEPCODE_EXPECT_THINKING="${DEEPCODE_EXPECT_THINKING:-disabled}" \
 python3 - <<'PY'
 import json, os, sys
@@ -309,7 +311,7 @@ echo "==== [3/3] 摆卷 → $SUB_ROOT/$TRIAL/（不判分）===="
 rm -rf "${SUB_ROOT:?}/$TRIAL"
 mkdir -p "$SUB_ROOT/$TRIAL"
 cp -r "$CODE_DIR"/. "$SUB_ROOT/$TRIAL/"
-# 同时在 runs/ 下留一份副本供查看（权威副本仍是 ~/pb_submissions；两处都不入库）
+# 同时在 runs/ 下留一份副本供查看（权威副本是 results/；两处都不入库）
 mkdir -p "$OUT/submissions"
 rm -rf "$OUT/submissions/$TRIAL"
 cp -r "$CODE_DIR" "$OUT/submissions/$TRIAL"
@@ -318,4 +320,4 @@ if [ -n "${RESULTS_ROOT:-}" ]; then cp "$LOG" "$SUB_ROOT/RUN_LOG.txt"; echo "  �
 echo ""
 echo "==== $TRIAL 完成 $(date +%F\ %T)。当前 $PAPER 已就绪的提交: ===="
 ls "$SUB_ROOT"
-echo "==== 判分请在全部轮次就绪后运行: PAPER=$PAPER bash run_grade.sh ===="
+echo "==== 结果在 $SUB_ROOT/（submission/ + RUN_LOG.txt）；判分由 owner 在主分支做 ===="
