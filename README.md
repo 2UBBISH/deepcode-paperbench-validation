@@ -46,10 +46,10 @@ All earlier results (Aug 25 – Sep 15) are kept in `docs/RESULTS-HISTORY.md` wi
 | | |
 | --- | --- |
 | 问题 | 同一底座下，DeepCode 这套流程比裸跑的编码 agent 好多少——论文 Table 1 没做这件事（Codex 等用 Sonnet 4.5-thinking，DeepCode 用自己的配置，然后说 4.4×；bam 同底座对照下 Codex 是 0.73 不是 0.19） |
-| 臂 | DeepCode 基线（`run_trial.sh`）、Codex CLI、Claude Code CLI（`run_bare.sh`）、DeepEvol 线 stage 9（另一个仓库，`--until compute` 的树） |
+| 臂 | DeepCode 基线（`run_trial.sh`）、**Codex 桌面版、Claude 桌面版（Code 标签）**（分支 `0919-test` 的 `desktop_prep.sh` / `desktop_finish.sh`；CLI 版 `run_bare.sh` 留作参考）、DeepEvol 线 stage 9（另一个仓库，`--until compute` 的树） |
 | 论文 | `sapg`（77 个 Code-Dev 叶）、`pinn`（126）、`adaptive-pruning`（86）、`self-expansion`（70）、`test-time-model-adaptation`（86）；`robust-clip` 因官方 `paper.md` 缺方法章剔除 |
-| 钉死的量 | 模型 `deepseek-flash` @ api.deepseek.com、思考关、输入同字节、无 rubric、黑名单、裁判 Flash + Pro 解析器；每篇每臂 1 份 |
-| 起跑 | `~/Documents/env/deepseek.env` 写 `DEEPSEEK_API_KEY=…` → `nohup bash deepcode_test/scripts/run_batch.sh > runs/batch_0919.log 2>&1 &`（基线串行、两个 CLI 臂并行，账本 `runs/batch_*.txt`） |
+| 钉死的量 | 模型 `deepseek-flash` @ api.deepseek.com、**思考开**（09-19 晚改定：DeepSeek 缺省、论文对照也是 -thinking，且桌面版关不掉思考除非加代理）、输入同字节（md + addendum + blacklist）、无 rubric、黑名单、裁判 Flash + Pro 解析器；每篇每臂 1 份；桌面臂 3 小时硬上限 |
+| 起跑 | 在分支 `0919-test`（worktree `../validation-0919`）：DeepCode 臂 `ARMS=baseline bash deepcode_test/scripts/run_batch.sh`；桌面臂每篇每臂 `desktop_prep.sh` → 人在 app 里粘题面 → `desktop_finish.sh`；产物在 `results/<paper>/<arm>/`，判分时把各 `submission/` 拷进 `~/pb_submissions/<paper>/<arm>` |
 | 判分 | 池子齐了按论文 `PAPER=<id> PB_JUDGE_MODEL=DeepSeek-V4-Flash bash deepcode_test/scripts/run_grade.sh`，数字回填 `RESULTS-HISTORY.md` |
 | 读法 | 单篇噪声 0.025（sapg 同份重跑）、历史组内摆动 0.09–0.19：五篇看方向和一致性，差值 < 0.03 的篇补一份；n < 5 不说"优于" |
 | 局限 | 思考关对围着推理模型设计的 CLI 可能更不利（三臂一视同仁，但结论限于这个底座）；三臂都在无 GPU 的 Mac 上，Code-Dev 不判执行 |
