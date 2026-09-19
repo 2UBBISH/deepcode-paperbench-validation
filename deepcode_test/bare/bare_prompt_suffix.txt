@@ -1,6 +1,0 @@
-
-ADDITIONAL NOTES
----
-Do not stop to ask questions or wait for input; no one will respond. Keep working until you have reproduced as much as you can, then commit.
-
-Put everything in the git repository at `/home/submission/`; nothing outside that directory will be graded.

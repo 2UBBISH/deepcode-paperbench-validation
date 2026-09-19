@@ -1,3 +1,0 @@
-[lfs]
-	fetchexclude = project/paperbench/data/**
-	skipdownloaderrors = true

@@ -4,23 +4,26 @@
 #
 #   bash run_bare.sh <codex|claude> <paper-id> [--hours N] [--root DIR] [--pool DIR] [--max-continues N] [--no-pool]
 #
-# Caliber (docs/CODEDEV-ARMS.md §4): deepseek-flash on api.deepseek.com (the owner's cc-switch profile; the CLIs' own
-# keys pass through untouched), thinking OFF, PaperBench's official Code-Dev instructions + its ADDITIONAL NOTES, no
-# rubric, blacklist audited afterwards.
-# Thinking off needs the local proxy in between — neither CLI can do it alone against DeepSeek (measured 2026-09-19):
+# Caliber (docs/CODEDEV-ARMS.md §4): deepseek-flash on api.deepseek.com, thinking OFF, PaperBench's official Code-Dev
+# instructions + its ADDITIONAL NOTES, paper.md + addendum + blacklist as the only input (same bytes as the DeepCode arm),
+# no rubric, blacklist audited afterwards. The only secret is DEEPSEEK_API_KEY in ENV_FILE (default
+# ~/Documents/env/deepseek.env): the local proxy sends it upstream; the CLIs get a placeholder token and a provider defined
+# on the command line / in env vars, so nothing in ~/.codex or ~/.claude is read or changed for the model route.
+# Thinking off needs the proxy — neither CLI can do it alone against DeepSeek (measured 2026-09-19):
 #   · Claude Code's switches (CLAUDE_CODE_DISABLE_THINKING, MAX_THINKING_TOKENS=0) only OMIT the thinking field, and
 #     DeepSeek's Anthropic endpoint then defaults to thinking on; the off switch is an explicit thinking:{type:disabled}.
 #   · Codex sends reasoning.effort (the documented Responses-API switch, none = off), but DeepSeek serves a Codex
 #     profile keyed on the User-Agent codex_exec/… or the x-codex-turn-metadata header that ignores effort=none.
-# So the proxy injects (thinking disabled / effort none), replaces the User-Agent, drops x-codex-* headers, and its
-# log proves the result: reasoning_tokens + reasoning_items (Codex) or thinking_blocks (Claude Code) are 0 on every
-# line. Codex's config.toml is not modified (base_url / model overridden with -c for this process only); Claude Code
-# runs with --setting-sources project (cc-switch's env block in ~/.claude/settings.json would otherwise override the
-# process env) and gets the token from that same block in-process, never printed.
+# So the proxy injects (thinking disabled / effort none), replaces the User-Agent, drops x-codex-* headers, and its log
+# proves the result: reasoning_tokens + reasoning_items (Codex) or thinking_blocks (Claude Code) are 0 on every line
+# (AUDIT.txt → CALIBER_OK). Claude Code runs with --setting-sources project so a user-level settings.json cannot
+# redirect it.
 set -euo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
 ARM="${1:?codex|claude}"; PAPER="${2:?paper id}"; shift 2
-HOURS=""; ROOT="${BARE_ROOT:-$HOME/Documents/env/bare-0919}"; POOL="${RESULTS_ROOT:-$HOME/pb_submissions}"; MAX_CONT=5; TO_POOL=1
+REPO="$(cd "$HERE/../.." && pwd)"
+HOURS=""; ROOT="${BARE_ROOT:-$REPO/work}"; POOL="${RESULTS_ROOT:-$REPO/results}"; MAX_CONT=5; TO_POOL=1
+ENV_FILE="${ENV_FILE:-$HOME/Documents/env/deepseek.env}"   # DEEPSEEK_API_KEY=… ; the proxy authenticates upstream with it
 while [ $# -gt 0 ]; do case "$1" in
   --hours) HOURS="$2"; shift 2 ;; --root) ROOT="$2"; shift 2 ;; --pool) POOL="$2"; shift 2 ;;
   --max-continues) MAX_CONT="$2"; shift 2 ;; --no-pool) TO_POOL=0; shift ;; *) echo "unknown arg $1"; exit 2 ;; esac; done
@@ -30,6 +33,8 @@ command -v "$ARM" >/dev/null || { echo "❌ $ARM CLI not on PATH"; exit 1; }
 MODEL="${BARE_MODEL:-deepseek-flash}"                 # DeepSeek's own id for V4 Flash
 UPSTREAM="${BARE_UPSTREAM:-https://api.deepseek.com}"
 UA="paperbench-bare/1"
+[ -f "$ENV_FILE" ] || { echo "❌ $ENV_FILE missing — one line: DEEPSEEK_API_KEY=…"; exit 1; }
+grep -q '^DEEPSEEK_API_KEY=.\+' "$ENV_FILE" || { echo "❌ $ENV_FILE has no DEEPSEEK_API_KEY="; exit 1; }
 PORT=$([ "$ARM" = codex ] && echo 8787 || echo 8788)
 WS="$ROOT/$PAPER-$ARM"
 log() { echo "[$(date +%H:%M:%S)] $*" | tee -a "$WS/RUN_NOTES.md"; }
@@ -51,16 +56,13 @@ fi
 [ ! -f "$WS/AGENTS.md" ] && [ ! -f "$WS/CLAUDE.md" ] || { echo "❌ instruction files in the workspace"; exit 1; }
 
 # ---- 3. proxy ----
-( PROXY_THINKING=disabled PROXY_UPSTREAM="$UPSTREAM" PROXY_USER_AGENT="$UA" \
+( set -a; . "$ENV_FILE"; set +a   # the key lives only in this subshell; the proxy sends it upstream, the CLIs never see it
+  PROXY_THINKING=disabled PROXY_UPSTREAM="$UPSTREAM" PROXY_USER_AGENT="$UA" PROXY_UPSTREAM_KEY_ENV=DEEPSEEK_API_KEY \
   exec python3 "$HERE/paratera_proxy.py" "$PORT" "$WS/proxy_requests.log" > "$WS/proxy_stdout.log" 2>&1 ) &
 PROXY_PID=$!
 trap 'kill $PROXY_PID 2>/dev/null || true' EXIT
 sleep 1; kill -0 $PROXY_PID 2>/dev/null || { echo "❌ proxy did not start (port $PORT busy?)"; cat "$WS/proxy_stdout.log"; exit 1; }
-log "- proxy pid $PROXY_PID on :$PORT → $UPSTREAM (thinking off injected, UA $UA, auth passed through)"
-if [ "$ARM" = claude ]; then  # the token cc-switch put in ~/.claude/settings.json, read in-process (never printed)
-  CLAUDE_TOKEN="$(python3 -c 'import json,os; print(json.load(open(os.path.expanduser("~/.claude/settings.json")))["env"]["ANTHROPIC_AUTH_TOKEN"])')"
-  [ -n "$CLAUDE_TOKEN" ] || { echo "❌ no ANTHROPIC_AUTH_TOKEN in ~/.claude/settings.json env block"; exit 1; }
-fi
+log "- proxy pid $PROXY_PID on :$PORT → $UPSTREAM (thinking off injected, UA $UA, key from $ENV_FILE)"
 
 # ---- 4. the run, then continue rounds while nothing is committed ----
 PROMPT="$(cat "$WS/PROMPT.txt")"
@@ -68,7 +70,10 @@ CONTINUE="$(cat "$WS/CONTINUE.txt")"
 SESSION="$(python3 -c 'import uuid; print(uuid.uuid4())')"
 committed() { git -C "$WS/submission" rev-parse --verify HEAD >/dev/null 2>&1; }
 run_codex() {  # $1 = round (0 = first), $2 = prompt
-  local common=(-c "model=$MODEL" -c model_provider=custom -c "model_providers.custom.base_url=http://127.0.0.1:$PORT/v1"
+  # a provider defined entirely on the command line: ~/.codex/config.toml is not touched and its own providers/keys are not used
+  local common=(-c "model=$MODEL" -c model_provider=bare -c model_providers.bare.name=bare -c "model_providers.bare.base_url=http://127.0.0.1:$PORT/v1"
+                -c model_providers.bare.wire_api=responses -c model_providers.bare.requires_openai_auth=false
+                -c model_providers.bare.experimental_bearer_token=proxy-authenticates
                 -c sandbox_workspace_write.network_access=true --skip-git-repo-check --approve-for-me --json)
   if [ "$1" = 0 ]; then
     codex exec -C "$WS" "${common[@]}" -o "$WS/last_message.$1.txt" "$2" < /dev/null   # stdin closed: codex exec otherwise waits on it
@@ -79,7 +84,7 @@ run_codex() {  # $1 = round (0 = first), $2 = prompt
 run_claude() {
   local extra=(); [ "$1" = 0 ] && extra=(--session-id "$SESSION") || extra=(--resume "$SESSION")
   ( cd "$WS" && env -u CLAUDECODE -u CLAUDE_CODE_ENTRYPOINT -u ANTHROPIC_API_KEY \
-      ANTHROPIC_BASE_URL="http://127.0.0.1:$PORT/anthropic" ANTHROPIC_AUTH_TOKEN="$CLAUDE_TOKEN" \
+      ANTHROPIC_BASE_URL="http://127.0.0.1:$PORT/anthropic" ANTHROPIC_AUTH_TOKEN=proxy-authenticates \
       ANTHROPIC_MODEL="$MODEL" ANTHROPIC_DEFAULT_HAIKU_MODEL="$MODEL" ANTHROPIC_DEFAULT_SONNET_MODEL="$MODEL" ANTHROPIC_DEFAULT_OPUS_MODEL="$MODEL" \
       CLAUDE_CODE_SUBAGENT_MODEL="$MODEL" CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1 \
       claude -p "$2" "${extra[@]}" --setting-sources project --dangerously-skip-permissions --output-format stream-json --verbose \
@@ -112,6 +117,7 @@ models = {r.get("model") for r in rows}
 if models != {model}: bad.append(f"model(s) {models}")
 if not all(r.get("injected") for r in rows): bad.append("a request without the thinking injection")
 if arm == "codex" and not all(r.get("user_agent") for r in rows): bad.append("a Codex request without the User-Agent replacement (DeepSeek would force thinking on)")
+if not all((r.get("auth") or "").startswith("proxy:") for r in rows): bad.append("a request not authenticated by the proxy")
 key = "thinking_blocks" if arm == "claude" else "reasoning_items"
 over = [r for r in rows if ((r.get("usage") or {}).get("reasoning_tokens") or 0) > 0 or (r.get(key) or 0) > 0]
 if over: bad.append(f"{len(over)} responses with reasoning ({key} / reasoning_tokens > 0)")
