@@ -39,13 +39,13 @@ submission/                                               ← 空的 git 仓库�
 PROMPT.txt                                                ← 题面（已经复制到剪贴板）
 CONTINUE.txt                                              ← 它停下来时你回的那句话
 ```
-题面 = PaperBench 官方指令原文 + 官方附注（含 3 小时时限句），路径已经换成你机器上的绝对路径。**不要改一个字。**
+题面 = PaperBench 官方指令原文 + 官方附注（含官方的"你有 3 小时"那句），路径已经换成你机器上的绝对路径。**不要改一个字。**
 
 **第 2 步：在 app 里跑**
 1. 打开 `work/sapg-codex-desktop/` 这个文件夹作为项目。
 2. 审批模式选"全自动"（不要一条条点同意）。
 3. 新建对话，把剪贴板里的题面粘进去，发送。前面不加"你好"，后面不加"开始吧"。
-4. 然后不要管它。它**不能运行代码**（Codex 会看到命令被拒，Claude 没有 Bash 工具；读文件的 `ls`/`cat` 不受影响），只能写；它要是问"能不能运行"，按第 5 步回续跑语，**不要手动批准任何执行**。题面里写了时限 **3 小时**，到点还没停就手动停掉这一轮，去第 3 步。
+4. 然后不要管它。它**不能运行代码**（Codex 会看到命令被拒，Claude 没有 Bash 工具；读文件的 `ls`/`cat` 不受影响），只能写；它要是问"能不能运行"，按第 5 步回续跑语，**不要手动批准任何执行**。题面里告诉它有 **3 小时**，这是官方题面的说法，**不是硬上限**：它自己觉得核心贡献复现完了就会停，到了 3 小时还在写就让它继续写，**不要手动停**；收尾脚本会记实际用时。
 5. **它停下来了怎么办**：
    - 它说"做完了"，并且 `submission/` 里已经 `git commit` 了 → 去第 3 步。
    - 它问你问题 / 要你确认 / 说完了但没 commit → 把 `CONTINUE.txt` 里那句话原样发给它（最多 5 次），然后在 `work/sapg-codex-desktop/interactions.log` 里记一行（几点、它问了什么）。**不要回答它的问题，不要给任何提示。**
@@ -85,7 +85,7 @@ results/<paper>/claude/  同上
 
 - `robust-clip` 的官方 `paper.md` 缺第 2、3 章（方法），这是 PaperBench 数据本身的问题；三边拿的都是这份，照跑，分数会普遍低。
 - **不准执行代码**（09-20 定）：Code-Dev 判分本来就不执行；DeepCode 的写码 agent 没有执行工具，桌面 agent 若能跑几小时实验来验证就不对等（09-19 的 fre / rice Codex 运行各跑了 177 分钟实验，作废重跑）。落实：Codex 用 `~/.codex/rules/paperbench-no-exec.rules`（`desktop_prep.sh` 自动装，拒绝 python / pip / uv / conda / node / bash / sh / make / docker），Claude 用工作目录 `.claude/settings.json` 禁 Bash；题面附注多一条 Execution 说明。
-- 时限 3 小时是用 PaperBench 官方的 `time_limit_template` 写进题面的（官方跑法给 12 小时；我们 20 篇 × 2 个 app 给 3 小时），`desktop_prep.sh` 打印截止时刻。不能运行代码之后 agent 只写不跑，一般不到 3 小时就自己停；到点没停就手动停。
+- "3 小时"是用 PaperBench 官方的 `time_limit_template` 写进题面的（官方跑法给 12 小时；我们 20 篇 × 2 个 app 给 3 小时）。官方的意思是"预期你用满这么多时间，除非你已经把核心贡献都复现完了"——所以什么时候停由 agent 自己判断，人不按表停它；`desktop_finish.sh` 只记录实际用时。不能运行代码之后 agent 只写不跑，通常远不到 3 小时就自己说做完了。
 - Claude 桌面版的上下文窗口：Claude Code 靠模型名后缀 `[1m]` 开 1M 窗口，但 DeepSeek 会不会认 `deepseek-flash[1m]` 这个名字还没验；owner 验完会在这里写明填法，验之前 Claude 臂先按 `deepseek-flash` 跑，RUN_NOTES 里记一句。
 - 09-20 第一对分数（fre）：本线 0.876 vs 09-19 那次"跑了实验"的 Codex 0.785（那次作废，只作参考）；正式的 Codex / Claude 分数等本批产物。
 - 为什么用桌面版、为什么同模型、依据在哪：[`docs/CODEDEV-ARMS.md`](docs/CODEDEV-ARMS.md)（主分支）。想用 CLI 非交互跑同样两臂（要一层代理来关思考）：`cli-reference/`，不是本批口径。

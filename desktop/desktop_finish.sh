@@ -9,7 +9,7 @@ MODEL="${BARE_MODEL:-deepseek-flash}"; HOURS="${BARE_HOURS:-3}"
 [ -d "$WS" ] || { echo "❌ no workspace $WS (desktop_prep.sh first)"; exit 1; }
 log() { echo "[$(date +%H:%M:%S)] $*" | tee -a "$WS/RUN_NOTES.md"; }
 START=$(cat "$WS/START_EPOCH" 2>/dev/null || echo 0); ELAPSED=$(( ( $(date +%s) - START ) / 60 ))
-log "- finished after $ELAPSED min$([ $ELAPSED -gt $((HOURS*60)) ] && echo " — over the $HOURS h limit given in the prompt (stopped by hand; whatever is in submission/ counts)")"
+log "- finished after $ELAPSED min (the prompt told the agent $HOURS h; that figure is not a cap$([ $ELAPSED -gt $((HOURS*60)) ] && echo " — it chose to keep going past it"))"
 python3 "$HERE/audit_desktop.py" "$ARM" "$WS" "$START" "$MODEL" --copy "$WS/session_logs" > "$WS/AUDIT.txt" || true
 cat "$WS/AUDIT.txt" | tee -a "$WS/RUN_NOTES.md"
 if ! git -C "$WS/submission" rev-parse --verify HEAD >/dev/null 2>&1; then
