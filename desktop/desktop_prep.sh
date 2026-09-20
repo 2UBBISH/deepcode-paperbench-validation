@@ -18,11 +18,21 @@ ROOT="${BARE_ROOT:-$REPO/work}"; WS="$ROOT/$PAPER-$ARM-desktop"
 if [ "$ARM" = codex ]; then [ ! -s "$HOME/.codex/AGENTS.md" ] || { echo "❌ ~/.codex/AGENTS.md is not empty"; exit 1; }
 else [ ! -f "$HOME/.claude/CLAUDE.md" ] || { echo "❌ ~/.claude/CLAUDE.md exists; move it aside for the run"; exit 1; }; fi
 
+# no execution, enforced by the app's own mechanism (the prompt's Execution note is the symmetric statement of it):
+#   Codex  → an execpolicy rules file in ~/.codex/rules forbids interpreters / shells / installers ("Rejected: …" to the agent)
+#   Claude → a workspace .claude/settings.json denies the Bash tool (deny rules hold even in bypass-permissions mode)
+if [ "$ARM" = codex ]; then
+  mkdir -p "$HOME/.codex/rules"
+  if ! cmp -s "$HERE/paperbench-no-exec.rules" "$HOME/.codex/rules/paperbench-no-exec.rules" 2>/dev/null; then
+    cp "$HERE/paperbench-no-exec.rules" "$HOME/.codex/rules/paperbench-no-exec.rules" && echo "  installed ~/.codex/rules/paperbench-no-exec.rules (remove after the batch)"
+  fi
+fi
 mkdir -p "$ROOT"; RLOG="$(mktemp)"
 bash "$HERE/render_prompt.sh" "$PAPER" "$WS" ${HOURS:+--hours "$HOURS"} | tee "$RLOG"; grep -q PROMPT_OK "$RLOG" || exit 1; mv "$RLOG" "$WS/render.log"
 START=$(date +%s); echo "$START" > "$WS/START_EPOCH"
+[ "$ARM" = claude ] && { mkdir -p "$WS/.claude"; printf '{"permissions": {"deny": ["Bash"]}}\n' > "$WS/.claude/settings.json"; }
 { echo "# $PAPER / $ARM desktop — $(date '+%F %T')"
-  echo "- caliber: deepseek-flash @ api.deepseek.com via the app's cc-switch profile, thinking ON (DeepSeek default)"
+  echo "- caliber: deepseek-flash @ api.deepseek.com via the app's cc-switch profile, thinking ON (DeepSeek default), NO code execution ($([ "$ARM" = codex ] && echo '~/.codex/rules/paperbench-no-exec.rules' || echo 'workspace .claude/settings.json denies Bash'))"
   echo "- validation repo: $(git -C "$HERE" rev-parse --short HEAD)"
   echo "- time limit in prompt: $HOURS h (official time_limit_template); stop the app and run desktop_finish.sh at $(date -r $((START + HOURS*3600)) '+%H:%M' 2>/dev/null || date -d "@$((START + HOURS*3600))" '+%H:%M') at the latest"
   echo "- app version: (fill in: Codex app / Claude desktop 'About')"
@@ -38,6 +48,7 @@ READY  $WS      started $(date '+%H:%M'), time limit $HOURS h → stop by $(date
 In the $([ "$ARM" = codex ] && echo "Codex app" || echo "Claude desktop app (Code tab)"):
   1. cc-switch: the DeepSeek profile (deepseek-flash) must be current; restart the app after switching.
   2. Open the folder  $WS  as the project. Approval: full auto. Plugins / browser / computer-use / skills / MCP: off.
+     It cannot run code: $([ "$ARM" = codex ] && echo 'the rules file rejects python/pip/uv/node/bash/sh/make/docker' || echo 'the Bash tool is denied'); reads (ls, cat) are fine. Never approve an execution by hand.
   3. Paste PROMPT.txt as the first message, verbatim $CLIP — nothing before or after it.
   4. If it stops and asks, or stops without committing: reply with CONTINUE.txt verbatim (max 5 times) and add a line to
      $WS/interactions.log  (time, what it asked). Never answer a question with information.
