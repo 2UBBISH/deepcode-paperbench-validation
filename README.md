@@ -7,7 +7,7 @@ DeepCode 那一臂在主分支跑，不在这里。评分标准（rubric）也�
 
 PaperBench 是 OpenAI 的基准：给 agent 一篇论文，让它从零写出复现代码，裁判拿一棵作者审过的评分树逐条看"这个点实现了没有"（Code-Dev 口径，不跑代码）。
 DeepCode 论文说自己比 Codex 好 4 倍多，但两边用的模型不一样。我们把**模型钉成同一个**（DeepSeek 官方的 `deepseek-flash`，思考开），
-给三套系统**同一份论文文字、同一份题面、都只能做快速检查、不能跑实验**，看到底差多少。所以下面每一步都在保证"三边拿到的东西一样"，请别自己加东西。
+给三套系统**同一份论文文字、同一份题面、都不在本地跑实验**（题面告诉 agent 代码以后在远程跑；语法 / 单测这类快速检查可以），看到底差多少。所以下面每一步都在保证"三边拿到的东西一样"，请别自己加东西。
 
 ## 1. 准备（只做一次，10 分钟）
 
@@ -43,12 +43,11 @@ CONTINUE.txt                                              ← 它停下来时你
 
 **第 2 步：在 app 里跑**
 1. 打开 `work/sapg-codex-desktop/` 这个文件夹作为项目。
-2. 审批模式：Codex 选 **"Agent"**（不要选"完全访问"，否则规则文件弹不出审批）；Claude 用**默认模式**（不要选 bypass / 跳过权限，否则 Bash 不会问你）。
+2. 审批模式选"全自动"（不要一条条点同意）。
 3. 新建对话，把剪贴板里的题面粘进去，发送。前面不加"你好"，后面不加"开始吧"。
-4. 然后盯着审批。它每次要跑 `python` / `pytest` / `pip` / `uv` / `bash` / `curl` 都会弹出来问你（读文件、改文件不会问）。**你只做一件事：批快速检查，拒实验。**
-   - **批**：语法 / 导入检查（`python -m py_compile`、`python -c "import …"`）、单元测试和冒烟测试（`pytest`、小数据几秒钟跑完的脚本）、装依赖（`pip install` / `uv sync`）、`--help`。
-   - **拒**：训练（`train`）、评估（`eval` / `benchmark`）、下载数据集或模型权重（`wget` / `curl` / `huggingface`）、任何一看就要跑几分钟以上的。拿不准就拒。
-   - 拒了之后它自己会继续写；它要是问"能不能运行"，按第 5 步回续跑语，不要解释。收尾脚本会把实际跑过的命令和耗时列出来，单条超过 5 分钟或合计超过 30 分钟这篇作废。
+4. 然后不要管它。题面已经告诉它：代码以后在我们提供的远程环境里跑，本地**不能跑实验**（训练 / 评估 / benchmark / 下载数据或权重），语法检查、单测、装依赖这类快速检查可以。它正常跑自己的命令，你不用批。
+   - 要是看见它还是在跑训练 / 评估、一跑好几分钟，把**那条命令**停掉（不是停会话），在 `interactions.log` 记一行。
+   - 收尾脚本会把实际跑过的命令和耗时列出来，单条超过 5 分钟（装依赖除外）或合计超过 30 分钟这篇作废。
    - 题面里告诉它有 **3 小时**，这是官方题面的说法，**不是硬上限**：它自己觉得核心贡献复现完了就会停，到了 3 小时还在写就让它继续写，**不要手动停**；收尾脚本会记实际用时。
 5. **它停下来了怎么办**：
    - 它说"做完了"，并且 `submission/` 里已经 `git commit` 了 → 去第 3 步。
@@ -80,7 +79,7 @@ results/<paper>/claude/  同上
 ## 4. 不要做的（做了这篇就作废）
 
 - 不给 agent 论文 PDF、图、官方代码、任何提示；题面之外不说话（续跑语除外）。
-- 不批准实验（训练 / 评估 / 下载数据）。`desktop_finish.sh` 会从 app 的会话日志列出实际跑过的命令和耗时，单条 > 5 分钟或合计 > 30 分钟这篇作废（`AUDIT.txt` 会写明）。
+- 不帮它跑实验，也不放任它跑实验（训练 / 评估 / 下载数据）。`desktop_finish.sh` 会从 app 的会话日志列出实际跑过的命令和耗时，单条 > 5 分钟或合计 > 30 分钟这篇作废（`AUDIT.txt` 会写明）。
 - 不改 `submission/` 里的代码，不帮它装环境，不帮它 commit（收尾脚本会替它 commit 未提交的改动并记录）。
 - 不动 `desktop/`、`instructions/`、`data/` 里的东西。
 - 同一篇同一个 app 只跑一次；要重跑先删 `results/<paper>/<app>/` 和 `work/<paper>-<app>-desktop/`，并在 RUN_NOTES 里说明。
@@ -88,7 +87,7 @@ results/<paper>/claude/  同上
 ## 5. 已知情况
 
 - `robust-clip` 的官方 `paper.md` 缺第 2、3 章（方法），这是 PaperBench 数据本身的问题；三边拿的都是这份，照跑，分数会普遍低。
-- **只准快速检查，不准跑实验**（09-20 晚定；白天曾定为完全不准执行）：Code-Dev 判分本来就不执行；DeepCode 的写码 agent 只有 `write_file` / `search_code_references` / `read_paper` 三个工具、没有解释器，桌面 agent 若能跑几小时实验来验证就不对等（09-19 的 fre / rice Codex 运行各跑了 177 分钟实验，作废重跑）；但语法 / 导入 / 单测这类秒级检查算基本运行，允许。落实靠人逐条审批：Codex 用 `~/.codex/rules/paperbench-exec.rules`（`desktop_prep.sh` 自动装，把 python / pip / uv / conda / node / bash / sh / make / docker / wget / curl 升级成审批弹窗），Claude 用工作目录 `.claude/settings.json` 把 Bash 设成 ask；题面附注的 Execution 一条把同样的规则告诉 agent；`audit_desktop.py` 列出实际跑过的命令和耗时。
+- **本地不跑实验，快速检查可以**（09-20 晚定；白天曾两度改口：完全禁执行 → 逐条人工审批，都作废了）：Code-Dev 判分本来就不执行；DeepCode 的写码 agent 只有 `write_file` / `search_code_references` / `read_paper` 三个工具、没有解释器，桌面 agent 若能跑几小时实验来验证就不对等（09-19 的 fre / rice Codex 运行各跑了 177 分钟实验，作废重跑）。落实只靠题面：附注的 Execution 一条告诉 agent 代码以后在远程跑、本地不能做实验、快速检查可以；不装规则文件、不设权限、不人工审批。`audit_desktop.py` 从会话日志列出实际跑过的命令和耗时，单条 > 5 分钟或合计 > 30 分钟即 `CALIBER_BROKEN` 作废，跑过但在线内 `CALIBER_REVIEW` 由 owner 看清单。对称地，DeepCode 线在生成后做一次 `compile()` 级的语法检查并修复（不执行）。
 - "3 小时"是用 PaperBench 官方的 `time_limit_template` 写进题面的（官方跑法给 12 小时；我们 20 篇 × 2 个 app 给 3 小时）。官方的意思是"预期你用满这么多时间，除非你已经把核心贡献都复现完了"——所以什么时候停由 agent 自己判断，人不按表停它；`desktop_finish.sh` 只记录实际用时。不能跑实验之后 agent 以写为主，通常远不到 3 小时就自己说做完了。
 - Claude 桌面版的上下文窗口：Claude Code 靠模型名后缀 `[1m]` 开 1M 窗口，但 DeepSeek 会不会认 `deepseek-flash[1m]` 这个名字还没验；owner 验完会在这里写明填法，验之前 Claude 臂先按 `deepseek-flash` 跑，RUN_NOTES 里记一句。
 - 09-20 第一对分数（fre）：本线 0.876 vs 09-19 那次"跑了实验"的 Codex 0.785（那次作废，只作参考）；正式的 Codex / Claude 分数等本批产物。
@@ -100,7 +99,7 @@ results/<paper>/claude/  同上
 setup.sh                      一次性初始化
 data/papers/<20 篇>/          paper.md · addendum.md · blacklist.txt（PaperBench 官方数据集的子集）
 instructions/                 code_only_instructions.txt（官方题面，逐字）
-desktop/                      desktop_prep.sh · desktop_finish.sh · audit_desktop.py · render_prompt.sh · additional_notes.txt · continue_message.txt · paperbench-exec.rules
+desktop/                      desktop_prep.sh · desktop_finish.sh · audit_desktop.py · render_prompt.sh · additional_notes.txt · continue_message.txt
 cli-reference/                run_bare.sh · paratera_proxy.py · audit.py · README.md（CLI + 代理版，参考）
 results/  work/               交回的产物 · 工作目录（都不入库）
 ```

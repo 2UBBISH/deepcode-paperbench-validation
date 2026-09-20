@@ -2,7 +2,7 @@
 ADDITIONAL NOTES
 ------
 - **Compute**: You don't have access to a GPU.
-- **Execution**: Every command that runs code goes to a human operator for approval. Quick checks are approved (syntax and import checks, unit or smoke tests, dependency installs); training, evaluation, benchmarks and dataset or model downloads are rejected — do not attempt experiments, and do not wait on them. Grading is static.
+- **Execution**: Your code will be run later in a remote environment that we provide. Locally you cannot run any experiment — no training, evaluation, benchmarks, or dataset / model downloads; do not attempt them. Quick checks (syntax and import checks, unit or smoke tests, dependency installs) are fine. Grading is static.
 - **Total Runtime**: {TIME_LIMIT}
 - **API keys**: You have been granted API keys for services necessary for replicating your paper. The API keys are available to you at `{WORKSPACE}/agent.env`. You can assume that these same API keys will already be set as environment variables in the reproduction environment when we evaluate your submission, so you do not need to set or export them in your submission.
 - You have root access in your environment.

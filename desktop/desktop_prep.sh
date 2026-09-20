@@ -18,23 +18,20 @@ ROOT="${BARE_ROOT:-$REPO/work}"; WS="$ROOT/$PAPER-$ARM-desktop"
 if [ "$ARM" = codex ]; then [ ! -s "$HOME/.codex/AGENTS.md" ] || { echo "❌ ~/.codex/AGENTS.md is not empty"; exit 1; }
 else [ ! -f "$HOME/.claude/CLAUDE.md" ] || { echo "❌ ~/.claude/CLAUDE.md exists; move it aside for the run"; exit 1; }; fi
 
-# execution = quick checks only, and a human approves each command (09-20 evening rule; the prompt's Execution note says the same):
-#   Codex  → an execpolicy rules file in ~/.codex/rules escalates interpreters / installers / shells / downloads to an approval
-#            prompt (decision "prompt"); the old paperbench-no-exec.rules ("forbidden" would win) is removed
-#   Claude → a workspace .claude/settings.json puts the Bash tool on "ask" (ask beats any allow rule; do NOT run in bypass mode)
+# execution (owner 09-20 evening): the agent runs normally in full-auto mode; the prompt's Execution note tells it the code
+# will run remotely later and no experiment can be run locally (quick checks are fine). Nothing is blocked or gated by hand;
+# audit_desktop.py lists what ran with wall time and a run that did experiments (> 5 min one command / > 30 min total) is void.
+# Earlier rules files from the 09-20 daytime variants are removed so they do not interfere.
 if [ "$ARM" = codex ]; then
-  mkdir -p "$HOME/.codex/rules"
-  [ -f "$HOME/.codex/rules/paperbench-no-exec.rules" ] && rm -f "$HOME/.codex/rules/paperbench-no-exec.rules" && echo "  removed the old ~/.codex/rules/paperbench-no-exec.rules (forbid-all)"
-  if ! cmp -s "$HERE/paperbench-exec.rules" "$HOME/.codex/rules/paperbench-exec.rules" 2>/dev/null; then
-    cp "$HERE/paperbench-exec.rules" "$HOME/.codex/rules/paperbench-exec.rules" && echo "  installed ~/.codex/rules/paperbench-exec.rules (remove after the batch)"
-  fi
+  for old in paperbench-no-exec.rules paperbench-exec.rules; do
+    [ -f "$HOME/.codex/rules/$old" ] && rm -f "$HOME/.codex/rules/$old" && echo "  removed the old ~/.codex/rules/$old"
+  done
 fi
 mkdir -p "$ROOT"; RLOG="$(mktemp)"
 bash "$HERE/render_prompt.sh" "$PAPER" "$WS" ${HOURS:+--hours "$HOURS"} | tee "$RLOG"; grep -q PROMPT_OK "$RLOG" || exit 1; mv "$RLOG" "$WS/render.log"
 START=$(date +%s); echo "$START" > "$WS/START_EPOCH"
-[ "$ARM" = claude ] && { mkdir -p "$WS/.claude"; printf '{"permissions": {"ask": ["Bash"]}}\n' > "$WS/.claude/settings.json"; }
 { echo "# $PAPER / $ARM desktop — $(date '+%F %T')"
-  echo "- caliber: deepseek-flash @ api.deepseek.com via the app's cc-switch profile, thinking ON (DeepSeek default), execution = quick checks only, each command approved by hand ($([ "$ARM" = codex ] && echo '~/.codex/rules/paperbench-exec.rules → prompt' || echo 'workspace .claude/settings.json: Bash on ask'))"
+  echo "- caliber: deepseek-flash @ api.deepseek.com via the app's cc-switch profile, thinking ON (DeepSeek default), execution = the prompt says no experiments locally (code runs remotely later); full auto, nothing gated"
   echo "- validation repo: $(git -C "$HERE" rev-parse --short HEAD)"
   echo "- time budget told to the agent: $HOURS h (official time_limit_template sentence); not a hard cap — the agent stops when it believes the core contributions are reproduced, nobody kills it at $HOURS h"
   echo "- app version: (fill in: Codex app / Claude desktop 'About')"
@@ -49,10 +46,10 @@ READY  $WS      started $(date '+%H:%M'); the prompt tells the agent it has $HOU
 
 In the $([ "$ARM" = codex ] && echo "Codex app" || echo "Claude desktop app (Code tab)"):
   1. cc-switch: the DeepSeek profile (deepseek-flash) must be current; restart the app after switching.
-  2. Open the folder  $WS  as the project. Approval: $([ "$ARM" = codex ] && echo '"Agent" (NOT full access — the rules file needs the prompt to appear)' || echo 'default / ask (NOT bypass — bypass skips the Bash prompt)'). Plugins / browser / computer-use / skills / MCP: off.
-     Every python / pytest / pip / uv / bash / curl command comes to you for approval. APPROVE quick checks (py_compile,
-     import checks, unit / smoke tests, pip install). REJECT training, evaluation, benchmarks, dataset / model downloads,
-     anything that would run for minutes. When unsure, reject. File reads / edits need no approval.
+  2. Open the folder  $WS  as the project. Approval: full auto. Plugins / browser / computer-use / skills / MCP: off.
+     The prompt tells it that experiments cannot run locally (the code runs remotely later); quick checks are fine.
+     If you see it running a training / evaluation for minutes anyway, stop that command (not the session) and
+     note it in interactions.log; desktop_finish.sh lists what ran with wall time.
   3. Paste PROMPT.txt as the first message, verbatim $CLIP — nothing before or after it.
   4. If it stops and asks, or stops without committing: reply with CONTINUE.txt verbatim (max 5 times) and add a line to
      $WS/interactions.log  (time, what it asked). Never answer a question with information.

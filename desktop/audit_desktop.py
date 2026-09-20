@@ -8,9 +8,10 @@ event_msg token_count → total_token_usage incl. reasoning_output_tokens); Clau
 ~/.claude/projects/<cwd with '/' and '.' → '-'>/<session>.jsonl (assistant messages: message.model, usage incl.
 output_tokens_details.thinking_tokens, content blocks). Sessions are matched by cwd == workspace and mtime ≥ start.
 Caliber of the 0919 batch: model == deepseek-flash on every turn, thinking ON (reasoning / thinking tokens > 0 overall),
-execution limited to quick checks (09-20 evening rule): every interpreter / installer command that RAN is listed with its
-wall time; a single command over MAX_SINGLE_S, a total over MAX_TOTAL_S, or an experiment-looking command (train / eval /
-benchmark / dataset download) breaks the caliber; anything that ran at all is flagged for the owner to look at.
+execution rule (09-20 evening): the prompt tells the agent no experiment can run locally (quick checks are fine) — nothing
+is blocked. Every interpreter / installer command that RAN is listed with its wall time; one command over MAX_SINGLE_S or a
+total over MAX_TOTAL_S = it did experiments → BROKEN; experiment-looking commands (train / eval / download) are flagged;
+anything that ran at all → REVIEW for the owner.
 Prints a summary and CALIBER_OK / CALIBER_REVIEW / CALIBER_BROKEN: …; --copy DIR copies the matched session files there."""
 import datetime, glob, json, os, re, shutil, sys, time
 
@@ -89,10 +90,10 @@ else:
 if not files: bad.append(f"no {arm} session with cwd {ws} modified since {time.strftime('%H:%M:%S', time.localtime(start))}")
 if files and models != {model}: bad.append(f"model(s) {sorted(str(m) for m in models)} != {model}")
 if files and think_tokens == 0: bad.append("no reasoning/thinking tokens at all — thinking appears OFF (caliber is ON)")
-# Execution (09-20 evening rule): quick checks may run after the operator approves them; experiments may not. Rejected
-# attempts are fine. What ran is listed with wall time; over the clock or experiment-looking → BROKEN; anything ran → REVIEW.
+# Execution (09-20 evening rule): the prompt says no experiments locally; nothing is gated. What ran is listed with wall
+# time; over the clock → BROKEN (it did experiments); experiment-looking commands flagged; anything ran → REVIEW.
 review = []
-if blocked: print(f"  ({blocked} command(s) rejected at the approval prompt — fine)")
+if blocked: print(f"  ({blocked} command(s) rejected / not run — fine)")
 total_s = sum(t for _, t in executed)
 looks = 0
 for cmd, t in executed:
