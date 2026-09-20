@@ -119,6 +119,19 @@ Codex 赢的叶：walker(RND) 数据集（本线那叶是裁判截断的无效�
 ③ 两边一起丢的集中在训练/评估节；④ 本线值得补一道 `py_compile` 静态检查（不算执行）。
 判分：两份 18 分钟；`grade.json` 在 `runs/fre/grades/`（bae9fba6 = line1，d1988ed0 = codex-exec），提交归档在 `~/pb_submissions_archive/fre/0920_{line1,codex-exec}/`。
 
+### 1.4 fre 第二份：ADR 0003 结构化 Source 义务 + 读后写 + 语法检查（2026-09-20 晚，同裁判口径，306 叶）
+
+本线 HEAD `623bbcbdd`→`3d3d45c8e`（`fre-t15`）：planner 输出 27 条义务 / 43 文件（31 paper），写码 43/43、78 次回读收据（13 万字符）、fidelity 审计通过、`compile()` 0 错；449 次调用 12.5M token；83 min 到第 9 步。
+
+| 提交 | 总分 | 数据集/环境 | 方法实现 | 训练/评估 | 备注 |
+| --- | --- | --- | --- | --- | --- |
+| 本线 `line1`（fre-t14，09-19 自由文本 Source） | 0.8756 | 0.833 | 0.991 | 0.803 | §1.3 |
+| 本线 `line2`（fre-t15，ADR 0003） | **0.8389** | 0.833 | 0.991 | 0.693 | 无效叶 0 |
+| Codex 桌面版 `codex-exec`（执行了实验，作废） | 0.7847 | 0.750 | 0.935 | 0.669 | §1.3 |
+
+叶级 73 叶不同（line1 胜 40 / line2 胜 33）；前两个大节完全相同，差在**训练节 0.85 → 0.66**：FB / SF 基线（controllable_agent）line2 写成"out of scope"没实现——这正是 manifest 里**唯一没被任何文件认领的义务 `baseline.fb_sf`**；另有 IQL target critic 软更新、OPAL 子轨迹采样几叶。读法：−0.037 ≈ 单篇噪声量级，且成因定位到一条未绑定义务 → 本线加了"有未认领义务就重规划一次"（`79ff0f057`）；ADR 0003 的强约束本身没有把分数拉高，第一次真跑的收益是**机制跑通**（提前失败、审计、语法检查）而不是分。运行中修的四处 manifest 过严和 74 次被拒的 `read_paper` 见本线 HANDOFF / PITFALLS。
+判分 15 min；`grade.json` `runs/fre/grades/fre_be597371…`，提交归档 `~/pb_submissions_archive/fre/0920_line2/`。
+
 ## 2. sequential-neural-score-estimation（2026-09-14，对标前的数，裁判修 bug 前）
 
 裁判 DeepSeek-V4-Pro @ Paratera，67 叶，无效叶 0；**三份都是思考开的分数**（当时 `enable_thinking:false` 无效，49 次调用 reasoning 78.7 万 / completion 113 万 token）；
