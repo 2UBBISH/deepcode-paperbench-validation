@@ -18,21 +18,23 @@ ROOT="${BARE_ROOT:-$REPO/work}"; WS="$ROOT/$PAPER-$ARM-desktop"
 if [ "$ARM" = codex ]; then [ ! -s "$HOME/.codex/AGENTS.md" ] || { echo "❌ ~/.codex/AGENTS.md is not empty"; exit 1; }
 else [ ! -f "$HOME/.claude/CLAUDE.md" ] || { echo "❌ ~/.claude/CLAUDE.md exists; move it aside for the run"; exit 1; }; fi
 
-# no execution, enforced by the app's own mechanism (the prompt's Execution note is the symmetric statement of it):
-#   Codex  → an execpolicy rules file in ~/.codex/rules forbids interpreters / shells / installers ("Rejected: …" to the agent)
-#   Claude → a workspace .claude/settings.json denies the Bash tool (deny rules hold even in bypass-permissions mode)
+# execution = quick checks only, and a human approves each command (09-20 evening rule; the prompt's Execution note says the same):
+#   Codex  → an execpolicy rules file in ~/.codex/rules escalates interpreters / installers / shells / downloads to an approval
+#            prompt (decision "prompt"); the old paperbench-no-exec.rules ("forbidden" would win) is removed
+#   Claude → a workspace .claude/settings.json puts the Bash tool on "ask" (ask beats any allow rule; do NOT run in bypass mode)
 if [ "$ARM" = codex ]; then
   mkdir -p "$HOME/.codex/rules"
-  if ! cmp -s "$HERE/paperbench-no-exec.rules" "$HOME/.codex/rules/paperbench-no-exec.rules" 2>/dev/null; then
-    cp "$HERE/paperbench-no-exec.rules" "$HOME/.codex/rules/paperbench-no-exec.rules" && echo "  installed ~/.codex/rules/paperbench-no-exec.rules (remove after the batch)"
+  [ -f "$HOME/.codex/rules/paperbench-no-exec.rules" ] && rm -f "$HOME/.codex/rules/paperbench-no-exec.rules" && echo "  removed the old ~/.codex/rules/paperbench-no-exec.rules (forbid-all)"
+  if ! cmp -s "$HERE/paperbench-exec.rules" "$HOME/.codex/rules/paperbench-exec.rules" 2>/dev/null; then
+    cp "$HERE/paperbench-exec.rules" "$HOME/.codex/rules/paperbench-exec.rules" && echo "  installed ~/.codex/rules/paperbench-exec.rules (remove after the batch)"
   fi
 fi
 mkdir -p "$ROOT"; RLOG="$(mktemp)"
 bash "$HERE/render_prompt.sh" "$PAPER" "$WS" ${HOURS:+--hours "$HOURS"} | tee "$RLOG"; grep -q PROMPT_OK "$RLOG" || exit 1; mv "$RLOG" "$WS/render.log"
 START=$(date +%s); echo "$START" > "$WS/START_EPOCH"
-[ "$ARM" = claude ] && { mkdir -p "$WS/.claude"; printf '{"permissions": {"deny": ["Bash"]}}\n' > "$WS/.claude/settings.json"; }
+[ "$ARM" = claude ] && { mkdir -p "$WS/.claude"; printf '{"permissions": {"ask": ["Bash"]}}\n' > "$WS/.claude/settings.json"; }
 { echo "# $PAPER / $ARM desktop — $(date '+%F %T')"
-  echo "- caliber: deepseek-flash @ api.deepseek.com via the app's cc-switch profile, thinking ON (DeepSeek default), NO code execution ($([ "$ARM" = codex ] && echo '~/.codex/rules/paperbench-no-exec.rules' || echo 'workspace .claude/settings.json denies Bash'))"
+  echo "- caliber: deepseek-flash @ api.deepseek.com via the app's cc-switch profile, thinking ON (DeepSeek default), execution = quick checks only, each command approved by hand ($([ "$ARM" = codex ] && echo '~/.codex/rules/paperbench-exec.rules → prompt' || echo 'workspace .claude/settings.json: Bash on ask'))"
   echo "- validation repo: $(git -C "$HERE" rev-parse --short HEAD)"
   echo "- time budget told to the agent: $HOURS h (official time_limit_template sentence); not a hard cap — the agent stops when it believes the core contributions are reproduced, nobody kills it at $HOURS h"
   echo "- app version: (fill in: Codex app / Claude desktop 'About')"
@@ -47,8 +49,10 @@ READY  $WS      started $(date '+%H:%M'); the prompt tells the agent it has $HOU
 
 In the $([ "$ARM" = codex ] && echo "Codex app" || echo "Claude desktop app (Code tab)"):
   1. cc-switch: the DeepSeek profile (deepseek-flash) must be current; restart the app after switching.
-  2. Open the folder  $WS  as the project. Approval: full auto. Plugins / browser / computer-use / skills / MCP: off.
-     It cannot run code: $([ "$ARM" = codex ] && echo 'the rules file rejects python/pip/uv/node/bash/sh/make/docker' || echo 'the Bash tool is denied'); reads (ls, cat) are fine. Never approve an execution by hand.
+  2. Open the folder  $WS  as the project. Approval: $([ "$ARM" = codex ] && echo '"Agent" (NOT full access — the rules file needs the prompt to appear)' || echo 'default / ask (NOT bypass — bypass skips the Bash prompt)'). Plugins / browser / computer-use / skills / MCP: off.
+     Every python / pytest / pip / uv / bash / curl command comes to you for approval. APPROVE quick checks (py_compile,
+     import checks, unit / smoke tests, pip install). REJECT training, evaluation, benchmarks, dataset / model downloads,
+     anything that would run for minutes. When unsure, reject. File reads / edits need no approval.
   3. Paste PROMPT.txt as the first message, verbatim $CLIP — nothing before or after it.
   4. If it stops and asks, or stops without committing: reply with CONTINUE.txt verbatim (max 5 times) and add a line to
      $WS/interactions.log  (time, what it asked). Never answer a question with information.

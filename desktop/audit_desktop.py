@@ -7,18 +7,28 @@ Codex app / CLI write ~/.codex/sessions/YYYY/MM/DD/rollout-*.jsonl (session_meta
 event_msg token_count → total_token_usage incl. reasoning_output_tokens); Claude desktop's Code tab / claude CLI write
 ~/.claude/projects/<cwd with '/' and '.' → '-'>/<session>.jsonl (assistant messages: message.model, usage incl.
 output_tokens_details.thinking_tokens, content blocks). Sessions are matched by cwd == workspace and mtime ≥ start.
-Caliber of the 0919 batch: model == deepseek-flash on every turn, thinking ON (reasoning / thinking tokens > 0 overall).
-Prints a summary line and CALIBER_OK / CALIBER_BROKEN: …; --copy DIR copies the matched session files there."""
-import glob, json, os, re, shutil, sys, time
+Caliber of the 0919 batch: model == deepseek-flash on every turn, thinking ON (reasoning / thinking tokens > 0 overall),
+execution limited to quick checks (09-20 evening rule): every interpreter / installer command that RAN is listed with its
+wall time; a single command over MAX_SINGLE_S, a total over MAX_TOTAL_S, or an experiment-looking command (train / eval /
+benchmark / dataset download) breaks the caliber; anything that ran at all is flagged for the owner to look at.
+Prints a summary and CALIBER_OK / CALIBER_REVIEW / CALIBER_BROKEN: …; --copy DIR copies the matched session files there."""
+import datetime, glob, json, os, re, shutil, sys, time
 
-EXEC_PATTERN = re.compile(r"(^|[\s;&|(])(python[0-9.]*|pytest|pip[0-9]?|uv|conda|node|npm|bash|sh|zsh|make|docker|\./[\w./-]+)(\s|$)")
+EXEC_PATTERN = re.compile(r"(^|[\s;&|(])(python[0-9.]*|pytest|pip[0-9]?|uv|conda|node|npm|bash|sh|zsh|make|docker|wget|curl|\./[\w./-]+)(\s|$)")
+EXPERIMENT_PATTERN = re.compile(r"(train|eval|benchmark|experiment|run_all|sweep|download|wget|curl\s+-[LO]|huggingface|hf_hub|datasets?\.|torchvision\.datasets|\.pt\b|\.ckpt\b)", re.I)
+MAX_SINGLE_S, MAX_TOTAL_S = 300, 1800   # a quick check finishes in seconds; 5 min for one command / 30 min in total is the line
+INSTALL_PATTERN = re.compile(r"(^|\s)(pip[0-9]?|uv|conda)\s+(install|sync|add)")  # installs are exempt from the single-command clock
+
+def _ts(v):
+    try: return datetime.datetime.fromisoformat(str(v).replace("Z", "+00:00")).timestamp()
+    except Exception: return None
 
 arm, ws = sys.argv[1], os.path.realpath(sys.argv[2])
 start = float(sys.argv[3])
 model = sys.argv[4] if len(sys.argv) > 4 and not sys.argv[4].startswith("--") else "deepseek-flash"
 copy_dir = sys.argv[sys.argv.index("--copy") + 1] if "--copy" in sys.argv else None
 bad, files, models, turns, out_tokens, think_tokens = [], [], set(), 0, 0, 0
-executed: list[str] = []  # commands that actually ran an interpreter / build tool (the batch forbids execution)
+executed: list[tuple[str, float]] = []  # (command, wall seconds) for every interpreter / installer / shell command that actually ran
 blocked = 0
 
 def same_dir(a, b):
@@ -37,12 +47,14 @@ if arm == "codex":
             elif e.get("type") == "turn_context": mod.add(p.get("model"))
             elif p.get("type") == "token_count" and (p.get("info") or {}).get("total_token_usage"): last = p["info"]["total_token_usage"]
             elif e.get("type") == "response_item" and p.get("type") == "function_call" and p.get("name") == "exec_command":
-                try: cmds[p.get("call_id")] = json.loads(p.get("arguments") or "{}").get("cmd") or ""
+                try: cmds[p.get("call_id")] = (json.loads(p.get("arguments") or "{}").get("cmd") or "", _ts(e.get("timestamp")))
                 except Exception: pass
             elif e.get("type") == "response_item" and p.get("type") == "function_call_output" and p.get("call_id") in cmds:
-                cmd = cmds.pop(p["call_id"]); out = str(p.get("output") or "")[:300]
-                if "Rejected" in out or "blocked by policy" in out: rejected += 1
-                elif EXEC_PATTERN.search(cmd.replace("/bin/zsh -lc", "").replace("/bin/bash -lc", "").strip(" '\"")): ran.append(cmd)
+                cmd, t0 = cmds.pop(p["call_id"]); out = str(p.get("output") or "")[:400]
+                if "Rejected" in out or "blocked by policy" in out or "not approved" in out.lower(): rejected += 1
+                elif EXEC_PATTERN.search(cmd.replace("/bin/zsh -lc", "").replace("/bin/bash -lc", "").strip(" '\"")):
+                    m = re.search(r"Wall time: ([0-9.]+) seconds", out); t1 = _ts(e.get("timestamp"))
+                    ran.append((cmd, float(m.group(1)) if m else ((t1 - t0) if t0 and t1 else 0.0)))
         if not (meta_cwd and same_dir(meta_cwd, ws)): continue
         executed += ran; blocked += rejected
         files.append(f); models |= mod; turns += 1
@@ -51,16 +63,24 @@ else:
     key = ws.replace("/", "-").replace(".", "-")
     for f in sorted(glob.glob(os.path.expanduser(f"~/.claude/projects/{key}/*.jsonl"))):
         if os.path.getmtime(f) < start: continue
-        n = 0
+        n = 0; pending = {}
         for line in open(f, encoding="utf-8", errors="replace"):
             try: e = json.loads(line)
             except Exception: continue
+            if e.get("type") == "user":
+                for c in ((e.get("message") or {}).get("content") or []) if isinstance((e.get("message") or {}).get("content"), list) else []:
+                    if isinstance(c, dict) and c.get("type") == "tool_result" and c.get("tool_use_id") in pending:
+                        cmd, t0 = pending.pop(c["tool_use_id"]); body = c.get("content"); body = body if isinstance(body, str) else json.dumps(body)[:400]
+                        if "doesn't want to proceed" in body or "was rejected" in body or "permission" in body.lower()[:200]: blocked += 1
+                        else:
+                            t1 = _ts(e.get("timestamp")); executed.append((cmd, (t1 - t0) if t0 and t1 else 0.0))
+                continue
             if e.get("type") != "assistant": continue
             m = e.get("message") or {}; u = m.get("usage") or {}
             models.add(m.get("model")); n += 1
             for c in m.get("content", []):
                 if isinstance(c, dict) and c.get("type") == "tool_use" and c.get("name") == "Bash":
-                    executed.append(str((c.get("input") or {}).get("command") or "")[:120])
+                    pending[c.get("id")] = (str((c.get("input") or {}).get("command") or "")[:160], _ts(e.get("timestamp")))
             out_tokens += int(u.get("output_tokens") or 0)
             think_tokens += int((u.get("output_tokens_details") or {}).get("thinking_tokens") or 0)
             think_tokens += sum(len(c.get("thinking") or "") // 4 for c in m.get("content", []) if isinstance(c, dict) and c.get("type") == "thinking" and not (u.get("output_tokens_details") or {}).get("thinking_tokens"))
@@ -69,16 +89,23 @@ else:
 if not files: bad.append(f"no {arm} session with cwd {ws} modified since {time.strftime('%H:%M:%S', time.localtime(start))}")
 if files and models != {model}: bad.append(f"model(s) {sorted(str(m) for m in models)} != {model}")
 if files and think_tokens == 0: bad.append("no reasoning/thinking tokens at all — thinking appears OFF (caliber is ON)")
-# Codex: a forbidden command is attempted, rejected by the rules file and answered "Rejected: …" — that is fine; what breaks
-# the caliber is a command that ran. The rejected ones are still listed so a sudden spike is visible.
-if arm == "codex":
-    if blocked: print(f"  ({blocked} execution attempt(s) rejected by the rules file — fine)")
-    if executed: bad.append(f"{len(executed)} interpreter/build command(s) RAN — execution is forbidden in this batch: " + "; ".join(c[:60] for c in executed[:3]))
-elif executed: bad.append(f"{len(executed)} Bash tool call(s) — execution is forbidden in this batch: " + "; ".join(executed[:3]))
+# Execution (09-20 evening rule): quick checks may run after the operator approves them; experiments may not. Rejected
+# attempts are fine. What ran is listed with wall time; over the clock or experiment-looking → BROKEN; anything ran → REVIEW.
+review = []
+if blocked: print(f"  ({blocked} command(s) rejected at the approval prompt — fine)")
+total_s = sum(t for _, t in executed)
+looks = 0
+for cmd, t in executed:
+    head = (cmd.strip().splitlines() or [""])[0][:110]; tag = []
+    if EXPERIMENT_PATTERN.search(cmd): tag.append("experiment-looking"); looks += 1
+    if t > MAX_SINGLE_S and not INSTALL_PATTERN.search(cmd): tag.append(f"over {MAX_SINGLE_S}s"); bad.append(f"over {MAX_SINGLE_S}s: {head[:60]} ({t:.0f}s)")
+    print(f"  ran {t:7.1f}s  {head}" + (f"   ⚠️ {', '.join(tag)}" if tag else ""))
+if total_s > MAX_TOTAL_S: bad.append(f"execution total {total_s/60:.0f} min > {MAX_TOTAL_S//60} min")
+if executed and not bad: review.append(f"{len(executed)} command(s) ran ({total_s:.0f}s total{f', {looks} experiment-looking by keyword' if looks else ''}) — owner to confirm they were quick checks, not experiments")
 print(f"{arm}: {len(files)} session file(s), {turns} turn(s), models {sorted(str(m) for m in models)}, output tokens {out_tokens}, thinking tokens {think_tokens}")
 for f in files: print("  " + f)
 if copy_dir and files:
     os.makedirs(copy_dir, exist_ok=True)
     for f in files: shutil.copy2(f, copy_dir)
-print("CALIBER_OK" if not bad else "CALIBER_BROKEN: " + "; ".join(bad))
+print("CALIBER_BROKEN: " + "; ".join(bad) if bad else ("CALIBER_REVIEW: " + "; ".join(review) if review else "CALIBER_OK"))
 sys.exit(1 if bad else 0)
