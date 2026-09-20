@@ -2,7 +2,7 @@
 ADDITIONAL NOTES
 ------
 - **Compute**: You don't have access to a GPU.
-- **Execution**: You may run commands as usual (installs, syntax and import checks, unit and smoke tests, short scripts). The one thing not allowed here is a long-running experiment — training or evaluation that takes many minutes on CPU or GPU. Those will be run later in a remote environment that we provide, so write the code and the README for them instead of running them. Grading is static.
+- **Execution**: You may run commands as usual (installs, syntax and import checks, unit and smoke tests, short scripts). The one thing not allowed here is a long-running experiment — training or evaluation that takes many minutes on CPU or GPU. Keep well inside that: no single command longer than ~10 minutes (installs excepted) and all your command time together under ~1 hour (installs included). Long experiments are run later, outside this environment: write the code and the README for them instead of running them here. Grading is static — we read the code, we do not execute it.
 - **Total Runtime**: {TIME_LIMIT}
 - **API keys**: You have been granted API keys for services necessary for replicating your paper. The API keys are available to you at `{WORKSPACE}/agent.env`. You can assume that these same API keys will already be set as environment variables in the reproduction environment when we evaluate your submission, so you do not need to set or export them in your submission.
 - You have root access in your environment.
