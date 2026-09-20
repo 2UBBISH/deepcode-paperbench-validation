@@ -38,7 +38,7 @@ README 第 90 行 "the agent is informed of this file in our default instruction
 
 裁判只看提交目录，**怎么把提交送进去不影响 Code-Dev 分**；差别只在输入和 harness 条件。
 
-**09-20 起的正式三臂是 Codex 桌面版、Claude 桌面版、DeepEvol Paper2Code 线**，接法在分支 `0919-test`（`README.md` 白话版、`desktop/desktop_prep.sh` / `desktop_finish.sh` / `audit_desktop.py`）。三臂共同条件：`deepseek-flash` @ api.deepseek.com、思考开、**只准快速检查、不准跑实验**（桌面臂每条执行命令弹给人审批：Codex `~/.codex/rules/paperbench-exec.rules` decision=prompt、Claude 工作目录 `.claude/settings.json` Bash=ask；人批语法/导入/单测/装依赖、拒训练/评估/下载；本线写码 agent 本来就没有解释器，`PAPER2CODE_IMPLEMENT_VERIFY` 关）、上下文 1M、同字节输入、3 小时官方句（非硬上限）。下表的 Codex CLI / Claude Code 两行是 09-19 的 CLI 方案（带关思考代理），**只作参考**；DeepCode 基线行不在本批。
+**09-20 起的正式三臂是 Codex 桌面版、Claude 桌面版、DeepEvol Paper2Code 线**，接法在分支 `0919-test`（`README.md` 白话版、`desktop/desktop_prep.sh` / `desktop_finish.sh` / `audit_desktop.py`）。三臂共同条件：`deepseek-flash` @ api.deepseek.com、思考开、**本地不跑实验、快速检查可以**（只靠题面附注 Execution 一条告知，不装规则、不人工审批，事后 `audit_desktop.py` 按 5 min / 30 min 线判作废；本线写码 agent 没有解释器，`PAPER2CODE_IMPLEMENT_VERIFY` 关，生成后 `syntax_check.py` 做 `compile()` 级检查 + 修复）、上下文 1M、同字节输入、3 小时官方句（非硬上限）。下表的 Codex CLI / Claude Code 两行是 09-19 的 CLI 方案（带关思考代理），**只作参考**；DeepCode 基线行不在本批。
 
 | 臂 | 输入 | 接法 | harness 条件 | 记录 |
 | --- | --- | --- | --- | --- |
@@ -51,9 +51,9 @@ README 第 90 行 "the agent is informed of this file in our default instruction
 
 ## 4. 本批（09-20）口径
 
-deepseek-flash（api.deepseek.com）**思考开**；PaperBench 全部 20 篇（robust-clip 的官方 paper.md 缺方法章，照跑单独标）；三臂：Codex 桌面版、Claude 桌面版、DeepEvol Paper2Code 线（第 9 步的树）；**只准快速检查、不准跑实验**（逐条人工审批），桌面臂由 `audit_desktop.py` 列出跑过的命令和耗时（单条 > 5 min / 合计 > 30 min 作废，其余 `CALIBER_REVIEW` 由 owner 看）；全部关图、md-only；裁判 V4-Flash + V4-Pro 解析器；每篇每臂 1 份先看方向，差值 < 0.03 再补；单篇噪声 0.025、历史组内摆动 0.09–0.19，n < 5 不说"优于"。跑法见分支 `0919-test` 的 README。
+deepseek-flash（api.deepseek.com）**思考开**；PaperBench 全部 20 篇（robust-clip 的官方 paper.md 缺方法章，照跑单独标）；三臂：Codex 桌面版、Claude 桌面版、DeepEvol Paper2Code 线（第 9 步的树）；**本地不跑实验、快速检查可以**（题面告知，不拦），桌面臂由 `audit_desktop.py` 列出跑过的命令和耗时（单条 > 5 min / 合计 > 30 min 作废，其余 `CALIBER_REVIEW` 由 owner 看）；本线生成后 `compile()` 级语法检查 + 修复；全部关图、md-only；裁判 V4-Flash + V4-Pro 解析器；每篇每臂 1 份先看方向，差值 < 0.03 再补；单篇噪声 0.025、历史组内摆动 0.09–0.19，n < 5 不说"优于"。跑法见分支 `0919-test` 的 README。
 
-与 09-19 草案的差别：思考从"关"改"开"（桌面版关不掉，DeepSeek 缺省开，论文对照也是 -thinking）；CLI 臂换成桌面版（论文用的是桌面 agent；CLI 的 UA/x-codex 头会让 DeepSeek 走另一套 profile）；5 篇扩到 20 篇；加了执行规则——09-20 白天定完全不执行，晚上改成"快速检查可以、实验不行、人逐条批"（DeepCode 写码 agent 无解释器是设计如此，但秒级的语法 / 单测检查算基本运行；09-19 的 fre / rice Codex 运行各跑了 177 min CPU 实验，作废）；3 小时用官方 `time_limit_template` 句子，不设硬上限。
+与 09-19 草案的差别：思考从"关"改"开"（桌面版关不掉，DeepSeek 缺省开，论文对照也是 -thinking）；CLI 臂换成桌面版（论文用的是桌面 agent；CLI 的 UA/x-codex 头会让 DeepSeek 走另一套 profile）；5 篇扩到 20 篇；加了执行规则——09-20 白天定完全不执行，晚上改成"本地不跑实验、快速检查可以"，只写在题面里、不拦不批（DeepCode 写码 agent 无解释器是设计如此，本线补了 `compile()` 级语法检查作对称；09-19 的 fre / rice Codex 运行各跑了 177 min CPU 实验，作废）；3 小时用官方 `time_limit_template` 句子，不设硬上限。
 
 与 bam 批（`INPUT_STANDARD.md`）的差别：Flash（bam 是 Pro）；题面后接**官方附注** + Execution 一条（bam 接的是我们自写的两句后缀）；续跑语用官方 `DEFAULT_CONTINUE_MESSAGE`。
 
