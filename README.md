@@ -13,7 +13,7 @@ DeepCode 论文说自己比 Codex 好 4 倍多，但两边用的模型不一样�
 
 1. **装两个桌面 app**：Codex 桌面版（ChatGPT app 里的 Codex）、Claude 桌面版（Code 标签）。
 2. **让两个 app 都走 DeepSeek 官方**。用 cc-switch 各建一个档（真 key 填在档里，DeepSeek 平台申请）：
-   - Codex：`base_url = https://api.deepseek.com/v1`，`wire_api = "responses"`，`model = "deepseek-flash"`
+   - Codex：`base_url = https://api.deepseek.com/v1`，`wire_api = "responses"`，`model = "deepseek-flash"`，再加一行 `model_context_window = 1000000`（三边上下文窗口都按 1M 对齐，不然各自压缩历史的时机不一样）
    - Claude 桌面：`ANTHROPIC_BASE_URL = https://api.deepseek.com/anthropic`，再把 `ANTHROPIC_MODEL`、`ANTHROPIC_DEFAULT_HAIKU_MODEL`、`ANTHROPIC_DEFAULT_SONNET_MODEL`、`ANTHROPIC_DEFAULT_OPUS_MODEL`、`CLAUDE_CODE_SUBAGENT_MODEL` 五个都填 `deepseek-flash`（不填的话 app 会拿 Claude 的模型名去请求，DeepSeek 不认）
    切完档**重启 app**。思考模式不用管：DeepSeek 缺省就是开的，我们就用开的。
 3. **清掉私人指令**：`~/.codex/AGENTS.md` 要是空的（或不存在），`~/.claude/CLAUDE.md` 不能存在。这两个文件会把你平时的习惯偷偷喂给 agent。
@@ -85,7 +85,9 @@ results/<paper>/claude/  同上
 
 - `robust-clip` 的官方 `paper.md` 缺第 2、3 章（方法），这是 PaperBench 数据本身的问题；三边拿的都是这份，照跑，分数会普遍低。
 - **不准执行代码**（09-20 定）：Code-Dev 判分本来就不执行；DeepCode 的写码 agent 没有执行工具，桌面 agent 若能跑几小时实验来验证就不对等（09-19 的 fre / rice Codex 运行各跑了 177 分钟实验，作废重跑）。落实：Codex 用 `~/.codex/rules/paperbench-no-exec.rules`（`desktop_prep.sh` 自动装，拒绝 python / pip / uv / conda / node / bash / sh / make / docker），Claude 用工作目录 `.claude/settings.json` 禁 Bash；题面附注多一条 Execution 说明。
-- 时限 3 小时是用 PaperBench 官方的 `time_limit_template` 写进题面的（官方跑法给 12 小时；我们 20 篇 × 2 个 app 给 3 小时），`desktop_prep.sh` 打印截止时刻；agent 常会在 CPU 上真跑实验来验证，题面告诉它运行时间也算在时限里，到点手动停。
+- 时限 3 小时是用 PaperBench 官方的 `time_limit_template` 写进题面的（官方跑法给 12 小时；我们 20 篇 × 2 个 app 给 3 小时），`desktop_prep.sh` 打印截止时刻。不能运行代码之后 agent 只写不跑，一般不到 3 小时就自己停；到点没停就手动停。
+- Claude 桌面版的上下文窗口：Claude Code 靠模型名后缀 `[1m]` 开 1M 窗口，但 DeepSeek 会不会认 `deepseek-flash[1m]` 这个名字还没验；owner 验完会在这里写明填法，验之前 Claude 臂先按 `deepseek-flash` 跑，RUN_NOTES 里记一句。
+- 09-20 第一对分数（fre）：本线 0.876 vs 09-19 那次"跑了实验"的 Codex 0.785（那次作废，只作参考）；正式的 Codex / Claude 分数等本批产物。
 - 为什么用桌面版、为什么同模型、依据在哪：[`docs/CODEDEV-ARMS.md`](docs/CODEDEV-ARMS.md)（主分支）。想用 CLI 非交互跑同样两臂（要一层代理来关思考）：`cli-reference/`，不是本批口径。
 
 ## 6. 目录
