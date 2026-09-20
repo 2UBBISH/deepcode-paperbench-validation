@@ -100,6 +100,25 @@ DeepSeek-V4-Pro @ Paratera、`PB_JUDGE_CONCURRENCY=20`、裁判已修选文件�
 另：T4 预装 torch 的镜像让 RSA 伪证器把 pinn 的 G0 判为"裸镜像即过"而拒绝判据两次，已换回无 torch 镜像（DeepEvol PITFALLS §D）。
 判分：三份 9.5 分钟；`grade.json` 在 `runs/pinn/grades/`，提交归档在 `~/pb_submissions_archive/pinn/`。
 
+### 1.3 fre 第一对分数（2026-09-20，裁判 DeepSeek-V4-Flash，解析器 V4-Pro，code_only，306 叶）
+
+口径：两边 `deepseek-flash` @ api.deepseek.com **思考开**、同一份 `paper.md` + addendum + 黑名单（md-only，无 PDF/图）。本线 = DeepEvol Paper2Code 线
+`fre-t14`（T14 论文保真：蓝图照抄公式 + `Source: §x.y`、写码期 `read_paper` 回读 181 次；`PAPER2CODE_IMPLEMENT_VERIFY` 关，**不执行任何代码**）到第 9 步的树。
+Codex 那份是 09-19 的 Codex 桌面版运行，**跑了 177 min CPU 实验**（`.pytest_cache` 在树里）——按 09-20 定的"三臂都不许执行"规则它不算正式样本，只作 Codex 的上界参考；正式 Codex 样本等 owner 用 `paperbench-no-exec.rules` 重跑。
+
+| 提交 | 总分 | 数据集/环境 (w3) | 方法实现 (w3) | 训练/评估 (w3) | 产物 | 无效叶 |
+| --- | --- | --- | --- | --- | --- | --- |
+| 本线 `line1`（fre-t14，不执行） | **0.8756** | 0.833 | 0.991 | 0.803 | 35 文件 / 29 py | 1（裁判输出撞 65536 上限，记 0） |
+| Codex 桌面版 `codex-exec`（执行了实验） | **0.7847** | 0.750 | 0.935 | 0.669 | 42 文件 / 28 py | 0 |
+
+叶级：306 叶里 61 叶不同，本线胜 38、Codex 胜 23。本线赢在 Kitchen 环境（1.00 vs 0.50）、OPAL 架构（0.94 vs 0.61：Codex 把 OPAL 编码器写成 MLP，
+置换不变 transformer / 无因果掩码 / 无位置编码 / App.A 超参四叶全丢）、评估节（0.76 vs 0.52：ExORL cheetah 自定义奖励在线评估缺失）。
+Codex 赢的叶：walker(RND) 数据集（本线那叶是裁判截断的无效叶）、OPAL 编码器输入 (s,a) 对（本线只喂了状态）、OPAL 自编码目标（本线写成未来状态 MSE + 单位高斯 KL）、
+潜变量条件 BC 微调、AntMaze XY 32-bin 离散化没接进 OPAL 训练，以及 **`fre/prior.py:503` 语法错误**（`torch.rand(..., device="cpu", device=device)` 重复关键字）+ `trainer.py:420` 调了不存在的 `prior.evaluate_params`——不执行代码时这类错误没有任何一道闸能拦，裁判读到就扣叶。
+读法：① 本线在有执行的 Codex 上界之上 +0.09，是自 sapg/pinn（0.32 / 0.68 量级）以来第一篇上 0.85 的；② fre 08 月作废批里 DeepCode 最好的 trial_fx2 也才 0.49（Pro 裁判、输入有偏），不可直接比；
+③ 两边一起丢的集中在训练/评估节；④ 本线值得补一道 `py_compile` 静态检查（不算执行）。
+判分：两份 18 分钟；`grade.json` 在 `runs/fre/grades/`（bae9fba6 = line1，d1988ed0 = codex-exec），提交归档在 `~/pb_submissions_archive/fre/0920_{line1,codex-exec}/`。
+
 ## 2. sequential-neural-score-estimation（2026-09-14，对标前的数，裁判修 bug 前）
 
 裁判 DeepSeek-V4-Pro @ Paratera，67 叶，无效叶 0；**三份都是思考开的分数**（当时 `enable_thinking:false` 无效，49 次调用 reasoning 78.7 万 / completion 113 万 token）；
