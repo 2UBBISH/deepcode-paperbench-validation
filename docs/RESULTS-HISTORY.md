@@ -104,7 +104,7 @@ DeepSeek-V4-Pro @ Paratera、`PB_JUDGE_CONCURRENCY=20`、裁判已修选文件�
 
 口径：两边 `deepseek-flash` @ api.deepseek.com **思考开**、同一份 `paper.md` + addendum + 黑名单（md-only，无 PDF/图）。本线 = DeepEvol Paper2Code 线
 `fre-t14`（T14 论文保真：蓝图照抄公式 + `Source: §x.y`、写码期 `read_paper` 回读 181 次；`PAPER2CODE_IMPLEMENT_VERIFY` 关，**不执行任何代码**）到第 9 步的树。
-Codex 那份是 09-19 的 Codex 桌面版运行，**跑了 177 min CPU 实验**（`.pytest_cache` 在树里）——按 09-20 定的"三臂都不许执行"规则它不算正式样本，只作 Codex 的上界参考；正式 Codex 样本等 owner 用 `paperbench-no-exec.rules` 重跑。
+Codex 那份是 09-19 的 Codex 桌面版运行，**跑了 177 min CPU 实验**（`.pytest_cache` 在树里）——按 09-20 定的执行规则（只准秒级检查、不准跑实验）它不算正式样本，只作 Codex 的上界参考；正式 Codex 样本等 owner 用 `paperbench-no-exec.rules` 重跑。
 
 | 提交 | 总分 | 数据集/环境 (w3) | 方法实现 (w3) | 训练/评估 (w3) | 产物 | 无效叶 |
 | --- | --- | --- | --- | --- | --- | --- |
