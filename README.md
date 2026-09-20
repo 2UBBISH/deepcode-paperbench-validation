@@ -7,7 +7,7 @@ DeepCode 那一臂在主分支跑，不在这里。评分标准（rubric）也�
 
 PaperBench 是 OpenAI 的基准：给 agent 一篇论文，让它从零写出复现代码，裁判拿一棵作者审过的评分树逐条看"这个点实现了没有"（Code-Dev 口径，不跑代码）。
 DeepCode 论文说自己比 Codex 好 4 倍多，但两边用的模型不一样。我们把**模型钉成同一个**（DeepSeek 官方的 `deepseek-flash`，思考开），
-给三套系统**同一份论文文字、同一份题面**，看到底差多少。所以下面每一步都在保证"三边拿到的东西一样"，请别自己加东西。
+给三套系统**同一份论文文字、同一份题面、都不准运行代码**，看到底差多少。所以下面每一步都在保证"三边拿到的东西一样"，请别自己加东西。
 
 ## 1. 准备（只做一次，10 分钟）
 
@@ -45,7 +45,7 @@ CONTINUE.txt                                              ← 它停下来时你
 1. 打开 `work/sapg-codex-desktop/` 这个文件夹作为项目。
 2. 审批模式选"全自动"（不要一条条点同意）。
 3. 新建对话，把剪贴板里的题面粘进去，发送。前面不加"你好"，后面不加"开始吧"。
-4. 然后不要管它。题面里写了时限 **3 小时**（PaperBench 官方的时限句，含"程序运行时间也算在内"），它会自己安排；到 3 小时还没停就手动停掉这一轮，去第 3 步。
+4. 然后不要管它。它**不能运行代码**（Codex 会看到命令被拒，Claude 没有 Bash 工具；读文件的 `ls`/`cat` 不受影响），只能写；它要是问"能不能运行"，按第 5 步回续跑语，**不要手动批准任何执行**。题面里写了时限 **3 小时**，到点还没停就手动停掉这一轮，去第 3 步。
 5. **它停下来了怎么办**：
    - 它说"做完了"，并且 `submission/` 里已经 `git commit` 了 → 去第 3 步。
    - 它问你问题 / 要你确认 / 说完了但没 commit → 把 `CONTINUE.txt` 里那句话原样发给它（最多 5 次），然后在 `work/sapg-codex-desktop/interactions.log` 里记一行（几点、它问了什么）。**不要回答它的问题，不要给任何提示。**
@@ -76,6 +76,7 @@ results/<paper>/claude/  同上
 ## 4. 不要做的（做了这篇就作废）
 
 - 不给 agent 论文 PDF、图、官方代码、任何提示；题面之外不说话（续跑语除外）。
+- 不批准任何代码执行。`desktop_finish.sh` 会从 app 的会话日志数实际跑过的命令，跑过的这篇作废（`AUDIT.txt` 会写明）。
 - 不改 `submission/` 里的代码，不帮它装环境，不帮它 commit（收尾脚本会替它 commit 未提交的改动并记录）。
 - 不动 `desktop/`、`instructions/`、`data/` 里的东西。
 - 同一篇同一个 app 只跑一次；要重跑先删 `results/<paper>/<app>/` 和 `work/<paper>-<app>-desktop/`，并在 RUN_NOTES 里说明。
@@ -83,6 +84,7 @@ results/<paper>/claude/  同上
 ## 5. 已知情况
 
 - `robust-clip` 的官方 `paper.md` 缺第 2、3 章（方法），这是 PaperBench 数据本身的问题；三边拿的都是这份，照跑，分数会普遍低。
+- **不准执行代码**（09-20 定）：Code-Dev 判分本来就不执行；DeepCode 的写码 agent 没有执行工具，桌面 agent 若能跑几小时实验来验证就不对等（09-19 的 fre / rice Codex 运行各跑了 177 分钟实验，作废重跑）。落实：Codex 用 `~/.codex/rules/paperbench-no-exec.rules`（`desktop_prep.sh` 自动装，拒绝 python / pip / uv / conda / node / bash / sh / make / docker），Claude 用工作目录 `.claude/settings.json` 禁 Bash；题面附注多一条 Execution 说明。
 - 时限 3 小时是用 PaperBench 官方的 `time_limit_template` 写进题面的（官方跑法给 12 小时；我们 20 篇 × 2 个 app 给 3 小时），`desktop_prep.sh` 打印截止时刻；agent 常会在 CPU 上真跑实验来验证，题面告诉它运行时间也算在时限里，到点手动停。
 - 为什么用桌面版、为什么同模型、依据在哪：[`docs/CODEDEV-ARMS.md`](docs/CODEDEV-ARMS.md)（主分支）。想用 CLI 非交互跑同样两臂（要一层代理来关思考）：`cli-reference/`，不是本批口径。
 
