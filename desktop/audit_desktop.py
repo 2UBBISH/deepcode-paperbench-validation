@@ -8,16 +8,16 @@ event_msg token_count → total_token_usage incl. reasoning_output_tokens); Clau
 ~/.claude/projects/<cwd with '/' and '.' → '-'>/<session>.jsonl (assistant messages: message.model, usage incl.
 output_tokens_details.thinking_tokens, content blocks). Sessions are matched by cwd == workspace and mtime ≥ start.
 Caliber of the 0919 batch: model == deepseek-flash on every turn, thinking ON (reasoning / thinking tokens > 0 overall),
-execution rule (09-20 evening): the prompt tells the agent no experiment can run locally (quick checks are fine) — nothing
-is blocked. Every interpreter / installer command that RAN is listed with its wall time; one command over MAX_SINGLE_S or a
-total over MAX_TOTAL_S = it did experiments → BROKEN; experiment-looking commands (train / eval / download) are flagged;
-anything that ran at all → REVIEW for the owner.
+execution rule (09-20 evening): commands are allowed; only long CPU / GPU training or evaluation runs are not (the prompt
+says they run remotely later) — nothing is blocked. Every interpreter / installer command that RAN is listed with its wall
+time; one command over MAX_SINGLE_S or a total over MAX_TOTAL_S = it ran a long experiment → BROKEN; training-looking
+commands are flagged for the owner; anything that ran at all → REVIEW.
 Prints a summary and CALIBER_OK / CALIBER_REVIEW / CALIBER_BROKEN: …; --copy DIR copies the matched session files there."""
 import datetime, glob, json, os, re, shutil, sys, time
 
 EXEC_PATTERN = re.compile(r"(^|[\s;&|(])(python[0-9.]*|pytest|pip[0-9]?|uv|conda|node|npm|bash|sh|zsh|make|docker|wget|curl|\./[\w./-]+)(\s|$)")
-EXPERIMENT_PATTERN = re.compile(r"(train|eval|benchmark|experiment|run_all|sweep|download|wget|curl\s+-[LO]|huggingface|hf_hub|datasets?\.|torchvision\.datasets|\.pt\b|\.ckpt\b)", re.I)
-MAX_SINGLE_S, MAX_TOTAL_S = 300, 1800   # a quick check finishes in seconds; 5 min for one command / 30 min in total is the line
+EXPERIMENT_PATTERN = re.compile(r"(train|eval|benchmark|experiment|run_all|sweep|epochs?|\.ckpt\b)", re.I)  # hints only, never fatal
+MAX_SINGLE_S, MAX_TOTAL_S = 600, 3600   # only LONG training / evaluation is out: 10 min for one command / 60 min of execution in total
 INSTALL_PATTERN = re.compile(r"(^|\s)(pip[0-9]?|uv|conda)\s+(install|sync|add)")  # installs are exempt from the single-command clock
 
 def _ts(v):
@@ -90,19 +90,19 @@ else:
 if not files: bad.append(f"no {arm} session with cwd {ws} modified since {time.strftime('%H:%M:%S', time.localtime(start))}")
 if files and models != {model}: bad.append(f"model(s) {sorted(str(m) for m in models)} != {model}")
 if files and think_tokens == 0: bad.append("no reasoning/thinking tokens at all — thinking appears OFF (caliber is ON)")
-# Execution (09-20 evening rule): the prompt says no experiments locally; nothing is gated. What ran is listed with wall
-# time; over the clock → BROKEN (it did experiments); experiment-looking commands flagged; anything ran → REVIEW.
+# Execution (09-20 evening rule): commands allowed, long training / evaluation not; nothing is gated. What ran is listed
+# with wall time; over the clock → BROKEN (it ran a long experiment); training-looking commands flagged; anything ran → REVIEW.
 review = []
 if blocked: print(f"  ({blocked} command(s) rejected / not run — fine)")
 total_s = sum(t for _, t in executed)
 looks = 0
 for cmd, t in executed:
     head = (cmd.strip().splitlines() or [""])[0][:110]; tag = []
-    if EXPERIMENT_PATTERN.search(cmd): tag.append("experiment-looking"); looks += 1
+    if EXPERIMENT_PATTERN.search(cmd): tag.append("training-looking"); looks += 1
     if t > MAX_SINGLE_S and not INSTALL_PATTERN.search(cmd): tag.append(f"over {MAX_SINGLE_S}s"); bad.append(f"over {MAX_SINGLE_S}s: {head[:60]} ({t:.0f}s)")
     print(f"  ran {t:7.1f}s  {head}" + (f"   ⚠️ {', '.join(tag)}" if tag else ""))
 if total_s > MAX_TOTAL_S: bad.append(f"execution total {total_s/60:.0f} min > {MAX_TOTAL_S//60} min")
-if executed and not bad: review.append(f"{len(executed)} command(s) ran ({total_s:.0f}s total{f', {looks} experiment-looking by keyword' if looks else ''}) — owner to confirm they were quick checks, not experiments")
+if executed and not bad: review.append(f"{len(executed)} command(s) ran ({total_s:.0f}s total{f', {looks} training-looking by keyword' if looks else ''}) — owner to glance at the list; none exceeded the long-experiment line")
 print(f"{arm}: {len(files)} session file(s), {turns} turn(s), models {sorted(str(m) for m in models)}, output tokens {out_tokens}, thinking tokens {think_tokens}")
 for f in files: print("  " + f)
 if copy_dir and files:

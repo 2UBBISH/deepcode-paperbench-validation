@@ -18,9 +18,9 @@ ROOT="${BARE_ROOT:-$REPO/work}"; WS="$ROOT/$PAPER-$ARM-desktop"
 if [ "$ARM" = codex ]; then [ ! -s "$HOME/.codex/AGENTS.md" ] || { echo "❌ ~/.codex/AGENTS.md is not empty"; exit 1; }
 else [ ! -f "$HOME/.claude/CLAUDE.md" ] || { echo "❌ ~/.claude/CLAUDE.md exists; move it aside for the run"; exit 1; }; fi
 
-# execution (owner 09-20 evening): the agent runs normally in full-auto mode; the prompt's Execution note tells it the code
-# will run remotely later and no experiment can be run locally (quick checks are fine). Nothing is blocked or gated by hand;
-# audit_desktop.py lists what ran with wall time and a run that did experiments (> 5 min one command / > 30 min total) is void.
+# execution (owner 09-20 evening): the agent runs normally in full-auto mode and may run commands; the prompt's Execution
+# note says only long CPU / GPU training or evaluation is out (the code runs remotely later). Nothing is blocked or gated;
+# audit_desktop.py lists what ran with wall time and a run with a long experiment (> 10 min one command / > 60 min total) is void.
 # Earlier rules files from the 09-20 daytime variants are removed so they do not interfere.
 if [ "$ARM" = codex ]; then
   for old in paperbench-no-exec.rules paperbench-exec.rules; do
@@ -31,7 +31,7 @@ mkdir -p "$ROOT"; RLOG="$(mktemp)"
 bash "$HERE/render_prompt.sh" "$PAPER" "$WS" ${HOURS:+--hours "$HOURS"} | tee "$RLOG"; grep -q PROMPT_OK "$RLOG" || exit 1; mv "$RLOG" "$WS/render.log"
 START=$(date +%s); echo "$START" > "$WS/START_EPOCH"
 { echo "# $PAPER / $ARM desktop — $(date '+%F %T')"
-  echo "- caliber: deepseek-flash @ api.deepseek.com via the app's cc-switch profile, thinking ON (DeepSeek default), execution = the prompt says no experiments locally (code runs remotely later); full auto, nothing gated"
+  echo "- caliber: deepseek-flash @ api.deepseek.com via the app's cc-switch profile, thinking ON (DeepSeek default), execution = commands allowed, only long CPU / GPU training or evaluation is out (the prompt says the code runs remotely later); full auto, nothing gated"
   echo "- validation repo: $(git -C "$HERE" rev-parse --short HEAD)"
   echo "- time budget told to the agent: $HOURS h (official time_limit_template sentence); not a hard cap — the agent stops when it believes the core contributions are reproduced, nobody kills it at $HOURS h"
   echo "- app version: (fill in: Codex app / Claude desktop 'About')"
@@ -47,9 +47,9 @@ READY  $WS      started $(date '+%H:%M'); the prompt tells the agent it has $HOU
 In the $([ "$ARM" = codex ] && echo "Codex app" || echo "Claude desktop app (Code tab)"):
   1. cc-switch: the DeepSeek profile (deepseek-flash) must be current; restart the app after switching.
   2. Open the folder  $WS  as the project. Approval: full auto. Plugins / browser / computer-use / skills / MCP: off.
-     The prompt tells it that experiments cannot run locally (the code runs remotely later); quick checks are fine.
-     If you see it running a training / evaluation for minutes anyway, stop that command (not the session) and
-     note it in interactions.log; desktop_finish.sh lists what ran with wall time.
+     It may run commands (installs, checks, tests, short scripts); the prompt says only long CPU / GPU training or
+     evaluation is out (the code runs remotely later). If you see a training / evaluation grinding on for many
+     minutes, stop that command (not the session) and note it in interactions.log; desktop_finish.sh lists what ran.
   3. Paste PROMPT.txt as the first message, verbatim $CLIP — nothing before or after it.
   4. If it stops and asks, or stops without committing: reply with CONTINUE.txt verbatim (max 5 times) and add a line to
      $WS/interactions.log  (time, what it asked). Never answer a question with information.
