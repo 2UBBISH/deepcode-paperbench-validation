@@ -51,7 +51,7 @@ README 第 90 行 "the agent is informed of this file in our default instruction
 
 ## 4. 本批（09-20）口径
 
-deepseek-flash（api.deepseek.com）**思考开**；PaperBench 全部 20 篇（robust-clip 的官方 paper.md 缺方法章，照跑单独标）；三臂：Codex 桌面版、Claude 桌面版、DeepEvol Paper2Code 线（第 9 步的树）；**命令随便跑、只有长时间训练 / 评估不行**（题面告知，不拦），桌面臂由 `audit_desktop.py` 列出跑过的命令和耗时（单条 > 10 min / 合计 > 60 min 作废，其余 `CALIBER_REVIEW` 由 owner 看）；本线生成后 `compile()` 级语法检查 + 修复；全部关图、md-only；裁判 V4-Flash + V4-Pro 解析器；每篇每臂 1 份先看方向，差值 < 0.03 再补；单篇噪声 0.025、历史组内摆动 0.09–0.19，n < 5 不说"优于"。跑法见分支 `0919-test` 的 README。
+deepseek-flash（api.deepseek.com）**思考开**；PaperBench 全部 20 篇（robust-clip 的官方 paper.md 缺方法章，照跑单独标）；三臂：Codex 桌面版、Claude 桌面版、DeepEvol Paper2Code 线（第 9 步的树）；**命令随便跑、只有长时间训练 / 评估不行**（题面告知，不拦），桌面臂由 `audit_desktop.py` 列出跑过的命令和耗时（单条 > 10 min / 合计 > 60 min 作废，其余 `CALIBER_REVIEW` 由 owner 看）；本线生成后 `compile()` 级语法检查 + 修复；全部关图、md-only；裁判硅基 `deepseek-ai/DeepSeek-V4-Flash` 整树 + 思考关、解析器 `deepseek-ai/DeepSeek-V4-Pro`（09-21 起；整树前缀缓存把一份判分降到 ¥32 / 半价 ¥16；09-20 及之前 Paratera V4-Flash 每叶选 10 + V4-Pro）；每篇每臂 1 份先看方向，差值 < 0.03 再补；单篇噪声 0.025、历史组内摆动 0.09–0.19，n < 5 不说"优于"。跑法见分支 `0919-test` 的 README。
 
 与 09-19 草案的差别：思考从"关"改"开"（桌面版关不掉，DeepSeek 缺省开，论文对照也是 -thinking）；CLI 臂换成桌面版（论文用的是桌面 agent；CLI 的 UA/x-codex 头会让 DeepSeek 走另一套 profile）；5 篇扩到 20 篇；加了执行规则——09-20 白天定完全不执行，晚上改成"命令随便跑、只有长时间 CPU / GPU 训练或评估不行"，只写在题面里、不拦不批（DeepCode 写码 agent 无解释器是设计如此，本线补了 `compile()` 级语法检查作对称；09-19 的 fre / rice Codex 运行各跑了 177 min CPU 实验，作废）；3 小时用官方 `time_limit_template` 句子，不设硬上限。
 

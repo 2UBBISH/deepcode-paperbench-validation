@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Prove that the vendored frontier-evals/ (PaperBench) equals upstream openai/frontier-evals at the pinned commit
 # (patches/UPSTREAM_BASE.txt), sparse paths project/paperbench + project/common, plus exactly:
-#   · patches/paperbench_local_changes.patch (5 files)
+#   · patches/paperbench_local_changes.patch (6 files)
 #   · the files added from paperbench_changes/ (single-paper splits, the judge-bias script)
 #   · LFS assets hydrated: a data file that upstream stores as an LFS pointer must be byte-identical to that pointer,
 #     or hash to the sha256 the pointer names

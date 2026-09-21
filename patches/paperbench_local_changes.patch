@@ -1,8 +1,8 @@
 diff --git a/project/common/preparedness_turn_completer/preparedness_turn_completer/utils.py b/project/common/preparedness_turn_completer/preparedness_turn_completer/utils.py
-index 71e01f9..6058fa4 100644
+index 71e01f9..e1dba8c 100644
 --- a/project/common/preparedness_turn_completer/preparedness_turn_completer/utils.py
 +++ b/project/common/preparedness_turn_completer/preparedness_turn_completer/utils.py
-@@ -24,6 +24,14 @@ from pydantic import BaseModel
+@@ -24,6 +24,17 @@ from pydantic import BaseModel
  logger = structlog.stdlib.get_logger(component=__name__)
  
  CONTEXT_WINDOW_LENGTHS: dict[str, int] = {
@@ -13,10 +13,107 @@ index 71e01f9..6058fa4 100644
 +    "DeepSeek-V4-Pro": 1_000_000,
 +    # [local] Flash judge trial (2026-09-17): same route, bare name
 +    "DeepSeek-V4-Flash": 1_000_000,
++    # DeepSeek official serving (api.deepseek.com; judge since 2026-09-21 — automatic prefix caching)
++    "deepseek-flash": 1_000_000,
++    "deepseek-v4-pro": 1_000_000,
 +    "deepseek-ai/DeepSeek-V4-Flash": 1_000_000,
      "gpt-4o-mini": 128_000,
      "gpt-4o-mini-2024-07-18": 128_000,
      "gpt-4o": 128_000,
+diff --git a/project/common/preparedness_turn_completer/preparedness_turn_completer/oai_completions_turn_completer.py b/project/common/preparedness_turn_completer/preparedness_turn_completer/oai_completions_turn_completer.py
+index 3a573a9..df83525 100644
+--- a/project/common/preparedness_turn_completer/preparedness_turn_completer/oai_completions_turn_completer.py
++++ b/project/common/preparedness_turn_completer/preparedness_turn_completer/oai_completions_turn_completer.py
+@@ -1,6 +1,8 @@
+ from __future__ import annotations
+ 
+ import functools
++import json
++import os
+ from typing import Any, Literal, Unpack
+ 
+ import openai
+@@ -24,6 +26,12 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
+ logger = structlog.stdlib.get_logger(component=__name__)
+ 
+ 
++def _schema_example(prop: dict) -> object:
++    """A placeholder value of a property's type, for the one-line example in json_object mode."""
++    t = prop.get("type")
++    return {"boolean": True, "integer": 0, "number": 0.0, "string": "...", "array": [], "object": {}}.get(t, "...")
++
++
+ class OpenAICompletionsTurnCompleter(TurnCompleter):
+     def __init__(
+         self,
+@@ -121,19 +129,56 @@ class OpenAICompletionsTurnCompleter(TurnCompleter):
+     ) -> OpenAICompletionsTurnCompleter.Completion:
+         warn_about_non_empty_params(self, **params)
+ 
++        # [local compat] DeepSeek's official API (api.deepseek.com) refuses the `json_schema` response_format that
++        # `chat.completions.parse` sends ("This response_format type is unavailable now") but honours `json_object`.
++        # With PB_STRUCTURED_JSON_MODE=json_object the schema goes into a system message and the reply is validated
++        # by the caller (the judge runs `model_validate_json` on the content anyway). Default behaviour unchanged.
++        json_object_mode = (
++            os.environ.get("PB_STRUCTURED_JSON_MODE", "").strip().lower() == "json_object"
++            and not isinstance(self.response_format, NotGiven)
++            and self.response_format is not None
++        )
++        # [local compat] PB_COMPLETER_EXTRA_BODY: a JSON object merged into every request body (e.g.
++        # {"enable_thinking": false} — SiliconFlow honours it for DeepSeek-V4-Flash, 2026-09-21 probe; PaperBench has no
++        # thinking switch of its own). Empty = nothing added, default behaviour unchanged.
++        # It applies to the judge's free-text calls only: the structured parser (json_object_mode) keeps the server's
++        # default — with thinking off, Flash's parser declared 23 of 178 JudgeEval leaves "no valid score" although the
++        # judge text carried "Score: 0" (2026-09-21).
++        # `extra_body` is `Body | None`, not NotGiven: passing the sentinel raised "'NotGiven' object is not a mapping"
++        # inside the SDK and voided every parser call of the 09-21 13:41 JudgeEval run (178/178 invalid).
++        extra_body = (json.loads(os.environ.get("PB_COMPLETER_EXTRA_BODY") or "{}") or None) if not json_object_mode else None
+         async for attempt in self.retry_config.build():
+             with attempt:
+-                completion = await self._client.chat.completions.parse(
+-                    model=self.model,
+-                    messages=conversation,
+-                    reasoning_effort=self.reasoning_effort,
+-                    response_format=self.response_format,
+-                    temperature=self.temperature,
+-                    max_tokens=self.max_tokens,
+-                    top_p=self.top_p,
+-                    tools=self.tools,
+-                    tool_choice=self.tool_choice,
+-                )
++                if json_object_mode:
++                    schema = self.response_format.model_json_schema()  # type: ignore[union-attr]
++                    guided = [
++                        # "an instance, not the schema": DeepSeek-V4-Pro echoed the schema itself back for 2 of 178 JudgeEval
++                        # parser calls (2026-09-21) — say so and show the shape of a valid reply
++                        {"role": "system", "content": "Reply with ONE JSON object that is an INSTANCE of the following JSON schema (fill in the fields; do not reply with the schema itself, no other keys, no prose):\n" + json.dumps(schema) + "\nExample of the expected shape: " + json.dumps({k: _schema_example(v) for k, v in (schema.get("properties") or {}).items()})},
++                        *conversation,
++                    ]
++                    completion = await self._client.chat.completions.create(
++                        model=self.model,
++                        messages=guided,  # type: ignore[arg-type]
++                        response_format={"type": "json_object"},
++                        temperature=self.temperature,
++                        max_tokens=self.max_tokens,
++                        top_p=self.top_p,
++                        extra_body=extra_body,
++                    )
++                else:
++                    completion = await self._client.chat.completions.parse(
++                        model=self.model,
++                        messages=conversation,
++                        reasoning_effort=self.reasoning_effort,
++                        response_format=self.response_format,
++                        temperature=self.temperature,
++                        max_tokens=self.max_tokens,
++                        top_p=self.top_p,
++                        tools=self.tools,
++                        tool_choice=self.tool_choice,
++                        extra_body=extra_body,
++                    )
+         assert isinstance(completion, ChatCompletion)
+         return OpenAICompletionsTurnCompleter.Completion(
+             input_conversation=conversation,
 diff --git a/project/paperbench/paperbench/grade.py b/project/paperbench/paperbench/grade.py
 index ae29493..87cadd1 100644
 --- a/project/paperbench/paperbench/grade.py
@@ -50,7 +147,7 @@ index ae29493..87cadd1 100644
              if judge_type == "simple":
                  token_usage = get_total_token_usage(graded_task_tree)
 diff --git a/project/paperbench/paperbench/judge/simple.py b/project/paperbench/paperbench/judge/simple.py
-index 1fc0c2b..5e5d383 100644
+index 1fc0c2b..5dab545 100644
 --- a/project/paperbench/paperbench/judge/simple.py
 +++ b/project/paperbench/paperbench/judge/simple.py
 @@ -1,5 +1,6 @@
@@ -88,10 +185,41 @@ index 1fc0c2b..5e5d383 100644
              response_format=response_format,
          )
          return cfg, cfg.build()
-@@ -369,6 +379,27 @@ class SimpleJudge(Judge):
+@@ -369,6 +379,58 @@ class SimpleJudge(Judge):
          )
          return truncated_tree_structure
  
++    async def _prepare_whole_codebase(self, task: TaskNode) -> str | None:
++        """[local] The whole submission (the category's whitelisted files, sorted by path) formatted like the ranked
++        selection, or None when it does not fit the context budget (the caller then ranks as upstream does).
++        Cached per category: the block is the same for every leaf, which is the point."""
++        category = task.task_category or "Subtree"
++        cache = getattr(self, "_whole_codebase_cache", None)
++        if cache is None:
++            cache = self._whole_codebase_cache = {}
++        if category in cache:
++            return cache[category]
++        max_tokens = self.avail_context_lens[category] - 2000
++        files = sorted(await self._get_whitelisted_files(category), key=lambda p: str(p.relative_to(self.submission_dir)))
++        pieces: list[str] = []
++        total = 0
++        for full_path in files:
++            try:
++                content = await read_file_content(full_path, self.computer)
++            except Exception as e:  # unreadable / binary / missing: skipped, as the ranked path skips them
++                self.get_logger(task).info(f"File {full_path} skipped for the whole-codebase block: {e}")
++                continue
++            piece = format_file(full_path.relative_to(self.submission_dir), content) + "\n\n"
++            n = len(self.token_encoder.encode(piece, disallowed_special=()))
++            if total + n > max_tokens:
++                cache[category] = None  # does not fit: the upstream per-leaf ranking takes over
++                return None
++            pieces.append(piece)
++            total += n
++        cache[category] = "".join(pieces).rstrip("\n")
++        self.get_logger(task).info(f"Whole-codebase block for {category}: {len(pieces)} files, {total} tokens (PB_JUDGE_WHOLE_CODEBASE=1)")
++        return cache[category]
++
 +    def _resolve_selected_path(self, rel_path: str) -> Path | None:
 +        """[local] The path a selection line names, as it exists in the submission, or None.
 +
@@ -116,7 +244,26 @@ index 1fc0c2b..5e5d383 100644
      async def _prepare_relevant_files(
          self,
          task: TaskNode,
-@@ -410,11 +441,26 @@ class SimpleJudge(Judge):
+@@ -388,6 +450,18 @@ class SimpleJudge(Judge):
+         """
+         tree_structure = self.tree_structures[task.task_category or "Subtree"]
+ 
++        # [local] PB_JUDGE_WHOLE_CODEBASE=1 (2026-09-21): every leaf sees the whole submission in one fixed order and
++        # the per-leaf file-ranking call is skipped. Upstream always asks the model to rank files and takes the top
++        # `max_files` per leaf (its docstring's "entire codebase if it fits" branch never existed in the code); with a
++        # 1M-context judge the whole tree fits, the <files> block becomes byte-identical across a submission's leaves
++        # (prefix caching on api.deepseek.com then covers ~98% of every leaf's input), and file-selection failures
++        # (PITFALLS: a selection naming no existing file) cannot happen. A submission that does not fit falls back to
++        # the upstream ranking below. Scores under this switch are a different judge caliber from the upstream one.
++        if os.environ.get("PB_JUDGE_WHOLE_CODEBASE", "").strip() == "1" and task.task_category != "Result Analysis":
++            whole = await self._prepare_whole_codebase(task)
++            if whole is not None:
++                return whole
++
+         messages: list[ChatCompletionMessageParam] = [
+             {
+                 "role": "system",
+@@ -410,11 +484,26 @@ class SimpleJudge(Judge):
                  "content": f"Here are the files in the submission attempt:\n\nDirectory structure:\n{tree_structure}\n\nNow return a list of the {str(max_files) + ' ' if max_files else ''}most relevant files in order of relevance (descending) to the resolution criteria, to be provided for your inspection. Your response must contain each filename separated by newlines, with each file containing the full path. Do not write anything else.",
              },
          ]
@@ -148,7 +295,7 @@ index 1fc0c2b..5e5d383 100644
  
          selected_files_tokens = []
          num_files = 0
-@@ -424,19 +470,16 @@ class SimpleJudge(Judge):
+@@ -424,19 +513,16 @@ class SimpleJudge(Judge):
          )  # Buffer of 2k tokens
  
          file_content_tasks = [
@@ -172,6 +319,35 @@ index 1fc0c2b..5e5d383 100644
              try:
                  if isinstance(content, BaseException):
                      raise content
+@@ -549,6 +635,28 @@ class SimpleJudge(Judge):
+ 
+     @override
+     async def grade_leaf(self, task: TaskNode) -> GradedTaskNode:
++        # [local] With PB_JUDGE_WHOLE_CODEBASE=1 every leaf shares one ~200k-token prefix; a prefix cache is only built
++        # once a request has completed, so the first `concurrency` leaves would all miss it (fre/line3: 20 × 223k).
++        # The first leaf runs alone and warms the cache; the rest then run at full concurrency.
++        # SiliconFlow's cache became visible only on the 4th leaf when the first ran alone (5-leaf trial: 3 misses),
++        # so the first PB_JUDGE_WARM_LEAVES (default 3) leaves run one at a time.
++        warm = getattr(self, "_prefix_warm", None)
++        if warm is None:
++            warm = self._prefix_warm = asyncio.Event()
++            self._prefix_warm_lock = asyncio.Lock()
++            self._prefix_warm_done = 0
++        if os.environ.get("PB_JUDGE_WHOLE_CODEBASE", "").strip() == "1" and not warm.is_set():
++            async with self._prefix_warm_lock:
++                if not warm.is_set():
++                    try:
++                        return await self._grade_leaf_inner(task)
++                    finally:
++                        self._prefix_warm_done += 1
++                        if self._prefix_warm_done >= int(os.environ.get("PB_JUDGE_WARM_LEAVES", "3")):
++                            warm.set()
++        return await self._grade_leaf_inner(task)
++
++    async def _grade_leaf_inner(self, task: TaskNode) -> GradedTaskNode:
+         async with self.leaf_semaphore:
+             leaf_logger = self.get_logger(task)
+             leaf_std_logger = leaf_logger._logger
 diff --git a/project/paperbench/paperbench/nano/eval.py b/project/paperbench/paperbench/nano/eval.py
 index 52d2e67..50e5052 100644
 --- a/project/paperbench/paperbench/nano/eval.py

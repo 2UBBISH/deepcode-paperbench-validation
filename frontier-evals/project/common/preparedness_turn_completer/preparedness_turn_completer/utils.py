@@ -31,6 +31,9 @@ CONTEXT_WINDOW_LENGTHS: dict[str, int] = {
     "DeepSeek-V4-Pro": 1_000_000,
     # [local] Flash judge trial (2026-09-17): same route, bare name
     "DeepSeek-V4-Flash": 1_000_000,
+    # DeepSeek official serving (api.deepseek.com; judge since 2026-09-21 — automatic prefix caching)
+    "deepseek-flash": 1_000_000,
+    "deepseek-v4-pro": 1_000_000,
     "deepseek-ai/DeepSeek-V4-Flash": 1_000_000,
     "gpt-4o-mini": 128_000,
     "gpt-4o-mini-2024-07-18": 128_000,

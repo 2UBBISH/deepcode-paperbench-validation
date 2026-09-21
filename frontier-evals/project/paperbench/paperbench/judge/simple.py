@@ -379,6 +379,37 @@ class SimpleJudge(Judge):
         )
         return truncated_tree_structure
 
+    async def _prepare_whole_codebase(self, task: TaskNode) -> str | None:
+        """[local] The whole submission (the category's whitelisted files, sorted by path) formatted like the ranked
+        selection, or None when it does not fit the context budget (the caller then ranks as upstream does).
+        Cached per category: the block is the same for every leaf, which is the point."""
+        category = task.task_category or "Subtree"
+        cache = getattr(self, "_whole_codebase_cache", None)
+        if cache is None:
+            cache = self._whole_codebase_cache = {}
+        if category in cache:
+            return cache[category]
+        max_tokens = self.avail_context_lens[category] - 2000
+        files = sorted(await self._get_whitelisted_files(category), key=lambda p: str(p.relative_to(self.submission_dir)))
+        pieces: list[str] = []
+        total = 0
+        for full_path in files:
+            try:
+                content = await read_file_content(full_path, self.computer)
+            except Exception as e:  # unreadable / binary / missing: skipped, as the ranked path skips them
+                self.get_logger(task).info(f"File {full_path} skipped for the whole-codebase block: {e}")
+                continue
+            piece = format_file(full_path.relative_to(self.submission_dir), content) + "\n\n"
+            n = len(self.token_encoder.encode(piece, disallowed_special=()))
+            if total + n > max_tokens:
+                cache[category] = None  # does not fit: the upstream per-leaf ranking takes over
+                return None
+            pieces.append(piece)
+            total += n
+        cache[category] = "".join(pieces).rstrip("\n")
+        self.get_logger(task).info(f"Whole-codebase block for {category}: {len(pieces)} files, {total} tokens (PB_JUDGE_WHOLE_CODEBASE=1)")
+        return cache[category]
+
     def _resolve_selected_path(self, rel_path: str) -> Path | None:
         """[local] The path a selection line names, as it exists in the submission, or None.
 
@@ -418,6 +449,18 @@ class SimpleJudge(Judge):
             Context window is handled in the same way as above
         """
         tree_structure = self.tree_structures[task.task_category or "Subtree"]
+
+        # [local] PB_JUDGE_WHOLE_CODEBASE=1 (2026-09-21): every leaf sees the whole submission in one fixed order and
+        # the per-leaf file-ranking call is skipped. Upstream always asks the model to rank files and takes the top
+        # `max_files` per leaf (its docstring's "entire codebase if it fits" branch never existed in the code); with a
+        # 1M-context judge the whole tree fits, the <files> block becomes byte-identical across a submission's leaves
+        # (prefix caching on api.deepseek.com then covers ~98% of every leaf's input), and file-selection failures
+        # (PITFALLS: a selection naming no existing file) cannot happen. A submission that does not fit falls back to
+        # the upstream ranking below. Scores under this switch are a different judge caliber from the upstream one.
+        if os.environ.get("PB_JUDGE_WHOLE_CODEBASE", "").strip() == "1" and task.task_category != "Result Analysis":
+            whole = await self._prepare_whole_codebase(task)
+            if whole is not None:
+                return whole
 
         messages: list[ChatCompletionMessageParam] = [
             {
@@ -592,6 +635,28 @@ class SimpleJudge(Judge):
 
     @override
     async def grade_leaf(self, task: TaskNode) -> GradedTaskNode:
+        # [local] With PB_JUDGE_WHOLE_CODEBASE=1 every leaf shares one ~200k-token prefix; a prefix cache is only built
+        # once a request has completed, so the first `concurrency` leaves would all miss it (fre/line3: 20 × 223k).
+        # The first leaf runs alone and warms the cache; the rest then run at full concurrency.
+        # SiliconFlow's cache became visible only on the 4th leaf when the first ran alone (5-leaf trial: 3 misses),
+        # so the first PB_JUDGE_WARM_LEAVES (default 3) leaves run one at a time.
+        warm = getattr(self, "_prefix_warm", None)
+        if warm is None:
+            warm = self._prefix_warm = asyncio.Event()
+            self._prefix_warm_lock = asyncio.Lock()
+            self._prefix_warm_done = 0
+        if os.environ.get("PB_JUDGE_WHOLE_CODEBASE", "").strip() == "1" and not warm.is_set():
+            async with self._prefix_warm_lock:
+                if not warm.is_set():
+                    try:
+                        return await self._grade_leaf_inner(task)
+                    finally:
+                        self._prefix_warm_done += 1
+                        if self._prefix_warm_done >= int(os.environ.get("PB_JUDGE_WARM_LEAVES", "3")):
+                            warm.set()
+        return await self._grade_leaf_inner(task)
+
+    async def _grade_leaf_inner(self, task: TaskNode) -> GradedTaskNode:
         async with self.leaf_semaphore:
             leaf_logger = self.get_logger(task)
             leaf_std_logger = leaf_logger._logger

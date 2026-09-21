@@ -18,6 +18,8 @@
 
 ## 1. bam 三方对照（2026-09-15，当前唯一有效的对比数字）
 
+> owner 09-21：这一节的 DeepCode > Codex（0.837 vs 0.734）是**单次样本，不是稳定领先**；§1.3 fre 的 Codex 那份（0920_codex-exec）跑时**已带蓝图**，也不是裸跑。两个点都不能当"DeepCode 领先"的先验；线 vs Codex vs Claude 的有效对比从 fre / rice 三臂在同一裁判口径下齐了才开始。
+
 口径：`docs/INPUT_STANDARD.md`（材料五样字节级相同、裸跑用官方指令原文 + 冻结后缀、**思考开**、裁判恒定
 DeepSeek-V4-Pro @ Paratera、`PB_JUDGE_CONCURRENCY=20`、裁判已修选文件根目录 bug）。
 
@@ -118,6 +120,20 @@ Codex 赢的叶：walker(RND) 数据集（本线那叶是裁判截断的无效�
 读法：① 本线在有执行的 Codex 上界之上 +0.09，是自 sapg/pinn（0.32 / 0.68 量级）以来第一篇上 0.85 的；② fre 08 月作废批里 DeepCode 最好的 trial_fx2 也才 0.49（Pro 裁判、输入有偏），不可直接比；
 ③ 两边一起丢的集中在训练/评估节；④ 本线值得补一道 `py_compile` 静态检查（不算执行）。
 判分：两份 18 分钟；`grade.json` 在 `runs/fre/grades/`（bae9fba6 = line1，d1988ed0 = codex-exec），提交归档在 `~/pb_submissions_archive/fre/0920_{line1,codex-exec}/`。
+
+### 1.5 裁判口径改定：硅基流动 · 整棵树 · 裁判思考关 · Pro 解析器（2026-09-21，`run_grade.sh` 默认）
+
+09-21 一天里裁判换了三次 serving：官方 DeepSeek（json_schema 被拒 → json_object；两次半途作废花 ¥125；判分 key 在 fre 整树那份中途透支到 −¥8.67，165 叶无效，作废）→ 硅基流动（新 key）。最终口径：
+
+| 项 | 值 | 为什么 |
+| --- | --- | --- |
+| 裁判 | `deepseek-ai/DeepSeek-V4-Flash` @ api.siliconflow.cn，**整棵代码树**进每叶提示词（`PB_JUDGE_WHOLE_CODEBASE=1`，不再每叶选 10 文件；上游 docstring 里的"整库"分支从未存在） | 前缀缓存命中 ~98%，一份 306 叶 ¥32（02:00–08:00 半价 ¥16）；每叶选 10 在硅基约 ¥120；owner："挑十个反而容易错" |
+| 裁判思考 | **关**（`PB_JUDGE_THINKING=off` → `enable_thinking:false`，只作用于裁判调用） | JudgeEval 准确率不变（§7），输出 token 少 2/3 |
+| 解析器 | `deepseek-ai/DeepSeek-V4-Pro`，`PB_STRUCTURED_JSON_MODE=json_object`（schema 放 system，"回实例不回 schema"引导语，`model_validate_json` 校验） | Flash 解析器随机把 `Score: 0` 判无效（9/178；解析器也关思考时 23/178）；Pro 178/178 |
+
+**fre 第三份 = `fre/line3`（fre-t17，ADR 0004：蓝图 `Source:` 指针 → manifest → 整节读回 → 写前检查 → 审计只记录）**：**0.9210**，306 叶 0 无效，0.833 / 0.991 / 0.939（数据环境 / 方法 / 实验三个子树），2026-09-21 12:24，硅基整树、**思考开**（当时思考开关还没定；与最终默认口径差这一项，待重判）。`grade.json` 在 `runs/fre/grades/fre_9871437d_sf_tree_thinkon.grade.json`，存档 `~/Documents/0919-test/`。**§1.3 / §1.4 的分数是 Paratera 每叶选 10 口径的**，与 line3 不可直比；line1 / line2 不重判（owner）。
+
+从这一份起，Code-Dev 三臂（deepcode / codex / claude）的提交与分数统一收口在 `~/Documents/0919-test/`（README 在那里）。
 
 ### 1.4 fre 第二份：ADR 0003 结构化 Source 义务 + 读后写 + 语法检查（2026-09-20 晚，同裁判口径，306 叶）
 
@@ -248,6 +264,11 @@ rice bare_v4 判分侧诊断（SF vs PT）：每叶输入 60,757 vs 62,852 token
 | DeepSeek-V4-Pro @ SiliconFlow（08-26） | 0.685 | 0.685 | 0.449 | 严 9.0 pp | — | ¥27.7 | — |
 | DeepSeek-V4-Pro @ Paratera（09-03） | 0.719 | 0.719 | 0.449 | 严 9.0 pp（FP 17 / FN 33） | 7.98M / 0.44M | ¥28 | — |
 | **DeepSeek-V4-Flash @ Paratera（09-17）**，解析器仍 V4-Pro | **0.719** | **0.716** | **0.562** | **宽 2.2 pp**（FP 27 / FN 23） | 7.68M / 1.19M（+ Pro 解析 0.22M / 0.02M） | 未查账单；按 Flash ≈ Pro 单价 1/4 折算约 ¥13–25 | 9.5 min |
+
+| 硅基 V4-Flash 整树、裁判思考关、Flash 解析器（09-21 `0921c`） | 0.722（169 叶有效，**9 无效**） | F1 0.702 | — | prec 0.744 / rec 0.703 | 150.5M / 0.23M（整树：每叶 ~85 万入，缓存命中） | ≈ ¥40 | 72 min |
+| **硅基 V4-Flash 整树、裁判思考关、Pro 解析器**（同一批 0921c 裁判文本离线重解析，引导语修后 3 叶补解析） | **0.702–0.720**（**178 叶 0 无效**） | F1 0.686 | — | prec 0.719 / rec 0.688 | 解析器 0.24M / 0.09M | 解析器 ≈ ¥3 | — |
+
+整树 + 思考关不掉准确率（三种口径都在 0.70–0.72，同 gpt-4o 档）；差别全在解析器的有效率：Flash 解析器随机把明明白白的 `**Score: 0**` 判成"无效"（重跑一遍 8/9 有效——是噪声不是规律，加提示词也救不了），Pro 在 json_object 下会把 schema 原样吐回（2/178，引导语改成"回实例并给示例形状"后消失）。09-21 13:41 那一遍（`0921b`）178 叶全无效是 completer 把 `NOT_GIVEN` 传给了 `extra_body`，代码 bug，作废。原始输出 `runs/judge_eval/0921c_*/`（含 `reparse_pro*.json`）。
 
 Flash vs Pro（Paratera，同一批叶子）：叶级一致 138/178（77.5%）；都对 108、只 Flash 对 20、只 Pro 对 20、都错 30。
 准确率相同、偏向相反：Pro 偏严（把人判过的判挂），Flash 偏宽且更接近人工通过率。两者都在 gpt-4o 档（0.681），谁也不比谁准。

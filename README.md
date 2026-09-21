@@ -40,7 +40,7 @@ All earlier results (Aug 25 – Sep 15) are kept in `docs/RESULTS-HISTORY.md` wi
 | 黑名单 | `blacklist.txt` 在两层拦：git `insteadOf`（setup.sh）+ MCP 层 `DEEPCODE_URL_DENYLIST`（补丁） | setup.sh / run_trial.sh |
 | 预算 | 参考挖掘 40 轮 / 下载 12 轮；挖掘报告 32768、下载 16384、预筛 32000、分析 16000、关系 16000 token；规划限时 600 s；stall 7200 s；写码墙钟 21600 s；14 h 硬顶 | `run_trial.sh` 注入（补丁只把这些做成 env，默认全等于上游） |
 | 实验开关 | fix-①②③ **必须关**（§5.3） | `run_trial.sh` 拒绝 `=1` |
-| 判分 | PaperBench Code-Dev `code_only=True`（裁判只判 Code Development 叶，不执行代码），裁判 `PB_JUDGE_MODEL`：09-17 起 `DeepSeek-V4-Flash`，结构化解析器恒为 `DeepSeek-V4-Pro`（bam 批是 Pro 裁判）；`PB_JUDGE_CONCURRENCY=20`，`num_invalid_leaf_nodes ≤ 2` 才有效；四臂同一个裁判同一天判 | `run_grade.sh` |
+| 判分 | PaperBench Code-Dev `code_only=True`（裁判只判 Code Development 叶，不执行代码）。**09-21 起裁判走硅基流动**（`PB_JUDGE_PROVIDER=siliconflow` 默认）：裁判 `deepseek-ai/DeepSeek-V4-Flash`，**整棵代码树**进每叶提示词（`PB_JUDGE_WHOLE_CODEBASE=1`）、**思考关**（`PB_JUDGE_THINKING=off`）；结构化解析器 `deepseek-ai/DeepSeek-V4-Pro`（`PB_STRUCTURED_JSON_MODE=json_object`）；key 从 `PB_JUDGE_ENV_FILE`（默认 `~/Documents/env/siliconflow.env`）经环境变量注入。整树让每叶前缀字节相同、缓存命中 ~98%，一份 306 叶的 fre 约 ¥32（02:00–08:00 半价 ¥16）；JudgeEval 准确率 0.70–0.72 与 Paratera 每叶选 10 口径持平（RESULTS-HISTORY §7）。**09-17 → 09-20 的分数是 Paratera `DeepSeek-V4-Flash` + `DeepSeek-V4-Pro` 解析器判的**（`PB_JUDGE_PROVIDER=paratera` 仍可走），两种 serving 的分不混表（§5 serving 依赖 0.8–1.0×）；`PB_JUDGE_CONCURRENCY=20`，`num_invalid_leaf_nodes ≤ 2` 才有效；同一批同一个裁判同一天判 | `run_grade.sh` |
 
 ## 2.1 2026-09-20 批：三臂 × 20 篇（当前进行中）
 
@@ -49,9 +49,9 @@ All earlier results (Aug 25 – Sep 15) are kept in `docs/RESULTS-HISTORY.md` wi
 | 问题 | 同一底座、同一输入、都不执行代码的条件下，Codex 桌面版、Claude 桌面版和我们的 DeepCode 线差多少——论文 Table 1 没做这件事（Codex 等用 Sonnet 4.5-thinking，DeepCode 用自己的配置，然后说 4.4×；bam 同底座对照下 Codex 是 0.73 不是 0.19） |
 | 臂 | **Codex 桌面版、Claude 桌面版（Code 标签）**（分支 `0919-test` 的 `desktop_prep.sh` / `desktop_finish.sh`，owner 跑）、**DeepCode 臂 = DeepEvol Paper2Code 线**（另一个仓库，`--until compute` 的第 9 步树，`submit --dest-root`）。本仓库的 DeepCode 基线 `run_trial.sh` 不在本批里，只作历史对照 |
 | 论文 | PaperBench 全部 20 篇（`data/papers/` 的 `paper.md` + `addendum.md` + `blacklist.txt`）；`robust-clip` 的官方 `paper.md` 缺 §2–§3（`check_paper_md.py`），照跑但结论里单独标 |
-| 钉死的量 | 模型 `deepseek-flash` @ api.deepseek.com、**思考开**、**命令随便跑、只有长时间训练 / 评估不行（题面告知，事后审计）**、**上下文窗口三边都按 1M**（Codex `model_context_window`、DeepCode `contextWindow`、Claude 模型名带 `[1m]`）、输入同字节（md + addendum + blacklist，无 PDF/assets/rubric）、黑名单、裁判 Flash + Pro 解析器；每篇每臂 1 份；桌面臂题面 = 官方 `code_only_instructions.txt` + 官方附注 + 官方 `time_limit_template` 的"3 小时"句（官方语义：预期用满，除非核心贡献已复现完；不是硬上限，人不按表停，实际用时记 RUN_NOTES） |
+| 钉死的量 | 模型 `deepseek-flash` @ api.deepseek.com、**思考开**、**命令随便跑、只有长时间训练 / 评估不行（题面告知，事后审计）**、**上下文窗口三边都按 1M**（Codex `model_context_window`、DeepCode `contextWindow`、Claude 模型名带 `[1m]`）、输入同字节（md + addendum + blacklist，无 PDF/assets/rubric）、黑名单、裁判硅基 V4-Flash 整树思考关 + V4-Pro 解析器（09-21 起；之前 Paratera 每叶选 10）；每篇每臂 1 份；桌面臂题面 = 官方 `code_only_instructions.txt` + 官方附注 + 官方 `time_limit_template` 的"3 小时"句（官方语义：预期用满，除非核心贡献已复现完；不是硬上限，人不按表停，实际用时记 RUN_NOTES） |
 | 起跑 | 桌面臂：每篇每臂 `desktop_prep.sh` → 人在 app 里粘题面 → `desktop_finish.sh`（含 `audit_desktop.py`），产物 `results/<paper>/<arm>/`。本线：DeepEvol 仓库 `scripts/paper2code_canary.py init … --thinking enabled` + `run --until compute --env-file ~/Documents/env/deepseek.env`（`DEEPCODE_PAPER_FIDELITY=1` 默认开），见那边 README「生成到第 9 步并摆卷」。判分时把各 `submission/` 拷进 `~/pb_submissions/<paper>/<arm>` |
-| 判分 | 池子齐了按论文 `PAPER=<id> PB_JUDGE_MODEL=DeepSeek-V4-Flash bash deepcode_test/scripts/run_grade.sh`，数字回填 `RESULTS-HISTORY.md`（fre 第一对见 §1.3） |
+| 判分 | 池子齐了按论文 `PAPER=<id> bash deepcode_test/scripts/run_grade.sh`（09-21 起默认硅基：V4-Flash 整树思考关 + V4-Pro 解析器），数字回填 `RESULTS-HISTORY.md`（fre 第一对见 §1.3） |
 | 读法 | 单篇噪声 0.025（sapg 同份重跑）、历史组内摆动 0.09–0.19：20 篇看方向和一致性，差值 < 0.03 的篇补一份；n < 5 不说"优于" |
 | 局限 | 三臂都在无 GPU 的 Mac 上；桌面臂能做秒级检查（语法 / 导入 / 单测），本线对应加了 `compile()` 级语法检查（09-20 晚），但导入错误 / 属性不存在这类本线仍看不到；"短命令 vs 长实验"只靠题面约束 + 事后审计（10 min / 60 min 线），不靠机制拦；桌面版的会话审计依赖 app 本地日志格式 |
 
