@@ -792,27 +792,37 @@ class SimpleJudge(Judge):
             },
         ]
 
-        try:
-            ParsedJudgeResponse = (
-                ParsedJudgeResponseInt if not continuous else ParsedJudgeResponseFloat
-            )
-            completer = self.int_completer if not continuous else self.float_completer
-            completion = await completer.async_completion(conversation=messages)
+        # [local] The structured parser is itself a model call and fails transiently: on 2026-09-21 the V4-Pro parser
+        # returned "no judge response was provided" / a half-formed object for 6 of 612 fre leaves whose judge text
+        # carried an unambiguous score, and every one parsed on the first retry. Upstream raises on the first failure
+        # and the leaf becomes invalid (num_invalid_leaf_nodes > 2 voids the submission). Up to PB_PARSER_ATTEMPTS
+        # (default 3) attempts; a leaf whose judge text really has no score still comes back valid_score=False.
+        attempts = max(1, int(os.environ.get("PB_PARSER_ATTEMPTS", "3")))
+        last_error: Exception | None = None
+        usage = None
+        for attempt in range(attempts):
+            try:
+                ParsedJudgeResponse = (
+                    ParsedJudgeResponseInt if not continuous else ParsedJudgeResponseFloat
+                )
+                completer = self.int_completer if not continuous else self.float_completer
+                completion = await completer.async_completion(conversation=messages)
 
-            usage = None
-            if isinstance(completer, OpenAICompletionsTurnCompleter) and isinstance(
-                completion, OpenAICompletionsTurnCompleter.Completion
-            ):
-                usage = completion.usage
+                if isinstance(completer, OpenAICompletionsTurnCompleter) and isinstance(
+                    completion, OpenAICompletionsTurnCompleter.Completion
+                ):
+                    usage = completion.usage  # the last attempt's usage (retries are not summed; the caller expects CompletionUsage)
 
-            content = completion.output_messages[0].content
-            judge_response = ParsedJudgeResponse.model_validate_json(content) if content else None
+                content = completion.output_messages[0].content
+                judge_response = ParsedJudgeResponse.model_validate_json(content) if content else None
 
-            if judge_response is None:
-                raise ParseError(f"Response could not be parsed: {content}")
-            elif not (0 <= judge_response.score <= 1):
-                raise ParseError(f"Score is not between 0 and 1: {judge_response.score}")
-
-            return judge_response, usage
-        except Exception as e:
-            raise ParseError(e) from e
+                if judge_response is None:
+                    raise ParseError(f"Response could not be parsed: {content}")
+                elif not (0 <= judge_response.score <= 1):
+                    raise ParseError(f"Score is not between 0 and 1: {judge_response.score}")
+                if judge_response.valid_score or attempt == attempts - 1:
+                    return judge_response, usage
+                last_error = ParseError(f"parser said no valid score (attempt {attempt + 1}): {judge_response.explanation[:120]}")
+            except Exception as e:
+                last_error = e
+        raise ParseError(last_error) from last_error

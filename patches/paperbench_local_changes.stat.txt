@@ -1,7 +1,7 @@
- project/common/preparedness_turn_completer/preparedness_turn_completer/oai_completions_turn_completer.py |   67 ++++
+ project/common/preparedness_turn_completer/preparedness_turn_completer/oai_completions_turn_completer.py |   67 ++-
  project/common/preparedness_turn_completer/preparedness_turn_completer/utils.py                          |   11 
  project/paperbench/paperbench/grade.py                                                                   |   11 
- project/paperbench/paperbench/judge/simple.py                                                            |  136 ++++++++--
- project/paperbench/paperbench/nano/eval.py                                                               |   17 -
+ project/paperbench/paperbench/judge/simple.py                                                            |  194 ++++++++--
+ project/paperbench/paperbench/nano/eval.py                                                               |   17 
  project/paperbench/paperbench/utils.py                                                                   |    5 
- 6 files changed, 217 insertions(+), 30 deletions(-)
+ 6 files changed, 251 insertions(+), 54 deletions(-)
