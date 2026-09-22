@@ -63,26 +63,33 @@ JudgeEval 校准（rice/0，178 人工标注 Code-Dev 叶）：
 
 "判出"是 `run_grade.sh` 落盘的分（无效叶按 0 计，>2 个即作废）；"补解析"= 同一批裁判文本里无效叶用同一个 Pro 解析器离线再解析（09-21 全部第一次重试即过，都是解析器瞬时抽风，`grades/*.reparsed.json`）。09-21 19:20 起 `simple.py` 解析失败自动重试 3 次（`PB_PARSER_ATTEMPTS`），之后的判分不再需要补解析。fre 早前思考开那份 0.9210（`fre_deepcode_9871437d_sf_tree_thinkon`）留档不入表。
 
-Codex 臂（owner 09-20 起跑，`codex/results/`，10 篇全部 `CALIBER_REVIEW`：单条命令最长 30 s，总计最多 28 min，没有一篇越过 10 min / 60 min 线；每篇 RUN_NOTES 都有"blacklist mentioned in README"提示 —— 是引用还是抄代码，owner 过一眼）：
+Codex 臂（owner 跑，`codex/<paper>/`）。**时长按会话日志的首末事件算**（`desktop_finish.sh` 打印的 "finished after N min" 是从 `desktop_prep.sh` 建工作区起算的，09-20 晚建了 8 个工作区、其中 4 篇第二天上午才打开 Codex，所以那里出现过 850–1090 min 的假数字；mechanistic-understanding 的 727 min 里 577 min 是 00:28 之后的空闲，收尾时才多一个事件）。全部 `CALIBER_REVIEW`：单条命令最长 30 s，总计最多 28 min，没有一篇越过 10 min / 60 min 线。
 
-| 论文 | 起跑 | 结束（墙钟） | 跑过的命令 / 总时长 | py 文件 |
+| 论文 | 会话开始 | 会话时长 | 跑过的命令 / 总时长 | py 文件 |
 | --- | --- | --- | --- | --- |
-| fre | 09-20 16:40 | 188 min | 14 / <1 min | 30 |
-| rice | 09-20 16:40 | 193 min | 105 / 28 min | 53 |
-| adaptive-pruning | 09-20 19:52 | 852 min | 93 / 20 min | 33 |
-| all-in-one | 09-20 19:52 | 908 min | 45 / 6 min | 30 |
-| bam | 09-20 19:51 | 853 min | 158 / 15 min | 30 |
-| bbox | 09-20 19:52 | 908 min | 48 / 6 min | 67 |
-| bridging-data-gaps | 09-20 19:52 | 1093 min | 91 / 9 min | 39 |
-| ftrl | 09-20 19:52 | 1093 min | 60 / 11 min | 50 |
-| mechanistic-understanding | 09-20 19:52 | 853 min | 48 / 6 min | 41 |
-| pinn | 09-20 19:51 | 853 min | 73 / 10 min | 25 |
+| fre | 09-20 16:45 | 76 min | 14 / <1 min | 30 |
+| rice | 09-20 16:56 | 123 min | 105 / 28 min | 53 |
+| bam | 09-20 20:05 | 108 min | 158 / 15 min | 30 |
+| pinn | 09-20 20:05 | 119 min | 73 / 10 min | 25 |
+| mechanistic-understanding | 09-20 21:57 | 150 min（+577 min 空闲） | 48 / 6 min | 41 |
+| adaptive-pruning | 09-20 22:11 | 77 min | 93 / 20 min | 33 |
+| all-in-one | 09-21 10:08 | 52 min | 45 / 6 min | 30 |
+| bbox | 09-21 10:08 | 41 min | 48 / 6 min | 67 |
+| bridging-data-gaps | 09-21 11:04 | 49 min | 91 / 9 min | 39 |
+| ftrl | 09-21 11:04 | 60 min | 60 / 11 min | 50 |
+| lca-on-the-line | 09-21 18:04 | 83 min | 65 / 15 min | 26 |
+| lbcs | 09-21 18:05 | 96 min | 60 / 13 min | 33 |
+| robust-clip | 09-21 20:10 | 29 min | 64 / 7 min | 45 |
+| sample-specific-masks | 09-21 20:10 | 55 min | 42 / 4 min | 22 |
+| sapg | 09-21 20:31 | 21 min | 51 / 3 min | 44 |
+| sequential-neural-score-estimation | 09-21 20:31 | 125 min | 70 / 10 min | 28 |
+| stay-on-topic-with-classifier-free-guidance | 09-21 21:00 | 16 min | 27 / 4 min | 30 |
+| stochastic-interpolants | 09-21 21:01 | 92 min | 57 / 14 min | 29 |
+| test-time-model-adaptation | 09-21 21:24 | 74 min | 85 / 11 min | 42 |
+| what-will-my-model-forget | 09-21 21:25 | 110 min | 50 / 11 min | 46 |
+| robust-clip†（补全版输入重跑） | 09-22 10:37 | 106 min | 153 / 19 min | 42 |
 
-（09-20 晚 8 篇是并行起的，墙钟含等待；`codex/work/` 里还有 10 个工作目录没有 results —— lbcs、lca-on-the-line、robust-clip、sample-specific-masks、sapg、sequential-neural-score-estimation、stay-on-topic…、stochastic-interpolants、test-time-model-adaptation、what-will-my-model-forget。）
-
-**fre 消融**（同一天同口径，唯一变量 `DEEPCODE_PAPER_FIDELITY`）：保真开 0.961 / 保真关 0.862 / Codex 0.914 —— 蓝图 `Source:` 指针 + 整节读回 + 写前检查这一套值 **+0.10**；关掉之后线比 Codex 还低 0.05。一篇一份，噪声 0.025。
-
-**robust-clip 0.642 vs 0.906 的原因（09-22 查）**：两个因素。① 输入：官方 `paper.md`（PDF 是 LFS 指针，md 是唯一输入）在 §1 引言第 4 段句中截断（"it is foreseeable that they"），下一行就是 Table 1 和 `\subsection*{4.1…}`——§1 后半、§2 相关工作、**§3 方法（TeCoA/FARE 损失、冻结文本编码器、训练设置）**、§4 开头整体缺失；§4.1、§4.4、附录 B.1–B.10（B.6 无目标攻击细节、B.8 定向攻击细节）都在。② planner：14 条 `Source:` 全部写 `§Addendum`，一条都没指向存在的 §4.1 / B.6 / B.8；`train_robust_clip.py` 当 glue。deepcode 独丢 16 叶：TeCoA 交叉熵损失、文本编码器冻结属于缺失的 §3（无解）；VQAv2 数据集（§4.1 有）、定向攻击流程（Table 3 / B.8 有）、APGD 10000 步（B.8/B.9 有）是 planner 没指、写码没读。Codex 没抓论文（审计只有 auto-attack / cider 的 curl），靠记忆补的。对比表里这篇单独标注。
+中位 76 min；我们线一篇 40–100 min（含 index），量级相同。
 
 有效对比的定义：同一论文三臂都在上面的裁判口径下有分。目前 0 组。前史里的数字（bam 09-15 DeepCode 0.837 vs Codex 0.734 单次样本；fre 09-20 白天 Codex 带蓝图且跑了实验 0.785）都不作先验。
 
