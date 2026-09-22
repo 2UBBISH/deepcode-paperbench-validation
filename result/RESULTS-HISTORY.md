@@ -137,6 +137,8 @@ Codex 赢的叶：walker(RND) 数据集（本线那叶是裁判截断的无效�
 
 ### 1.6 09-22 夜：18 篇 deepcode（t19）+ Codex 树的第一夜判分（硅基半价窗，4 路并行）
 
+> 模型身份（owner 09-22）：官渠 `deepseek-flash` 别名现在指 **DeepSeek-V4.1-Flash**，API 不暴露版本号。09-19 之后所有走 api.deepseek.com 的生成（线 t17/t19/t18/t20、Codex 桌面臂）都是 V4.1-Flash，两臂一致；§1.1–1.4 的 Paratera `DeepSeek-V4-Flash` 是 V4，与本节不混。SA-Bench 09-19 三臂是 Paratera V4，重跑要三臂同 serving。
+
 7 篇成对（同口径：硅基 V4-Flash 整树思考关 + V4-Pro 解析器重试 3 次）：
 
 | 论文 | deepcode（t19 / t17） | Codex 桌面 |

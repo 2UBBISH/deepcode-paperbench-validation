@@ -12,7 +12,7 @@ PaperBench Code-Dev 上三臂对比（DeepEvol 的 DeepCode 线 · Codex 桌面�
 
 ## 口径（详见 `paperbench/docs/INPUT_STANDARD.md`、`result/README.md`）
 
-- 三臂同一底座 `deepseek-flash` @ api.deepseek.com（DeepSeek-V4-Flash 官方），思考开，1M 上下文；同一份输入字节；不给 PDF、assets、rubric。
+- 三臂同一底座 `deepseek-flash` @ api.deepseek.com（官渠别名，09-22 起对应 **DeepSeek-V4.1-Flash**；Paratera 的 `DeepSeek-V4-Flash` 是旧的 V4），思考开，1M 上下文；同一份输入字节；不给 PDF、assets、rubric。
 - 执行规则：命令允许，只有长时间 CPU/GPU 训练或评估不允许（题面告知，`audit_desktop.py` 事后审计 10 min / 60 min）；我们线的写码 agent 无执行工具，生成后只做 `compile()` 级语法检查。对比停在第 9 步的树。
 - 裁判（09-21 起）：硅基流动 `deepseek-ai/DeepSeek-V4-Flash` 整树、思考关；解析器 `deepseek-ai/DeepSeek-V4-Pro`；`num_invalid_leaf_nodes ≤ 2` 才有效；JudgeEval rice/0 准确率 0.70–0.72（178/178 有效）。
 
