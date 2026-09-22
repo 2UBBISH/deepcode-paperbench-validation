@@ -1,0 +1,26 @@
+# 与 rsa/remote_backend.py:255-258 的内联 Dockerfile 同源。
+# 预先建好并打上 rsa-grader:py311-v1，_ensure_grader_image() 的
+# `docker image inspect` 就会命中并跳过远端构建。
+#
+# grader 以 `--network none` + 只读判据挂载 + 挂 /var/run/docker.sock 运行，
+# 所以 SSH 宿主机和目标容器里都不需要装 pytest。
+FROM docker:27.5-cli AS docker_cli
+FROM python:3.11-slim
+COPY --from=docker_cli /usr/local/bin/docker /usr/local/bin/docker
+
+# ★ 钉版本 + **构建期当场验证**。
+#
+#   2026-08-25 实测：不钉版本时装到了 pytest 9.1.1，而拉下来的包是**坏的** ——
+#   `pytest/__init__.py` 是空模块（dir() 里一个公开属性都没有），
+#   pip 连自己写的 dist-info 都读不回来
+#   （"invalid metadata entry 'name'"，pygments/pluggy/iniconfig 同样）。
+#   后果极其隐蔽：`import pytest` **不报错**，`python -m pytest` 退出码 0 且
+#   一声不吭，于是 rsa 的 collect_test_ids 收不到任何 id，
+#   最终报成「criteria_G2.py: pytest collected no tests」——
+#   一句听起来完全像是判据写错了的话。中间隔着四层，排查花了很久。
+#
+#   所以这里做两件事：钉一个已知可用的版本；并且**在构建期就跑一次**，
+#   跑不出版本号就让 build 失败。装完不验，等于把坏镜像烘进基础镜像。
+RUN python -m pip install --no-cache-dir "pytest==8.3.4" \
+ && python -m pytest --version \
+ && python -c "import pytest; assert pytest.__version__, 'pytest 模块是空的'"

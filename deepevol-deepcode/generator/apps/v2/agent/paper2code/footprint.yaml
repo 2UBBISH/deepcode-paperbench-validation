@@ -1,0 +1,37 @@
+# The Paper2Code line's footprint outside its own paths (after reproduction-c's ADR-0005 guard).
+# SNAPSHOT NOTE (validation repository): the two data_contracts registrations of the DeepEvol repo are not part of this copy.
+#
+# Every file the line owns has "paper2code" somewhere in its path (apps/v2/agent/paper2code,
+# apps/v2/agent_engine/paper2code, scripts/paper2code_canary.py, tests/v2_paper2code). Any other file that
+# mentions the line must be registered here; tests/v2_paper2code/test_footprint.py fails on an unregistered
+# file, on a registered file that no longer mentions the line, and on a bounded entry that grew past `lines`.
+#
+# kinds: registration | composition | logic | contract | generated | test | tooling (see reproduction-c).
+
+scan_roots: [apps, scripts, deploy, tests, docs, Agent, config]
+excluded_trees:
+  - apps/web/node_modules
+  - apps/web/.next
+  - apps/web/public
+  - apps/v2/agent_engine/ppt_master_skill
+  - Agent/third_party
+  - Agent/DeepEvol.egg-info
+  - docs/audits
+excluded_suffixes: [.tsbuildinfo, .png, .jpg, .pdf, .zip, .pyc, .lock]
+excluded_files: []
+
+registrations:
+  - path: pyproject.toml
+    kind: registration
+    lines: 9
+    note: the engine's dependencies (comment), the ruff exclusion of the vendored engine and of vendor/paperbench-judge
+  - path: CONTEXT.md
+    kind: registration
+    lines: 7
+    note: the Paper2Code line, its phases, the denylist and the run directory in the glossary
+  - path: deploy/experiment-images/Dockerfile.setupx-base
+    kind: logic
+    lines: 4
+    note: the pip index moved to tuna (mirrors.aliyun.com serves pip's HTTP/1.1 at 0.25 MB/s from cn-hongkong) and, T4, torch 2.1.2 + torchvision pre-installed behind TORCH_INDEX_URL (cpu default; the line's bootstrap passes cu121 on GPU hosts); the comments cite the line's measurements
+
+foreign: []

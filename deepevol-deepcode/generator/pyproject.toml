@@ -1,0 +1,214 @@
+[project]
+name = "deepevol-product-api"
+version = "0.1.0"
+description = "Snapshot of the DeepEvol Paper2Code line (apps/v2/agent/paper2code + engine + the modules it imports) for the PaperBench validation repository."
+requires-python = ">=3.11"
+dependencies = [
+    # vendored PaperOrchestra（apps/v2/agent_engine/paperorchestra）直接 import 这两个。
+    # 2026-09-09 引擎从 Agent/ 搬进 apps/v2 之前，它们靠 Agent 依赖集的传递依赖凑巧满足；
+    # 现在引擎属于产品侧，必须显式声明，否则论文线报 ModuleNotFoundError: openai。
+    "openai>=1.0",
+    "tqdm>=4.66",
+    "rich>=13.0",
+    "thefuzz>=0.22",
+    "json-repair>=0.30",
+    "joblib>=1.4",
+    "matplotlib>=3.8",
+    "pymupdf4llm>=0.0.17",
+    "opencv-python-headless>=4.9",
+    "aiometer>=1.0.0",
+    "alibabacloud-credentials>=1.0",
+    "alibabacloud-dypnsapi20170525>=1.2",
+    "alibabacloud-tea-openapi>=0.3",
+    "alibabacloud-tea-util>=0.3",
+    "alembic>=1.13",
+    "cryptography>=46.0,<47",
+    "fastapi>=0.115",
+    "httpx>=0.27,<1.0",
+    "jinja2>=3.1.6",
+    "jsonschema[format]>=4.23,<5",
+    "openpyxl>=3.1",
+    "paramiko>=3.4",
+    "Pillow>=9.2",
+    "psycopg[binary]==3.3.4",
+    "psycopg-pool==3.3.1",
+    "pydantic-settings>=2.0",
+    "pymupdf>=1.24",
+    "pyyaml>=6.0",
+    "pypdf>=5.0,<7.0",
+    "python-docx>=1.1",
+    "python-pptx>=1.0",
+    "reportlab>=4.0",
+    "sqlalchemy>=2.0",
+    "svglib>=1.5,<1.6",
+    "uvicorn[standard]>=0.34",
+    "langfuse>=4.13,<5",
+    # apps/v2/agent imports these directly at module scope (the durable graph,
+    # its checkpoint serde, and the tool-invocation middleware). They used to
+    # arrive only because the deployment installed the Agent's lock on top,
+    # which made a plain `uv sync` unable to run the V2 agent tests.
+    "langchain>=1.3,<2",
+    "langgraph>=1.2,<2",
+    "langgraph-checkpoint-postgres==3.1.0",
+    "argon2-cffi>=23.1,<26",
+    "redis[hiredis]>=5.2,<7",
+    "geoip2>=4.8,<6",
+    # vendored Paper2Code engine (apps/v2/agent_engine/paper2code) and its
+    # in-process tool servers. `mcp` is imported only for the FastMCP
+    # decorators and the Tool types; no MCP process is ever spawned, so the
+    # V2 "no MCP" boundary holds. asyncssh is for the vendored remote_relay
+    # under apps/v2/agent/paper2code/execution; its upper bound follows the
+    # cryptography<47 pin above (see PLAN.md §7).
+    "loguru>=0.7",
+    "mcp>=1.29,<2",
+    "aiohttp>=3.9",
+    "aiofiles>=23",
+    "asyncssh>=2.14,<2.22",
+]
+
+[project.optional-dependencies]
+asset-runtime = [
+    # S3-compatible storage is the only production Asset authority. Keep its
+    # SDK explicit so the V2 File image never borrows the retired File lock.
+    "boto3>=1.35,<2",
+]
+agent-runtime = [
+    # Strict V2 Agent runtime and the V2-owned presentation bundle.  This
+    # deliberately replaces installing the retired Agent project in the
+    # production Agent image.
+    "beautifulsoup4>=4.12",
+    "curl-cffi>=0.7",
+    "ebooklib>=0.18",
+    "edge-tts>=7.2.8",
+    "flask>=3.0",
+    "google-genai>=1.0",
+    "mammoth>=1.6",
+    "markdownify>=0.14",
+    "nbconvert>=7.0",
+    "numpy>=1.20",
+    "requests>=2.31",
+    "zstandard>=0.23,<1",
+    # DeepResearch pipeline (apps/v2/agent_engine/research + vendored
+    # gpt_researcher), moved out of Agent/ on 2026-09-13. Floors mirror
+    # Agent/pyproject.toml. Optional Provider SDKs stay out: the pipeline only
+    # ever talks to the V2 Gateway for model calls.
+    "aiofiles>=23.2.1,<25",
+    "arxiv>=2.0.0",
+    "colorama>=0.4.6",
+    "ddgs>=9.0.0",
+    "deepxiv-sdk==0.3.1",
+    "langchain-classic>=1.0.0",
+    "langchain-community>=0.4.0",
+    "langchain-openai>=1.1",
+    "langchain-text-splitters>=1.0.0",
+    "markdown>=3.5.1",
+    "pypinyin>=0.52",
+    "python-dotenv>=1.0.0",
+    "tavily-python>=0.7",
+    "tiktoken>=0.7.0",
+    "webserp>=0.1.4",
+    # Experiment Agent (apps/v2/agent_engine/experiment + vendored rsa /
+    # remote_relay / setupx), moved out of Agent/ on 2026-09-15.
+    # asyncssh: remote_relay's SSH transport. Upper bound mirrors the Agent
+    # lock note: >=2.22 wants a cryptography with ML-KEM whose macOS wheel
+    # dlopen-fails locally; CI/Linux is unaffected either way.
+    "asyncssh>=2.14,<2.22",
+    # docker SDK: setupx/src/environment_manager.py imports it at module top.
+    "docker>=7.0.0",
+]
+dev = [
+    "aiosqlite>=0.20,<1",
+    "boto3>=1.35,<2",
+    "httpx>=0.27,<1.0",
+    "jsonschema[format]>=4.23,<5",
+    "langgraph-checkpoint-sqlite>=3,<4",
+    "pytest>=8.0,<9.0",
+    # vendored remote_relay upstream tests are asyncio_mode=auto.
+    "pytest-asyncio>=0.23",
+    "pytest-timeout>=2.4",
+    "ruff>=0.5",
+]
+
+[dependency-groups]
+dev = [
+    "aiosqlite>=0.20,<1",
+    "boto3>=1.35,<2",
+    "httpx>=0.27,<1.0",
+    "jsonschema[format]>=4.23,<5",
+    "langgraph-checkpoint-sqlite>=3,<4",
+    "pytest>=8.0,<9.0",
+    "pytest-asyncio>=0.23",
+    "pytest-timeout>=2.4",
+    "ruff>=0.5",
+]
+
+[tool.setuptools.packages.find]
+include = ["apps*"]
+exclude = [
+    "apps.web*",
+    "Agent*",
+    "key*",
+    "tests*",
+    "docs*",
+    "scripts*",
+]
+namespaces = false
+
+[tool.setuptools.package-data]
+"*" = ["*.md", "*.yaml", "*.yml", "*.json", "*.txt", "*.j2", "*.sh", "Dockerfile*"]
+
+[tool.uv]
+# pymupdf4llm pulls pymupdf-layout, whose onnxruntime dependency has no wheel
+# for Intel macOS on modern CPython. Keep the optional layout accelerator off
+# only on that unsupported target; Linux release images and Apple Silicon keep
+# the normal dependency.
+override-dependencies = [
+    "onnxruntime ; sys_platform != 'darwin' or platform_machine != 'x86_64'",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = [".", "Agent"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+exclude = [
+    ".venv",
+    "__pycache__",
+    ".pytest_cache",
+    "vendor/paperbench-judge",  # paper2code: vendored PaperBench judge scripts (VENDOR.md), not ours to lint
+    "apps/web/node_modules",
+    "apps/web/.next",
+    "Agent/sessions",
+    "sessions",
+    "Agent/DeepEvol/ppt_agent/upstream",
+    # Bundled "skill" packages. They ship their own code style (own SKILL.md,
+    # requirements, templates) and are not linted as product source.
+    "Agent/DeepEvol/skills",
+    "apps/v2/agent_engine/ppt_master_skill",
+    # vendored PaperOrchestra：与上面两条同理，它是外部代码的适配副本，有自己的
+    # 风格与 DEEPEVOL_ADAPTATION.md，不按产品源码 lint。2026-09-09 随论文引擎
+    # 从 Agent/third_party 搬进来，排除项跟着搬。
+    "apps/v2/agent_engine/paperorchestra",
+    # vendored 文献检索域：从 V1 的 Agent/DeepEvol 整文件复制过来，好让 V2 的 agent
+    # 镜像不必再 COPY Agent（依赖边界禁止）。它保持 V1 的风格以便双向 diff，
+    # 按产品源码 lint 只会制造两份的无谓差异。
+    "apps/v2/agent_engine/literature",
+    # vendored Paper2Code engine (DeepCode business layer): external code with
+    # its own style and VENDOR.md; only the listed patches differ from source.
+    "apps/v2/agent_engine/paper2code",
+    # vendored remote_relay (from feature/reproduction-c) under the paper2code line: not lint-owned.
+    "apps/v2/agent/paper2code/execution/remote_relay",
+    "apps/v2/agent_engine/gpt_researcher",
+]
+
+[tool.ruff.lint]
+select = ["E", "F", "B", "C4", "PT", "PLE", "RUF"]
+ignore = [
+    "E501",
+    "RUF001",
+    "RUF002",
+    "RUF003",
+    "B008",
+]

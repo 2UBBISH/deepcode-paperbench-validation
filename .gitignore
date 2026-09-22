@@ -26,3 +26,7 @@ run.log
 result/codex/**/data/cifar-10*
 result/codex/**/artifacts/probe/features/
 *.npz
+
+# gitignore for the generator snapshot: its venv and run state
+deepevol-deepcode/generator/.venv/
+deepevol-deepcode/generator/**/__pycache__/

@@ -1,0 +1,88 @@
+{
+  "_comment": [
+    "The seven MCP servers the Paper2Code path names in `server_names`.",
+    "Five are shipped in this tree under tools/; `filesystem` and `fetch` are",
+    "external packages. Replace {KERNEL_ROOT} with the absolute path of this",
+    "directory, {PYTHON} with the interpreter that has this tree's deps, and",
+    "{WORKSPACE} with the directory the filesystem server may read.",
+    "Feed the result into KernelConfig.tools.mcp_servers as MCPServerConfig",
+    "entries keyed by name. Which phase needs which server is in",
+    "docs/INTEGRATION.md.",
+    "The planner (run_code_analyzer) connects no servers: it receives the paper or the ranked segments inline."
+  ],
+  "servers": {
+    "filesystem": {
+      "type": "stdio",
+      "command": "node",
+      "args": [
+        "{NODE_MODULES}/@modelcontextprotocol/server-filesystem/dist/index.js",
+        "{WORKSPACE}"
+      ],
+      "package": "@modelcontextprotocol/server-filesystem (npm)",
+      "used_by": [
+        "paper_reference_analyzer",
+        "github_repo_download"
+      ]
+    },
+    "fetch": {
+      "type": "stdio",
+      "command": "mcp-server-fetch",
+      "args": [],
+      "package": "mcp-server-fetch (pip / uvx)",
+      "used_by": [
+        "paper_reference_analyzer"
+      ]
+    },
+    "github-downloader": {
+      "type": "stdio",
+      "command": "{PYTHON}",
+      "args": [
+        "{KERNEL_ROOT}/tools/git_command.py"
+      ],
+      "used_by": [
+        "github_repo_download"
+      ]
+    },
+    "document-segmentation": {
+      "type": "stdio",
+      "command": "{PYTHON}",
+      "args": [
+        "{KERNEL_ROOT}/tools/document_segmentation_server.py"
+      ],
+      "used_by": [
+        "DocumentSegmentationAgent",
+        "CodeImplementationWorkflow (indexed mode)"
+      ]
+    },
+    "code-implementation": {
+      "type": "stdio",
+      "command": "{PYTHON}",
+      "args": [
+        "{KERNEL_ROOT}/tools/code_implementation_server.py"
+      ],
+      "used_by": [
+        "CodeImplementationWorkflow"
+      ]
+    },
+    "code-reference-indexer": {
+      "type": "stdio",
+      "command": "{PYTHON}",
+      "args": [
+        "{KERNEL_ROOT}/tools/code_reference_indexer.py"
+      ],
+      "used_by": [
+        "CodeImplementationWorkflow (indexed mode)"
+      ]
+    },
+    "command-executor": {
+      "type": "stdio",
+      "command": "{PYTHON}",
+      "args": [
+        "{KERNEL_ROOT}/tools/command_executor.py"
+      ],
+      "used_by": [
+        "CodeImplementationWorkflow.create_file_structure"
+      ]
+    }
+  }
+}

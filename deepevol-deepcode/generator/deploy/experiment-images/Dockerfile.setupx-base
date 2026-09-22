@@ -1,0 +1,45 @@
+# rsa / setupx 的默认 base_image（`setupx-base:py310-proxy`）。
+#
+# 上游没有提供这个 Dockerfile，本文件是 DeepEvol 按它的实际用法重建的：
+#   · py310  —— 名字如此，且 setup loop 会在容器里 pip install 目标仓的依赖
+#   · -proxy —— 按国内机器的实际需要，理解为「把 apt / pip 镜像烘进去」。
+#               容器跑的是 `network_mode=host`，直连 pypi/deb.debian.org 极慢。
+#   · git    —— rsa 的 create_container 与 setupx 的 _setup_container 都会
+#               `apt-get install git` 后再 clone；预装省掉每次几十秒。
+FROM python:3.10
+
+RUN sed -i 's#//deb.debian.org#//mirrors.aliyun.com#g; s#//security.debian.org#//mirrors.aliyun.com#g' \
+      /etc/apt/sources.list.d/debian.sources /etc/apt/sources.list 2>/dev/null || true
+
+# pip's index. ★ Not mirrors.aliyun.com: measured from a cn-hongkong ECS (2026-09-18, Paper2Code line, sapg-2 GPU
+#   run) its wheel downloads run at ~0.25 MB/s over HTTP/1.1 — which is what pip speaks — while the same URL over
+#   HTTP/2 (curl's default) does 14 MB/s. A 554 MB torch wheel took 25 minutes and its ~3 GB of nvidia-* CUDA
+#   wheels would have taken hours; the earlier CPU-torch crawl (1–2 MB/s, PITFALLS D) was the same thing. The
+#   tuna mirror serves HTTP/1.1 at 12 MB/s from the same machine (download.pytorch.org too, for CUDA wheels).
+RUN pip config set global.index-url https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple \
+ && pip config set global.trusted-host mirrors.tuna.tsinghua.edu.cn \
+ && pip config set global.timeout 120
+
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends git ca-certificates curl \
+ && rm -rf /var/lib/apt/lists/*
+
+# torch pre-installed (Paper2Code line T4, 2026-09-18). SetupX's first round on every machine was 8–66 minutes of
+# `pip install torch` (the CUDA build pulls ~3 GB of nvidia-* wheels; measured 1–12 MB/s from cn-hongkong), and
+# pip keeps an installed torch that satisfies the requirement — of the ten requirement pins the generated
+# repositories wrote so far, nine admit 2.1.2 (`>=1.13`, `<2.2`, `<2.3`, `<3`); only `<2.0` does not.
+# TORCH_INDEX_URL picks the build: the CPU wheels (default, what main's bootstrap.sh builds on a CPU machine) or
+# cu121 — apps/v2/agent/paper2code/execution/machine_bootstrap.py passes it after asking the host for nvidia-smi.
+# ★ Parked on 2026-09-18 21:50 (T5 pinn): with torch importable in the bare image, RSA's falsifier rejects any G0
+#   whose import check is "torch + the repository's own package" (the compiler derives that list from the entry's
+#   imports and ignores the goal), and the run stops before the controller starts. TORCH_INDEX_URL therefore
+#   defaults to empty = no torch layer; the bootstrap passes an index only when PAPER2CODE_TORCH_PREINSTALL=1.
+#   The way out is a wheelhouse (wheels cached, torch not installed) — T4b in PLAN-3.
+ARG TORCH_INDEX_URL=
+ARG TORCH_VERSION=2.1.2
+ARG TORCHVISION_VERSION=0.16.2
+RUN if [ -n "${TORCH_INDEX_URL}" ]; then \
+      pip install --no-cache-dir "torch==${TORCH_VERSION}" "torchvision==${TORCHVISION_VERSION}" \
+        --index-url "${TORCH_INDEX_URL}" --extra-index-url https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple \
+      && python -c "import torch, torchvision; print(torch.__version__, torchvision.__version__)"; \
+    else echo "torch not pre-installed (TORCH_INDEX_URL empty)"; fi
