@@ -128,7 +128,12 @@ uv run python -m paperbench.nano.entrypoint \
 
 echo ""
 echo "==== [4/4] 结果与有效性核验 $(date +%F\ %T) ===="
-G=$(ls -t runs/ | head -1)
+# [4/4] reads THIS paper's newest run group, not the newest group of any paper: with several papers graded at once
+# (night of 09-21/22, four workers) `ls -t runs/ | head -1` was another paper's still-empty group and nothing was
+# copied ("NO grade.json" for a grading that had finished). A grading's own group is the newest one holding a
+# <PAPER>_<run-id> directory.
+G=$(ls -td runs/*/${PAPER}_* 2>/dev/null | head -1 | xargs -I{} dirname {} | xargs -I{} basename {})
+[ -n "$G" ] || G=$(ls -t runs/ | head -1)
 mkdir -p "$OUT/grades"
 python3 - "$PB/runs/$G" "$OUT/grades" <<'PY'
 import json, glob, os, shutil, sys

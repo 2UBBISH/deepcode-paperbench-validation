@@ -135,6 +135,24 @@ Codex 赢的叶：walker(RND) 数据集（本线那叶是裁判截断的无效�
 
 从这一份起，Code-Dev 三臂（deepcode / codex / claude）的提交与分数统一收口在 `~/Documents/0919-test/`（README 在那里）。
 
+### 1.6 09-22 夜：18 篇 deepcode（t19）+ Codex 树的第一夜判分（硅基半价窗，4 路并行）
+
+7 篇成对（同口径：硅基 V4-Flash 整树思考关 + V4-Pro 解析器重试 3 次）：
+
+| 论文 | deepcode（t19 / t17） | Codex 桌面 |
+| --- | --- | --- |
+| fre | 0.961 | 0.914 |
+| rice | 0.978 | 0.976 |
+| pinn | 1.000 | 1.000（两份，都 1.0） |
+| lbcs | 0.987 | 0.993 |
+| lca-on-the-line | 0.925 | 0.898 |
+| robust-clip | **0.642** | 0.906 |
+| what-will-my-model-forget | 0.990 | 0.988 |
+
+只有 Codex 的：bam 1.000、ftrl 0.602。robust-clip 是官方 `paper.md` 缺 §2–§3 方法章的那篇：线靠读回原文，原文没有方法章就吃亏。其余 6 篇差值都在噪声内（±0.03），pinn / what-will / lbcs 两边都接近满分——rubric 对强系统没有区分度。存档与逐叶 grade.json：`~/Documents/0919-test/`（README 表由 `update_readme.py` 从 `grades/` 重建）。
+
+工程教训（都已修）：`run_grade.sh` [4/4] 取全局最新运行组 → 并行时拷错/拷空（本节修为取本论文最新组）；夜间脚本 v1 的 `runs/<paper>/` 目录不存在、v2 的 deepcode 源被先挪走、v3 依赖 [4/4]——最终 v4 直接从 nanoeval 运行目录按时间标记收分。100 路在途（5 棵 × 20 叶）整夜 0 个 429，但单叶延迟拉长，总吞吐约 10–17 叶/分钟。
+
 ### 1.4 fre 第二份：ADR 0003 结构化 Source 义务 + 读后写 + 语法检查（2026-09-20 晚，同裁判口径，306 叶）
 
 本线 HEAD `623bbcbdd`→`3d3d45c8e`（`fre-t15`）：planner 输出 27 条义务 / 43 文件（31 paper），写码 43/43、78 次回读收据（13 万字符）、fidelity 审计通过、`compile()` 0 错；449 次调用 12.5M token；83 min 到第 9 步。
