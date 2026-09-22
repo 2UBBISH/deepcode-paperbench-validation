@@ -1,0 +1,79 @@
+# SAPG algorithm-level configuration (Sec 4, Algorithm 1)
+# Split and Aggregate Policy Gradients
+#
+# This config captures the algorithm-level hyperparameters that are shared
+# across all tasks. Task-specific overrides live in the per-task configs
+# (allegrokuka.yaml, shadowhand.yaml, allegrohand.yaml).
+
+# ---------------------------------------------------------------------------
+# Number of policies / environment blocks (Sec 4.3)
+# ---------------------------------------------------------------------------
+num_policies: 6          # M = 6 leader/follower policies
+num_envs: 24576          # N = 24576 total parallel environments
+# Each policy owns num_envs / num_policies = 4096 environments.
+
+# ---------------------------------------------------------------------------
+# Aggregation scheme (Sec 4.3, Algorithm 1)
+# ---------------------------------------------------------------------------
+aggregation: leader_follower   # one of: leader_follower | symmetric | none
+subsample: true                # subsample D_1' so |D_1'| == |D_1| (Sec 4.3)
+lam: 1.0                       # lambda in L = L_on + lambda * L_off (Eq. 4)
+
+# ---------------------------------------------------------------------------
+# Entropy regularization grid (Eq. 10, Sec 4.5)
+# ---------------------------------------------------------------------------
+# sigma is tuned from {0, 0.003, 0.005}. Best values:
+#   0.000 -> ShadowHand, AllegroHand, Regrasping, Throw
+#   0.005 -> Reorientation
+entropy_coef: 0.0
+entropy_coef_grid: [0.0, 0.003, 0.005]
+
+# ---------------------------------------------------------------------------
+# Per-policy latent dimension (Sec 4.4)
+# ---------------------------------------------------------------------------
+# phi_dim = 32 for AllegroKuka, 16 for ShadowHand / AllegroHand.
+phi_dim: 32
+
+# ---------------------------------------------------------------------------
+# PPO / optimization (Tables 2-4)
+# ---------------------------------------------------------------------------
+gamma: 0.99
+tau: 0.95                # GAE lambda
+n_step: 3                # on-policy n-step return horizon (Eq. 5-6)
+clip_eps: 0.1            # PPO clip epsilon (Eq. 2)
+critic_coef: 4.0         # value loss coefficient
+learning_rate: 3.0e-4
+kl_threshold: 0.016      # KL-adaptive LR threshold
+kl_min_lr: 1.0e-5
+kl_max_lr: 1.0e-2
+mini_epochs: 2
+num_mini_batches: 4      # mini-batch = num_envs * 4
+grad_norm_clip: 1.0
+normalize_advantage: true
+value_clip: null
+
+# ---------------------------------------------------------------------------
+# Training budget
+# ---------------------------------------------------------------------------
+target_transitions: 2.0e10   # ~2e10 transitions per run
+seed: 0
+device: cuda
+output_dir: runs/sapg
+log_interval: 1
+save_interval: 100
+
+# ---------------------------------------------------------------------------
+# Ablation variants (Fig. 6)
+# ---------------------------------------------------------------------------
+ablations:
+  symmetric:            # symmetric aggregation (all-to-all)
+    aggregation: symmetric
+    subsample: true
+  high_off_policy:      # leader-follower without subsampling
+    aggregation: leader_follower
+    subsample: false
+  no_off_policy:        # pure per-policy PPO (no aggregation)
+    aggregation: none
+    lam: 0.0
+  entropy_grid:         # entropy coefficient sweep
+    entropy_coef_grid: [0.0, 0.003, 0.005]

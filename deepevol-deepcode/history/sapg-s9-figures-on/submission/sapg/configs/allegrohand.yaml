@@ -1,0 +1,117 @@
+# =============================================================================
+# SAPG configuration: AllegroHand 16-DoF in-hand reorientation
+# -----------------------------------------------------------------------------
+# Reproduces the hyperparameters reported in the paper's Table 4 (Appendix B)
+# for the AllegroHand task.  The AllegroHand platform is a 16-DoF hand used for
+# in-hand object reorientation; SAPG is compared against PPO / PBT / PQL on this
+# task in Table 1 and Figure 5.
+#
+# Expected final performance after ~2e10 samples (Table 1):
+#   PPO            : 1.01e4
+#   PBT            : 7.28e3
+#   PQL            : 1.01e4
+#   SAPG (coef=0)  : 1.23e4   <- best
+#   SAPG (coef=.005): 9.14e3
+# =============================================================================
+
+# ----------------------------------------------------------------------------
+# Task
+# ----------------------------------------------------------------------------
+task: allegrohand
+task_name: reorientation
+
+# ----------------------------------------------------------------------------
+# Scale (Section 4.3 / 4.6)
+#   N = 24576 parallel environments split into M = 6 blocks of N/M = 4096.
+#   Each policy collects H = 8 steps per iteration (hands use a shorter horizon
+#   than AllegroKuka, which uses H = 16).
+# ----------------------------------------------------------------------------
+num_envs: 24576
+num_policies: 6
+horizon: 8
+episode_length: 200
+
+# ----------------------------------------------------------------------------
+# Optimizer / PPO (Appendix B, Table 4)
+#   Hands use a higher learning rate (5e-4) than AllegroKuka (1e-4).
+#   clip_eps = 0.2 for AllegroHand (vs 0.1 for AllegroKuka / ShadowHand).
+# ----------------------------------------------------------------------------
+learning_rate: 5.0e-4
+gamma: 0.99
+tau: 0.95
+n_step: 3
+clip_eps: 0.2
+critic_coef: 4.0
+lambda_off: 1.0
+bounds_coef: 1.0e-4
+max_grad_norm: 1.0
+mini_epochs: 5
+num_mini_batches: 4
+use_kl_adaptive_lr: true
+kl_threshold: 0.016
+kl_adaptive_factor: 1.5
+normalize_advantage: true
+
+# ----------------------------------------------------------------------------
+# Follower entropy regularization (Section 4.5)
+#   L(pi_i) = L_on(pi_i) + sigma * (i - 1) * H(pi_i(a|s))
+#   Leader (i = 1) receives no entropy bonus.
+#   Ablation sweep: sigma in {0, 0.003, 0.005}; sigma = 0 is best for
+#   AllegroHand (Table 1: SAPG coef=0 -> 1.23e4 vs coef=.005 -> 9.14e3).
+# ----------------------------------------------------------------------------
+entropy_coef: 0.0
+learnable_entropy_coef: false
+
+# ----------------------------------------------------------------------------
+# Model (Section 4.4 / Addendum)
+#   AllegroHand actor: MLP(512 x 256 x 128, ELU) -> Gaussian mean.
+#   No LSTM for the in-hand tasks (feed-forward MLP).
+#   phi_j in R^16 (per-policy latent parameters).
+# ----------------------------------------------------------------------------
+phi_dim: 16
+use_lstm: false
+lstm_hidden: 768
+lstm_layers: 1
+actor_hidden_dims: [512, 256, 128]
+critic_hidden_dims: [512, 256, 128]
+activation: elu
+conditioning: concat          # concat phi_j to the observation (paper default)
+log_std_init: -0.5
+
+# ----------------------------------------------------------------------------
+# Rewards (PQL-style decomposition, Li et al. 2023)
+# ----------------------------------------------------------------------------
+reward_weights:
+  orientation: 1.0
+  position: 0.5
+  velocity: 0.01
+  angular_velocity: 0.01
+  action_penalty: 0.0001
+  torque_penalty: 0.00001
+  success: 10.0
+
+# ----------------------------------------------------------------------------
+# Success-tolerance curriculum
+#   Shrink tolerance by 10% (floor 0.1 rad) whenever the average number of
+#   successes per episode exceeds 3.
+# ----------------------------------------------------------------------------
+use_curriculum: true
+tolerance_start: 0.5
+tolerance_end: 0.1
+tolerance_decay: 0.90
+success_threshold: 3.0
+
+# ----------------------------------------------------------------------------
+# Training / logging
+# ----------------------------------------------------------------------------
+seed: 0
+device: cuda:0
+max_iterations: 100000
+max_samples: 2.0e10
+log_interval: 1
+eval_interval: 100
+eval_episodes: 32
+save_interval: 500
+output_dir: results/allegrohand
+headless: true
+force_mock: false             # set true for CPU-only debugging without IsaacGym

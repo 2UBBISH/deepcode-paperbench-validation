@@ -5,9 +5,9 @@ PaperBench Code-Dev 上三臂对比（DeepEvol 的 DeepCode 线 · Codex 桌面�
 
 | 目录 | 内容 |
 | --- | --- |
-| `paperbench/` | **判分**。`frontier-evals/` = openai/frontier-evals @ `patches/UPSTREAM_BASE.txt` 的 vendored 副本 + `patches/paperbench_local_changes.patch`（6 文件：整树裁判、json_object 解析器、并发、路径解析）；`scripts/run_grade.sh`（判池子里一篇论文的所有树）、`scripts/run_judge_eval.sh`（rice/0 裁判校准）、`scripts/run_trial.sh`（原装 DeepCode 基线臂）；`baseline-deepcode/` = HKUDS/DeepCode 上游 + `patches/deepcode_local_changes.patch`（口径补丁，默认等于上游）；`setup.sh`；`docs/`（INPUT_STANDARD 口径、CODEDEV-ARMS 三臂规则、PITFALLS、旧 README）；`runs/`（不入库）|
-| `deepevol-deepcode/` | **我们线的生成结果**：`<paper>/submission/` 第 9 步的代码树（DeepEvol `0916onmain-experiment`，ADR 0004 原文保真），`<paper>/RUN_NOTES.md` 运行口径与过程数字。20 篇 + `fre-nofid`（保真关的对照） |
-| `result/` | **分数与对照臂**：`grades/*.grade.json` 逐叶判分产物；`codex/<paper>/` Codex 桌面臂的树与审计；`README.md` 分数表（`update_readme.py` 重建）、裁判口径与 JudgeEval 校准；`RESULTS-HISTORY.md` 全部历史 |
+| `paperbench/` | **判分**。`frontier-evals/` = openai/frontier-evals @ `patches/UPSTREAM_BASE.txt` 的 vendored 副本 + `patches/paperbench_local_changes.patch`（6 文件：整树裁判、json_object 解析器、并发、路径解析）；`scripts/run_grade.sh`（判池子里一篇论文的所有树）、`scripts/run_judge_eval.sh`（rice/0 裁判校准）、`scripts/run_trial.sh`（原装 DeepCode 基线臂）；`baseline-deepcode/` = HKUDS/DeepCode 上游 + `patches/deepcode_local_changes.patch`（口径补丁，默认等于上游）；`setup.sh`；`baseline-runs/` 基线臂早期跑出的树；`docs/`（INPUT_STANDARD 口径、CODEDEV-ARMS 三臂规则、PITFALLS、旧 README）；`runs/`（不入库）|
+| `deepevol-deepcode/` | **我们线的生成结果**：`<paper>/submission/` 第 9 步的代码树（DeepEvol `0916onmain-experiment`，ADR 0004 原文保真），`<paper>/RUN_NOTES.md` 运行口径与过程数字。20 篇 + `fre-nofid`（保真关的对照）；`history/` 定型前各版本生成的树（fre t14/t15、rice t14、sapg/pinn/snse 早期运行，各带 NOTE） |
+| `result/` | **分数与对照臂**：`grades/*.grade.json` 逐叶判分产物；`codex/<paper>/<arm>/` Codex 桌面臂的完整产物（submission、AUDIT、RUN_NOTES、PROMPT、会话日志 session_logs、interactions/render 日志；只去掉下载的数据集和特征转储）；`README.md` 分数表（`update_readme.py` 重建）、裁判口径与 JudgeEval 校准；`RESULTS-HISTORY.md` 全部历史 |
 | `materials/` | **评测原材料**：`papers/<paper>/` 三臂共用的同一份输入字节（`paper.md` + `addendum.md` + `blacklist.txt` + `rubric.json` + `config.yaml`；robust-clip 的 `paper.md` 是补全版，`hydration/` 记原版与补全过程）；`desktop-prompt/` 桌面臂的题面、附注、准备 / 收尾 / 审计脚本 |
 
 ## 口径（详见 `paperbench/docs/INPUT_STANDARD.md`、`result/README.md`）

@@ -1,0 +1,5 @@
+PROMPT_OK  /Users/apple/Documents/0919-test/codex/work/bridging-data-gaps-codex-desktop/PROMPT.txt  (      37 lines; time limit: 3; input: markdown only, same bytes as the DeepCode arms)
+     2 795c5911a541  paper.md
+     2 dc0f763eb0fd  addendum.md
+     2 c9ed389cc077  blacklist.txt
+copy the prompt:  cat /Users/apple/Documents/0919-test/codex/work/bridging-data-gaps-codex-desktop/PROMPT.txt | pbcopy

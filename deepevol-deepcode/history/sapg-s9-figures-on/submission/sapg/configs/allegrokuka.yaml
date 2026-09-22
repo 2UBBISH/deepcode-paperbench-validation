@@ -1,0 +1,77 @@
+# SAPG configuration for the AllegroKuka tasks (Regrasping / Throw / Reorientation)
+# Hyperparameters follow the paper's Table 2 (AllegroKuka family).
+#
+# Tasks: regrasping, throw, reorientation
+# Observation: o_t = [q, q_dot, x_t, v_t, omega_t, g_t, z_t]  (78-dim)
+# Action: 23-DoF (7 arm + 16 hand)
+
+task: allegrokuka
+task_name: regrasping          # one of: regrasping | throw | reorientation
+
+# ----------------------------- Scale -----------------------------
+num_envs: 24576                # N parallel environments
+num_policies: 6                # M blocks (1 leader + M-1 followers)
+horizon: 16                    # H steps collected per env instance
+episode_length: 300            # max episode length (env-side)
+
+# --------------------------- Optimizer ---------------------------
+learning_rate: 0.0001          # 1e-4
+gamma: 0.99
+tau: 0.95                      # GAE lambda
+n_step: 3                      # n-step critic target (Eq. 5)
+clip_eps: 0.1                  # PPO clip range
+critic_coef: 4.0               # lambda' critic loss coefficient
+lambda_off: 1.0                # off-policy loss weight (Eq. 4)
+bounds_coef: 0.0001            # 1e-4 bounds loss coefficient
+max_grad_norm: 1.0
+mini_epochs: 2
+num_mini_batches: 4            # mini-batch size = num_envs * 4
+use_kl_adaptive_lr: true
+kl_threshold: 0.016
+kl_adaptive_factor: 1.5
+normalize_advantage: true
+
+# --------------------------- Entropy -----------------------------
+entropy_coef: 0.0              # sigma; sweep {0, 0.003, 0.005}
+learnable_entropy_coef: false
+
+# ---------------------------- Model ------------------------------
+phi_dim: 32                    # phi_j in R^32 for AllegroKuka
+use_lstm: true                 # 1-layer LSTM, 768 hidden
+lstm_hidden: 768
+lstm_layers: 1
+actor_hidden_dims: [768, 512, 256]
+critic_hidden_dims: [768, 512, 256]
+activation: elu
+conditioning: concat           # concat | film
+log_std_init: -0.5
+
+# --------------------------- Rewards -----------------------------
+reward_weights:
+  reach: 1.0
+  lift: 2.0
+  target: 4.0
+  success: 10.0
+  action_penalty: 0.0001
+  torque_penalty: 0.00001
+  velocity_penalty: 0.0001
+
+# -------------------------- Curriculum ---------------------------
+use_curriculum: true
+tolerance_start: 0.075         # 7.5 cm
+tolerance_end: 0.010           # 1 cm
+tolerance_decay: 0.90          # -10% when avg successes/episode > threshold
+success_threshold: 3.0
+
+# --------------------------- Training ----------------------------
+seed: 0
+device: cuda:0
+max_iterations: 100000
+max_samples: 20000000000       # 2e10 transitions
+log_interval: 1
+eval_interval: 100
+eval_episodes: 32
+save_interval: 500
+output_dir: results/allegrokuka
+headless: true
+force_mock: false

@@ -1,0 +1,65 @@
+# AllegroKuka task configuration (hard tasks: regrasping / throw / reorientation)
+# Overrides configs/default.yaml. Paper hyperparameters for AllegroKuka:
+#   gamma=0.99, tau=0.95, lr=1e-4, KL threshold=0.016, grad norm=1.0,
+#   entropy coeff=0, clip eps=0.1, mini-batch=num_envs*4, critic coeff=4.0,
+#   horizon=16, LSTM seq=16, bounds loss coeff=1e-4, mini epochs=2.
+
+run:
+  run_name: allegrokuka
+  total_iterations: 2000
+
+env:
+  name: allegrokuka
+  task: regrasping          # one of: regrasping | throw | reorientation
+  num_envs: 4096
+  num_blocks: 8
+  episode_length: 300
+  control_dt: 0.05
+  action_scale: 0.5
+  normalize_obs: true
+  use_curriculum: true
+  # Reward weights (paper: reward = w1*r_reach + r_lift + r_target + r_success)
+  w_reach: 1.0
+  w_lift: 1.0
+  w_target: 1.0
+  w_success: 5.0
+  w_orientation: 1.0
+  # Success-tolerance curriculum: 7.5cm -> 1cm, -10% when avg successes > 3
+  initial_delta: 0.075
+  min_delta: 0.01
+  decrease_factor: 0.9
+  success_threshold: 3.0
+
+sapg:
+  mode: leader
+  use_importance_weights: true
+  max_importance_weight: 10.0
+  phi_dim: 8
+
+ppo:
+  gamma: 0.99
+  tau: 0.95
+  lr: 1.0e-4
+  kl_threshold: 0.016
+  grad_norm_clip: 1.0
+  entropy_coeff: 0.0
+  clip_eps: 0.1
+  critic_coeff: 4.0
+  bounds_loss_coeff: 1.0e-4
+  action_bound: 1.0
+  horizon: 16
+  lstm_seq_len: 16
+  mini_epochs: 2
+  mini_batch_size_mult: 4
+  min_lr: 1.0e-6
+  max_lr: 1.0e-2
+  lr_scale: 1.5
+
+network:
+  hidden_sizes: [768, 512, 256]
+  use_lstm: true
+  lstm_hidden: 768
+  activation: elu
+  learnable_sigma: true
+  per_block_sigma: false
+  init_log_std: 0.0

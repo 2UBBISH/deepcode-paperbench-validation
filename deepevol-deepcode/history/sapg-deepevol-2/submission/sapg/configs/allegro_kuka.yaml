@@ -1,0 +1,77 @@
+# =============================================================================
+# SAPG config: AllegroKuka (Allegro 16-DoF hand + Kuka 7-DoF arm = 23 joints)
+# Hyperparameters from Table 2 of the SAPG paper.
+# Tasks: regrasping | throw | reorientation
+# =============================================================================
+
+# Inherit / override defaults from default.yaml
+defaults:
+  - default
+
+# --- Environment -------------------------------------------------------------
+env_name: "allegro_kuka"
+task: "regrasping"          # regrasping | throw | reorientation
+num_envs: 4096              # total parallel environments (batch size)
+num_workers: 8              # number of blocks (followers) + 1 leader
+horizon: 32                 # rollout horizon per iteration
+max_iterations: 2000
+seed: 0
+device: "cuda"
+
+control_freq: 20
+episode_length: 300
+
+# --- Optimization (Table 2) --------------------------------------------------
+gamma: 0.99
+tau: 0.95
+clip_epsilon: 0.1
+critic_coef: 4.0            # lambda' in the paper
+entropy_coef: 0.0
+bounds_loss_coef: 0.0001
+max_grad_norm: 1.0
+learning_rate: 0.0003
+num_learning_epochs: 5
+mini_batch_size: null       # defaults to num_envs * 4
+kl_target: 0.016
+use_kl_adaptive_lr: true
+normalize_advantage: true
+normalize_value: true
+
+# --- Recurrent network (AllegroKuka uses LSTM) -------------------------------
+use_lstm: true
+seq_len: 16
+lstm_hidden: 768
+lstm_layers: 1
+hidden_dims: [768, 512, 256]
+critic_hidden_dims: [768, 512, 256]
+embed_dim: 16
+activation: "elu"
+condition_mode: "concat"
+init_log_std: -1.0
+use_tanh: false
+
+# --- Aggregation -------------------------------------------------------------
+aggregation_mode: "leader"  # leader | symmetric | none
+leader_id: 0
+rotate_leader: false
+use_entropy_exploration: false
+
+# --- Curriculum (regrasping: 7.5cm -> 1cm, -10% when >3 successes/episode) ---
+use_curriculum: true
+curriculum_initial_tolerance: 0.075
+curriculum_min_tolerance: 0.01
+curriculum_decay: 0.9
+curriculum_success_threshold: 3.0
+
+# --- Reward weights ----------------------------------------------------------
+w1: 1.0                     # reach weight
+r_lift_w: 1.0
+r_target_w: 1.0
+r_success_w: 10.0
+
+# --- Logging -----------------------------------------------------------------
+log_interval: 10
+save_interval: 100
+eval_interval: 50
+output_dir: "runs/allegro_kuka"
+wandb: false

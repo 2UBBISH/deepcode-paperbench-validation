@@ -1,0 +1,5 @@
+PROMPT_OK  /Users/apple/Documents/0919-test/codex/work/stay-on-topic-with-classifier-free-guidance-codex-desktop/PROMPT.txt  (      37 lines; time limit: 3; input: markdown only, same bytes as the DeepCode arms)
+     2 521f484e62ca  paper.md
+     2 b44b6a7db7cc  addendum.md
+     2 db49db6275e5  blacklist.txt
+copy the prompt:  cat /Users/apple/Documents/0919-test/codex/work/stay-on-topic-with-classifier-free-guidance-codex-desktop/PROMPT.txt | pbcopy

@@ -1,0 +1,5 @@
+PROMPT_OK  /Users/apple/Documents/0919-test/codex/work/what-will-my-model-forget-codex-desktop/PROMPT.txt  (      37 lines; time limit: 3; input: markdown only, same bytes as the DeepCode arms)
+     2 9100fd383ddc  paper.md
+     2 cf9f88d62f64  addendum.md
+     2 1eea50574972  blacklist.txt
+copy the prompt:  cat /Users/apple/Documents/0919-test/codex/work/what-will-my-model-forget-codex-desktop/PROMPT.txt | pbcopy

@@ -1,0 +1,5 @@
+PROMPT_OK  /Users/apple/Documents/0919-test/codex/work/mechanistic-understanding-codex-desktop/PROMPT.txt  (      37 lines; time limit: 3; input: markdown only, same bytes as the DeepCode arms)
+     2 0a8847ea3f6a  paper.md
+     2 aaac641a5728  addendum.md
+     2 8f8401a5031c  blacklist.txt
+copy the prompt:  cat /Users/apple/Documents/0919-test/codex/work/mechanistic-understanding-codex-desktop/PROMPT.txt | pbcopy

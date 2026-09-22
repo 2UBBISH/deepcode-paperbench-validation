@@ -1,0 +1,83 @@
+# SAPG default configuration
+# Global defaults shared across all tasks. Task-specific configs override these.
+
+# ---------------------------------------------------------------------------
+# Environment / parallelism
+# ---------------------------------------------------------------------------
+num_envs: 4096            # total number of parallel environments (batch size)
+num_workers: 8            # number of blocks (followers). 1 => standard PPO
+envs_per_worker: null     # computed as num_envs // num_workers if null
+horizon: 32               # rollout horizon (steps per update)
+max_iterations: 2000      # number of training iterations
+seed: 0
+device: "cuda"            # "cuda" or "cpu"
+
+# ---------------------------------------------------------------------------
+# Environment
+# ---------------------------------------------------------------------------
+env_name: "allegro_kuka"
+task: "regrasping"        # regrasping | throw | reorientation
+obs_dim: null             # inferred from env if null
+action_dim: null          # inferred from env if null
+control_freq: 20
+episode_length: 300       # max steps per episode
+
+# ---------------------------------------------------------------------------
+# PPO / SAPG optimization
+# ---------------------------------------------------------------------------
+gamma: 0.99
+tau: 0.95                 # GAE lambda
+clip_epsilon: 0.1         # PPO clipping epsilon (importance sampling clip)
+critic_coef: 4.0          # value loss coefficient (lambda')
+entropy_coef: 0.0
+bounds_loss_coef: 0.0001
+max_grad_norm: 1.0
+learning_rate: 0.0003
+num_learning_epochs: 5
+num_mini_batches: null    # if null -> num_envs * 4 transitions per mini-batch
+mini_batch_size: null     # explicit override; else num_envs * 4
+kl_target: 0.016
+use_kl_adaptive_lr: true
+normalize_advantage: true
+normalize_value: true
+use_lstm: false
+seq_len: 16               # LSTM truncated BPTT sequence length
+lstm_hidden: 768
+lstm_layers: 1
+
+# ---------------------------------------------------------------------------
+# Networks
+# ---------------------------------------------------------------------------
+hidden_dims: [512, 256, 128]
+critic_hidden_dims: [512, 256, 128]
+embed_dim: 16             # dimension of per-worker embedding phi_j
+activation: "elu"
+condition_mode: "concat"  # concat | add
+init_log_std: -1.0
+use_tanh: false
+
+# ---------------------------------------------------------------------------
+# SAPG aggregation
+# ---------------------------------------------------------------------------
+aggregation_mode: "leader"   # leader | symmetric | none
+leader_id: 0
+rotate_leader: false
+use_entropy_exploration: false   # per-block learnable sigma
+
+# ---------------------------------------------------------------------------
+# Curriculum
+# ---------------------------------------------------------------------------
+use_curriculum: true
+curriculum_initial_tolerance: 0.075   # 7.5 cm
+curriculum_min_tolerance: 0.01        # 1 cm
+curriculum_decay: 0.9                 # -10% per decrement
+curriculum_success_threshold: 3.0     # avg successes/episode to trigger decrement
+
+# ---------------------------------------------------------------------------
+# Logging / evaluation
+# ---------------------------------------------------------------------------
+log_interval: 10
+save_interval: 100
+eval_interval: 50
+output_dir: "runs"
+wandb: false

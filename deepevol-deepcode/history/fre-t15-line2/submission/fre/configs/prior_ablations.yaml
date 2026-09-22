@@ -1,0 +1,337 @@
+# =============================================================================
+# Prior-scaling ablation configuration (Table 4) for FRE
+# Zero-Shot Reinforcement Learning via Functional Reward Encodings
+# =============================================================================
+#
+# Paper sources
+# ------------
+# Section 5.3 / Table 4 ("How important is the choice of prior reward
+# distribution?") and the Addendum section "Clarifications on FRE Prior Reward
+# Distributions" define the named variants:
+#
+#   FRE-all      : equal split of singleton goal-reaching / random linear / random MLP
+#   FRE-goals    : exclusively singleton goal-reaching reward functions
+#   FRE-lin      : exclusively random linear reward functions
+#   FRE-mlp      : exclusively random MLP reward functions
+#   FRE-lin-mlp  : equal split of random linear + random MLP
+#   FRE-goal-mlp : equal split of singleton goal-reaching + random MLP
+#   FRE-goal-lin : equal split of singleton goal-reaching + random linear
+#   FRE-hint     : prior reward distribution that is a *superset* of the
+#                  evaluation tasks.  For ant-directional, the prior rewards are
+#                  all rewards corresponding to movement in a unit (x,y)
+#                  direction.  For Cheetah-velocity and walker-velocity, the
+#                  rewards are for moving at a specific velocity.
+#
+# All agents are given the *same training budget* (the Addendum states this
+# explicitly), so every variant below shares the identical encoder/policy step
+# counts and batch sizes from Table 3:
+#   Batch Size 512, Reward Pairs to Encode 32, Reward Pairs to Decode 8,
+#   Optimizer Adam, Learning Rate 0.0001, beta 0.01, Target Update Rate 0.001,
+#   Discount Factor 0.88, AWR Temperature 3.0, IQL Expectile 0.8,
+#   RL Network Layers [512,512,512], Decoder Network Layers [512,512,512],
+#   Encoder Layers [256,256,256,256], Encoder Attention Heads 4.
+#
+# The sweep for Table 4 is run on AntMaze (antmaze-large-diverse-v2) with the
+# discretized X/Y preprocessing and the 5 evaluation task groups:
+#   goal-reaching, directional, random-simplex, path-loop, path-edges, path-center
+# (Table 4 reports goal-reaching / directional / random-simplex / path-all).
+#
+# `expected` blocks record the numbers printed in Table 4 (mean +- std over 5
+# random seeds) purely for validation / reporting — they are never consumed by
+# the training code.
+# =============================================================================
+
+name: prior_ablations
+domain: antmaze
+method: FRE
+seed: 0
+seeds: [0, 1, 2, 3, 4]
+device: cuda
+
+# -----------------------------------------------------------------------------
+# Domain / dataset (identical to fre_antmaze.yaml so variants are comparable)
+# -----------------------------------------------------------------------------
+dataset:
+  name: antmaze-large-diverse-v2   # D4RL, see Appendix C.1 (use a pre-June-2024 D4RL pin)
+  env_id: antmaze-large-diverse-v2
+  path: null                       # falls back to $FRE_ANTMAZE_DATASET / D4RL
+  limit: null
+  discretize: true                 # X/Y discretized into 32 bins for FRE/GC-IQL/GC-BC/OPAL
+  num_xy_bins: 32
+  discretize_mode: index           # 'index' -> bin integer, 'center' -> bin center
+  position_dims: [0, 1]
+  xy_bounds: [[0, 36], [0, 36]]    # Paper silent: grid bounds chosen so the addendum's
+                                   # integer goal coordinates map to themselves.
+  center_position: [16, 16]        # ant placed in the center of the maze (Appendix C.1)
+  goal_distance_threshold: 2.0     # goal reached within distance 2 (Appendix C.1)
+  exclude_final_states: true
+  attach_stats: true
+  use_encoder_inputs: false        # physics augmentation is ExORL-only
+
+# -----------------------------------------------------------------------------
+# Prior reward distribution components (shared by all variants).
+# Sampler details come from Appendix B "Training Details".
+# -----------------------------------------------------------------------------
+prior_components:
+  goal:
+    # Appendix B: HER distribution, -1 until the goal is achieved, done mask
+    # True on achievement, and at least one encoding sample contains the goal.
+    p_current: 0.2         # current state used as the goal
+    p_future: 0.5          # future state within the trajectory
+    p_random: 0.3          # completely random state from the dataset
+    geometric_p: 0.2       # leniency of the 'future' lookahead distribution
+    threshold: 0.0         # exact-goal matching for training priors
+    reward_unreached: -1.0
+    reward_reached: 0.0
+    terminate_on_success: true
+    ensure_goal_in_set: true
+  linear:
+    # Appendix B: uniform vector in [-1, 1]; XY dims of AntMaze are REMOVED
+    # (their scale caused instability); a 0.9 per-dimension binary mask zeroes
+    # the vector to encourage sparse / simpler functions.
+    weight_range: 1.0
+    zero_prob: 0.9
+    exclude_dims: [0, 1]   # AntMaze XY positions
+    clip: null
+  mlp:
+    # Appendix B: network of size (state_dim, 32, 1), parameters sampled from a
+    # normal distribution scaled by the average dimension of the layer, tanh
+    # activation between the two layers, output clipped to [-1, 1].
+    hidden_dim: 32
+    output_clip: 1.0
+    scale_mode: average
+    activation: tanh
+
+# -----------------------------------------------------------------------------
+# Table 4 sweep: variants with equal training budget.
+# `ratios` is (goal, linear, mlp) and must sum to 1.0.
+# -----------------------------------------------------------------------------
+ablations:
+  FRE-all:
+    ratios: {goal: 0.33, linear: 0.33, mlp: 0.33}
+    hint: false
+    description: >-
+      Vanilla prior reward distribution: equal split of singleton goal-reaching,
+      random linear and random MLP reward functions (used in Sections 5.1/5.2/5.4
+      as "FRE" and Section 5.3 as "FRE-all").
+    expected:
+      ant-goal-reaching: 48.8
+      ant-directional: 55.2
+      ant-random-simplex: 21.3
+      ant-path-all: 63.8
+      total: 47.3
+      total_std: 7
+      std: {goal-reaching: 6, directional: 8, random-simplex: 4, path-all: 10}
+  FRE-goals:
+    ratios: {goal: 1.0, linear: 0.0, mlp: 0.0}
+    hint: false
+    description: Prior distribution consisting exclusively of singleton goal-reaching reward functions.
+    expected: {total: 26.1, total_std: 8}
+  FRE-lin:
+    ratios: {goal: 0.0, linear: 1.0, mlp: 0.0}
+    hint: false
+    description: Prior distribution consisting exclusively of random linear reward functions.
+    expected: {total: 31.6, total_std: 5}
+  FRE-mlp:
+    ratios: {goal: 0.0, linear: 0.0, mlp: 1.0}
+    hint: false
+    description: Prior distribution consisting exclusively of random MLP reward functions.
+    expected: {total: 25.3, total_std: 8}
+  FRE-lin-mlp:
+    ratios: {goal: 0.0, linear: 0.5, mlp: 0.5}
+    hint: false
+    description: Equal split of random linear and random MLP reward functions.
+    expected: {total: 32.3, total_std: 5}
+  FRE-goal-mlp:
+    ratios: {goal: 0.5, linear: 0.0, mlp: 0.5}
+    hint: false
+    description: Equal split of singleton goal-reaching and random MLP reward functions.
+    expected: {total: 33.8, total_std: 15}
+  FRE-goal-lin:
+    ratios: {goal: 0.5, linear: 0.5, mlp: 0.0}
+    hint: false
+    description: Equal split of singleton goal-reaching and random linear reward functions.
+    expected: {total: 46.9, total_std: 7}
+
+  # ---------------------------------------------------------------------------
+  # FRE-hint (Section 5.4): the prior is a *superset* of the evaluation tasks.
+  # The Addendum defines it per evaluation group; the mixing ratio between the
+  # task-superset rewards and the vanilla mixture is not specified in the paper
+  # (documented default: 0.5 / 0.5).
+  # ---------------------------------------------------------------------------
+  FRE-hint:
+    hint: true
+    hint_probability: 0.5        # Source: not specified in the paper (default 0.5/0.5)
+    ratios: {goal: 0.33, linear: 0.33, mlp: 0.33}   # vanilla mixture inside the non-hint branch
+    name_aliases:
+      ant-directional: FRE-hint-ant-directional
+      cheetah-velocity: FRE-hint-cheetah-velocity
+      walker-velocity: FRE-hint-walker-velocity
+    domains:
+      ant-directional:
+        # All rewards corresponding to movement in a unit (x,y) direction.
+        kind: directional
+        velocity_dims: [15, 16]   # ant velocity (x, y) within the 29-dim state
+        velocity_scale: 1.0
+        num_directions: null      # null -> uniform over the unit circle
+        include_axes_only: false
+      cheetah-velocity:
+        # Rewards for moving at a specific velocity.
+        kind: velocity
+        domain: cheetah
+        velocity_dims: [0]
+        num_velocities: 12
+        velocity_range: [0.0, 12.0]   # HINT_VELOCITY_RANGES['cheetah']
+        mode: match
+      walker-velocity:
+        kind: velocity
+        domain: walker
+        velocity_dims: [0, 1]
+        num_velocities: 12
+        velocity_range: [0.0, 8.0]    # HINT_VELOCITY_RANGES['walker']
+        mode: match
+
+# -----------------------------------------------------------------------------
+# Model architecture (Table 3 + Addendum corrections)
+# -----------------------------------------------------------------------------
+model:
+  state_embed_dim: 64          # learned linear projection of the state
+  reward_embed_dim: 64         # learned embedding table (32 entries) per bin
+  token_dim: 128               # 64 + 64 concatenated per reward-labeled state
+  latent_dim: 128              # z is 128-dimensional
+  num_reward_embeddings: 32
+  num_encoder_blocks: 4        # Table 3 lists 4 encoder MLP dims [256,256,256,256]
+  encoder_layers: [256, 256, 256, 256]
+  encoder_attention_heads: 4
+  decoder_layers: [512, 512, 512]
+  decoder_state_embedding: false   # raw state + z concatenated directly
+  rl_layers: [512, 512, 512]
+  num_qs: 2
+  activation: relu
+  dropout: 0.0
+  layer_norm: false
+  positional_encoding: false   # inputs treated as an unordered set
+  causal_masking: false
+  pooling: mean                # average of final-layer representations
+  log_std_min: -5.0            # Source: not specified in the paper (numerical floor)
+  log_std_max: 2.0
+
+# -----------------------------------------------------------------------------
+# Phase 1: encoder + decoder training (Algorithm 1, "# Train encoder")
+# -----------------------------------------------------------------------------
+encoder_training:
+  batch_size: 512
+  num_encoder_states: 32       # K
+  num_decoder_states: 8        # K'
+  reward_functions_per_update: 1
+  learning_rate: 0.0001
+  optimizer: adam
+  weight_decay: 0.0
+  max_grad_norm: null
+  beta: 0.01                   # beta KL weight
+  loss_form: mse               # MSE reconstruction (Section 5)
+  sample_z: true
+  reward_range: auto           # fit the 32-bin range from the sampled eta
+  reward_min: -1.0
+  reward_max: 1.0
+  encoder_training_steps: 150000
+  freeze_encoder_after_phase1: true
+  convergence_window: 200      # Source: not specified in the paper (strided controller)
+  convergence_rtol: 0.01
+  convergence_min_steps: 10000
+  log_interval: 1000
+
+# -----------------------------------------------------------------------------
+# Phase 2: IQL policy training on the frozen encoder (same budget for every variant)
+# -----------------------------------------------------------------------------
+policy_training:
+  policy_training_steps: 850000
+  batch_size: 512
+  learning_rate: 0.0001
+  optimizer: adam
+  expectile: 0.8
+  awr_temperature: 3.0
+  discount: 0.88
+  tau: 0.001
+  adv_weight_clamp: 100.0      # Source: not specified in the paper (reference IQL)
+  normalize_advantage: false
+  max_grad_norm: null
+  freeze_encoder: true         # strided scheme: z must be stationary during TD learning
+  stationary_check_interval: 10000
+  reward_done_masks: true
+  sample_z: true
+  num_encoder_states: 32
+  log_interval: 1000
+
+# -----------------------------------------------------------------------------
+# Zero-shot evaluation protocol (Section 5.2, Table 1 caption)
+# -----------------------------------------------------------------------------
+evaluation:
+  suites:
+    - ant-goal-reaching
+    - ant-directional
+    - ant-random-simplex
+    - ant-path-center
+    - ant-path-loop
+    - ant-path-edges
+  num_episodes: 20             # mean over twenty evaluation episodes
+  num_seeds: 5                 # five random seeds, std across seeds reported
+  context_samples: 32          # FRE encodes 32 (state, reward) pairs at evaluation
+  deterministic_policy: true   # Source: not specified in the paper
+  sample_latent: false         # posterior-mean z; Source: not specified in the paper
+  eval_episode_length: 2000
+  normalize_returns: true      # results normalized between 0 and 100
+  score_min: 0.0
+  score_max: 100.0
+  goal_threshold: 2.0
+  start_at_center: true
+  record_observations: false
+  save_path: results/prior_ablations.json
+  task_kwargs:
+    goal_locations:
+      goal-bottom: [28, 0]
+      goal-left: [0, 15]
+      goal-top: [35, 24]
+      goal-center: [12, 24]
+      goal-right: [33, 16]
+    directions:
+      vel_left: [-1, 0]
+      vel_up: [0, 1]
+      vel_down: [0, -1]
+      vel_right: [1, 0]
+    velocity_dims: [15, 16]
+    velocity_scale: 1.0
+    simplex_seeds: [1, 2, 3, 4, 5]
+    simplex_frequency: 0.1
+    simplex_height_bonus: 1.0
+    simplex_velocity_bonus: 1.0
+    simplex_baseline: -1.0
+    path_width: 4.0
+
+# -----------------------------------------------------------------------------
+# Table 4 reporting: which task columns collapse into the "path-all" column
+# -----------------------------------------------------------------------------
+reporting:
+  columns:
+    ant-goal-reaching: [goal-bottom, goal-left, goal-top, goal-center, goal-right]
+    ant-directional: [vel_left, vel_up, vel_down, vel_right]
+    ant-random-simplex: [simplex-1, simplex-2, simplex-3, simplex-4, simplex-5]
+    ant-path-all: [path-center, path-loop, path-edges]
+    total: [ant-goal-reaching, ant-directional, ant-random-simplex, ant-path-all]
+  digits: 1
+  success_metric: highest_total   # FRE-all should attain the largest total and be
+                                   # competitive on every task column.
+
+# -----------------------------------------------------------------------------
+# Logging
+# -----------------------------------------------------------------------------
+logging:
+  log_interval: 1000
+  smoothing: 0.9
+  verbose: true
+  log_dir: runs/prior_ablations
+  save_encoder_path: null
+  save_policy_path: null
+  evaluate_every: 0
+  use_tensorboard: false
+  use_wandb: false

@@ -1,0 +1,85 @@
+# AllegroHand (16-DoF) in-hand cube reorientation configuration.
+# Encodes Table 4 hyperparameters from the SAPG paper.
+defaults:
+  - default
+
+# ---------------------------------------------------------------------------
+# Environment / parallelism
+# ---------------------------------------------------------------------------
+env_name: allegro_hand
+task: reorientation
+num_envs: 4096
+num_workers: 8
+horizon: 32
+max_iterations: 2000
+seed: 0
+device: cuda
+control_freq: 20
+episode_length: 300
+
+# ---------------------------------------------------------------------------
+# Optimization (Table 4)
+# ---------------------------------------------------------------------------
+gamma: 0.99
+tau: 0.95
+clip_epsilon: 0.2          # AllegroHand uses 0.2 (vs 0.1 for AllegroKuka/ShadowHand)
+critic_coef: 4.0
+entropy_coef: 0.0
+bounds_loss_coef: 0.0001
+max_grad_norm: 1.0
+learning_rate: 0.0003
+num_learning_epochs: 5
+mini_batch_size: null      # computed as num_envs * 4
+kl_target: 0.016
+use_kl_adaptive_lr: true
+normalize_advantage: true
+normalize_value: true
+
+# ---------------------------------------------------------------------------
+# Network architecture (MLP, no LSTM for AllegroHand)
+# ---------------------------------------------------------------------------
+use_lstm: false
+seq_len: 16
+lstm_hidden: 768
+lstm_layers: 1
+hidden_dims: [512, 256, 128]
+critic_hidden_dims: [512, 256, 128]
+embed_dim: 16
+activation: elu
+condition_mode: concat
+init_log_std: -1.0
+use_tanh: false
+
+# ---------------------------------------------------------------------------
+# Aggregation
+# ---------------------------------------------------------------------------
+aggregation_mode: leader
+leader_id: 0
+rotate_leader: false
+use_entropy_exploration: false
+
+# ---------------------------------------------------------------------------
+# Curriculum
+# ---------------------------------------------------------------------------
+use_curriculum: true
+curriculum_initial_tolerance: 0.5
+curriculum_min_tolerance: 0.1
+curriculum_decay: 0.9
+curriculum_success_threshold: 3.0
+
+# ---------------------------------------------------------------------------
+# Reward weights
+# ---------------------------------------------------------------------------
+w1: 1.0
+r_lift_w: 1.0
+r_target_w: 1.0
+r_success_w: 10.0
+
+# ---------------------------------------------------------------------------
+# Logging
+# ---------------------------------------------------------------------------
+log_interval: 10
+save_interval: 100
+eval_interval: 50
+output_dir: runs/allegro_hand
+wandb: false

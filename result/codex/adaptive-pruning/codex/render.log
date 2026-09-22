@@ -1,0 +1,5 @@
+PROMPT_OK  /Users/apple/Documents/0919-test/codex/work/adaptive-pruning-codex-desktop/PROMPT.txt  (      37 lines; time limit: 3; input: markdown only, same bytes as the DeepCode arms)
+     2 ab75e6e9238f  paper.md
+     2 3b4acc15081a  addendum.md
+     2 88ea296e8c6c  blacklist.txt
+copy the prompt:  cat /Users/apple/Documents/0919-test/codex/work/adaptive-pruning-codex-desktop/PROMPT.txt | pbcopy

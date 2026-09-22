@@ -1,0 +1,78 @@
+# SAPG configuration for the AllegroHand environment (16-DoF in-hand cube reorientation).
+# Corresponds to Table 4 in the SAPG paper ("easy" task; metric = net episode reward).
+
+env: allegro_hand
+task: reorientation
+
+# ---------------------------------------------------------------------------
+# Parallelism / splitting (SAPG core)
+# ---------------------------------------------------------------------------
+num_envs: 8192          # total number of parallel environments
+num_blocks: 8           # number of environment blocks (followers)
+aggregation: leader     # "leader" (default) or "symmetric" (ablation)
+leader_id: 0            # index of the designated leader worker
+
+# ---------------------------------------------------------------------------
+# Rollout / optimization (Table 4)
+# ---------------------------------------------------------------------------
+horizon: 8              # rollout horizon per block (hands use 8)
+num_mini_epochs: 5      # mini-epochs per update (hands use 5)
+mini_batch_multiplier: 4  # mini-batch size = num_envs * multiplier
+gamma: 0.99
+tau: 0.95               # GAE lambda
+clip_eps: 0.2
+value_loss_coef: 1.0
+bounds_loss_coef: 0.001
+entropy_coef: 0.0
+max_grad_norm: 1.0
+lr: 3.0e-4
+kl_threshold: 0.016
+lr_adapt: true
+normalize_advantages: true
+
+# ---------------------------------------------------------------------------
+# Network architecture (AllegroHand mean net: MLP 512x256x128, ELU)
+# ---------------------------------------------------------------------------
+hidden_dims: [512, 256, 128]
+recurrent: false
+lstm_hidden: 768
+pre_hidden_dims: [512, 256]
+phi_dim: 8              # dimension of per-worker embedding phi_j
+activation: elu
+per_worker_sigma: false # entropy-exploration variant: per-block learnable sigma
+
+# ---------------------------------------------------------------------------
+# Environment
+# ---------------------------------------------------------------------------
+episode_length: 100
+control_freq: 20
+sim_dt: 0.0166
+action_scale: 0.5
+success_tolerance: 0.1
+min_tolerance: 0.1      # no curriculum annealing for this easy task
+tolerance_decay: 0.9
+curriculum_success_threshold: 3.0
+randomize_object: true
+randomize_goal: true
+
+# ---------------------------------------------------------------------------
+# Reward (orientation error + success bonus)
+# ---------------------------------------------------------------------------
+reward:
+  w_orientation: 1.0
+  orientation_scale: 1.0
+  w_success: 100.0
+  success_tolerance: 0.1
+
+# ---------------------------------------------------------------------------
+# Training / logging
+# ---------------------------------------------------------------------------
+total_steps: 100000000
+seed: 0
+log_dir: "runs/allegro_hand"
+use_tensorboard: true
+use_wandb: false
+wandb_project: "sapg"
+save_interval: 1000
+eval_interval: 100
+eval_episodes: 10

@@ -1,0 +1,27 @@
+# SAPG: Split and Aggregate Policy Gradients
+# Python 3.8+ (3.9/3.10 recommended)
+
+# --- Core deep learning ---
+torch>=1.13.0
+numpy>=1.21.0
+scipy>=1.7.0
+
+# --- Configuration ---
+PyYAML>=6.0
+
+# --- Plotting (Figures 2, 6, 8) ---
+matplotlib>=3.5.0
+
+# --- Optional: experiment tracking ---
+# wandb>=0.13.0
+
+# --- Optional: massively parallel GPU simulation ---
+# IsaacGym (Makoviychuk et al., 2021) is NOT distributed via PyPI.
+# Install it manually following NVIDIA's instructions:
+#   https://developer.nvidia.com/isaac-gym
+# The reference environments in `envs/` provide a lightweight NumPy-based
+# kinematic proxy so the full SAPG/PPO stack can run without IsaacGym
+# (CPU-only, useful for debugging and small-scale reproduction).
+#
+# Alternative physics backends (optional):
+# mujoco>=3.0.0

@@ -1,0 +1,87 @@
+# SAPG configuration for ShadowHand (24-DoF in-hand cube reorientation)
+# Corresponds to Table 3 in the SAPG paper.
+#
+# ShadowHand is an "easy" task in the paper's taxonomy: the reported metric is
+# net episode reward (compared against PQL, Li et al. 2023), not success rate.
+
+# ---------------------------------------------------------------------------
+# Environment / task
+# ---------------------------------------------------------------------------
+env: shadow_hand
+task: reorientation
+
+# ---------------------------------------------------------------------------
+# Parallelism and splitting (SAPG core)
+# ---------------------------------------------------------------------------
+# Total number of parallel environments. Split into `num_blocks` blocks, each
+# running its own follower policy phi_j.
+num_envs: 8192
+num_blocks: 8
+aggregation: leader        # "leader" (default) or "symmetric" (ablation)
+leader_id: 0
+
+# ---------------------------------------------------------------------------
+# Rollout / optimization hyperparameters (Table 3)
+# ---------------------------------------------------------------------------
+horizon: 8                 # rollout horizon per block
+num_mini_epochs: 5         # mini-epochs per update
+mini_batch_multiplier: 4   # mini-batch size = num_envs * multiplier
+gamma: 0.99
+tau: 0.95                  # GAE lambda
+clip_eps: 0.2
+value_loss_coef: 1.0
+bounds_loss_coef: 0.001
+entropy_coef: 0.0
+max_grad_norm: 1.0
+lr: 3.0e-4
+kl_threshold: 0.016
+lr_adapt: true
+normalize_advantages: true
+
+# ---------------------------------------------------------------------------
+# Network architecture (Table 3)
+# ---------------------------------------------------------------------------
+# ShadowHand mean net: MLP 512x512x256x128 with ELU activation.
+hidden_dims: [512, 512, 256, 128]
+recurrent: false
+lstm_hidden: 768
+pre_hidden_dims: [512, 256]
+phi_dim: 8
+activation: elu
+per_worker_sigma: false    # true enables the entropy-exploration variant
+
+# ---------------------------------------------------------------------------
+# Environment / curriculum
+# ---------------------------------------------------------------------------
+episode_length: 100
+control_freq: 20
+sim_dt: 0.0166
+action_scale: 0.5
+success_tolerance: 0.1
+min_tolerance: 0.1         # easy task: no curriculum annealing by default
+tolerance_decay: 0.9
+curriculum_success_threshold: 3.0
+randomize_object: true
+randomize_goal: true
+
+# ---------------------------------------------------------------------------
+# Reward weights (orientation error + success bonus)
+# ---------------------------------------------------------------------------
+reward:
+  w_orientation: 1.0
+  orientation_scale: 1.0
+  w_success: 100.0
+  success_tolerance: 0.1
+
+# ---------------------------------------------------------------------------
+# Training / logging
+# ---------------------------------------------------------------------------
+total_steps: 100000000
+seed: 0
+log_dir: runs/shadow_hand
+use_tensorboard: true
+use_wandb: false
+wandb_project: sapg
+save_interval: 1000
+eval_interval: 100
+eval_episodes: 10

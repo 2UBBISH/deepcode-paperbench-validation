@@ -1,0 +1,5 @@
+PROMPT_OK  /Users/apple/Documents/0919-test/codex/work/robust-clip-codex-desktop/PROMPT.txt  (      37 lines; time limit: 3; input: markdown only, same bytes as the DeepCode arms)
+     2 63195aae9b82  paper.md
+     2 84c9d2ec98f2  addendum.md
+     2 5d86723b93cd  blacklist.txt
+copy the prompt:  cat /Users/apple/Documents/0919-test/codex/work/robust-clip-codex-desktop/PROMPT.txt | pbcopy

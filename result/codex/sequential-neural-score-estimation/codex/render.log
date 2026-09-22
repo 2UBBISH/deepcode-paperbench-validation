@@ -1,0 +1,5 @@
+PROMPT_OK  /Users/apple/Documents/0919-test/codex/work/sequential-neural-score-estimation-codex-desktop/PROMPT.txt  (      37 lines; time limit: 3; input: markdown only, same bytes as the DeepCode arms)
+     2 e815e5427bce  paper.md
+     2 89ab6b6aa69e  addendum.md
+     2 4a5e953f86ec  blacklist.txt
+copy the prompt:  cat /Users/apple/Documents/0919-test/codex/work/sequential-neural-score-estimation-codex-desktop/PROMPT.txt | pbcopy

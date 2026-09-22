@@ -1,0 +1,5 @@
+PROMPT_OK  /Users/apple/Documents/0919-test/codex/work/sample-specific-masks-codex-desktop/PROMPT.txt  (      37 lines; time limit: 3; input: markdown only, same bytes as the DeepCode arms)
+     2 4ab5855e094b  paper.md
+     2 8d3f4629892c  addendum.md
+     2 d6f2588377dd  blacklist.txt
+copy the prompt:  cat /Users/apple/Documents/0919-test/codex/work/sample-specific-masks-codex-desktop/PROMPT.txt | pbcopy

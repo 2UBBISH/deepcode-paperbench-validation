@@ -1,0 +1,165 @@
+# =============================================================================
+# Default configuration for "Challenges in Training PINNs: A Loss Landscape
+# Perspective" reproduction.
+#
+# This file centralises the PDE coefficients, data-sampling sizes, model
+# architecture, optimizer schedules and NNCG hyperparameters described in the
+# paper (Sections 2.2, 6.1, 7.2-7.4 and Appendices A, C.2, E.2).
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Reproducibility / runtime
+# -----------------------------------------------------------------------------
+runtime:
+  seed: 345                 # default seed (best per-PDE seeds: 345/456/567)
+  seeds: [123, 234, 345, 456, 567]   # 5 seeds used for all experiments
+  device: cpu               # "cuda" if a GPU is available
+  dtype: float32            # training dtype (float64 used internally for Hessian/PCG)
+  hessian_dtype: float64    # dtype for Hessian-vector products, SLQ and PCG
+  outdir: results
+
+# -----------------------------------------------------------------------------
+# PDE definitions (Appendix A)
+# -----------------------------------------------------------------------------
+pdes:
+  convection:
+    beta: 40.0              # advection speed
+    x_min: 0.0
+    x_max: 6.283185307179586   # 2*pi
+    t_min: 0.0
+    t_max: 1.0
+    n_bc_sides: 2           # periodic BC -> u(0,t) = u(2pi,t)
+    ic: "sin(x)"            # u(x,0) = sin(x)
+    exact: "sin(x - beta*t)"  # u(x,t) = sin(x - beta t)
+
+  reaction:
+    rho: 5.0                # reaction rate
+    x_min: 0.0
+    x_max: 6.283185307179586   # 2*pi
+    t_min: 0.0
+    t_max: 1.0
+    n_bc_sides: 2           # periodic BC
+    ic: "exp(-(x-pi)^2 / (2*(pi/4)^2))"
+    exact: "h*exp(rho*t) / (h*exp(rho*t) + 1 - h), h = exp(-(x-pi)^2/(2*(pi/4)^2))"
+
+  wave:
+    beta: 5.0               # wave number multiplier
+    x_min: 0.0
+    x_max: 1.0
+    t_min: 0.0
+    t_max: 1.0
+    n_bc_sides: 2           # Dirichlet BC -> u(0,t) = u(1,t) = 0
+    ic: "sin(pi*x) + 0.5*sin(beta*pi*x)"
+    ic_dt: "0"              # u_t(x,0) = 0
+    exact: "sin(pi*x)*cos(2*pi*t) + 0.5*sin(beta*pi*x)*cos(2*beta*pi*t)"
+
+# -----------------------------------------------------------------------------
+# Data sampling (Section 2.2)
+# -----------------------------------------------------------------------------
+data:
+  n_x_grid: 255             # interior grid resolution in x
+  n_t_grid: 100             # interior grid resolution in t
+  n_res: 10000              # random residual (collocation) points
+  n_ic: 257                 # equally spaced initial-condition points
+  n_bc: 101                 # equally spaced boundary points per side
+  full_batch: true          # full-batch training (all points every step)
+
+# -----------------------------------------------------------------------------
+# Model architecture (Section 2.2)
+# -----------------------------------------------------------------------------
+model:
+  in_dim: 2                 # (x, t)
+  out_dim: 1                 # scalar u
+  depth: 3                  # 3 hidden layers
+  width: 200                # default width; sweep over {50, 100, 200, 400}
+  widths: [50, 100, 200, 400]
+  activation: tanh
+  weight_init: xavier_normal
+  bias_init: zeros
+
+# -----------------------------------------------------------------------------
+# Baseline optimizers (Sections 2.2, 6.1)
+# -----------------------------------------------------------------------------
+optimizers:
+  adam:
+    lr: 1.0e-3
+    lr_grid: [1.0e-5, 1.0e-4, 1.0e-3, 1.0e-2, 1.0e-1]
+    betas: [0.9, 0.999]
+    eps: 1.0e-8
+    n_iters: 41000
+
+  lbfgs:
+    lr: 1.0
+    history_size: 100
+    line_search_fn: strong_wolfe
+    n_iters: 41000
+
+  adam_lbfgs:
+    adam_lr: 1.0e-3
+    switch_iter: 11000
+    switch_grid: [1000, 11000, 31000]
+    total_iters: 41000
+    lbfgs_lr: 1.0
+    history_size: 100
+    line_search_fn: strong_wolfe
+
+# -----------------------------------------------------------------------------
+# NNCG (NysNewton-CG) hyperparameters (Section 7.2, Appendix E.2)
+# -----------------------------------------------------------------------------
+nncg:
+  n_steps: 2000             # fine-tuning steps after Adam+L-BFGS
+  s: 60                     # Nystrom rank
+  F: 20                     # recompute Nystrom approximation every F iterations
+  mu: 1.0e-2                # damping / regularisation (tuned in {1e-5..1e-1})
+  mu_grid: [1.0e-5, 1.0e-4, 1.0e-3, 1.0e-2, 1.0e-1]
+  eps: 1.0e-16              # PCG tolerance
+  M: 1000                   # PCG max iterations
+  eta: 1.0                  # initial step size
+  alpha: 0.1                # Armijo sufficient-decrease parameter
+  beta: 0.5                 # Armijo backtracking factor
+
+# -----------------------------------------------------------------------------
+# GD fine-tuning baseline (Section 7.3)
+# -----------------------------------------------------------------------------
+gd:
+  n_steps: 2000
+  lr: 1.0e-3
+
+# -----------------------------------------------------------------------------
+# Spectral density estimation (Section 5, Appendix C)
+# -----------------------------------------------------------------------------
+spectral:
+  slq_iters: 100            # Lanczos iterations per probe
+  slq_probes: 1             # number of random probes
+  slq_bins: 100             # histogram / KDE bins
+  grid_min: 1.0e-2
+  grid_max: 1.0e8
+  use_preconditioned: true  # also plot L-BFGS-preconditioned spectrum
+
+# -----------------------------------------------------------------------------
+# Per-PDE best configurations (Section 6.1 / 7.3)
+# width=200; Adam lr 1e-4/1e-3/1e-3; best seeds 345/456/567
+# -----------------------------------------------------------------------------
+best_config:
+  convection:
+    width: 200
+    adam_lr: 1.0e-4
+    switch_iter: 11000
+    seed: 345
+  reaction:
+    width: 200
+    adam_lr: 1.0e-3
+    switch_iter: 11000
+    seed: 456
+  wave:
+    width: 200
+    adam_lr: 1.0e-3
+    switch_iter: 11000
+    seed: 567
+
+# -----------------------------------------------------------------------------
+# Wall-clock timing experiment (Section 7.4, Table 3)
+# -----------------------------------------------------------------------------
+wallclock:
+  n_timed_lbfgs: 20
+  n_timed_nncg: 20

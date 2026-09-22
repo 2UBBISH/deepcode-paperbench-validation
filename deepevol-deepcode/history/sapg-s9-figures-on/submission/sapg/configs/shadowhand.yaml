@@ -1,0 +1,78 @@
+# =============================================================================
+# SAPG configuration for the ShadowHand 24-DoF in-hand reorientation task.
+# Follows the paper's Table 3 (Appendix B hyperparameters).
+# =============================================================================
+
+# --- Task -------------------------------------------------------------------
+task: shadowhand
+task_name: reorientation
+
+# --- Scale ------------------------------------------------------------------
+num_envs: 24576          # N parallel environments (paper Section 6)
+num_policies: 6          # M policies = 1 leader + 5 followers
+horizon: 8               # H rollout steps per env instance (ShadowHand)
+episode_length: 200      # max episode length (control steps)
+
+# --- Optimizer / PPO --------------------------------------------------------
+learning_rate: 5.0e-4    # Adam LR for the hands (Table 3)
+gamma: 0.99              # discount factor
+tau: 0.95                # GAE lambda
+n_step: 3                # n-step critic target (Eq. 5)
+clip_eps: 0.1            # PPO clipping epsilon (ShadowHand)
+critic_coef: 4.0         # critic loss coefficient lambda'
+lambda_off: 1.0          # off-policy loss weight (Eq. 4)
+bounds_coef: 1.0e-4      # bounds loss coefficient
+max_grad_norm: 1.0       # gradient norm clipping
+mini_epochs: 5           # mini-epochs per update (hands)
+num_mini_batches: 4      # mini-batch size = num_envs * num_mini_batches
+use_kl_adaptive_lr: true
+kl_threshold: 0.016
+kl_adaptive_factor: 1.5
+normalize_advantage: true
+
+# --- Entropy regularization (Section 4.5) -----------------------------------
+# L(pi_i) = L_on(pi_i) + sigma * (i-1) * H(pi_i); leader has no entropy loss.
+# Sweep values: {0.0, 0.003, 0.005}
+entropy_coef: 0.0
+learnable_entropy_coef: false
+
+# --- Model (Section 4.4 / Addendum) -----------------------------------------
+phi_dim: 16              # per-policy latent phi_j in R^16 for ShadowHand
+use_lstm: false          # ShadowHand uses a feed-forward MLP actor
+lstm_hidden: 768
+lstm_layers: 1
+actor_hidden_dims: [512, 512, 256, 128]   # MLP(512x512x256x128, ELU)
+critic_hidden_dims: [512, 512, 256, 128]
+activation: elu
+conditioning: concat     # concatenate phi_j to the observation (FiLM alternative)
+log_std_init: -0.5
+
+# --- Rewards (PQL-style decomposition, Li et al. 2023) ----------------------
+reward_weights:
+  orientation: 1.0
+  position: 0.5
+  velocity: 0.01
+  angular_velocity: 0.01
+  action_penalty: 0.0001
+  torque_penalty: 0.00001
+  success: 10.0
+
+# --- Curriculum -------------------------------------------------------------
+use_curriculum: true
+tolerance_start: 0.5     # initial orientation tolerance (rad)
+tolerance_end: 0.1       # final orientation tolerance (rad)
+tolerance_decay: 0.90    # multiplicative shrink per curriculum step
+success_threshold: 3.0   # avg successes/episode needed to advance
+
+# --- Training loop ----------------------------------------------------------
+seed: 0
+device: cuda:0
+max_iterations: 100000
+max_samples: 2.0e10      # ~2e10 transitions per run (paper Section 6)
+log_interval: 1
+eval_interval: 100
+eval_episodes: 32
+save_interval: 500
+output_dir: results/shadowhand
+headless: true
+force_mock: false        # set true for CPU-only debugging without IsaacGym

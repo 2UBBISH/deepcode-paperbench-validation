@@ -1,0 +1,5 @@
+PROMPT_OK  /Users/apple/Documents/0919-test/codex/work/sapg-codex-desktop/PROMPT.txt  (      37 lines; time limit: 3; input: markdown only, same bytes as the DeepCode arms)
+     2 cec74153ae20  paper.md
+     2 2e114c9c87fa  addendum.md
+     2 169662886f2e  blacklist.txt
+copy the prompt:  cat /Users/apple/Documents/0919-test/codex/work/sapg-codex-desktop/PROMPT.txt | pbcopy

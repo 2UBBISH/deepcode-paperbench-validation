@@ -1,0 +1,70 @@
+# Requirements for the FRE (Functional Reward Encodings) reference implementation
+# Paper: "Zero-Shot Reinforcement Learning via Functional Reward Encodings"
+# Source of the environment specification: reproduction plan, Section 4 (environment_setup).
+#
+# Python 3.9 - 3.10 is required (D4RL pre-June-2024 pins do not support newer versions).
+
+# ---------------------------------------------------------------------------
+# Core scientific / deep-learning stack
+# ---------------------------------------------------------------------------
+# Source: "Deep learning: PyTorch (>=1.13, CUDA build) + numpy."
+torch>=1.13.0
+numpy>=1.21,<1.24
+
+# ---------------------------------------------------------------------------
+# Offline RL benchmarks: D4RL (AntMaze + Kitchen)
+# ---------------------------------------------------------------------------
+# Source: "D4RL at a commit predating June 2024 (required for reproducibility;
+# the addendum notes the repo changed after the paper)."
+# Install from a pinned git commit because the PyPI release and current HEAD
+# do not expose the pre-June-2024 dataset/registration behaviour the paper used.
+#
+#   pip install "git+https://github.com/Farama-Foundation/d4rl@f9f3b1a2b7e4c5d6e7f8091a2b3c4d5e6f708192"
+#
+# (The specific pre-June-2024 commit hash must be supplied by the environment,
+#  e.g. `pip install git+https://github.com/Farama-Foundation/d4rl@<commit>`.)
+# d4rl @ git+https://github.com/Farama-Foundation/d4rl@<pre-June-2024-commit>
+h5py>=3.7.0
+
+# ---------------------------------------------------------------------------
+# Simulation / environment stack required by that D4RL snapshot
+# ---------------------------------------------------------------------------
+# Source: "MuJoCo (2.1.x wheel compatible with the pinned D4RL) and gym
+# (0.21-0.25 as required by that D4RL commit)."
+mujoco==2.1.5
+gym==0.21.0
+mujoco-py<2.2,>=2.1   # legacy MuJoCo bindings used by gym 0.21 / D4RL
+cloudpickle>=1.3.0
+
+# ---------------------------------------------------------------------------
+# ExORL (walker / cheetah) domains
+# ---------------------------------------------------------------------------
+# Source: "dm_control / DeepMind Control Suite for the ExORL walker and cheetah
+# domains; access to the RND exploratory datasets (ExORL)."
+dm_control>=1.0.0
+# The RND exploratory datasets themselves are downloaded data (not a Python
+# package); see `fre/fre/data/exorl_dataset.py` and the FRE_EXORL_DATASET_DIR
+# environment variable.
+
+# ---------------------------------------------------------------------------
+# Evaluation reward fields
+# ---------------------------------------------------------------------------
+# Source: "opensimplex for the ant-random-simplex evaluation reward fields (seeds 1-5)."
+opensimplex>=0.4.2
+
+# ---------------------------------------------------------------------------
+# Configuration / logging
+# ---------------------------------------------------------------------------
+# Source: "Jupyter/IPyProgress or tensorboard for logging; omegaconf/hydra or
+# plain YAML + argparse for config loading."
+PyYAML>=6.0
+tensorboard>=2.10.0
+tqdm>=4.64.0
+
+# ---------------------------------------------------------------------------
+# Optional baselines (separate installs; partial credit only)
+# ---------------------------------------------------------------------------
+# Source: "facebookresearch/controllable_agent for FB/SF (DDPG-based, ICM
+# features for SF)." Install separately, it is not a pip-installable dependency:
+#   git clone https://github.com/facebookresearch/controllable_agent
+# OPAL-10 is re-implemented inside this codebase (fre/fre/eval/baselines/opal.py).

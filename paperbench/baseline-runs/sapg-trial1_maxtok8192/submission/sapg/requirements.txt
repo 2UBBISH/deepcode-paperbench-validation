@@ -1,0 +1,22 @@
+# SAPG: Split and Aggregate Policy Gradients
+# Core dependencies
+
+# --- Core numerics / deep learning ---
+torch>=1.13.0
+numpy>=1.21.0
+
+# --- Configuration ---
+PyYAML>=6.0
+
+# --- Logging / visualization ---
+tensorboard>=2.10.0
+
+# --- Environment simulation (optional; the codebase ships with a
+#     framework-agnostic NumPy surrogate simulator so these are only
+#     required to run against the real physics backends) ---
+# isaacgym>=1.0.0        # GPU-based physics simulation (AllegroKuka)
+# mujoco>=2.3.0          # Shadow Hand / Allegro Hand in-hand reorientation
+# gymnasium>=0.28.0      # Gym-like API for MuJoCo tasks
+
+# --- Testing ---
+pytest>=7.0.0

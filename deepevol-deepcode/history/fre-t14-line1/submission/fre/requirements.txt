@@ -1,0 +1,46 @@
+# =============================================================================
+# FRE: Functional Reward Encoding -- reproduction requirements
+# Zero-Shot Reinforcement Learning via Functional Reward Encodings (ICML 2024)
+# -----------------------------------------------------------------------------
+# Paper:  https://arxiv.org/abs/2402.13253   Code: https://github.com/kvfrans/fre
+#
+# Training stack (Appendix A, Table 3): optimizer Adam, lr 1e-4, batch size 512,
+# encoder 150k steps (1M ExORL/Kitchen), policy 850k steps (1M ExORL/Kitchen).
+# Only a single GPU is required; the paper used the Savio cluster.
+#
+# Install (recommended, after creating a Python 3.9+ environment):
+#     pip install -r fre/requirements.txt
+#     pip install git+https://github.com/Farama-Foundation/d4rl@<commit-before-2024-06>
+#     git clone https://github.com/facebookresearch/controllable_agent third_party/controllable_agent
+#
+# NOTE on d4rl / mujoco-py: the PyPI `d4rl` release changed after publication.
+# Pin d4rl to a commit predating June 2024 (see the git line above; the
+# `d4rl` entry below is a lower-bound fallback if you cannot use the git pin).
+# NOTE on controllable_agent (FB / SF baselines): not on PyPI -- clone it and
+# put it on PYTHONPATH, or set CONTROLLABLE_AGENT_DIR to the checkout
+# (default: third_party/controllable_agent).
+# =============================================================================
+
+# --- Core numerics / deep learning -------------------------------------------
+torch>=2.0,<2.4
+numpy>=1.23,<2.0            # numpy 2.x breaks several gym/mujoco-py releases
+
+# --- Offline RL datasets and environments ------------------------------------
+gym==0.21.*                 # d4rl / ExORL expect the legacy gym API
+d4rl>=1.1
+mujoco-py>=2.1,<2.2         # MuJoCo v2.1 (needed by D4RL antmaze / kitchen)
+mujoco==2.3.*               # dm_control backend used by ExORL walker/cheetah
+dm-control>=1.0.11          # ExORL environments (walker/cheetah velocity + goals)
+h5py>=3.8                   # ExORL RND datasets are distributed as HDF5
+opencv-python-headless>=4.5 # required by the ExORL replay apparatus
+
+# --- Prior reward distribution (Component 1) ---------------------------------
+opensimplex>=0.4            # `ant-random-simplex` 2-D noise tasks (Appendix C.1)
+
+# --- Logging / progress / experiment bookkeeping ------------------------------
+tensorboard>=2.12           # optional: MetricLogger(use_tensorboard=True)
+tqdm>=4.64
+
+# --- Optional convenience (datasets / plotting / analysis) --------------------
+# pandas>=1.5
+# matplotlib>=3.6

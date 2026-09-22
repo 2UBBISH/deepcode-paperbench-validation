@@ -1,0 +1,60 @@
+# Configuration for the 1D Reaction PDE experiment (Appendix A).
+#   du/dt - rho * u * (1 - u) = 0,  x in (0, 2*pi), t in (0, 1)
+#   IC: u(x, 0) = exp(-(x - pi)^2 / (2 (pi/4)^2))
+#   Periodic BC: u(0, t) = u(2*pi, t)
+#   rho = 5
+
+name: reaction
+
+pde_kwargs:
+  rho: 5.0
+
+# Informational only -- authoritative bounds live in src/pdes.py
+domain:
+  x_min: 0.0
+  x_max: 6.283185307179586   # 2*pi
+  t_min: 0.0
+  t_max: 1.0
+
+data:
+  n_res: 10000
+  n_ic: 257
+  n_bc: 101
+  n_x_grid: 255
+  n_t_grid: 100
+
+training:
+  total_iters: 41000
+  switch_iters: [1000, 11000, 31000]
+  default_switch: 11000
+  lbfgs_memory: 100
+
+lr_grid:
+  adam: [1.0e-5, 1.0e-4, 1.0e-3, 1.0e-2, 1.0e-1]
+  lbfgs: [1.0]
+  adam_lbfgs: [1.0e-5, 1.0e-4, 1.0e-3, 1.0e-2, 1.0e-1]
+
+# Selected by smallest final L2RE (see run_experiments.tune_lr)
+best_lr:
+  adam: 1.0e-3
+  lbfgs: 1.0
+  adam_lbfgs: 1.0e-3
+
+spectral:
+  width: 200
+  switch_iter: 11000
+  lr: 1.0e-3
+  seeds: [345, 456, 567]
+  num_matvecs: 100
+  num_bins: 200
+
+nncg:
+  steps: 2000
+  mu_grid: [1.0e-2, 1.0e-1]
+  s: 60
+  F: 20
+  M: 1000
+  eps: 1.0e-16
+  eta: 1.0
+  alpha: 0.1
+  beta: 0.5

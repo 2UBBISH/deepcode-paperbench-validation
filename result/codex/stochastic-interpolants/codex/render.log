@@ -1,0 +1,5 @@
+PROMPT_OK  /Users/apple/Documents/0919-test/codex/work/stochastic-interpolants-codex-desktop/PROMPT.txt  (      37 lines; time limit: 3; input: markdown only, same bytes as the DeepCode arms)
+     2 17f03d33b1a4  paper.md
+     2 40b6b38a1d66  addendum.md
+     2 f838f2dc1562  blacklist.txt
+copy the prompt:  cat /Users/apple/Documents/0919-test/codex/work/stochastic-interpolants-codex-desktop/PROMPT.txt | pbcopy

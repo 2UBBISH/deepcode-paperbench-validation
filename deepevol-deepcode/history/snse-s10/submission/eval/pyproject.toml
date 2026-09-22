@@ -1,0 +1,16 @@
+[build-system]
+requires = ['setuptools==79.0.1', 'wheel==0.46.3']
+build-backend = 'setuptools.build_meta'
+
+[project]
+name = 'npse-tsnpse-reproduction'
+version = '0.1.0'
+description = 'Reproduction of NPSE and TSNPSE posterior estimation methods'
+requires-python = '==3.10.*'
+dependencies = [
+    'torch==2.2.0',
+    'numpy==1.26.4',
+    'scipy==1.11.4',
+    'sbibm==1.0.5',
+    'sbi==0.22.0',
+]

@@ -1,0 +1,291 @@
+# =============================================================================
+# FRE (Functional Reward Encodings) -- D4RL Kitchen domain configuration
+# Paper: "Zero-Shot Reinforcement Learning via Functional Reward Encodings"
+# Reference implementation: github.com/kvfrans/fre
+#
+# Sources used for every value in this file:
+#   - Table 3 (§A Hyperparameters): batch size 512, Encoder Training Steps
+#     150,000 (1M for ExORL/Kitchen), Policy Training Steps 850,000 (1M for
+#     ExORL/Kitchen), K=32 reward pairs to encode, K'=8 reward pairs to decode,
+#     ratios 0.33/0.33/0.33, 32 reward embeddings, Adam, lr 0.0001, RL layers
+#     [512,512,512], decoder layers [512,512,512], encoder layers
+#     [256,256,256,256], encoder attention heads 4, beta 0.01, target update
+#     rate 0.001, discount 0.88, AWR temperature 3.0, IQL expectile 0.8.
+#   - Addendum (Additional Details on the FRE architecture): 64-d state
+#     embedding + 64-d reward embedding = 128-d token, 128-d latent z, no
+#     embedding step for the decoder state (raw state concatenated with z),
+#     latent simply concatenated to the observation for the RL components.
+#   - Appendix B (Training Details): goal-reaching HER 0.2/0.5/0.3, -1/0
+#     reward, done mask, "at least one sample contains the goal"; linear
+#     weights U[-1,1] with a 0.9 zero mask; MLP (state_dim, 32, 1) with tanh
+#     and output clipped to [-1,1].
+#   - Appendix C.3 (Kitchen): "we utilize the seven standard subtasks within
+#     the D4RL Kitchen environment. Because each task already defines a sparse
+#     reward, we directly use those sparse rewards as evaluation tasks."
+#   - Section 5.2 / Table 1 caption: 20 evaluation episodes per task, 5 random
+#     training seeds, std across seeds, FRE encodes 32 (state, reward) pairs at
+#     evaluation, returns normalized to [0, 100].
+#
+# Values annotated "paper silent" are defaults chosen by this reproduction
+# (documented in the plan's Section 5 "Handling of unspecified details").
+# =============================================================================
+
+name: fre_kitchen
+domain: kitchen
+method: FRE
+seed: 0
+seeds: [0, 1, 2, 3, 4]
+device: cuda
+
+# -----------------------------------------------------------------------------
+# Offline dataset (Appendix C.3)
+# Kitchen is trained with an unlabeled offline dataset; the seven subtask
+# rewards are the *evaluation* tasks and are not used as labels during training.
+# -----------------------------------------------------------------------------
+dataset:
+  name: kitchen-complete-v0            # D4RL Kitchen dataset id
+  aliases: [kitchen-complete-v0, kitchen-partial-v0, kitchen-mixed-v0]
+  path: null                           # optional local npz/hdf5 override
+  env_ids: [kitchen-complete-v0, kitchen-partial-v0, kitchen-mixed-v0]
+  env_var: [FRE_KITCHEN_DATASET, FRE_KITCHEN_DATASET_PATH]
+  limit: null                          # max transitions to load (null = all)
+  obs_dim: 60                          # D4RL Kitchen observation is 60-d
+  info_dim: 30                         # binary/continuous object state used by subtasks
+  exclude_final_states: true
+  attach_stats: true                   # attach state_mean_std / state_box hooks
+  # Observation normalization: the paper only specifies normalization
+  # (per-dimension std) for ExORL; for Kitchen it is "paper silent".
+  normalize: false
+  subtract_mean: false
+  std_floor: 1.0e-6
+  # Kitchen appends no physics/auxiliary features: `use_encoder_inputs` stays
+  # false so the encoder input is the raw observation (Appendix C.2 applies the
+  # auxiliary information only to ExORL).
+  use_encoder_inputs: false
+
+# -----------------------------------------------------------------------------
+# Prior reward distribution p(eta) (Section 4.2, Table 3, Appendix B)
+# Uniform mixture of random singleton (goal-reaching), random linear, and
+# random MLP functions. Used only during training on the unlabeled dataset.
+# -----------------------------------------------------------------------------
+prior:
+  name: FRE-all
+  ratios:
+    goal: 0.33
+    linear: 0.33
+    mlp: 0.33
+  goal:
+    p_current: 0.20                    # Appendix B: current state is goal
+    p_future: 0.50                     # Appendix B: future state in trajectory
+    p_random: 0.30                     # Appendix B: completely random state
+    geometric_p: 0.20                  # paper silent: geometric lookahead for p_future
+    threshold: 0.0                     # training prior: exact goal
+    reward_unreached: -1.0
+    reward_reached: 0.0
+    terminate_on_success: true         # "A done mask is set to True when the goal is achieved"
+    ensure_goal_in_set: true           # "at least one of the samples contains the goal state"
+    metric_weights: null               # Euclidean in raw state space (paper silent for Kitchen)
+  linear:
+    weight_range: 1.0                  # uniform vector within -1 and 1
+    zero_prob: 0.9                     # 0.9 chance to zero each dimension
+    exclude_dims: []                   # XY removal is AntMaze-only
+    clip: null
+  mlp:
+    hidden_dim: 32                     # network of size (state_dim, 32, 1)
+    output_clip: 1.0                   # final output clipped between -1 and 1
+    scale_mode: average                # std scaled by the average dimension of the layer
+    activation: tanh
+  hint:
+    enabled: false                     # FRE-hint is only defined for ant-directional / *-velocity
+
+# -----------------------------------------------------------------------------
+# Model architecture (Table 3 + addendum)
+# -----------------------------------------------------------------------------
+model:
+  state_embed_dim: 64                  # addendum: state embedding is 64-d
+  reward_embed_dim: 64                 # addendum: reward embedding is 64-d
+  token_dim: 128                       # concatenated 64 + 64
+  latent_dim: 128                      # addendum: latent embedding z is 128-d
+  num_reward_embeddings: 32            # Table 3: Number of Reward Embeddings
+  num_encoder_blocks: 4                # addendum implies 4 stacked blocks
+  encoder_layers: [256, 256, 256, 256] # Table 3: transformer MLP block dims
+  encoder_attention_heads: 4           # Table 3: Encoder Attention Heads
+  decoder_layers: [512, 512, 512]      # Table 3: Decoder Network Layers
+  decoder_state_embedding: false       # addendum: raw state concatenated with z
+  rl_layers: [512, 512, 512]           # Table 3: RL Network Layers
+  num_qs: 2                            # twin critics (paper silent; reference IQL)
+  activation: relu
+  dropout: 0.0
+  layer_norm: false
+  positional_encoding: false           # "Positional encodings ... are not used"
+  causal_masking: false                # "and causal masking are not used"
+  pooling: mean                        # "The average of the final layer representations"
+  log_std_min: -5.0                    # encoder/policy log-std clamp (paper silent)
+  log_std_max: 2.0
+  state_norm: false                    # Kitchen raw observations by default
+
+# -----------------------------------------------------------------------------
+# Phase 1: encoder + decoder training (Algorithm 1, "# Train encoder")
+# Maximize Equation (6): reconstruction (negative MSE) - beta * KL(N(mu,sigma)||N(0,I))
+# -----------------------------------------------------------------------------
+encoder_training:
+  batch_size: 512                      # Table 3
+  num_encoder_states: 32               # Table 3: Reward Pairs to Encode (K)
+  num_decoder_states: 8                # Table 3: Reward Pairs to Decode (K')
+  reward_functions_per_update: 1
+  learning_rate: 0.0001                # Table 3
+  optimizer: adam                      # Table 3
+  weight_decay: 0.0
+  max_grad_norm: null                  # paper silent: no clipping
+  beta: 0.01                           # Table 3: beta KL Weight
+  loss_form: mse                       # Section 5: "minimizing mean-squared error"
+  sample_z: true                       # z ~ p_theta(z|L_eta^e) during training
+  reward_range: auto                   # per-eta reward bounds for the 32-bin discretization
+  reward_min: -1.0                     # fallback range (paper silent, matches clipping)
+  reward_max: 1.0
+  encoder_training_steps: 1000000      # Table 3 footnote: 1M for ExORL/Kitchen
+  freeze_encoder_after_phase1: true    # strided scheme (Section 4.3)
+  convergence_window: 200              # paper silent: moving-average window
+  convergence_rtol: 0.01               # paper silent: relative improvement threshold
+  convergence_min_steps: 10000         # paper silent: minimum steps before convergence
+  log_interval: 1000
+  use_encoder_inputs: false            # Kitchen has no physics augmentation
+
+# -----------------------------------------------------------------------------
+# Phase 2: policy / value / critic training on the FROZEN encoder (IQL)
+# Section 4.3: "we freeze the encoder and then start the training of the RL
+# networks using the frozen encoder's outputs."
+# -----------------------------------------------------------------------------
+policy_training:
+  policy_training_steps: 1000000       # Table 3 footnote: 1M for ExORL/Kitchen
+  batch_size: 512                      # Table 3
+  learning_rate: 0.0001                # Table 3
+  optimizer: adam                      # Table 3
+  expectile: 0.8                       # Table 3: IQL Expectile
+  awr_temperature: 3.0                 # Table 3: AWR Temperature
+  discount: 0.88                       # Table 3: Discount Factor (0.88)
+  tau: 0.001                           # Table 3: Target Update Rate
+  adv_weight_clamp: 100.0              # paper silent (reference IQL): exp(3*A) clamp
+  normalize_advantage: false           # paper silent
+  max_grad_norm: null
+  freeze_encoder: true                 # strided scheme requirement
+  stationary_check_interval: 10000     # z must be stationary across RL updates
+  reward_done_masks: true              # prior goal-reaching functions provide a done mask
+  sample_z: true                       # Algorithm 1: "Encode into latent vector z ~ p_theta(...)"
+  num_encoder_states: 32               # K context states per RL update
+  use_encoder_inputs: false            # Q/V/pi use the raw observation space (Appendix C.2)
+  log_interval: 1000
+
+# -----------------------------------------------------------------------------
+# Zero-shot evaluation (Section 5.2, Appendix C.3)
+# "All methods are evaluated using a mean over twenty evaluation episodes, and
+# each agent is trained using five random seeds."  Results normalized 0-100.
+# -----------------------------------------------------------------------------
+evaluation:
+  suites: [kitchen]                    # 7 sparse subtasks
+  num_episodes: 20                     # Section 5.2
+  num_seeds: 5                         # Section 5.2
+  context_samples: 32                  # FRE encodes 32 (state, reward) pairs at eval
+  fb_sf_context_samples: 5120          # Table 1 caption (FB / SF)
+  deterministic_policy: true           # paper silent
+  sample_latent: false                 # paper silent: posterior-mean z at evaluation
+  normalize_returns: true
+  score_min: 0.0                       # Table 1 caption: normalized between 0 and 100
+  score_max: 100.0
+  normalization_mode: success          # sparse subtask indicator (0/1 per step)
+  # Episode length: "paper silent" for Kitchen; D4RL Kitchen default is 1000
+  # timesteps, matching fre/data/kitchen_dataset.py:KITCHEN_EVAL_EPISODE_LENGTH.
+  eval_episode_length: 1000
+  record_observations: false
+  save_path: results/fre_kitchen.json
+  task_kwargs:
+    tasks:                             # the seven standard D4RL Kitchen subtasks
+      - microwave
+      - kettle
+      - light_switch
+      - slide_cabinet
+      - bottom_burner
+      - top_burner
+      - hinge_cabinet
+    threshold: 0.3                     # D4RL element-success L2 threshold
+    reward_success: 1.0
+    reward_failure: 0.0
+    reward_min: 0.0
+    reward_max: 1.0
+    obs_dim: 60
+    element_indices:                   # D4RL Kitchen element observation indices
+      microwave: [19]
+      kettle: [20]
+      light_switch: [21]
+      slide_cabinet: [22]
+      bottom_burner: [23, 24]
+      top_burner: [25, 26]
+      hinge_cabinet: [27]
+    element_goals:
+      microwave: [1.0]
+      kettle: [1.0]
+      light_switch: [1.0]
+      slide_cabinet: [1.0]
+      bottom_burner: [1.0, 1.0]
+      top_burner: [1.0, 1.0]
+      hinge_cabinet: [1.0]
+
+# -----------------------------------------------------------------------------
+# Logging / checkpointing
+# -----------------------------------------------------------------------------
+logging:
+  log_interval: 1000
+  smoothing: 0.9
+  verbose: true
+  log_dir: logs/fre_kitchen
+  save_encoder_path: checkpoints/fre_kitchen_encoder.pt
+  save_policy_path: checkpoints/fre_kitchen_policy.pt
+  evaluate_every: 100000
+  use_tensorboard: false
+  use_wandb: false
+
+# -----------------------------------------------------------------------------
+# Baselines (Section 5.2 / addendum). Same network structure & codebase as FRE.
+# Paper numbers (Kitchen): GC-IQL 59 +- 4, GC-BC 35 +- 9, FB 3 +- 6, SF 1 +- 1,
+# OPAL-10 26 +- 16, FRE 66 +- 3.
+# -----------------------------------------------------------------------------
+baselines:
+  gc_bc:
+    hidden_dims: [512, 512, 512]       # addendum: three hidden layers of size 512
+    activation: relu
+    layer_norm_before_activation: true
+    deterministic: false               # Gaussian policy head (mean + log_std)
+    log_std_min: -5.0                  # addendum: log-std clamped with a lower bound of -5.0
+    loss: mle                          # addendum: maximum likelihood estimation
+    goal_sampling: geometric_only      # addendum: GC-BC uses geometric goals only
+    gamma: 0.88
+    learning_rate: 0.0001
+    batch_size: 512
+    training_steps: 1000000
+  gc_iql:
+    goal_concat: true                  # goal concatenated to the observation
+    p_random_goal: 0.3                 # addendum: p_randomgoal = 0.3
+    p_geometric_goal: 0.5              # addendum: p_geometric_goal = 0.5
+    p_current_goal: 0.2                # addendum: p_current_goal = 0.2
+    reward_unreached: -1.0
+    reward_reached: 0.0
+    terminate_on_success: true
+    expectile: 0.8
+    awr_temperature: 3.0
+    discount: 0.88
+    tau: 0.001
+    learning_rate: 0.0001
+    batch_size: 512
+    hidden_dims: [512, 512, 512]
+    training_steps: 1000000
+  opal:
+    num_skills: 10                     # addendum: 10 random skills from a unit Gaussian
+    skill_sampling: unit_gaussian
+    privileged_execution: true         # evaluate each skill for the whole episode, take best
+    encoder: transformer               # addendum: same transformer architecture as FRE
+    context_samples: 32
+  fb_sf:
+    codebase: https://github.com/facebookresearch/controllable_agent
+    features: icm                      # ICM features for SF
+    context_samples: 5120
+    dataset: rnd

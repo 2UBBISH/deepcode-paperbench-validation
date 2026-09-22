@@ -1,0 +1,115 @@
+# Benchmark-specific configuration for the NPSE reproduction project.
+# These settings override the shared defaults in `default.yaml`.
+#
+# Conventions:
+#   - `sigma_min` follows the paper: 0.01 for 2-D tasks and SIR, 0.05 otherwise.
+#   - `sigma_max` is omitted (null) so it is auto-calibrated from training data
+#     using Technique 1 of Song & Ermon (2020).
+#   - `sde_type` defaults to "ve" (variance exploding). Set "vp" for the
+#     variance-preserving ablation/experiments.
+#   - `budgets` may be overridden per benchmark; absent means use the global
+#     budgets list in `default.yaml`.
+
+gaussian_linear:
+  sde_type: ve
+  sigma_min: 0.05
+  sigma_max: null
+  budgets: [1000, 10000, 100000]
+  observation_index: 0
+
+gaussian_mixture:
+  sde_type: ve
+  sigma_min: 0.01
+  sigma_max: null
+  budgets: [1000, 10000, 100000]
+  observation_index: 0
+
+two_moons:
+  sde_type: ve
+  sigma_min: 0.01
+  sigma_max: null
+  budgets: [1000, 10000, 100000]
+  observation_index: 0
+
+gaussian_linear_uniform:
+  sde_type: ve
+  sigma_min: 0.05
+  sigma_max: null
+  budgets: [1000, 10000, 100000]
+  observation_index: 0
+
+bernoulli_glm:
+  sde_type: ve
+  sigma_min: 0.05
+  sigma_max: null
+  budgets: [1000, 10000, 100000]
+  observation_index: 0
+
+slcp:
+  sde_type: ve
+  sigma_min: 0.05
+  sigma_max: null
+  budgets: [1000, 10000, 100000]
+  observation_index: 0
+
+sir:
+  sde_type: ve
+  sigma_min: 0.01
+  sigma_max: null
+  budgets: [1000, 10000, 100000]
+  observation_index: 0
+
+lotka_volterra:
+  sde_type: ve
+  sigma_min: 0.05
+  sigma_max: null
+  budgets: [1000, 10000, 100000]
+  observation_index: 0
+
+# ---------------------------------------------------------------------------
+# Sequential settings (used by TSNPSE / SNPSE experiments)
+# ---------------------------------------------------------------------------
+tsnpse:
+  rounds: 10
+  hpr_epsilon: 5.0e-4
+  hpr_n_density_samples: 20000
+  proposal_batch_size: 512
+  proposal_max_attempts_factor: 10000
+
+snpse:
+  rounds: 10
+  hpr_epsilon: 5.0e-4
+  hpr_n_density_samples: 20000
+  proposal_batch_size: 512
+  proposal_max_attempts_factor: 10000
+
+# ---------------------------------------------------------------------------
+# NLSE comparison settings. These tasks have exact perturbed-prior scores
+# available under the VE SDE (uniform or Gaussian-mixture priors).
+# ---------------------------------------------------------------------------
+nlse:
+  benchmarks: [gaussian_linear, gaussian_linear_uniform, gaussian_mixture, two_moons]
+  budgets: [10000]
+  prior_score: analytic
+
+# ---------------------------------------------------------------------------
+# SNPSE variant ablation (Figure 6). Default variant is SNPSE-B.
+# ---------------------------------------------------------------------------
+snpse_variants:
+  benchmarks: [slcp, gaussian_linear_uniform]
+  variants: [a, b, c]
+  total_budget: 10000
+  rounds: 10
+
+# ---------------------------------------------------------------------------
+# Pyloric-network application settings (optional real-world experiment).
+# ---------------------------------------------------------------------------
+pyloric:
+  theta_dim: 31
+  x_dim: 18
+  prior: uniform
+  initial_budget: 30000
+  per_round_budget: 20000
+  rounds: 9
+  valid_summary_threshold: 0.8
+  invalid_summary_sigma_multiplier: 2.0

@@ -1,0 +1,61 @@
+# =============================================================================
+# RICE: A Refining scheme for ReInForcement learning with Explanation
+# (Proc. 41st ICML, PMLR 235, 2024)
+#
+# Reproduction requirements.
+#
+# NOTE (important): the paper does NOT specify exact package versions
+# ("Exact package versions are NOT specified in the paper"). The pins below are
+# the versions actually exercised by this reproduction and are therefore the
+# recommended, reproducible set. Loosened lower bounds are given in comments so
+# that the code can still run on slightly different stacks.
+# =============================================================================
+
+# --------------------------- core (required) ---------------------------------
+numpy>=1.21,<2.0            # arrays, RNG (np.random.Generator), running stats
+torch>=1.12,<2.4            # mask network, PPO, RND, IG/AIRS attribution
+matplotlib>=3.4             # Figures 2/3/5/7/8/9 and Table-4 timing plots
+
+# ------------------- environment stack (required for MuJoCo) -----------------
+# Legacy gym API (Hopper-v3 / Walker2d-v3 / Reacher-v2 / HalfCheetah-v3 ids).
+gym>=0.21                   # or gymnasium>=0.28 (the code supports both)
+gymnasium>=0.28             # modern API; either stack is sufficient
+mujoco>=2.3                 # MuJoCo 2.x/3.x bindings used by the -v3/-v4 ids
+# The paper uses the *-v3 ids; the code transparently falls back to *-v4 and
+# re-injects the healthy reward removed in Gymnasium's v4 rewrite.
+
+# ------------------------- optional / in-scope extras ------------------------
+# PPO/SAC reference implementations (the code ships self-contained PPO and SAC,
+# but SB3 is used when available to obtain the exact SB3 default 'MlpPolicy').
+stable-baselines3>=1.7      # SB3 defaults for PPO (lr 3e-4, n_steps 2048, ...)
+pyyaml>=5.4                 # configs/*.yaml (per-environment p/lambda/alpha)
+
+# ------------------------- optional / out-of-scope ---------------------------
+# The following back-ends are ONLY needed to run the corresponding environment
+# families against their real simulators. Every module in this repo degrades
+# gracefully (documented fallbacks) when they are absent.
+#
+# CAGE Challenge 2 (blue agent, Cardiff champion variant):
+#   cage-challenge-2  @ git+https://github.com/cage-challenge/cage-challenge-2
+#   -> set RICE_USE_REAL_CAGE=1 to use it; otherwise an in-repo simulator runs.
+#
+# Autonomous driving "Macro-v1" (MetaDrive / DI-drive):
+#   metadrive-simulator
+#   -> set RICE_ALLOW_METADRIVE=1 to use it; otherwise an in-repo Numpy
+#      bicycle-model simulator runs.
+#
+# Reference baselines / explanations (optional thin adapters, all of which fall
+# back to faithful in-repo re-implementations):
+#   StateMask             https://github.com/nuwuxian/RL-state_mask
+#   JSRL                  https://github.com/steventango/jumpstart-rl
+#   Selfish Mining        https://github.com/roibarzur/pto-selfish-mining
+#   AIRS (Yu et al. 2023) set RICE_AIRS_UPSTREAM=1 with an 'airs' module on path
+#
+# OUT OF SCOPE (deliberately NOT required):
+#   - malware-mutation module (Table 7 / Appendix D)
+#   - Tianshou and the MalConv gym environment
+#   - SparseWalker2d refining and sparse hyper-parameter sweeps
+#   - Section 3.4 theory / Appendix B proofs (no code)
+
+# ---------------------------- test / tooling ---------------------------------
+pytest>=7.0                 # tests/ behavioural + unit suite

@@ -1,0 +1,64 @@
+# Allegro Hand (16-DoF) in-hand cube reorientation configuration.
+# Overrides configs/default.yaml with task-specific hyperparameters from the
+# SAPG paper (lr=5e-4, clip_eps=0.2, horizon=8, mini_epochs=5).
+
+run:
+  run_name: allegro_hand
+  total_iterations: 2000
+  checkpoint_every: 100
+  log_every: 1
+  save_checkpoint: true
+
+env:
+  name: allegro_hand
+  task: reorientation
+  num_envs: 4096
+  num_blocks: 8
+  episode_length: 100
+  control_dt: 0.016666666666666666
+  action_scale: 0.5
+  normalize_obs: true
+  use_curriculum: true
+  # Reward weights (orientation error + success bonus).
+  w_orientation: 1.0
+  w_success: 5.0
+  w_action_penalty: 0.0
+  # Success-tolerance curriculum (radians).
+  initial_delta: 0.5
+  min_delta: 0.1
+  decrease_factor: 0.9
+  success_threshold: 3.0
+
+sapg:
+  mode: leader
+  use_importance_weights: true
+  max_importance_weight: 10.0
+  phi_dim: 8
+
+ppo:
+  gamma: 0.99
+  tau: 0.95
+  lr: 5.0e-4
+  kl_threshold: 0.016
+  grad_norm_clip: 1.0
+  entropy_coeff: 0.0
+  clip_eps: 0.2
+  critic_coeff: 4.0
+  bounds_loss_coeff: 1.0e-4
+  action_bound: 1.0
+  horizon: 8
+  lstm_seq_len: 8
+  mini_epochs: 5
+  mini_batch_size_mult: 4
+  min_lr: 1.0e-6
+  max_lr: 1.0e-2
+  lr_scale: 1.5
+
+network:
+  hidden_sizes: [512, 256, 128]
+  use_lstm: false
+  lstm_hidden: 768
+  activation: elu
+  learnable_sigma: true
+  per_block_sigma: false
+  init_log_std: 0.0

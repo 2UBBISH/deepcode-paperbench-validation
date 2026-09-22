@@ -1,0 +1,220 @@
+# =============================================================================
+# FRE configuration: AntMaze (antmaze-large-diverse-v2)
+# =============================================================================
+# Paper: "Zero-Shot Reinforcement Learning via Functional Reward Encodings".
+#
+# Sources:
+#   - Table 3 ("Hyperparameters used for FRE", Section A) for every numeric
+#     hyper-parameter below.
+#   - Appendix C.1 (AntMaze) for the dataset id, the 2000-timestep online
+#     evaluation length, the maze-center start position and the 32-bin X/Y
+#     discretization used by FRE / GC-IQL / GC-BC / OPAL.
+#   - Appendix C.1 for the goal-reaching threshold of 2 on the target position.
+#
+# Step budget note (Table 3): "Encoder Training Steps: 150,000 (1M for
+# ExORL/Kitchen)" and "Policy Training Steps: 850,000 (1M for ExORL/Kitchen)",
+# i.e. AntMaze uses 150k encoder + 850k policy steps.
+# =============================================================================
+
+name: fre_antmaze
+domain: antmaze
+method: FRE
+seed: 0
+# Section 5.2: "each agent is trained using five random seeds".
+seeds: [0, 1, 2, 3, 4]
+device: null    # null = auto-detect (cuda if available else cpu)
+
+# -----------------------------------------------------------------------------
+# Offline dataset (Appendix C.1)
+# -----------------------------------------------------------------------------
+dataset:
+  name: antmaze-large-diverse-v2
+  # D4RL commit predating June 2024 (Addendum).
+  env_id: antmaze-large-diverse-v2
+  path: null              # optional local HDF5/NPZ file; null -> D4RL
+  limit: null             # optional truncation for smoke tests
+  # "the X and Y coordinates are discretized into 32 bins"
+  discretize: true
+  num_xy_bins: 32
+  discretize_mode: index  # "index" -> integer bin [0, 31]; "center" -> bin centre
+  position_dims: [0, 1]
+  xy_bounds: [[0.0, 36.0], [0.0, 36.0]]   # fixed antmaze XY extent (paper silent)
+  # "The ant robot is placed in the center of the maze"
+  center_position: [16, 16]
+  goal_distance_threshold: 2.0            # Appendix C.1: within a distance of 2
+  exclude_final_states: true
+  attach_stats: true
+  use_encoder_inputs: false               # physics augmentation only for ExORL
+
+# -----------------------------------------------------------------------------
+# Prior reward distribution p(eta) (Section 4.2, Table 3, Appendix B)
+# -----------------------------------------------------------------------------
+prior:
+  name: FRE-all
+  # Table 3: Ratio of Goal-Reaching Rewards 0.33, Ratio of Linear Rewards 0.33,
+  #          Ratio of Random MLP Rewards 0.33 (uniform mixture).
+  ratios:
+    goal: 0.33
+    linear: 0.33
+    mlp: 0.33
+  goal:
+    # Appendix B: hindsight experience relabelling distribution
+    #   0.2 -> the randomly selected state itself
+    #   0.5 -> a future state within the trajectory
+    #   0.3 -> a completely random state
+    p_current: 0.2
+    p_future: 0.5
+    p_random: 0.3
+    geometric_p: 0.2        # geometric lookahead (paper silent; dataset sampling)
+    threshold: 0.0          # training prior: exact goal achievement
+    reward_unreached: -1.0  # "Reward is set to -1 for every timestep that the goal is not achieved"
+    reward_reached: 0.0
+    terminate_on_success: true   # "A done mask is set to True when the goal is achieved"
+    ensure_goal_in_set: true     # "We ensure that at least one of the samples contains the goal state"
+  linear:
+    weight_range: 1.0       # "uniform vector within -1 and 1"
+    zero_prob: 0.9          # "random binary mask is applied with a 0.9 chance"
+    # "On AntMaze, we remove the XY positions from this generation as the scale
+    #  of the dimensions led to instability."
+    exclude_dims: [0, 1]
+  mlp:
+    hidden_dim: 32          # "neural network of size (state_dim, 32, 1)"
+    output_clip: 1.0        # "final output ... is clipped between -1 and 1"
+    scale_mode: average     # "normal distribution scaled by the average dimension of the layer"
+
+# -----------------------------------------------------------------------------
+# FRE encoder / decoder (Section 4.1, Section 5, Addendum, Table 3)
+# -----------------------------------------------------------------------------
+model:
+  # Addendum: state embedding 64-d + reward embedding 64-d = 128-d token.
+  state_embed_dim: 64
+  reward_embed_dim: 64
+  token_dim: 128
+  latent_dim: 128                   # "The latent embedding (z) is 128-dimensional"
+  num_reward_embeddings: 32         # Table 3: Number of Reward Embeddings
+  # Table 3 "Encoder Layers = [256,256,256,256]" -> 4 transformer blocks whose
+  # MLP blocks expand to 256 and back to (Addendum) the 128-d residual width.
+  num_encoder_blocks: 4
+  encoder_layers: [256, 256, 256, 256]
+  encoder_attention_heads: 4        # Table 3: Encoder Attention Heads
+  decoder_layers: [512, 512, 512]   # Table 3: Decoder Network Layers
+  rl_layers: [512, 512, 512]        # Table 3: RL Network Layers
+  num_qs: 2                         # twin critics (paper silent; reference IQL)
+  activation: relu
+  dropout: 0.0                      # Addendum: no dropout used
+  layer_norm: false
+  positional_encoding: false        # "Positional encodings ... are not used"
+  causal_masking: false             # "causal masking are not used, thus the inputs are treated as an unordered set"
+  pooling: mean                     # "The average of the final layer representations"
+  log_std_min: -5.0
+  log_std_max: 2.0
+  # Decoder input: raw state concatenated directly with z (Addendum).
+  decoder_state_embedding: false
+
+# -----------------------------------------------------------------------------
+# Phase 1: encoder/decoder training on Equation (6) (Algorithm 1, Table 3)
+# -----------------------------------------------------------------------------
+encoder_training:
+  batch_size: 512
+  num_encoder_states: 32            # Table 3: Reward Pairs to Encode
+  num_decoder_states: 8             # Table 3: Reward Pairs to Decode
+  reward_functions_per_update: 1
+  learning_rate: 0.0001             # Table 3: Learning Rate
+  optimizer: adam                   # Table 3: Optimizer
+  weight_decay: 0.0
+  max_grad_norm: null
+  beta: 0.01                        # Table 3: beta KL Weight
+  loss_form: mse                    # Section 5: "minimizing mean-squared error"
+  sample_z: true                    # sample z ~ p_theta(z | .) during training
+  reward_range: auto                # bind per-eta reward bounds before discretizing
+  reward_min: -1.0
+  reward_max: 1.0
+  encoder_training_steps: 150000    # Table 3 (AntMaze)
+  # "After the encoder loss converges, we freeze the encoder" (Section 4.3)
+  freeze_encoder_after_phase1: true
+  convergence_window: 200
+  convergence_rtol: 0.01
+  convergence_min_steps: 10000
+  log_interval: 1000
+
+# -----------------------------------------------------------------------------
+# Phase 2: IQL training of pi(a|s,z), Q(s,a,z), V(s,z) (Section 4.3, Table 3)
+# -----------------------------------------------------------------------------
+policy_training:
+  policy_training_steps: 850000     # Table 3 (AntMaze)
+  batch_size: 512
+  learning_rate: 0.0001
+  optimizer: adam
+  expectile: 0.8                    # Table 3: IQL Expectile
+  awr_temperature: 3.0              # Table 3: AWR Temperature
+  discount: 0.88                    # Table 3: Discount Factor
+  tau: 0.001                        # Table 3: Target Update Rate
+  adv_weight_clamp: 100.0
+  normalize_advantage: false
+  max_grad_norm: null
+  freeze_encoder: true              # strided scheme (Section 4.3)
+  stationary_check_interval: 10000
+  reward_done_masks: true
+  sample_z: true
+  log_interval: 1000
+
+# -----------------------------------------------------------------------------
+# Zero-shot evaluation protocol (Section 5.2, Appendix C.1, Addendum)
+# -----------------------------------------------------------------------------
+evaluation:
+  suites: [ant-goal-reaching, ant-directional, ant-random-simplex, ant-path-loop, ant-path-edges, ant-path-center]
+  num_episodes: 20                  # "mean over twenty evaluation episodes"
+  num_seeds: 5
+  context_samples: 32               # FRE: 32 (state, reward) pairs at evaluation
+  deterministic_policy: true        # posterior-mean z, deterministic action (paper silent)
+  sample_latent: false
+  eval_episode_length: 2000         # Appendix C.1: evaluation length of 2000 timesteps
+  normalize_returns: true           # "Results normalized between 0 and 100"
+  score_min: 0.0
+  score_max: 100.0
+  goal_threshold: 2.0               # Appendix C.1 goal-reaching threshold
+  start_at_center: true             # "The ant robot is placed in the center of the maze"
+  record_observations: false
+  save_path: null                   # optional JSON report path
+  task_kwargs:
+    # Addendum: 5 hand-crafted goal locations on an (X,Y) grid, origin bottom-left.
+    goal_locations:
+      goal-bottom: [28, 0]
+      goal-left: [0, 15]
+      goal-top: [35, 24]
+      goal-center: [12, 24]
+      goal-right: [33, 16]
+    # Addendum: directional tasks use a dot product with the actual velocity.
+    directions:
+      vel_left: [-1, 0]
+      vel_up: [0, 1]
+      vel_down: [0, -1]
+      vel_right: [1, 0]
+    velocity_dims: [15, 16]
+    # Addendum: random-simplex reward fields seeded 1..5.
+    simplex_seeds: [1, 2, 3, 4, 5]
+    simplex_frequency: 0.08
+    simplex_height_bonus: 1.0
+    simplex_velocity_bonus: 1.0
+    simplex_baseline: -1.0
+    path_width: 4.0
+
+# -----------------------------------------------------------------------------
+# Logging / reproducibility
+# -----------------------------------------------------------------------------
+logging:
+  log_interval: 1000
+  smoothing: 0.9
+  verbose: true
+  log_dir: runs/fre_antmaze
+  save_encoder_path: checkpoints/fre_antmaze_encoder.pt
+  save_policy_path: checkpoints/fre_antmaze_policy.pt
+  evaluate_every: null              # optional in-training zero-shot evaluation
+  use_tensorboard: false
+  use_wandb: false
+
+# -----------------------------------------------------------------------------
+# Table 4 reference results (AntMaze, FRE-all, 5 seeds, normalized 0-100)
+# Priors: FRE-all is the vanilla uniform mixture configured above.
+# -----------------------------------------------------------------------------
+# prior ablation sweep lives in configs/prior_ablations.yaml

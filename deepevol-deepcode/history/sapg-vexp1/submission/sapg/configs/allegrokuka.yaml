@@ -1,0 +1,51 @@
+# SAPG configuration for the AllegroKuka tasks (Regrasping, Throw, Reorientation)
+# 23-DoF KUKA arm + 16-DoF Allegro hand. Recurrent (LSTM) policy.
+# Values follow Tables 2-4 / Appendix A of the SAPG paper.
+
+task: allegrokuka_regrasping
+
+# --- Environment ---
+num_envs: 24576          # total parallel environments (split across M policies)
+horizon: 16              # rollout horizon per policy (steps collected per iteration)
+episode_length: 1000     # max episode length (env-side)
+recurrent: true          # AllegroKuka uses an LSTM policy
+
+# --- Policy / architecture ---
+phi_dim: 32              # per-policy latent dimension (R^32 for AllegroKuka)
+actor_mlp: [768, 512, 256]
+lstm_hidden: 768
+lstm_layers: 1
+critic_mlp: [768, 512, 256]
+activation: elu
+init_log_std: -1.0
+
+# --- PPO / optimization ---
+gamma: 0.99
+tau: 0.95                # GAE lambda
+n_step: 3                # on-policy n-step return horizon
+clip_eps: 0.1            # PPO clip (AllegroKuka)
+lam: 1.0                 # off-policy loss weight (Eq. 4)
+critic_coef: 4.0
+entropy_coef: 0.0        # best sigma for Regrasping/Throw (Sec 4.5)
+learning_rate: 3.0e-4
+kl_threshold: 0.016
+kl_min_lr: 1.0e-5
+kl_max_lr: 1.0e-2
+mini_epochs: 2           # AllegroKuka uses 2 mini-epochs
+num_mini_batches: 4
+grad_norm_clip: 1.0
+normalize_advantage: true
+value_clip: null
+
+# --- SAPG aggregation ---
+num_policies: 6          # M
+aggregation: leader_follower
+subsample: true          # enforce |D_1'| == |D_1|
+
+# --- Training budget ---
+target_transitions: 2.0e10
+seed: 0
+device: cuda
+output_dir: runs/sapg_allegrokuka
+log_interval: 1
+save_interval: 100

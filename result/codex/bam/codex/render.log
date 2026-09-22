@@ -1,0 +1,5 @@
+PROMPT_OK  /Users/apple/Documents/0919-test/codex/work/bam-codex-desktop/PROMPT.txt  (      37 lines; time limit: 3; input: markdown only, same bytes as the DeepCode arms)
+     2 96cc2c131d6c  paper.md
+     2 1def9d460790  addendum.md
+     2 1307c2752814  blacklist.txt
+copy the prompt:  cat /Users/apple/Documents/0919-test/codex/work/bam-codex-desktop/PROMPT.txt | pbcopy

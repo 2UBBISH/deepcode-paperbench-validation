@@ -1,0 +1,40 @@
+# Requirements for opt_for_pinns
+# Reproduction of "Challenges in Training PINNs: A Loss Landscape Perspective"
+#
+# Reference environment (paper):
+#   - Python 3.10.12
+#   - PyTorch 2.0.0 (CUDA 11.8)
+#   - Single NVIDIA Titan V GPU (any modern CUDA GPU acceptable)
+#
+# Install (CUDA 11.8 build of PyTorch):
+#   pip install -r requirements.txt --extra-index-url https://download.pytorch.org/whl/cu118
+#
+# CPU-only fallback (works but slow, especially wave NNCG):
+#   pip install -r requirements.txt --extra-index-url https://download.pytorch.org/whl/cpu
+
+# --- Core deep learning framework ---
+torch==2.0.0
+torchvision==0.15.0
+
+# --- Numerical / scientific computing ---
+numpy>=1.23,<2.0
+scipy>=1.10,<1.12
+
+# --- Spectral density estimation (SLQ) ---
+# The paper uses a PyHessian-style Stochastic Lanczos Quadrature estimator.
+# Our implementation in src/hessian/spectral_density.py is self-contained
+# (pure PyTorch), so pyhessian is OPTIONAL. Uncomment to use the reference
+# implementation for cross-checking.
+# pyhessian==0.1.2
+
+# --- Plotting (Figures 1-5, 7, 8) ---
+matplotlib>=3.7,<3.9
+
+# --- Config files (configs/*.yaml) ---
+pyyaml>=6.0
+
+# --- Progress bars ---
+tqdm>=4.65
+
+# --- Optional: tabular output / analysis helpers ---
+# pandas>=2.0

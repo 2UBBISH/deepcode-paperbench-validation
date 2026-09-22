@@ -1,0 +1,21 @@
+# SAPG: Split and Aggregate Policy Gradients — Python dependencies
+#
+# NOTE: NVIDIA IsaacGym is NOT available on PyPI and must be installed manually
+# from https://developer.nvidia.com/isaac-gym (Preview 4 recommended).
+# See README.md for details. All other dependencies install via:
+#     pip install -r requirements.txt
+
+# --- Core numerics / deep learning -----------------------------------------
+torch>=1.13,<2.3          # CUDA build required for GPU training
+numpy>=1.21,<2.0
+
+# --- Config / logging ------------------------------------------------------
+pyyaml>=6.0
+tensorboard>=2.10
+
+# --- Analysis / plotting ---------------------------------------------------
+scikit-learn>=1.0         # PCA diversity metric (Fig. 7)
+matplotlib>=3.5           # learning-curve + diversity plots
+
+# --- Optional: simulator ---------------------------------------------------
+# isaacgym                # install manually from NVIDIA (not on PyPI)

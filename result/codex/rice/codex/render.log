@@ -1,0 +1,5 @@
+PROMPT_OK  /Users/apple/Documents/0919-test/codex/work/rice-codex-desktop/PROMPT.txt  (      37 lines; time limit: 3; input: markdown only, same bytes as the DeepCode arms)
+     2 e69c502c0c16  paper.md
+     2 d62c727e9aaa  addendum.md
+     2 119f3de8383b  blacklist.txt
+copy the prompt:  cat /Users/apple/Documents/0919-test/codex/work/rice-codex-desktop/PROMPT.txt | pbcopy

@@ -1,0 +1,92 @@
+# SAPG hyperparameters for the AllegroKuka environment (hard tasks).
+# Corresponds to Table 2 in the SAPG paper.
+#
+# Tasks: regrasping, throw, reorientation
+# The AllegroKuka env combines a 16-DoF Allegro hand with a 7-DoF Kuka arm
+# (23 joints total). The policy mean network is an LSTM (1 layer, 768 hidden)
+# preceded by an MLP 768x512x256 with ELU activations. The Gaussian sigma is a
+# fixed learnable vector independent of the observation.
+
+env: allegro_kuka
+task: regrasping
+
+# ---------------------------------------------------------------------------
+# Parallelism / splitting
+# ---------------------------------------------------------------------------
+num_envs: 16384          # total number of parallel environments
+num_blocks: 32           # number of follower blocks (each block = num_envs/num_blocks envs)
+aggregation: leader      # "leader" (default) or "symmetric" (ablation, Fig. 6)
+leader_id: 0             # index of the designated leader block
+
+# ---------------------------------------------------------------------------
+# Rollout / optimization
+# ---------------------------------------------------------------------------
+horizon: 16              # rollout horizon (LSTM sequence length = 16)
+num_mini_epochs: 2       # mini-epochs per update
+mini_batch_multiplier: 4 # mini-batch size = num_envs * 4
+gamma: 0.99              # discount factor
+tau: 0.95                # GAE lambda
+clip_eps: 0.2            # PPO clipping epsilon
+value_loss_coef: 1.0     # lambda' in the paper's loss
+bounds_loss_coef: 0.001  # bounds loss coefficient on log_std
+entropy_coef: 0.0        # entropy coefficient (0 in default configs)
+max_grad_norm: 1.0       # gradient clipping
+lr: 3.0e-4               # initial learning rate
+kl_threshold: 0.016      # KL threshold for LR adaptation
+lr_adapt: true           # enable KL-based LR adaptation
+normalize_advantages: true
+
+# ---------------------------------------------------------------------------
+# Networks
+# ---------------------------------------------------------------------------
+hidden_dims: [512, 256, 128]
+recurrent: true          # LSTM mean net for AllegroKuka
+lstm_hidden: 768
+pre_hidden_dims: [512, 256]
+phi_dim: 8               # dimension of per-worker embedding phi_j
+activation: elu
+per_worker_sigma: false  # entropy-exploration variant sets this to true
+
+# ---------------------------------------------------------------------------
+# Environment
+# ---------------------------------------------------------------------------
+episode_length: 300
+control_freq: 20
+sim_dt: 0.0166
+action_scale: 0.5
+success_tolerance: 0.075 # initial tolerance delta (7.5 cm)
+min_tolerance: 0.01      # final tolerance delta (1 cm)
+tolerance_decay: 0.9     # -10% per curriculum step
+hold_steps: 30           # K = 30 step hold for regrasping success
+curriculum_success_threshold: 3.0  # avg successes/episode to trigger decay
+randomize_object: true
+randomize_goal: true
+
+# ---------------------------------------------------------------------------
+# Reward weights: w1*r_reach + w2*r_lift + w3*r_target + w4*r_success
+# ---------------------------------------------------------------------------
+reward:
+  w_reach: 1.0
+  w_lift: 10.0
+  w_target: 1.0
+  w_success: 100.0
+  reach_scale: 1.0
+  lift_scale: 1.0
+  target_scale: 1.0
+  lift_height: 0.05
+  success_tolerance: 0.075
+  w_orientation: 1.0
+  orientation_scale: 1.0
+
+# ---------------------------------------------------------------------------
+# Training / logging
+# ---------------------------------------------------------------------------
+total_steps: 100000000
+seed: 0
+log_dir: runs/allegro_kuka
+use_tensorboard: true
+use_wandb: false
+wandb_project: sapg
+save_interval: 100
+eval_interval: 50
+eval_episodes: 10

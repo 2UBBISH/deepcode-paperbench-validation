@@ -1,0 +1,35 @@
+# =============================================================================
+# SAPG: Split and Aggregate Policy Gradients — Python dependencies
+# =============================================================================
+# Python 3.8+ is required (IsaacGym and the original codebase target 3.8).
+#
+# NOTE ON ISAACGYM:
+#   IsaacGym (Makoviychuk et al., 2021) is NOT distributed on PyPI. It must be
+#   downloaded manually from the NVIDIA developer portal and installed from the
+#   local package directory:
+#
+#       https://developer.nvidia.com/isaac-gym
+#
+#       cd isaacgym/python && pip install -e .
+#
+#   The codebase degrades gracefully when IsaacGym is unavailable: the
+#   `DummyVectorEnv` fallback in `envs/isaacgym_wrapper.py` allows the full
+#   SAPG training loop to be exercised on CPU for smoke tests.
+# =============================================================================
+
+# --- Core numerics / deep learning -------------------------------------------
+# PyTorch with CUDA. Install the CUDA build matching your driver, e.g.:
+#   pip install torch==2.0.1+cu118 --extra-index-url https://download.pytorch.org/whl/cu118
+torch>=1.13,<2.2
+numpy>=1.21,<1.25
+
+# --- Scientific stack --------------------------------------------------------
+scipy>=1.7,<1.12
+scikit-learn>=1.0,<1.4          # PCA for the diversity metric (Fig. 7)
+
+# --- Plotting / logging ------------------------------------------------------
+matplotlib>=3.5,<3.9            # Fig. 2, Fig. 5, Fig. 6, Fig. 7, Fig. 8
+tensorboard>=2.10               # training curves / scalar logging
+
+# --- Optional: real simulator backend ----------------------------------------
+# isaacgym  # install manually from https://developer.nvidia.com/isaac-gym

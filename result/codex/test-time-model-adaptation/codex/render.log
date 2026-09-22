@@ -1,0 +1,5 @@
+PROMPT_OK  /Users/apple/Documents/0919-test/codex/work/test-time-model-adaptation-codex-desktop/PROMPT.txt  (      37 lines; time limit: 3; input: markdown only, same bytes as the DeepCode arms)
+     2 550dc8d3594c  paper.md
+     2 eda333e452d6  addendum.md
+     2 bca2b3c6c763  blacklist.txt
+copy the prompt:  cat /Users/apple/Documents/0919-test/codex/work/test-time-model-adaptation-codex-desktop/PROMPT.txt | pbcopy

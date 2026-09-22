@@ -1,0 +1,25 @@
+# SAPG: Split and Aggregate Policy Gradients
+# Python 3.8+ required.
+#
+# Core dependencies (required)
+torch>=1.13.0
+numpy>=1.21.0
+PyYAML>=6.0
+
+# Logging (optional but recommended)
+tensorboard>=2.10.0
+# wandb>=0.15.0          # optional: enable with --use_wandb
+
+# ---------------------------------------------------------------------------
+# Simulation backends (optional)
+# ---------------------------------------------------------------------------
+# The environments in sapg/envs/ are simulator-agnostic: they attempt to
+# import IsaacGym and fall back to a lightweight analytic (torch) simulator
+# when it is unavailable.  For full-scale reproduction of the paper's results
+# (tens of thousands of parallel environments) install IsaacGym:
+#
+#   isaacgym            # install from https://developer.nvidia.com/isaac-gym
+#
+# A CPU/MuJoCo fallback is also supported for reduced-parallelism debugging:
+# mujoco>=2.3.0
+# gym>=0.21.0

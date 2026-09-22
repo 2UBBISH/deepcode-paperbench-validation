@@ -1,0 +1,278 @@
+# =============================================================================
+# FRE configuration -- ExORL domain
+# Paper: "Zero-Shot Reinforcement Learning via Functional Reward Encodings"
+#
+# Sources for every value below:
+#   - Table 3 "Hyperparameters used for FRE"                -> section A
+#   - Appendix C.2 "ExORL"                                  -> section C.2
+#   - Addendum (ExORL evaluation tasks / training datasets) -> section C.2 / addendum
+#   - Section 5.2 evaluation protocol (20 episodes, 5 seeds) -> section 5.2
+#
+# ExORL specifics that differ from the AntMaze config:
+#   * Encoder/policy step budgets are 1M / 1M (Table 3 footnote: "1M for ExORL/Kitchen")
+#   * Offline data are the RND exploratory datasets for walker and cheetah
+#   * Physics values (walker: horizontal_velocity, torso_upright, torso_height;
+#     cheetah: speed) are appended to the observations *for the encoder only*;
+#     value functions and the policy are trained on the raw observation space.
+#   * Episodes last 1000 timesteps; goal tasks use 5 fixed goal states and a
+#     Euclidean distance threshold of 0.1 with per-dimension std normalization.
+# =============================================================================
+
+name: fre_exorl
+domain: exorl
+method: FRE
+
+# Training seeds (paper: "each agent is trained using five random seeds")
+seed: 0
+seeds: [0, 1, 2, 3, 4]
+device: cuda
+
+# -----------------------------------------------------------------------------
+# Offline dataset (Appendix C.2: RND exploratory data; addendum: the training
+# uses the RND dataset for each domain)
+#   domain         : "cheetah" | "walker"
+#   dataset        : "rnd"  (ExORL exploratory dataset used for training)
+#   task           : cheetah-run | cheetah-walk | cheetah-run-backwards |
+#                    cheetah-walk-backwards | walker-run | walker-walk
+# The same offline dataset is used unlabeled (rewards are discarded); the reward
+# functions come from the prior mixture during training and from the evaluation
+# tasks at test time.
+# -----------------------------------------------------------------------------
+dataset:
+  name: exorl-rnd
+  domain: cheetah            # cheetah | walker
+  task: null                 # null = use every available sub-dataset for the domain
+  dataset: rnd               # ExORL RND exploratory dataset (not the "human"/"biased" ones)
+  # one of the six evaluation sub-datasets listed in Appendix C.2; null -> all
+  dataset_names:             # Appendix C.2 evaluation tasks
+    cheetah: [cheetah-run, cheetah-walk, cheetah-run-backwards, cheetah-walk-backwards]
+    walker: [walker-run, walker-walk]
+  path: null                 # explicit HDF5/NPZ path; falls back to $FRE_EXORL_DATASET_DIR
+  limit: null                # optional transition cap (debugging only)
+  # Per-dimension standard-deviation normalization by offline dataset statistics
+  # (Appendix C.2: "Each state dimension is normalized according to the standard
+  # deviation along that dimension within the offline dataset.")
+  normalize: true
+  subtract_mean: false       # paper only states std normalization
+  std_floor: 1.0e-6
+  exclude_final_states: true
+  attach_stats: true
+
+  # Physics augmentation -- ENCODER INPUT ONLY (Addendum, Appendix C.2).
+  # Walker appends three values, cheetah appends one; the augmented information
+  # is never used by the value functions/policy and never used for goal distance.
+  physics:
+    enabled: true
+    encoder_only: true       # do not feed physics into Q/V/policy
+    use_in_goal_distance: false
+    walker_features: [horizontal_velocity, torso_upright, torso_height]
+    cheetah_features: [speed]
+    method: auto             # auto | dm_control | index (fallback if dm_control absent)
+
+# -----------------------------------------------------------------------------
+# Prior reward distribution p(eta) -- Section 4.2, Table 3, Appendix B
+# -----------------------------------------------------------------------------
+prior:
+  name: FRE-all
+  # Table 3: ratio of goal-reaching / linear / random-MLP rewards
+  ratios:
+    goal: 0.33
+    linear: 0.33
+    mlp: 0.33
+  goal:
+    # Appendix B hindsight relabelling distribution
+    p_current: 0.2
+    p_future: 0.5
+    p_random: 0.3
+    geometric_p: 0.2        # geometric lookahead for the "future state" branch (paper silent)
+    threshold: 0.0
+    reward_unreached: -1.0
+    reward_reached: 0.0
+    terminate_on_success: true
+    ensure_goal_in_set: true  # at least one encoder sample attains the goal (Appendix B)
+  linear:
+    weight_range: 1.0       # uniform vector within -1 and 1
+    zero_prob: 0.9          # 0.9 per-dimension binary mask zero probability
+    exclude_dims: []        # AntMaze-only XY removal
+    clip: null
+  mlp:
+    hidden_dim: 32          # MLP of size (state_dim, 32, 1)
+    output_clip: 1.0        # final output clipped to [-1, 1]
+    scale_mode: average     # normal init scaled by the average dimension of the layer
+    activation: tanh        # tanh between the two layers
+  # FRE-hint variant (section 5.4 / addendum): prior superset of the evaluation
+  # tasks, i.e. rewards for moving at a specific velocity. Disabled by default;
+  # enable via scripts/run_prior_ablation.py with --prior FRE-hint.
+  hint:
+    enabled: false
+    hint_probability: 0.5   # paper does not specify the mixing ratio
+    domains: [cheetah-velocity, walker-velocity]
+    velocity_dims:
+      cheetah: [0]
+      walker: [0, 1]
+    velocity_ranges:
+      cheetah: [0.0, 12.0]
+      walker: [0.0, 8.0]
+
+# -----------------------------------------------------------------------------
+# Model architecture -- Section 4.1 / 5, Appendix A (addendum corrections)
+# -----------------------------------------------------------------------------
+model:
+  # token = concat(state embedding 64-d, reward embedding 64-d) = 128-d
+  state_embed_dim: 64
+  reward_embed_dim: 64
+  token_dim: 128
+  latent_dim: 128                 # "The latent embedding (z) is 128-dimensional"
+  num_reward_embeddings: 32       # learned embedding table over 32 reward bins
+  num_encoder_blocks: 4           # addendum: Encoder Layers [256,256,256,256]
+  encoder_layers: [256, 256, 256, 256]   # MLP block dims inside the transformer
+  encoder_attention_heads: 4
+  decoder_layers: [512, 512, 512] # Table 3: Decoder Network Layers
+  rl_layers: [512, 512, 512]      # Table 3: RL Network Layers
+  num_qs: 2                       # twin critic (paper writes a single Q(s,a,z))
+  activation: relu
+  dropout: 0.0
+  layer_norm: false
+  positional_encoding: false      # inputs treated as an unordered set
+  causal_masking: false
+  pooling: mean                   # average of the final layer representations
+  log_std_min: -5.0               # numerical clamp (paper silent)
+  log_std_max: 2.0                # numerical clamp (paper silent)
+  decoder_state_embedding: false  # raw state concatenated directly with z
+  # state_dim is inferred at runtime: obs_dim (+ physics dims for the encoder)
+
+# -----------------------------------------------------------------------------
+# Phase 1 -- Algorithm 1 "# Train encoder": maximize Equation (6)
+# -----------------------------------------------------------------------------
+encoder_training:
+  batch_size: 512                       # Table 3
+  num_encoder_states: 32                # Table 3: Reward Pairs to Encode
+  num_decoder_states: 8                 # Table 3: Reward Pairs to Decode
+  reward_functions_per_update: 1        # Algorithm 1: one eta per update
+  learning_rate: 0.0001                 # Table 3
+  optimizer: adam                       # Table 3
+  weight_decay: 0.0
+  max_grad_norm: null
+  beta: 0.01                            # Table 3: beta KL weight
+  loss_form: mse                        # Section 5: MSE between predicted and true rewards
+  sample_z: true                        # z ~ p_theta(z | .) during training
+  reward_range: auto                    # fit the 32-bin discretization range per sampled eta
+  reward_min: -1.0
+  reward_max: 1.0
+  # Table 3 footnote: 1M encoder steps for ExORL/Kitchen
+  encoder_training_steps: 1000000
+  freeze_encoder_after_phase1: true     # strided scheme (Section 4.3)
+  # convergence-based early stop (Section 4.3 says "after the encoder loss converges";
+  # the exact criterion is not specified in the paper -- moved-average relative
+  # improvement with a minimum step floor, hard-capped by encoder_training_steps)
+  convergence_window: 200
+  convergence_rtol: 0.01
+  convergence_min_steps: 10000
+  use_encoder_inputs: true              # physics-augmented observations for the encoder
+  log_interval: 1000
+
+# -----------------------------------------------------------------------------
+# Phase 2 -- Algorithm 1 "# Train policy": IQL on frozen-encoder latents
+# -----------------------------------------------------------------------------
+policy_training:
+  # Table 3 footnote: 1M policy steps for ExORL/Kitchen
+  policy_training_steps: 1000000
+  batch_size: 512                       # Table 3
+  learning_rate: 0.0001                 # Table 3
+  optimizer: adam                       # Table 3
+  expectile: 0.8                        # Table 3: IQL Expectile
+  awr_temperature: 3.0                  # Table 3: AWR Temperature
+  discount: 0.88                        # Table 3: Discount Factor
+  tau: 0.001                            # Table 3: Target Update Rate
+  adv_weight_clamp: 100.0               # reference IQL default (paper silent)
+  normalize_advantage: false            # paper silent
+  max_grad_norm: null
+  freeze_encoder: true                  # strided scheme: z stationary during policy learning
+  stationary_check_interval: 10000      # correctness gate: z must not drift
+  reward_done_masks: true               # goal-reaching priors supply a done mask
+  sample_z: true                        # z ~ p_theta(z | {(s_k^e, eta(s_k^e))}) per update
+  num_encoder_states: 32                # K context states used to encode z
+  # value functions/policy are trained on the raw observation space (Appendix C.2)
+  use_encoder_inputs: false
+  log_interval: 1000
+
+# -----------------------------------------------------------------------------
+# Zero-shot evaluation -- Section 5.2, Appendix C.2, addendum
+# -----------------------------------------------------------------------------
+evaluation:
+  suites:
+    - exorl-cheetah-velocity
+    - exorl-walker-velocity
+    - exorl-cheetah-goals
+    - exorl-walker-goals
+    - exorl-all
+  num_episodes: 20              # Section 5.2: mean over twenty evaluation episodes
+  num_seeds: 5                  # Section 5.2: five random seeds
+  context_samples: 32           # FRE encodes 32 (state, reward) pairs at test time
+  deterministic_policy: true    # paper silent -> posterior mean actions
+  sample_latent: false          # paper silent -> posterior-mean z at evaluation
+  eval_episode_length: 1000     # Appendix C.2: "Agents are evaluated for 1000 timesteps"
+  normalize_returns: true       # Table 1 caption: results normalized between 0 and 100
+  score_min: 0.0
+  score_max: 100.0
+  goal_distance_threshold: 0.1  # Appendix C.2
+  num_goals: 5                  # Appendix C.2: five consistent goal states
+  goal_state_seed: 0            # goal selection kept fixed throughout online evaluation
+  normalize_goal_distance: true # per-dimension std normalization, physics excluded
+  record_observations: false
+  save_path: null
+  # Domain-specific evaluation tasks (addendum "ExORL evaluation tasks")
+  task_kwargs:
+    # cheetah-run / cheetah-run-backwards / cheetah-walk / cheetah-walk-backwards
+    cheetah_thresholds: [10.0, 1.0]      # run-style threshold 10, walk-style threshold 1
+    # walker velocity tasks: thresholds 0.1, 1, 4, 8
+    walker_thresholds: [0.1, 1.0, 4.0, 8.0]
+    velocity_decay_to_zero: true         # reward 1 at the threshold, linear decay to 0
+    zero_if_opposite_direction: true     # reward 0 when moving opposite to the target
+    goal_reward_unreached: -1.0
+    goal_reward_reached: 0.0
+
+# -----------------------------------------------------------------------------
+# Logging / checkpoints
+# -----------------------------------------------------------------------------
+logging:
+  log_interval: 1000
+  smoothing: 0.9
+  verbose: true
+  log_dir: null
+  save_encoder_path: null
+  save_policy_path: null
+  evaluate_every: 0             # 0 = evaluate only once after the policy phase
+  use_tensorboard: false
+  use_wandb: false
+
+# -----------------------------------------------------------------------------
+# Baseline placeholders (Section 5.2, addendum)
+#   opal-10       : OPAL with 10 unit-Gaussian skills, best rollout selected
+#   gc-iql/gc-bc  : FRE codebase, same network structure
+#   fb / sf       : trained and evaluated with facebookresearch/controllable_agent
+# -----------------------------------------------------------------------------
+baselines:
+  opal:
+    num_skills: 10
+    sample_from_unit_gaussian: true
+    select_best_rollout: true
+    privileged_evaluation: true
+    encoder_architecture: transformer   # same transformer architecture as FRE
+  gc_iql:
+    p_random_goal: 0.3
+    p_geometric_goal: 0.5
+    p_current_goal: 0.2
+    goal_concatenated_to_observation: true
+  gc_bc:
+    hidden_dims: [512, 512, 512]
+    activation: relu
+    layer_norm_before_activation: true
+    log_std_min: -5.0
+    loss: mle
+    goal_sampling: geometric_only
+  fb:
+    codebase: https://github.com/facebookresearch/controllable_agent
+  sf:
+    codebase: https://github.com/facebookresearch/controllable_agent
+    features: icm
