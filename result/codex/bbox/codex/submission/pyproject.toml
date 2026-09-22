@@ -1,0 +1,40 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bbox-adapter"
+version = "1.0.0"
+description = "Reproduction of BBox-Adapter: Lightweight Adapting for Black-Box Large Language Models (ICML 2024)"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "torch>=2.0",
+    "transformers>=4.38",
+    "datasets>=2.18",
+    "numpy>=1.24",
+    "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+api = ["openai>=1.10"]
+baselines = ["peft>=0.8", "bitsandbytes>=0.41"]
+dev = ["pytest>=7.0"]
+
+[tool.setuptools]
+packages = [
+    "bbox_adapter",
+    "bbox_adapter.adapter",
+    "bbox_adapter.baselines",
+    "bbox_adapter.data",
+    "bbox_adapter.eval",
+    "bbox_adapter.inference",
+    "bbox_adapter.llm",
+    "bbox_adapter.online",
+    "bbox_adapter.utils",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+filterwarnings = ["ignore::DeprecationWarning"]
+markers = ["slow: end-to-end smoke tests (deselect with '-m \"not slow\"')"]

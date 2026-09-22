@@ -1,0 +1,181 @@
+# BBox-Adapter -- TruthfulQA configuration
+# ---------------------------------------------------------------------------
+# Paper references:
+#   * Dataset split: 717 train / 100 randomly sampled test  (Appendix F.1, Sec. 4.1)
+#   * Adapter backbone: bert-base-cased                       (Sec. 4.1 Implementations)
+#   * Prompt: helpful/honest assistant instruction, NO few-shot examples (Appendix J)
+#   * Metric: True+Info (GPT-judge surrogate)                 (Sec. 4.2, Appendix E)
+#   * AI feedback: gpt-4 ranked top-5, not best-answer        (Appendix G)
+#   * Online adaptation hyper-parameters: Appendix H.2        (lr 5e-6, batch 64,
+#     6000 steps, AdamW wd 0.01, beam 3, max_len 512, temp 1.0)
+#
+# This file may be loaded standalone (``yaml.safe_load``) or deep-merged on top
+# of ``configs/default.yaml`` (keys set here override the base).
+#
+# Paper-silent knobs (documented defaults chosen in the reproduction plan):
+#   * loss.alpha           -> 0.01   (sweep {1e-3, 1e-2, 1e-1})
+#   * training.n_iterations-> 4      (Fig. 3(b) plateau)
+#   * training.n_candidates-> 5      (M candidates sampled per outer iteration)
+#   * training.k_init      -> 5      (K prompted responses used to seed the buffer)
+#   * beam_search.n_samples-> 2      (n sentence samples per beam per step)
+#   * warmup / schedule / pooling / normalization as annotated below
+# ---------------------------------------------------------------------------
+
+name: bbox_adapter_truthfulqa
+dataset: truthfulqa
+size: 0.1b                 # 0.1b -> deberta-style 0.1B budget; TruthfulQA uses bert-base-cased
+backbone: null             # resolved from (dataset, size) in adapter/energy_model.py
+seed: 0
+output_dir: runs/truthfulqa
+
+data:
+  hf_path: truthful_qa
+  hf_config: generation
+  train_split: validation         # the 817-sample validation set is re-split below
+  test_split: validation
+  n_train: 717
+  n_test: 100
+  question_field: question
+  answer_field: best_answer
+  answer_type: truthfulqa
+  prompt_key: truthfulqa
+  metric: true_info
+  n_shot: 0                       # Appendix J: instruction prompt only
+  drop_instruction_models: []     # instruction KEPT for mixtral / davinci on TruthfulQA
+  use_terminator: false           # TruthfulQA answers are free-form (no '####')
+  terminator: "####"
+  random_test_seed: 0             # fixed seed for the 100-question test sample
+  include_correct_answers: true   # correct_answers / incorrect_answers used by True+Info
+
+blackbox:
+  model: gpt-3.5-turbo
+  kind: bbox
+  max_len: 512
+  temperature: 1.0                # Sec. H.2 -- BBox-Adapter generation temperature
+  top_p: 1.0
+  n: 1
+  allow_mock: true                # fall back to MockLLMClient when Azure creds absent
+
+adapter:
+  backbone: null                  # -> bert-base-cased for truthfulqa (Sec. 4.1)
+  pooling: null                   # -> 'cls' for BERT backbones
+  head_hidden: 0                  # Dropout + Linear(H, 1) scalar energy head
+  dropout: 0.0
+  freeze_backbone: false
+  max_length: 512
+  output_scale: 1.0
+  head_init_std: 0.02
+  size: 0.1b
+
+loss:
+  name: nce                       # nce | mlm (mlm = Sec. 4.5 ablation)
+  alpha: 0.01                     # Eq. (3) regularizer coefficient (paper-silent)
+  reduction: mean
+  temperature: 1.0
+  label_smoothing: 0.0
+  energy_clamp: null
+  reg_mode: split                 # alpha*E[g^2] applied to positives and negatives separately
+  reg_schedule: constant
+  reg_warmup_steps: 0
+  use_regularizer: true
+
+training:
+  lr: 5.0e-6                      # eta, Eq. (7) / Sec. H.2
+  batch_size: 64
+  max_train_steps: 6000           # total mini-batch gradient steps
+  weight_decay: 0.01
+  betas: [0.9, 0.999]
+  max_grad_norm: 1.0
+  schedule: constant
+  warmup_fraction: 0.1
+  n_iterations: 4                 # T outer iterations, Algorithm 1
+  n_candidates: 5                 # M candidates sampled from p_theta_t per iteration
+  k_init: 5                       # K responses prompted at initialization
+  samples_per_beam: 2             # n sentence samples per beam per step
+  use_beam_search: true
+  outcome_supervision: true       # Eq. (5)/(6) filter on final answers
+  sel_mode: ground_truth          # ground_truth | ai_feedback | combined
+  device: auto
+  log_every: 50
+  eval_every: 1
+  save_every: 0
+
+beam_search:
+  beam_size: 3                    # Sec. H.2 default beam size
+  n_samples: 2
+  max_steps: 6
+  stop_signal: "####"
+  temperature: 1.0
+  max_len: 512
+  normalization: none             # no length normalization by default (plan)
+  length_penalty: 0.0
+  deduplicate: true
+  stop_when_all_complete: true
+  include_prompt_in_energy: true
+  keep_candidates: true
+
+buffer:
+  sel_mode: ground_truth
+  k_init: 5
+  m_candidates: 5
+  max_positives: 8
+  max_negatives: 64
+  deduplicate: true
+  outcome_supervision: true
+  ai_feedback_n_ranked: 5         # Appendix G: ranked top-5 for TruthfulQA
+
+feedback:
+  enabled: true
+  model: gpt-4                    # AI feedback rater (Sec. 3.4, Appendix G)
+  temperature: 0.0
+  n_ranked: 5
+  retries: 2
+  fallback: majority
+  prompt_style: ranked            # TruthfulQA uses the ranked top-5 rater prompt
+  criteria: [Coherency, Reasonability, Correctness, Format]
+
+eval:
+  metric: true_info               # True+Info percentage (Sec. 4.2, Appendix E)
+  n_test: 100
+  gpt_judge: false                # true -> use the gpt-4 judge hook; false -> lexical surrogate
+  toxicity_threshold: 0.5
+  report_delta: true
+  num_seeds: 1
+
+baselines:
+  cot:
+    enabled: true
+    temperature: 0.0              # baselines decode greedily (Sec. H.2)
+    n_shot: 0
+  azure_sft:
+    enabled: false
+    model: gpt-3.5-turbo
+    epochs: 3                     # Sec. F.2 (Sec. H.2 says 5 -- documented conflict)
+    batch_size: null              # Azure default
+    lr_multiplier: null           # Azure default
+  sft_lora:
+    enabled: false
+    model: mistralai/Mixtral-8x7B-v0.1
+    lora_r: 128                   # 0.1B-equivalent (384 = 0.3B-equivalent)
+    lora_alpha: 256               # alpha = 2r
+    lora_dropout: 0.1
+    lr: 2.0e-4
+    weight_decay: 0.001
+    batch_size: 8
+    grad_accum: 1
+    max_grad_norm: 0.3
+    epochs: 3
+    optimizer: paged_adamw_32bit
+    lr_scheduler: cosine
+    max_length: 512
+
+cost:
+  enabled: true
+  model_for_pricing: gpt-3.5-turbo-1106
+  usd_per_1k_input_tokens: 0.0015
+  usd_per_1k_output_tokens: 0.002
+  per_questions: 1000
+
+vram:
+  enabled: false
+  report_only_0_1b: true          # Addendum: VRAM reported for the 0.1B adapter only

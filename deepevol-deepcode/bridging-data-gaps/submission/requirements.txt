@@ -1,0 +1,64 @@
+# =============================================================================
+# DPMs-ANT ("Adapting Pretrained Diffusion Models for Few-Shot Image
+# Generation") -- Python dependencies
+# =============================================================================
+# Target environment (Section 5.2 / Environment setup):
+#   * Python 3.8 - 3.10
+#   * PyTorch >= 1.13 (2.x is acceptable) built against CUDA >= 11.3
+#   * NVIDIA GPU (adaptor-only training fits in ~8 GB;
+#     the full fine-tuning reference baseline needs ~17 GB)
+#
+# Install the CUDA-matched torch/torchvision wheels first, e.g.:
+#   pip install torch==2.0.1 torchvision==0.15.2 --index-url https://download.pytorch.org/whl/cu118
+# then:
+#   pip install -r requirements.txt
+# =============================================================================
+
+# ---- Core deep-learning stack -------------------------------------------------
+torch>=1.13            # diffusion backbone, adaptor training, sampling (2.x fine)
+torchvision>=0.14      # LPIPS backbones (AlexNet/VGG) + InceptionV3 fallback for FID
+numpy>=1.21,<2.0       # array math, arbitrary RNG, JSON/npz IO
+
+# ---- Config / IO / utilities --------------------------------------------------
+pyyaml>=6.0            # configs/*.yaml loading via deep-merge
+Pillow>=9.0            # image decode/encode (256x256 resize + center crop)
+tqdm>=4.64             # progress bars for training / sampling / evaluation
+einops>=0.6            # tensor rearrangements in attention / adapter modules
+tensorboard>=2.10      # training logs (optional but used by logging.* config)
+
+# ---- Baseline backbone codebases are vendored (not pip-installed) -------------
+#   external/guided-diffusion  (OpenAI, DDPM 256x256)      -- models/unet_loader.py
+#   external/latent-diffusion  (CompVis, LDM 64x64 + KL-AE) -- models/ldm_loader.py
+# See README.md "Backbone codebases" for how to fetch them.
+
+# =============================================================================
+# Evaluation / metrics
+# =============================================================================
+# Intra-LPIPS (Section 5.2) uses the official LPIPS package (AlexNet backbone,
+# matching CDC / DDPM-PA).  If it is unavailable a pure-torch fallback based on
+# torchvision features is used instead -- slightly different absolute values.
+lpips>=0.1.4
+
+# FID between generated samples and the larger target sets
+# (Babies 2.7k, Sunglasses 2.5k).  `clean-fid` is the preferred backend because
+# it resizes identically to the reference pipeline; `pytorch-fid` is the fallback.
+# `dpm_ant/evaluation/fid.py` degrades to a dependency-free InceptionV3 path when
+# neither of these is importable, so both are technically optional.
+clean-fid>=0.1.35       ; python_version >= "3.8"
+pytorch-fid>=0.3.0      ; python_version >= "3.8"
+
+# =============================================================================
+# Optional extras
+# =============================================================================
+scipy>=1.7             # exact matrix sqrt for FID (pure-torch fallback otherwise)
+ema-pytorch>=0.2       # EMA of adaptor weights (optional)
+torchmetrics>=0.11     # optional convenience metrics
+matplotlib>=3.5        # Section 5.1 / Figure 2 toy-2D plots (toy_plots.py)
+
+# =============================================================================
+# Pre-trained checkpoints (downloaded separately -- not pip dependencies)
+# =============================================================================
+#   DDPM 256x256 diffusion model ....... https://github.com/openai/guided-diffusion
+#   DDPM 256x256 classifier ............ https://openaipublic.blob.core.windows.net/diffusion/jul-2021/256x256_classifier.pt
+#   LDM 64x64 classifier ............... https://openaipublic.blob.core.windows.net/diffusion/jul-2021/64x64_classifier.pt
+#   LDM weights + KL autoencoder ....... https://github.com/CompVis/latent-diffusion

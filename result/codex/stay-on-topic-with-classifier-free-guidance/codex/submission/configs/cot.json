@@ -1,0 +1,8 @@
+{
+  "comment": "Section 3.2 / Figures 2 and 17. GSM8K and AQuA with few-shot CoT.",
+  "models": ["wizardlm-30b", "guanaco-65b"],
+  "datasets": ["gsm8k", "aqua"],
+  "gammas": [1.0, 1.1, 1.25, 1.5, 1.75, 2.0],
+  "max_new_tokens": 256,
+  "self_consistency_paths": 5
+}

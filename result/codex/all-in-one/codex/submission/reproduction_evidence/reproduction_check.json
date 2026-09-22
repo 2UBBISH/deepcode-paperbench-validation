@@ -1,0 +1,49 @@
+{
+  "task": "gaussian_linear",
+  "n_simulations": 10000,
+  "mask_mode": "directed",
+  "config": {
+    "sde": "vesde",
+    "mask_mode": "directed",
+    "n_layers": "6",
+    "d_model": "50",
+    "n_heads": "4",
+    "attention_size": "10",
+    "widening_factor": "3.0",
+    "time_embed_dim": "128",
+    "token_mlp": "True",
+    "dropout": "0.0",
+    "metadata_dim": "0",
+    "random_mask_probs": "(0.3, 0.7)",
+    "condition_mask_options": "all",
+    "max_unique_masks": "32",
+    "num_steps": "25",
+    "self_recurrence": "0",
+    "t_min": "1e-05",
+    "t_max": "1.0",
+    "seed": "0"
+  },
+  "c2st_history": [
+    {
+      "epochs": 1,
+      "c2st": 1.0
+    },
+    {
+      "epochs": 5,
+      "c2st": 0.9884999999999999
+    },
+    {
+      "epochs": 10,
+      "c2st": 0.9855
+    },
+    {
+      "epochs": 20,
+      "c2st": 0.982
+    }
+  ],
+  "environment": {
+    "compute": "CPU only (Apple, macOS), no GPU",
+    "command": "python scripts/check_reproduction.py --n-simulations 10000 --max-epochs 20 --batch-size 512 --lr 1e-3 --num-steps 25 --n-samples 100",
+    "note": "C2ST between the Simformer posterior (10k simulations, 20 epochs, 6 layers, 25 reverse-SDE steps, 100 samples) and the *analytic* posterior of the Gaussian linear task. 0.5 is perfect alignment. The full paper configuration uses 1e5 simulations and trains to convergence; the trend (monotone decrease) is the same."
+  }
+}

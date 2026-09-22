@@ -1,0 +1,133 @@
+# PPLM configuration for pairwise toxic/non-toxic preference-dataset generation.
+#
+# Reproduces Section 4.2 + Appendix E Table 9 of
+# "A Mechanistic Understanding of Alignment Algorithms: A Case Study on DPO and Toxicity".
+#
+# The toxic (non-preferred / "rejected") continuation is produced by PPLM guided by the
+# trained toxicity probe W_Toxic used as the attribute classifier p(a|w):
+#       p(y|a) \propto p(y) p(a|y)
+# The non-toxic (preferred / "chosen") continuation is a plain greedy GPT2 sample.
+#
+# Consumed by:
+#   - scripts/generate_pairs.py  (settings["pplm"] -> PPLMConfig.from_dict)
+#   - src/pplm_generate.py       (PPLMConfig.from_dict / load_pplm_config)
+#
+# Resolution order: CLI flags > this file > Table 9 defaults.
+
+seed: 0
+device: null            # null = auto (CUDA if available, else CPU)
+
+# ---------------------------------------------------------------------------
+# Scope gating (see configs/default.yaml)
+# ---------------------------------------------------------------------------
+in_scope:
+  model: gpt2-medium    # Llama2-7b is out of scope for this reproduction
+  family: gpt2
+  llama2: false
+  glu: false
+
+# ---------------------------------------------------------------------------
+# Models
+# ---------------------------------------------------------------------------
+model_name: openai-community/gpt2-medium
+model:
+  name: openai-community/gpt2-medium
+  family: gpt2
+  n_layers: 24
+  d_model: 1024
+  d_mlp: 4096
+  n_heads: 16
+  vocab_size: 50257
+
+# Attribute classifier: the linear toxicity probe W_Toxic trained on Jigsaw.
+probe_path: artifacts/probe/w_toxic.pt
+attribute_class: toxic    # PPLM attribute class index (1 = toxic) for -log p(a|y)
+
+# ---------------------------------------------------------------------------
+# Prompts / pair dataset (Section 4.2: 24,576 Wikitext-2 pairs, 90:10 split)
+# ---------------------------------------------------------------------------
+prompt_source: wikitext-2
+prompt_split: train
+n_pairs: 24576
+valid_ratio: 0.1
+
+shard_dir: artifacts/data/pairs_shards
+pairs_path: artifacts/data/pairs.jsonl
+shard_size: 512
+resume: true
+
+# ---------------------------------------------------------------------------
+# Generation
+# ---------------------------------------------------------------------------
+generation:
+  max_new_tokens: 20        # greedy 20-token continuation for both arms
+  max_prompt_length: 96
+  batch_size: 16
+  do_sample: true           # PPLM arm samples (temperature/top-k below)
+  greedy_do_sample: false   # non-toxic arm uses greedy decoding
+
+# ---------------------------------------------------------------------------
+# PPLM hyperparameters -- Appendix E, Table 9
+# ---------------------------------------------------------------------------
+pplm:
+  # --- Table 9 values (do not change for exact reproduction) ---
+  step_size: 0.4            # perturbation step size (learning rate on past K/V)
+  temperature: 1.0          # sampling temperature
+  top_k: 10                 # top-k filtering of perturbed distribution
+  num_iterations: 50        # gradient iterations per generated token
+  window_length: 0          # 0 = full accumulated past
+  horizon_length: 1         # tokens considered for the attribute objective
+  decay: false              # geometric decay of perturbation over iterations
+  gamma: 1.0                # decay rate (only used when decay is true)
+  gm_scale: 0.95            # geometric-mean interpolation with unperturbed probs
+  kl_scale: 0.1             # KL(perturbed || unperturbed) regularisation weight
+  # --- Implementation knobs (paper does not specify these) ---
+  max_new_tokens: 20
+  max_prompt_length: 96
+  sample: true
+  seed: 0
+  attribute_class: 1        # toxic index of W_Toxic (column 1)
+  pool: last                # pool "last" hidden state for -log p(a|y) (probe trained on mean)
+  grad_norm: unit           # unit-gradient normalisation (PPLM loss_type=0)
+  normalize_inside: false
+  quiet: true
+
+# ---------------------------------------------------------------------------
+# Evaluation of the generated pairs (diagnostic only)
+# ---------------------------------------------------------------------------
+evaluation:
+  toxicity_model: unitary/unbiased-toxic-roberta
+  batch_size: 32
+  max_length: 256
+  threshold: 0.5
+
+# ---------------------------------------------------------------------------
+# Paper reference values for validation of the pair dataset / DPO stage
+# ---------------------------------------------------------------------------
+reference:
+  n_pairs: 24576
+  convergence_examples: 6700
+  gpt2_toxicity: 0.453
+  gpt2_ppl: 21.70
+  gpt2_f1: 0.193
+  gpt2_dpo_toxicity: 0.208
+  gpt2_dpo_ppl: 23.34
+  gpt2_dpo_f1: 0.195
+
+logged_pplm_hyperparameters:
+  # Flat duplicate of the Table 9 block so consumers reading top-level keys still work.
+  step_size: 0.4
+  temperature: 1.0
+  top_k: 10
+  num_iterations: 50
+  window_length: 0
+  horizon_length: 1
+  decay: false
+  gamma: 1.0
+  gm_scale: 0.95
+  kl_scale: 0.1
+
+logging:
+  verbose: true
+  progress: true
+  save_json: true

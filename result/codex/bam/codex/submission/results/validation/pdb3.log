@@ -1,0 +1,14 @@
+eight_schools_centered   BaM (B=8)        rel_mean  final=0.4045 (2.5s)
+eight_schools_centered   BaM (B=32)       rel_mean  final=0.5099 (1.2s)
+eight_schools_centered   ADVI (B=8)       rel_mean  final=2.981 (2.7s)
+eight_schools_centered   GSM (B=8)        rel_mean  final=0.1487 (2.2s)
+eight_schools_centered   ADVI (B=32)      rel_mean  final=3.052 (1.5s)
+eight_schools_centered   GSM (B=32)       rel_mean  final=0.4577 (1.2s)
+  saved /tmp/res_pdb3/posteriordb_eight_schools_centered_rel_mean.png
+eight_schools_centered   BaM (B=8)        rel_sd    final=1.03 (1.7s)
+eight_schools_centered   BaM (B=32)       rel_sd    final=1.092 (0.8s)
+eight_schools_centered   ADVI (B=8)       rel_sd    final=2.199 (2.2s)
+eight_schools_centered   GSM (B=8)        rel_sd    final=0.7108 (2.6s)
+eight_schools_centered   ADVI (B=32)      rel_sd    final=2.493 (1.5s)
+eight_schools_centered   GSM (B=32)       rel_sd    final=0.9077 (1.4s)
+  saved /tmp/res_pdb3/posteriordb_eight_schools_centered_rel_sd.png

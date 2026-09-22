@@ -1,0 +1,78 @@
+# APT config: RoBERTa-base / MNLI (GLUE-big)
+#
+# Source: paper Section 5.1 (datasets), Appendix A Table 6 (hyper-parameters),
+# Addendum (scaling factor 2 static, adapter rank 8, cubic sparsity schedule,
+# EMA salience, gradual mask decay alpha < 1).
+#
+# MNLI is a GLUE-big task (MNLI, SST2, QNLI, QQP); GLUE-big shares the same
+# Table-6 hyper-parameters as GLUE-small:
+#   learning rate 2e-4 | batch size 32 | epochs 40 | distill epochs 20
+#
+# Target sparsity is 60% for the RoBERTa-base Table 2 / Table 4 settings.
+
+# ---------------------------------------------------------------------------
+# Model / task
+# ---------------------------------------------------------------------------
+model_name_or_path: roberta-base
+model_type: roberta
+task: mnli
+table6_group: glue-big
+
+# ---------------------------------------------------------------------------
+# Table 6 hyper-parameters (GLUE-big column)
+# ---------------------------------------------------------------------------
+learning_rate: 2.0e-4
+batch_size: 32
+epochs: 40
+distill_epochs: 20
+
+# ---------------------------------------------------------------------------
+# APT / Algorithm 1
+# ---------------------------------------------------------------------------
+target_sparsity: 0.60
+initial_rank: 8
+scaling: 2.0
+mask_alpha: 0.01
+ema_beta: 0.85
+tau: 4
+tuning_budget_initial: 1.0
+tuning_budget_final: 2.0
+top_fraction: 0.5
+use_distillation: true
+use_kurtosis: true
+
+# ---------------------------------------------------------------------------
+# Self-knowledge distillation loss weights (GLUE: L_pred + 0.9 * L_layer)
+# ---------------------------------------------------------------------------
+pred_distill_weight: 1.0
+layer_distill_weight: 0.9
+
+# ---------------------------------------------------------------------------
+# Optimization
+# ---------------------------------------------------------------------------
+optimizer: adamw
+weight_decay: 0.01
+warmup_ratio: 0.06
+lr_kind: linear
+max_grad_norm: 1.0
+seed: 42
+
+# ---------------------------------------------------------------------------
+# Data / tokenization
+# ---------------------------------------------------------------------------
+max_seq_length: 128
+max_target_length: 8
+dynamic_padding: false
+num_workers: 0
+
+# ---------------------------------------------------------------------------
+# Runtime / evaluation
+# ---------------------------------------------------------------------------
+device: cuda
+output_dir: outputs/apt_roberta_mnli
+logging_steps: 50
+eval_steps: 0
+save_steps: 0
+inference_batch_size: 128
+fp16: false
+bf16: false

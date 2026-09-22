@@ -1,0 +1,13 @@
+{
+  "model_name": "t5-base",
+  "task": "cnn_dm",
+  "target_sparsity": 0.6,
+  "initial_rank": 8,
+  "target_rank": 64,
+  "scaling": 2.0,
+  "adapt_ffn": true,
+  "learning_rate": 0.0001,
+  "batch_size": 16,
+  "epochs": 16,
+  "distill_epochs": 6
+}

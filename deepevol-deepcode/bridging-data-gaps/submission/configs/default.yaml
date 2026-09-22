@@ -1,0 +1,320 @@
+# =============================================================================
+# DPMs-ANT: Adapting Pretrained Diffusion Models for Few-Shot Image Generation
+# Global default configuration.
+#
+# Every value here is taken from the paper unless marked otherwise:
+#   * Sec. 5.2 "Configurations":  T=1000, gamma=5, J=10, omega=0.02,
+#     lr 5e-5 (DDPM) / 1e-5 (LDM), ~300 iterations, batch size 40,
+#     adaptor c=4,d=8 (DDPM) and c=2,d=8 (LDM), all adapter params zero-init,
+#     shift-module-only fine-tuning, frozen pretrained DPMs / LDM autoencoders.
+#   * Sec. 5.2 "Evaluation Metrics": Intra-LPIPS (1000 generated images),
+#     FID on larger target sets (Sunglasses 2.5k, Babies 2.7k).
+#   * Sec. 4.1: classifier fine-tuning on noised source+target images.
+#   * Addendum "Hyperparameters for Table 3": per-task overrides -> per_task.yaml
+#
+# Ambiguities resolved with sensible defaults (noted in README):
+#   - noise schedule not stated -> linear beta schedule (cosine configurable)
+#   - optimizer not named      -> Adam for both classifier and adaptors
+#   - Norm(.) in Eq. (7)       -> per-sample standardization (mean 0, std 1)
+#   - sampling steps not stated-> DDIM eta=0, 100 steps for evaluation
+# =============================================================================
+
+seed: 0
+device: cuda          # falls back to cpu automatically when CUDA is unavailable
+
+# -----------------------------------------------------------------------------
+# Diffusion / noise schedule (Sec. 3 Preliminary, Appendix A.2)
+# -----------------------------------------------------------------------------
+diffusion:
+  num_timesteps: 1000          # T
+  schedule: linear             # linear | cosine | scaled_linear
+  beta_start: 0.0001
+  beta_end: 0.02
+  cosine_s: 0.008              # only used for the cosine schedule
+  eta: 0.0                     # 0.0 -> DDIM deterministic, 1.0 -> DDPM stochastic
+  # Eq. (4)/(A.2) constants: sigma_t = sqrt((1-ab_{t-1})/(1-ab_t)) * sqrt(1-ab_t/ab_{t-1})
+  #   sigma_hat_t = (1 - ab_{t-1}) * sqrt(alpha_t / (1 - ab_t))
+  # The constant c2 of Appendix A.2 is dropped in practice (as in the paper).
+  use_c2_constant: false
+
+# -----------------------------------------------------------------------------
+# Adaptation objective (Sec. 4, Eq. (5), Eq. (7), Eq. (8), Algorithm 1)
+# -----------------------------------------------------------------------------
+ant:
+  gamma: 5.0                   # similarity-guidance strength (Sec. 5.2)
+  omega: 0.02                  # adversarial-noise step size (Sec. 5.2)
+  J: 10                        # inner-maximization steps (Sec. 5.2)
+  norm: per_sample             # per_sample | per_channel  (Eq. (7) Norm(.))
+  detach_classifier_grad: true # stop-gradient on grad_{x_t} log p_phi(y=T|x_t)
+  classifier_target_index: 1   # index of the target class in the binary head
+  iterations: 300              # ~300 outer updates (Sec. 5.2)
+  batch_size: 40               # Sec. 5.2
+  lr_ddpm: 5.0e-5              # Sec. 5.2
+  lr_ldm: 1.0e-5               # Sec. 5.2
+  optimizer: adam
+  adam_betas: [0.9, 0.999]
+  weight_decay: 0.0
+  grad_clip: 1.0
+  # Ablation switches (Sec. 5.4, Figure 4)
+  use_adv_noise: true          # false -> "DPMs-ANT w/o AN" (similarity-guided only)
+  freeze_backbone: true        # true -> adaptor-only; false -> direct full fine-tuning
+  only_adaptor: true           # adaptor-only ablation
+  log_interval: 10
+  save_interval: 100
+
+# -----------------------------------------------------------------------------
+# Zero-initialized adaptor (Sec. 4.3, Sec. 5.2)
+#   psi^l(x^{l-1}) = f(x^{l-1} W_down) W_up
+#   bottleneck: R^{w x h x r} -> R^{(w/c) x (h/c) x d} -> R^{w x h x r}
+# -----------------------------------------------------------------------------
+adaptor:
+  bottleneck_c: 4              # DDPM default (Sec. 5.2)
+  bottleneck_c_ldm: 2          # LDM default (Sec. 5.2)
+  bottleneck_d: 8              # d = 8 for both DDPM and LDM (Sec. 5.2)
+  hidden_dims: [8, 16]         # addendum C values (8/16) for the richer composition
+  composition: linear          # linear | bottleneck_full (addendum composition)
+  activation: silu
+  norm: group
+  groups: 32
+  num_heads: 4                 # addendum composition: 4-head attention
+  up_sample_factor: 4          # addendum composition: up-sampling factor 4
+  zero_init: true              # all added parameters init to zero (Sec. 5.2)
+  insert_into: shift           # shift module of the U-Net only (Sec. 5.2)
+  per_task_c: {}               # overridden in per_task.yaml (addendum C = 8/16)
+
+# -----------------------------------------------------------------------------
+# Pretrained backbones (Sec. 5.2)
+# -----------------------------------------------------------------------------
+models:
+  ddpm:
+    name: guided_diffusion_256
+    image_size: 256
+    in_channels: 3
+    # OpenAI guided-diffusion ImageNet 256x256 unconditional/class-conditional model
+    model_path: checkpoints/ddpm/256x256_diffusion.pt
+    classifier_path: checkpoints/ddpm/256x256_classifier.pt
+    classifier_url_base: https://openaipublic.blob.core.windows.net/diffusion/jul-2021/
+    num_classes: 1000          # pretrained ImageNet classifier head (replaced below)
+    learn_sigma: true
+    use_fp16: false
+    attention_resolutions: "32,16,8"
+    num_heads: 4
+    num_res_blocks: 2
+    resblock_updown: true
+    use_scale_shift_norm: true
+  ldm:
+    name: ldm_256_latent64
+    image_size: 256
+    latent_size: 64            # 64x64 latent (Rombach et al., 2022)
+    latent_channels: 4
+    model_path: checkpoints/ldm/ldm_256.ckpt
+    autoencoder_path: checkpoints/ldm/autoencoder_kl_ft.ckpt
+    classifier_path: checkpoints/ldm/64x64_classifier.pt
+    classifier_url_base: https://openaipublic.blob.core.windows.net/diffusion/jul-2021/
+    num_classes: 1000
+    scale_factor: 0.18215      # LDM autoencoder scale factor
+
+# -----------------------------------------------------------------------------
+# Binary source/target classifier p_phi (Sec. 4.1, Sec. 5.5)
+#   Initialized from the ImageNet classifier by Dhariwal & Nichol (2021)
+#   and fine-tuned with a new binary head on 10 target-domain images.
+# -----------------------------------------------------------------------------
+classifier:
+  num_classes: 2               # binary source-vs-target head
+  target_index: 1              # y = T (target) class index
+  lr: 0.0001                   # Adam, lr = 1e-4 (addendum "Classifier Training")
+  batch_size: 64               # addendum "Classifier Training"
+  iterations: 300              # addendum "Classifier Training"
+  optimizer: adam
+  t_sampling: uniform_1_T      # t ~ Uniform({1..T})
+  noise_frac_source: 0.5       # half source / half target images in each batch
+  source_pool: 10000           # number of source images used for classifier ft
+  target_pool: 10              # few-shot target images (Sec. 5.1/5.2)
+  target_pool_ablation: 100    # Table 3: classifier trained on 100 images
+  freeze_during_ant: true      # p_phi is frozen while adapting the DPM (Sec. 4.1)
+  grad_scale: 1.0
+  use_fp16: false
+
+# -----------------------------------------------------------------------------
+# Sampling (Sec. 3 Eq. (2)/(3), Sec. 5.2)
+# -----------------------------------------------------------------------------
+sampling:
+  method: ddim                 # ddim (eta=0) | ddpm (eta=1)
+  num_steps: 100               # DDPM-100 / DDIM-100 for evaluation
+  eta: 0.0
+  batch_size: 16
+  num_samples: 1000            # Intra-LPIPS protocol generates 1,000 images
+  use_classifier_guidance: false   # ANT relies on the adapted model, not guidance
+  guidance_scale: 1.0
+  clip_denoised: true
+  device: cuda
+
+# -----------------------------------------------------------------------------
+# Evaluation (Sec. 5.2 "Evaluation Metrics")
+# -----------------------------------------------------------------------------
+evaluation:
+  intra_lpips:
+    num_samples: 1000
+    lpips_net: alex             # alex | vgg
+    image_size: 256
+    clusters: nearest_neighbor  # assign each generated image to nearest train image
+    seed: 0
+  fid:
+    num_samples: 2500           # Sunglasses target set
+    num_samples_babies: 2700    # Babies target set
+    batch_size: 32
+    backend: clean-fid          # clean-fid | pytorch-fid
+    compute_10shot_fid: false   # unstable/unreliable for 10-shot (Sec. 5.2)
+  metrics:
+    count_params: true
+    peak_gpu_memory: true
+    wall_clock: true
+    warmup_iters: 5
+
+# -----------------------------------------------------------------------------
+# Data (Sec. 5.2 "Datasets")
+# -----------------------------------------------------------------------------
+data:
+  source_datasets: [ffhq, lsun_church]
+  image_size: 256
+  ldm_latent_size: 64
+  center_crop: true
+  random_flip: true
+  num_target_shots: 10
+  root: data
+  source:
+    ffhq: data/ffhq
+    lsun_church: data/lsun_church
+  targets:
+    babies: data/few_shot/babies
+    sunglasses: data/few_shot/sunglasses
+    raphael: data/few_shot/raphael_peale
+    sketches: data/few_shot/sketches
+    modigliani: data/few_shot/amedeo_modigliani
+    haunted_houses: data/few_shot/haunted_houses
+    landscape_drawings: data/few_shot/landscape_drawings
+  fid_targets:
+    babies: data/fid/babies_2700
+    sunglasses: data/fid/sunglasses_2500
+  num_workers: 4
+
+# -----------------------------------------------------------------------------
+# Toy 2-D experiment (Sec. 5.1, Figure 2)
+# -----------------------------------------------------------------------------
+toy:
+  source_mean: [1.0, 1.0]
+  target_mean: [-1.0, -1.0]
+  covariance: 1.0              # covariance = I
+  num_samples_reference: 10000 # reference gradient estimate
+  num_target_samples: 10       # few-shot target samples
+  repeat_target: 1000          # 10 samples repeated 1,000x
+  heatmap_samples: 20000       # Figures 2(b),(c)
+  heatmap_grid: 64
+  hidden_dim: 128
+  num_layers: 3
+  lr: 0.001
+  iterations: 3000
+  batch_size: 128
+  T: 100
+  seed: 0
+
+# -----------------------------------------------------------------------------
+# Output paths
+# -----------------------------------------------------------------------------
+logging:
+  log_dir: outputs/logs
+  sample_dir: outputs/samples
+  ckpt_dir: outputs/checkpoints
+  metric_dir: outputs/metrics
+  tensorboard: true
+  level: info
+
+# -----------------------------------------------------------------------------
+# Task registry: source -> target pairs used in Tables 1-4
+# -----------------------------------------------------------------------------
+tasks:
+  ffhq_babies:
+    source: ffhq
+    target: babies
+    backbone: ddpm
+  ffhq_sunglasses:
+    source: ffhq
+    target: sunglasses
+    backbone: ddpm
+  ffhq_raphael:
+    source: ffhq
+    target: raphael
+    backbone: ddpm
+  church_haunted_houses:
+    source: lsun_church
+    target: haunted_houses
+    backbone: ddpm
+  church_landscape_drawings:
+    source: lsun_church
+    target: landscape_drawings
+    backbone: ddpm
+  ffhq_sketches:
+    source: ffhq
+    target: sketches
+    backbone: ddpm
+  ffhq_modigliani:
+    source: ffhq
+    target: modigliani
+    backbone: ddpm
+  ldm_ffhq_babies:
+    source: ffhq
+    target: babies
+    backbone: ldm
+  ldm_ffhq_sunglasses:
+    source: ffhq
+    target: sunglasses
+    backbone: ldm
+  ldm_ffhq_raphael:
+    source: ffhq
+    target: raphael
+    backbone: ldm
+  ldm_church_haunted_houses:
+    source: lsun_church
+    target: haunted_houses
+    backbone: ldm
+  ldm_church_landscape_drawings:
+    source: lsun_church
+    target: landscape_drawings
+    backbone: ldm
+
+# ---------------------------------------------------------------
+# Paper reference numbers (Table 1 / 2 / 4) used by evaluate.py reports
+# ---------------------------------------------------------------
+paper_reference:
+  intra_lpips:
+    ddpm_ant:
+      ffhq_babies: 0.592
+      ffhq_sunglasses: 0.613
+      ffhq_raphael: 0.621
+      church_haunted_houses: 0.648
+      church_landscape_drawings: 0.723
+      ffhq_sketches: 0.544
+      ffhq_modigliani: 0.620
+    ldm_ant:
+      ffhq_babies: 0.601
+      ffhq_sunglasses: 0.613
+      ffhq_raphael: 0.592
+      church_haunted_houses: 0.653
+      church_landscape_drawings: 0.738
+    ddpm_pa:
+      ffhq_babies: 0.599
+      ffhq_sunglasses: 0.604
+      ffhq_raphael: 0.581
+      church_haunted_houses: 0.628
+      church_landscape_drawings: 0.706
+  fid:
+    ddpm_ant:
+      babies: 46.70
+      sunglasses: 20.06
+    ddpm_pa:
+      babies: 48.92
+      sunglasses: 34.75
+  parameter_rate:
+    ddpm_ant: 0.013
+    ldm_ant: 0.016
+    baselines: 1.0

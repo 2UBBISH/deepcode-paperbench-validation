@@ -1,0 +1,89 @@
+# FOA main configuration: ImageNet-C, severity 5, ViT-Base (32-bit / full precision)
+# Reference: paper Table 2 (full-precision adaptation results) and Table 16 (calibration),
+# Appendix B.2 (hyper-parameters), Algorithm 1 (main online loop).
+#
+# All values mirror FOA_DEFAULTS in src/utils/config.py; only the experiment-specific
+# fields are overridden here so that `load_config("configs/foa_imagenetc.yaml")` yields
+# the exact configuration used for the ImageNet-C experiments.
+
+experiment:
+  name: foa_imagenetc
+  description: "FOA on ImageNet-C severity 5 (15 corruptions), ViT-Base, batch size 64"
+
+seed: 0
+output_dir: ./outputs/imagenet-c
+
+model:
+  name: vit_base_patch16_224
+  # Official augreg checkpoint: B_16-i21k-300ep-lr_0.001-aug_medium1-wd_0.1-do_0.0-sd_0.0--imagenet2012-steps_20k-lr_0.01-res_224.npz
+  # Downloaded once and cached locally; see src/models/vit_loader.FOA_CHECKPOINT_URL.
+  checkpoint: null
+  pretrained: true
+  num_classes: 1000
+  precision: 32          # full precision (Table 2); 8/6-bit handled by configs/foa_quantized.yaml
+  device: cuda
+
+prompt:
+  num_prompts: 3         # N_p = 3 (Appendix B.2)
+  init: uniform          # uniform initialization (Appendix B.2); range documented below
+  init_range: 0.01       # paper only says "uniform"; small range chosen (documented default)
+
+cma:
+  population_size: 28    # K = 4 + 3*log(d*N_p) = 4 + 3*log(2304) ~ 27.9 -> 28 (Section 4.3)
+  sigma0: 1.0            # tau^(0) = 1.0 (Algorithm 1)
+  mean0: 0.0             # m^(0) = 0 (Algorithm 1)
+  cov0: 1.0              # Sigma^(0) = I (Algorithm 1)
+  seed: 0                # single global seed for reproducible candidate sampling
+
+fitness:
+  # Eqn. (5): entropy + lambda * (per-layer mean/std L2 discrepancy vs. source ID stats)
+  use_entropy: true
+  use_discrepancy: true
+  lambda_base: 0.4       # lambda = 0.4 * BS/64 for ImageNet-C (Section 4.3 / Appendix C)
+  lambda_scale_with_bs: true
+  beta: 1.0              # batch statistics used directly (no EMA) for the fitness statistics
+  layer_start: 1         # Eqn. (5) sums layers i = 1..N
+  entropy_reduction: sum
+  discrepancy_reduction: sum
+
+shifting:
+  enabled: true          # back-to-source activation shifting (Section 3.2, Eqn. 7-9)
+  gamma: 1.0             # Eqn. (7) step size (Appendix B.2)
+  alpha: 0.1             # Eqn. (9) EMA factor (Appendix B.2)
+
+data:
+  dataset: imagenet-c
+  severity: 5            # all experiments use severity level 5
+  corruptions:
+    - gaussian_noise
+    - shot_noise
+    - impulse_noise
+    - defocus_blur
+    - glass_blur
+    - motion_blur
+    - zoom_blur
+    - snow
+    - frost
+    - fog
+    - brightness
+    - contrast
+    - elastic_transform
+    - pixelate
+    - jpeg_compression
+  root: ./data
+  batch_size: 64         # BS = 64 (Appendix B.2)
+  num_workers: 4
+  shuffle: false         # online, single-pass, no shuffling of the stream
+  image_size: 224
+  subset: null
+
+source_stats:
+  path: ./checkpoints/source_stats_vit_base.pt
+  num_samples: 32        # Q = 32 unlabeled ImageNet-1K samples (Appendix B.2)
+  seed: 0
+  id_root: ./data        # ImageNet-1K validation images (used only for source stats)
+
+eval:
+  ece_bins: 15           # equal-width probability bins (paper cites Naeini et al. 2015; bin count documented)
+  report_per_corruption: true
+  report_mean_over_corruptions: true

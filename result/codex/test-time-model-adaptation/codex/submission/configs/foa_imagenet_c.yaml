@@ -1,0 +1,36 @@
+# Default FOA configuration on ImageNet-C / V2 / Sketch (Appendix B.2 of the paper).
+# Every value below is quoted from "Test-Time Model Adaptation with Only Forward Passes".
+model:
+  checkpoint: vit_base_patch16_224.augreg_in21k_ft_in1k   # footnote 1 of Appendix B.2
+  num_classes: 1000
+  image_size: 224
+
+prompt:
+  num_prompts: 3                # N_p
+  init: uniform                 # "initialize prompts with uniform initialization"
+  prompt_pos: zero              # [CLS, prompts, patch embeddings] (paper addendum)
+
+cma:
+  popsize: 28                   # K = 28 = 4 + 3 * log(prompt dim), Hansen (2016)
+  sigma0: 1.0                   # tau^(0) of Eqn. (6)
+  initial_mean: 0               # m^(0) = 0, Sigma^(0) = I (Algorithm 1)
+  library: cmaes                # https://github.com/CyberAgentAILab/cmaes
+
+fitness:                        # Eqn. (5)
+  entropy: true
+  activation_discrepancy: true
+  lambda: 0.4                   # 0.4 x BS/64 on ImageNet-C/V2/Sketch
+
+activation_shifting:            # Section 3.2
+  enabled: true
+  gamma: 1.0                    # Eqn. (7)
+  ema_alpha: 0.1                # Eqn. (9); mu_N(0) = mu_N(X_1) (paper addendum)
+
+source_statistics:
+  num_samples: 32               # Q, unlabelled ImageNet-1K validation images
+  with_prompt: false
+
+evaluation:
+  batch_size: 64
+  severity: 5                   # ImageNet-C severity level 5
+  shuffle: true                 # i.i.d. ("mild") testing scenario

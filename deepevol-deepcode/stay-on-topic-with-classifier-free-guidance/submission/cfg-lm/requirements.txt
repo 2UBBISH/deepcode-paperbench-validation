@@ -1,0 +1,69 @@
+# ---------------------------------------------------------------------------
+# cfg-lm — requirements
+#
+# Reproduction of "Stay on Topic with Classifier-Free Guidance"
+# (Sanchez, Fan, Spangler, Kruszewski, Humphrey, ... 2023).
+#
+# Install with:
+#     pip install -r requirements.txt
+#
+# Notes
+# -----
+# * torch is listed with the CUDA 12.1 wheel index; swap the index URL for
+#   your CUDA version (or use `--index-url https://download.pytorch.org/whl/cpu`
+#   for a CPU-only install). The pure-math modules (src/cfg/logits.py,
+#   src/eval/pass_at_k.py, src/eval/triviaqa_match.py, src/eval/cot_eval.py,
+#   src/data/prompts.py, src/analysis/flops.py, src/analysis/ancova.py) work
+#   without torch; everything model-facing needs it.
+# * The EleutherAI LM Evaluation Harness is pinned by git commit because the
+#   paper's zero-shot numbers (Table 5) rely on harness defaults (greedy
+#   decoding, temperature 0.0, top-p 1.0). Per the plan, the harness version
+#   must be pinned since defaults are used unless otherwise specified.
+# * `human-eval` provides OpenAI's execution sandbox used by
+#   src/eval/humaneval_eval.py (a self-contained subprocess fallback also
+#   exists, so the package is optional but recommended).
+# ---------------------------------------------------------------------------
+
+# --- core deep-learning stack -------------------------------------------------
+torch>=2.0.0
+transformers>=4.38.0,<5.0
+huggingface-hub>=0.20.0
+accelerate>=0.25.0
+safetensors>=0.4.0
+tokenizers>=0.15.0
+sentencepiece>=0.1.99        # LLaMA-family tokenizer (optional, kept for parity)
+einops>=0.7.0
+
+# --- numerics / data ----------------------------------------------------------
+numpy>=1.24.0,<2.0           # scipy / statsmodels wheels still expect the 1.x ABI
+scipy>=1.11.0                # scipy.stats.entropy (Section 5.1)
+datasets>=2.18.0
+pyyaml>=6.0
+tqdm>=4.66.0
+regex>=2023.0.0
+
+# --- evaluation harness (Table 5 zero-shot sweep) -----------------------------
+lm-eval==0.4.2
+# The plan pins the harness because its defaults (temperature/top-p) are used
+# by the CFG-by-last-token scoring path in src/eval/harness_cfg.py.
+# If the pinned release is unavailable, install from source at the matching tag:
+#   pip install "git+https://github.com/EleutherAI/lm-evaluation-harness@v0.4.2"
+
+# --- code execution (HumanEval, Tables 2/7/8/9) -------------------------------
+human-eval==1.0.3
+
+# --- Section 5 / Section 4 analysis -------------------------------------------
+statsmodels>=0.14.0          # logistic regression + ANCOVA (Section 4.1, Table 6)
+pandas>=2.0.0
+matplotlib>=3.7.0
+seaborn>=0.13.0
+
+# --- testing ------------------------------------------------------------------
+pytest>=7.4.0
+
+# ---------------------------------------------------------------------------
+# Optional / situational (uncomment as needed)
+# ---------------------------------------------------------------------------
+# bitsandbytes>=0.41.0       # 8-bit / 4-bit loading for 30B-65B CoT models
+# deepspeed>=0.13.0          # sharding for WizardLM-30B / Guanaco-65B
+# jupyterlab>=4.0.0          # interactive exploration of analysis notebooks

@@ -1,0 +1,74 @@
+# FOA (Forward-Optimization Adaptation) configuration -- ImageNet-Sketch
+# ---------------------------------------------------------------------------
+# Reproduces the ImageNet-Sketch column of Table 3 (ViT-Base, full precision).
+# Paper: "Test-Time Model Adaptation with Only Forward Passes"
+#
+# Sketch uses the same lambda_base as ImageNet-C / ImageNet-V2 (0.4) and is
+# rescaled by BS/64 at runtime (Appendix B.2 / Table 15). Batch size 64,
+# N_p = 3, K = 28 = ceil(4 + 3*ln(768*3)).
+
+experiment:
+  name: foa_imagenetsketch
+  description: >-
+    FOA on ImageNet-Sketch (1000 classes) with a frozen full-precision
+    ViT-Base, batch size 64, prompt N_p=3, CMA-ES population K=28.
+
+seed: 0
+output_dir: ./outputs/imagenet-sketch
+
+model:
+  name: vit_base_patch16_224
+  # null -> src/models/vit_loader.py falls back to FOA_CHECKPOINT_URL
+  # (B_16-i21k-300ep-lr_0.001-aug_medium1-wd_0.1-do_0.0-sd_0.0--imagenet2012-steps_20k-lr_0.01-res_224.npz)
+  checkpoint: null
+  pretrained: true
+  num_classes: 1000
+  precision: 32
+  device: cuda
+
+prompt:
+  num_prompts: 3          # N_p (Appendix B.2)
+  init: uniform           # uniform initialization, range documented below
+  init_range: 0.01        # ambiguity (c): paper says "uniform" only
+
+cma:
+  population_size: 28     # K = ceil(4 + 3*ln(d*N_p)) -> 28 for d*N_p = 2304
+  sigma0: 1.0             # tau^(0) (Algorithm 1)
+  mean0: 0.0              # m^(0) = 0
+  cov0: 1.0               # Sigma^(0) = I
+  seed: 0
+
+fitness:
+  use_entropy: true       # prediction-entropy term of Eqn. (5)
+  use_discrepancy: true   # layer-wise activation-discrepancy term of Eqn. (5)
+  lambda_base: 0.4        # Appendix B.2 / Table 15 (C / V2 / Sketch)
+  lambda_scale_with_bs: true   # lambda = lambda_base * BS / 64
+  beta: 1.0               # test-batch statistics used directly (no EMA)
+  layer_start: 1          # Eqn. (5) sums i = 1..N (layer 0 excluded)
+  entropy_reduction: sum
+  discrepancy_reduction: sum
+
+shifting:
+  enabled: true           # back-to-source activation shifting, Eqn. (7)-(9)
+  gamma: 1.0              # Eqn. (7) step size
+  alpha: 0.1              # Eqn. (9) EMA factor
+
+data:
+  dataset: imagenet-sketch
+  root: ./data
+  batch_size: 64
+  num_workers: 4
+  shuffle: false          # single-pass, ordered online stream (Algorithm 1)
+  image_size: 224
+  num_classes_eval: 1000
+
+source_stats:
+  path: ./checkpoints/source_stats_vit_base.pt
+  num_samples: 32         # Q (Appendix B.2); sensitivity in Table 13
+  seed: 0
+  id_root: ./data
+
+eval:
+  ece_bins: 15            # ambiguity (d): paper cites Naeini et al. 2015 only
+  report_per_corruption: false
+  report_mean_over_corruptions: false

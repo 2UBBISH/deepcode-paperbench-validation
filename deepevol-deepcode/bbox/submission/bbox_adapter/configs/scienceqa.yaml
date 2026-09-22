@@ -1,0 +1,216 @@
+# =============================================================================
+# BBox-Adapter configuration -- ScienceQA
+# -----------------------------------------------------------------------------
+# Run:  python scripts/run_experiment.py --config bbox_adapter/configs/scienceqa.yaml
+#
+# Paper references:
+#   * Dataset splits (2000 train / 500 test, image-requiring questions excluded):
+#     Appendix F.1, Appendix E.
+#   * One-shot prompt with the "#### <choice index>" terminator: Appendix J.
+#   * Defaults (lr 5e-6, batch 64, 6000 steps, AdamW wd 0.01, beam 3,
+#     max length 512, temperature 1.0): Appendix H.2.
+#   * Table 2 targets (adapting gpt-3.5-turbo): GT 78.53, AI 78.30, Combined 79.40
+#     vs base model 72.90.
+#
+# This file may be loaded standalone (yaml.safe_load) or deep-merged on top of
+# configs/default.yaml (keys here override the base defaults).
+#
+# NOTE: values marked "paper-silent" are documented defaults for details the
+# paper does not specify (see Addendum): alpha, T, M, K_init, n, warmup, pooling.
+# =============================================================================
+
+name: bbox_adapter_scienceqa
+dataset: scienceqa
+size: 0.1b            # 0.1b -> microsoft/deberta-v3-base ; 0.3b -> deberta-v3-large
+backbone: null        # resolved from (dataset, size) in adapter/energy_model.py
+seed: 0
+output_dir: runs/scienceqa
+
+# -----------------------------------------------------------------------------
+# Dataset (Appendix F.1 / Appendix E)
+# -----------------------------------------------------------------------------
+data:
+  hf_path: derek-thomas/ScienceQA
+  hf_config: null
+  train_split: train
+  test_split: test
+  n_train: 2000       # random subset after removing image-requiring questions
+  n_test: 500         # random subset after removing image-requiring questions
+  question_field: question
+  answer_field: answer
+  answer_type: mcq    # 0-based choice index
+  prompt_key: scienceqa
+  metric: accuracy
+  n_shot: 1           # Appendix J: one-shot ScienceQA example
+  drop_instruction_models: [mixtral, davinci]
+  use_terminator: true
+  terminator: "####"
+  include_context: true       # ScienceQA "lecture"/"hint" context when present
+  exclude_image: true         # Appendix F.1: image-requiring questions removed
+  random_subset_seed: 0
+
+# -----------------------------------------------------------------------------
+# Black-box proposal generator (Section 4.1 -- text only, never logprobs)
+# -----------------------------------------------------------------------------
+blackbox:
+  model: gpt-3.5-turbo
+  kind: bbox                 # bbox | rater | hf | mock
+  max_len: 512
+  temperature: 1.0           # Appendix H.2 (SFT baselines use 0.0)
+  top_p: 1.0
+  n: 1
+  allow_mock: true
+
+# -----------------------------------------------------------------------------
+# Energy adapter g_theta (Section 3.1, Section 4.1 Implementations)
+# -----------------------------------------------------------------------------
+adapter:
+  backbone: null             # null -> per-dataset default (deberta-v3-base)
+  pooling: null              # null -> mean for DeBERTa-v3, cls for BERT
+  head_hidden: 0             # 0 -> Dropout + Linear(H, 1)
+  dropout: 0.0
+  freeze_backbone: false
+  max_length: 512
+  output_scale: 1.0
+  head_init_std: 0.02
+  size: 0.1b
+
+# -----------------------------------------------------------------------------
+# Ranking-based NCE objective (Eq. 2 / Eq. 3)
+# -----------------------------------------------------------------------------
+loss:
+  name: nce                  # nce | mlm (Table 5 ablation)
+  alpha: 0.01                # paper-silent; sweep {1e-3, 1e-2, 1e-1}
+  reduction: mean            # mean realises E[g^2] in Eq. (3)
+  temperature: 1.0
+  label_smoothing: 0.0
+  energy_clamp: null
+  reg_mode: split            # Eq. (3): alpha*E[g^2] on positives and negatives
+  reg_schedule: constant
+  reg_warmup_steps: 0
+  use_regularizer: true
+
+# -----------------------------------------------------------------------------
+# Algorithm 1 -- online adaptation (Eq. 5, 6, 7)
+# -----------------------------------------------------------------------------
+training:
+  lr: 5.0e-6                 # Appendix H.2 (eta)
+  batch_size: 64             # Appendix H.2
+  max_train_steps: 6000      # Appendix H.2 (total mini-batch gradient steps)
+  weight_decay: 0.01         # Appendix H.2 (AdamW)
+  betas: [0.9, 0.999]
+  max_grad_norm: 1.0
+  schedule: constant
+  warmup_fraction: 0.1       # paper-silent
+  n_iterations: 4            # T -- paper-silent, matches Fig. 3(b) plateau
+  n_candidates: 5            # M -- candidates sampled from current adapted inference
+  k_init: 5                  # K -- initial prompted responses per query
+  samples_per_beam: 2        # n -- sentence samples per beam per step
+  use_beam_search: true
+  outcome_supervision: true
+  sel_mode: ground_truth     # ground_truth | ai_feedback | combined
+  device: auto
+  log_every: 50
+  eval_every: 1
+  save_every: 0
+
+# -----------------------------------------------------------------------------
+# Sentence-level beam search (Eq. 4, Section 3.3)
+# -----------------------------------------------------------------------------
+beam_search:
+  beam_size: 3               # Appendix H.2 default k
+  n_samples: 2               # n sentences drawn per beam per step
+  max_steps: 6               # L -- number of sentence-level steps
+  stop_signal: "####"
+  temperature: 1.0
+  max_len: 512
+  normalization: none        # paper-silent: no length normalisation by default
+  length_penalty: 0.0
+  deduplicate: true
+  stop_when_all_complete: true
+  include_prompt_in_energy: true
+  keep_candidates: true
+
+# -----------------------------------------------------------------------------
+# Positive / negative buffers (Eq. 5, Eq. 6)
+# -----------------------------------------------------------------------------
+buffer:
+  sel_mode: ground_truth
+  k_init: 5
+  m_candidates: 5
+  max_positives: 8
+  max_negatives: 64
+  deduplicate: true
+  outcome_supervision: true
+  ai_feedback_n_ranked: 5
+
+# -----------------------------------------------------------------------------
+# GPT-4 AI feedback rater (Section 3.4, Appendix G / Appendix J)
+# -----------------------------------------------------------------------------
+feedback:
+  enabled: true              # built lazily; only used when sel_mode requests it
+  model: gpt-4
+  temperature: 0.0
+  n_ranked: 5                # TruthfulQA ranked top-5; unused for ScienceQA
+  retries: 2
+  fallback: majority
+  prompt_style: best         # ScienceQA uses the best-answer format
+  criteria: [Coherency, Reasonability, Correctness, Format]
+
+# -----------------------------------------------------------------------------
+# Evaluation
+# -----------------------------------------------------------------------------
+eval:
+  metric: accuracy
+  n_test: 500
+  gpt_judge: false
+  toxicity_threshold: 0.5
+  report_delta: true
+  num_seeds: 1
+
+# -----------------------------------------------------------------------------
+# Baselines (Section 4.1 Baselines, Appendix F.2, Appendix H.2)
+# -----------------------------------------------------------------------------
+baselines:
+  cot:
+    enabled: true
+    temperature: 0.0         # greedy for the unadapted CoT baseline
+    n_shot: 1
+  azure_sft:
+    enabled: false
+    model: gpt-3.5-turbo
+    epochs: 3                # Appendix F.2; note H.2 lists 5 (conflict)
+    batch_size: null         # Azure OpenAI default
+    lr_multiplier: null      # Azure OpenAI default
+  sft_lora:
+    enabled: false
+    model: mistralai/Mixtral-8x7B-v0.1
+    lora_r: 128              # 0.1B-equivalent (r=384 for 0.3B-equivalent)
+    lora_alpha: 256          # alpha = 2r
+    lora_dropout: 0.1
+    lr: 2.0e-4
+    weight_decay: 0.001
+    batch_size: 8            # per GPU
+    grad_accum: 1
+    max_grad_norm: 0.3
+    epochs: 3
+    optimizer: paged_adamw_32bit
+    lr_scheduler: cosine
+    max_length: 512
+
+# -----------------------------------------------------------------------------
+# Cost accounting (Table 4) -- Azure token stats x gpt-3.5-turbo-1106 pricing
+# -----------------------------------------------------------------------------
+cost:
+  enabled: true
+  model_for_pricing: gpt-3.5-turbo-1106
+  usd_per_1k_input_tokens: 0.0015
+  usd_per_1k_output_tokens: 0.002
+  per_questions: 1000
+
+# -----------------------------------------------------------------------------
+# VRAM accounting (Table 6) -- reported only for the 0.1B adapter (Addendum)
+# -----------------------------------------------------------------------------
+vram:
+  enabled: false
+  report_only_0_1b: true

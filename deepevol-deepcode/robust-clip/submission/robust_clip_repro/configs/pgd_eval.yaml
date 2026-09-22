@@ -1,0 +1,92 @@
+# ---------------------------------------------------------------------------
+# ImageNet zero-shot clean/robust evaluation with the Addendum-specified PGD
+# attacker (l_inf, momentum 0.9, uniform random init, projection around
+# NON-normalized inputs, int16 for half-precision / int32 for single-precision).
+#
+# PROVENANCE POLICY (reproduction plan, component 14):
+#   ADDENDUM  -> value is explicitly stated by the benchmark Addendum.
+#   PAPER BODY-> value is stated in the paper body (not the Addendum).
+#   UNSPECIFIED_BY_ADDENDUM -> the Addendum is silent; the value below is an
+#       EXTERNAL default supplied by this harness. It is logged as externally
+#       supplied and must never be reported as coming from the paper.
+# ---------------------------------------------------------------------------
+
+pgd_eval:
+  # ---- experiment identification -------------------------------------------
+  dataset_name: ImageNet
+  dataset_id: imagenet-1k          # HuggingFace id; loaded with trust_remote_code=True (ADDENDUM)
+  split: validation
+  resolution: 224                  # PAPER BODY (CLIP ViT-L/14@224)
+  num_samples: 1000                # PAPER BODY (clean zero-shot sample count)
+  num_robust_samples: 1000         # PAPER BODY (robust evaluation sample count)
+  top_k: 5
+  shuffle: false
+  seed: 0                          # UNSPECIFIED_BY_ADDENDUM (external default)
+  batch_size: 1                    # UNSPECIFIED_BY_ADDENDUM (external default)
+
+  # ---- model / victim ------------------------------------------------------
+  model_name: clip                 # clip | robust_clip | dummy
+  clip_model: ViT-L-14             # ADDENDUM (OpenAI CLIP ViT-L/14@224)
+  clip_pretrained: openai          # ADDENDUM (OpenAI weights via OpenCLIP)
+  clip_checkpoint: null            # robust_clip weights; REQUIRED when model_name=robust_clip
+  class_names: null                # optional path to ImageNet class names
+  class_index_file: null           # optional index-to-name map
+
+  # ---- attack selection ----------------------------------------------------
+  attacks: [pgd]                   # apgd_ce | apgd_targeted_dlr | pgd
+  norm: linf                       # ADDENDUM (l_inf ball around NON-normalized pixels)
+  use_upstream_apgd: true          # ADDENDUM (APGD comes from fra31/robust-finetuning)
+
+  # ---- PGD hyperparameters -------------------------------------------------
+  # The Addendum specifies the *internals* of PGD but not its budget, so these
+  # three values are UNSPECIFIED_BY_ADDENDUM and are supplied externally here.
+  epsilons: []                     # e.g. ["2/255", "4/255"]  UNSPECIFIED_BY_ADDENDUM
+  alpha: null                      # epsilon/4 if null;        UNSPECIFIED_BY_ADDENDUM
+  iterations: 50                   #                          UNSPECIFIED_BY_ADDENDUM
+  restarts: 1                      #                          UNSPECIFIED_BY_ADDENDUM
+  loss: ce                         #                          UNSPECIFIED_BY_ADDENDUM
+  target_mode: untargeted          #                          UNSPECIFIED_BY_ADDENDUM
+
+  # ---- Addendum-mandated PGD internals (do not change) ---------------------
+  momentum: 0.9                    # ADDENDUM
+  random_start: true               # ADDENDUM (uniform random init in the eps ball)
+  gradient_normalization: mean_abs # ADDENDUM (normalize then elementwise sign)
+  gradient_norm_eps: 1.0e-12       # ADDENDUM (numerical guard in the normalization)
+  projection_space: pixel          # ADDENDUM (raw, non-normalized image space)
+  clamp: [0.0, 1.0]                # ADDENDUM / image-domain validity
+
+  # ---- precision policy ----------------------------------------------------
+  precision: single                # ADDENDUM: single precision attack
+  int_dtype_half: int16            # ADDENDUM: half-precision attacks store int16
+  int_dtype_single: int32          # ADDENDUM: single-precision attacks store int32
+  quant_scale: 100000.0            # fixed-point scale for integer perturbation storage
+
+  # ---- runtime -------------------------------------------------------------
+  device: null                     # null -> cuda if available else cpu
+  output_dir: results
+  output_file: null                # results/imagenet_{model}_{attack}_eps{..}.json
+  verbose: true
+
+  # ---- provenance bookkeeping ---------------------------------------------
+  provenance:
+    addendum:
+      - "linear (l_inf) attacks use momentum 0.9"
+      - "perturbation initialization is uniform random inside the l_inf ball"
+      - "gradients are normalized and then elementwise-signed"
+      - "the l_inf ball is computed around NON-normalized inputs"
+      - "half-precision attacks store perturbations as int16"
+      - "single-precision attacks store perturbations as int32"
+      - "APGD is taken from https://github.com/fra31/robust-finetuning"
+      - "ImageNet is loaded via HuggingFace load_dataset('imagenet-1k', trust_remote_code=True)"
+    paper_body:
+      - "eps in {2/255, 4/255}"
+      - "APGD 100 iterations"
+      - "1000 robust-evaluation samples"
+      - "224x224 zero-shot evaluation"
+    unspecified_by_addendum:
+      - "eps for this general PGD run"
+      - "PGD step size (alpha)"
+      - "PGD iteration count"
+      - "PGD restarts"
+      - "batch size"
+      - "shuffle seed"

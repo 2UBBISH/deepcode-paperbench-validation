@@ -1,0 +1,20 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.DS_Store
+
+# data / statistics / results are produced by the scripts
+data/
+stats/
+results/*.json
+third_party/
+
+# checkpoints and other large artefacts
+*.pth
+*.pt
+*.npz
+*.tar
+*.tar.gz
+*.zip

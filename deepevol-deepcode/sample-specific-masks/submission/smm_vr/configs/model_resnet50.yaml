@@ -1,0 +1,51 @@
+# Model-specific configuration overrides for the frozen ImageNet-1K pre-trained
+# ResNet-50 backbone (SMM paper, Table 1 right half and Table 9).
+#
+# Layering: base.yaml -> model_resnet50.yaml -> train_smm.yaml / ablations.yaml
+# The ResNet-50 backbone shares the 5-layer mask generator with ResNet-18
+# (paper Sec. 3.2: 5 CNN layers for ResNet-18/ResNet-50, 6 for ViT-B32), hence
+# the same Table 4 parameter budget of 26,499 weights.
+
+name: resnet50
+
+backbone: resnet50
+
+model:
+  backbone: resnet50
+  torchvision_name: resnet50
+  pretrained: true
+  weights: IMAGENET1K_V1          # ImageNet-1K pre-trained weights (Table 1 / Appendix E.1)
+  freeze: true                    # all parameters requires_grad_(False)
+  input_size: 224                 # ResNet input resolution (addendum transforms)
+  num_pretrained_classes: 1000    # ImageNet-1K label space size |Y^P|
+  feature_layer: avgpool          # output-layer features before label mapping (t-SNE analysis)
+
+mask_generator:
+  num_layers: 5                   # 5-layer lightweight CNN f_mask for ResNet variants
+  base_channels: 8
+  out_channels: 3                 # 3-channel mask (Sec. 3.2; 1 channel for the f_mask^s ablation)
+  num_pooling_layers: 3           # 3 max-pooling layers -> floor(224/2^3) = 28
+  use_bn: true
+  use_relu: true
+  width_scale: 1.0                # doubled progressively in the Table 11 scaling study
+  expected_parameters: 26499      # Table 4 parameter budget (verified by verify_parameters())
+
+reprogram:
+  patch_size: 8                   # 2^l with l = 3 (default patch size, Sec. 3.3)
+  delta_init: zero                # Algorithm 1 initializes the shared pattern to an all-zero tensor
+  normalize_mask: false           # no squashing mentioned in the paper
+
+training:
+  # Appendix C, Table 9 schedule for ResNet-50 (identical to ResNet-18)
+  alpha_delta: 0.01               # learning rate for the shared pattern delta
+  gamma_delta: 0.1                # MultiStepLR decay for delta at milestones [100, 145]
+  alpha_mask: 0.01                # learning rate for the 5-layer mask generator phi
+  gamma_mask: 0.1                 # MultiStepLR decay for phi
+
+derived:
+  num_mask_layers: 5
+  alpha_mask: 0.01
+  gamma_mask: 0.1
+  mask_parameter_count: 26499
+  input_size: 224
+  low_res_mask_size: 28           # 224 // 2^3

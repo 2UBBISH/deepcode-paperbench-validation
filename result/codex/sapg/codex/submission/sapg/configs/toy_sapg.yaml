@@ -1,0 +1,41 @@
+# Small-scale CPU configuration used for smoke tests / qualitative checks of
+# SAPG against its ablations (see README, "toy suite").
+defaults: [base.yaml]
+
+env:
+  name: multimodal_collect
+  num_envs: 768                # divisible by num_policies = 6
+  num_landmarks: 6
+  max_steps: 64
+  capture_radius: 0.12
+  step_size: 0.15
+
+model:
+  latent_dim: 16
+  activation: elu
+  action_bound: null
+  actor:
+    type: mlp
+    units: [128, 128]
+  critic:
+    type: mlp
+    units: [128, 128]
+
+algo:
+  name: sapg
+  num_policies: 6
+  horizon: 16
+  mini_epochs: 4
+  learning_rate: 3.0e-4
+  clip_epsilon: 0.2
+  critic_coef: 1.0
+  entropy_coef: 0.0
+  aggregation: leader_follower
+  num_iterations: 150
+  eval_interval: 20
+  record_states_interval: 20
+
+eval:
+  episodes: 64
+  max_steps: 512
+  policy_ids: [0]

@@ -1,0 +1,63 @@
+# APT: Adaptive Pruning and Tuning Pretrained Language Models
+# Default configuration (paper §A Table 6 + Addendum).
+#
+# Everything the APT trainer (apt.training.TrainConfig) needs.  Task specific
+# configs (roberta_sst2.yaml, roberta_mnli.yaml, squad.yaml, t5_cnndm.yaml)
+# inherit these values and only override the model / task / data fields.
+#
+# Scope note: LLaMA-2 / Alpaca / lm-eval-harness and Appendix G/H experiments
+# are out of scope for this reproduction (see Addendum).
+
+# ---------------------------------------------------------------- model/task
+model_name_or_path: roberta-base
+model_type: roberta              # roberta | bert | t5
+task: sst2                       # GLUE task, squad / squad_v2, or cnndm
+
+# ------------------------------------------------- Table 6 hyper-parameters
+learning_rate: 2.0e-4            # GLUE-small / GLUE-big / SQuAD: 2e-4, CNN/DM: 1e-4
+batch_size: 32                   # GLUE-small / GLUE-big / SQuAD: 32, CNN/DM: 16
+epochs: 40                       # total epochs (prune+distill then recovery)
+distill_epochs: 20               # epochs of stage-1 prune+self-distillation
+
+# --------------------------------------------------------- APT (Algorithm 1)
+target_sparsity: 0.60            # gamma_T: ratio of pruned to total parameters
+initial_rank: 8                  # adapter rank r_apt at the start of fine-tuning
+scaling: 2.0                     # static LoRA scaling factor s (Appendix A)
+mask_alpha: 0.01                 # gradual mask decay alpha < 1 (Appendix A/C)
+ema_beta: 0.85                   # exponential moving average of salience
+tau: 4                           # number of teacher layer blocks (block-wise sampling)
+tuning_budget_initial: 1.0       # Delta_t at the start of the pruning stage
+tuning_budget_final: 2.0         # Delta_t at the end of the pruning stage
+pred_distill_weight: 1.0         # L_pred weight in L_distill (GLUE): 0.1 for SQuAD/CNN-DM
+layer_distill_weight: 0.9        # L_layer weight in L_distill
+use_distillation: true
+top_fraction: 0.5                # select top-half salient adapters (Sec. 4.3)
+use_kurtosis: true               # outlier-aware salience (Sec. 4.2 / Appendix B)
+
+# ------------------------------------------------------------- optimization
+weight_decay: 0.01
+warmup_ratio: 0.06
+lr_kind: linear                  # linear decay after warmup
+optimizer: adamw
+scheduler: linear
+max_grad_norm: 1.0
+seed: 42                         # paper reports mean/std over 3 seeds: 42, 43, 44
+
+# --------------------------------------------------------------- data/token.
+max_seq_length: 128              # GLUE (SQuAD: 384, CNN/DM source: 512)
+max_target_length: 8             # T5 GLUE target length (CNN/DM: 128)
+doc_stride: 128                  # SQuAD sliding window
+max_query_length: 64             # SQuAD question truncation
+table6_group: glue-big           # glue-small | glue-big | squad | cnndm
+dynamic_padding: false
+
+# ------------------------------------------------------------------ runtime
+device: cuda
+output_dir: outputs/apt
+logging_steps: 50
+eval_steps: 0                    # 0 => evaluate once per epoch
+save_steps: 0
+inference_batch_size: 128        # small models (Sec. 5.3)
+num_workers: 0
+fp16: false
+bf16: false

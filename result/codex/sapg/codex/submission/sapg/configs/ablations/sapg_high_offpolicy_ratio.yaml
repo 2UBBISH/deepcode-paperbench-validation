@@ -1,0 +1,5 @@
+# Sec. 6.3: "Ours (high off policy ratio)" -- no subsampling of D'_i.
+defaults: [../sapg_allegrokuka_regrasping.yaml]
+algo:
+  name: sapg
+  offpolicy_subsample: false

@@ -1,0 +1,68 @@
+# APT config: T5-base on CNN/DailyMail summarization (Table 2, right panel)
+#
+# Sources:
+#   - Table 6 (Appendix A): CNN/DM column -> lr 1e-4, batch 16, epochs 16,
+#     distill epochs 6.
+#   - Addendum: distillation loss weighting for SQuAD / CNN/DM is
+#     L_pred * 0.1 + L_layer * 0.9 (GLUE uses 1.0 / 0.9).
+#   - Sec. 4.4 / Appendix A: adapter rank initialized to 8, scaling factor 2,
+#     alpha < 1 gradual mask decay, EMA salience, cubic sparsity schedule.
+#
+# Inherits the schema of apt/configs/default.yaml and overrides the
+# model/task/data keys that differ for T5-base on CNN/DM.
+
+# ---------------------------------------------------------------- model/task
+model_name_or_path: t5-base
+model_type: t5                      # seq2seq; encoder-decoder with cross-attention
+task: cnndm
+table6_group: cnndm
+
+# ------------------------------------------------------- Table 6 (CNN/DM col)
+learning_rate: 1.0e-4
+batch_size: 16
+epochs: 16                          # 6 prune+distill epochs, then 10 recovery epochs
+distill_epochs: 6
+
+# ------------------------------------------------- APT / Algorithm 1 (Sec. 4)
+target_sparsity: 0.60                # Table 2: 60% sparsity for T5-base
+initial_rank: 8                      # Appendix A: adapter ranks initialized to 8
+scaling: 2.0                         # Appendix A: scaling factors set to 2 statically
+mask_alpha: 0.01                     # gradual mask decay alpha < 1
+ema_beta: 0.85                       # moving-average salience (0.85/0.15)
+tau: 4                               # block-wise teacher layer sampling
+tuning_budget_initial: 1.0           # Delta_t at start of the tuning-budget ramp
+tuning_budget_final: 2.0             # Delta_T at the end of the tuning-budget ramp
+top_fraction: 0.5                    # grow ranks of the top-half salient adapters
+use_distillation: true
+use_kurtosis: true                   # outlier-aware (sqrt-kurtosis) salience term
+
+# ------------------------------------------- self-distillation loss (CNN/DM)
+pred_distill_weight: 0.1             # SQuAD and CNN/DM: 0.1 * L_pred + 0.9 * L_layer
+layer_distill_weight: 0.9
+
+# ------------------------------------------------------------- optimization
+optimizer: adamw
+weight_decay: 0.01
+warmup_ratio: 0.06
+lr_kind: linear
+max_grad_norm: 1.0
+seed: 42                             # paper averages over seeds 42/43/44
+
+# ------------------------------------------------- data / tokenization (T5)
+max_seq_length: 512                  # CNN/DM source length
+max_target_length: 128              # summary length
+gen_num_beams: 4                     # beam search for ROUGE evaluation
+gen_length_penalty: 2.0
+gen_no_repeat_ngram_size: 3
+dynamic_padding: false
+num_workers: 0
+
+# ----------------------------------------------------------------- runtime
+device: cuda
+output_dir: outputs/apt_t5_cnndm
+logging_steps: 50
+eval_steps: 0                        # 0 = evaluate once per epoch
+save_steps: 0                        # 0 = save once per epoch
+inference_batch_size: 128            # small-model inference protocol (Sec. 5.3)
+fp16: false
+bf16: false

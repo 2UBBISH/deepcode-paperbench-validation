@@ -1,0 +1,34 @@
+# ---------------------------------------------------------------------------
+# SMM -- Sample-specific Multi-channel Masks for Visual Reprogramming
+# (ICML 2024) reproduction -- Python dependencies.
+#
+# Environment validated with: Python 3.10, CUDA 11.8/12.1, single A100 GPU.
+# Install with:  python -m pip install -r smm_vr/requirements.txt
+#
+# Notes on the paper's environment (Sec. 5 / Appendix):
+#   * Frozen ImageNet-1K backbones are loaded from torchvision
+#     (ResNet-18, ResNet-50, ViT-B/32; optional ViT-L/16 384x384 for Appendix E).
+#   * The target tasks are torchvision datasets, so no extra download helpers
+#     beyond torchvision are required (see scripts/prepare_data.sh).
+#   * t-SNE feature-space analysis uses scikit-learn (5000 training samples
+#     per dataset, addendum).
+# ---------------------------------------------------------------------------
+
+# --- core deep learning stack (>= 2.0 required for the paper's ViT weights) ---
+torch>=2.0
+torchvision>=0.15
+
+# --- numerical / scientific stack -------------------------------------------
+numpy>=1.23
+scipy>=1.9            # optional: statistics helpers for reporting
+scikit-learn>=1.2     # t-SNE for the feature-space visualization (Sec. 5)
+
+# --- data handling -----------------------------------------------------------
+pandas>=1.5           # result tables / CSV summaries
+pyyaml>=6.0           # YAML experiment configs (configs/*.yaml)
+
+# --- plotting ----------------------------------------------------------------
+matplotlib>=3.6       # Figure 4 (patch size) and Figure 6-style t-SNE grids
+
+# --- progress / logging ------------------------------------------------------
+tqdm>=4.65

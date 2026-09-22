@@ -1,0 +1,80 @@
+# FOA (Forward-Optimization Adaptation) -- ImageNet-V2 (Matched-Frequency subset)
+# Table 3 (paper): Full-precision ViT-Base, BS=64, online single-pass stream.
+# Reported (family average with R/Sketch): V2 accuracy 75.4%.
+experiment:
+  name: foa_imagenetv2
+  description: "ImageNet-V2 Matched-Frequency subset, ViT-Base, BS=64, full precision"
+
+seed: 0
+output_dir: ./outputs/imagenet-v2
+
+model:
+  name: vit_base_patch16_224
+  # null -> falls back to vit_loader.FOA_CHECKPOINT_URL
+  # (augreg B_16-i21k-300ep-...-res_224.npz) per Appendix B.2
+  checkpoint: null
+  pretrained: true
+  num_classes: 1000
+  precision: 32
+  device: cuda
+
+prompt:
+  # N_p = 3 learnable prompts (Appendix B.2), uniform initialization.
+  # CMA search dimension = embed_dim * N_p = 768 * 3 = 2304
+  num_prompts: 3
+  init: uniform
+  # Paper only states "uniform initialization"; small range documented as default.
+  init_range: 0.01
+
+cma:
+  # K = 4 + 3 * ln(d*N_p) = 28 (Hansen 2016; Eqn. 6 / Algorithm 1)
+  population_size: 28
+  # tau^(0) = 1.0, m^(0) = 0, Sigma^(0) = I
+  sigma0: 1.0
+  mean0: 0.0
+  cov0: 1.0
+  seed: 0
+
+fitness:
+  # Eqn. (5): entropy + lambda * per-layer CLS activation discrepancy (i = 1..N)
+  use_entropy: true
+  use_discrepancy: true
+  # lambda = 0.4 for ImageNet-C / V2 / Sketch, scaled by BS/64; 0.2 only for R.
+  lambda_base: 0.4
+  lambda_scale_with_bs: true
+  # beta = 1.0 -> direct batch statistics (no EMA) for the discrepancy term
+  beta: 1.0
+  # Eqn. (5) sums over layers i = 1..N (layer 0 stored but excluded)
+  layer_start: 1
+  entropy_reduction: sum
+  discrepancy_reduction: sum
+
+shifting:
+  # Eqn. (7)-(9) back-to-source activation shifting on the final-layer CLS feature
+  enabled: true
+  gamma: 1.0
+  alpha: 0.1
+
+data:
+  dataset: imagenet-v2
+  # Matched-Frequency subset (ImageNetV2 "matched-frequency")
+  subset: matched-frequency
+  root: ./data
+  batch_size: 64
+  num_workers: 4
+  # online, single pass, ordered stream (Algorithm 1)
+  shuffle: false
+  image_size: 224
+
+source_stats:
+  path: ./checkpoints/source_stats_vit_base.pt
+  # Q = 32 unlabeled ImageNet-1K validation images (Appendix B.2)
+  num_samples: 32
+  seed: 0
+  id_root: ./data
+
+eval:
+  # ECE with equal-width bins; bin count unspecified in the paper -> 15
+  ece_bins: 15
+  report_per_corruption: false
+  report_mean_over_corruptions: false

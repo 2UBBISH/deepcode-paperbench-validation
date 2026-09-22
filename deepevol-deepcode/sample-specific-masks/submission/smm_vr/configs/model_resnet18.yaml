@@ -1,0 +1,66 @@
+// Model-specific overrides for the frozen pre-trained ResNet-18 backbone.
+# Extends base.yaml (see smm_vr/configs/base.yaml). Merge order:
+#   base.yaml  ->  model_resnet18.yaml  ->  train_smm.yaml / ablations.yaml / ...
+#
+# Paper references:
+#   - Section 5 "Pre-trained Models and Target Tasks": ImageNet-1K ResNet-18,
+#     reprogrammed input size 224x224, weights frozen.
+#   - Appendix A.2 / Table 4: the mask generator uses 5 CNN layers for
+#     ResNet-18 (26,499 parameters) with 3 max-pooling layers (patch size 8).
+#   - Appendix E.1: ResNet-18 is the primary backbone of the main tables.
+
+name: resnet18
+backbone: resnet18
+
+model:
+  backbone: resnet18
+  # torchvision identifier used by models/pretrained.py
+  torchvision_name: resnet18
+  # ImageNet-1K pre-trained weights (frozen)
+  pretrained: true
+  weights: IMAGENET1K_V1
+  freeze: true
+  # ResNets reprogram at 224x224 (ViT-B32 uses 384x384)
+  input_size: 224
+  # Number of logits produced by the frozen pre-trained classifier
+  num_pretrained_classes: 1000
+  # Feature layer used for the t-SNE analysis (output-layer features,
+  # extracted before the label mapping is applied).
+  feature_layer: avgpool
+
+mask_generator:
+  # 5 CNN layers for ResNet-18 / ResNet-50 (Table 4: 26,499 parameters)
+  num_layers: 5
+  base_channels: 8
+  out_channels: 3
+  # 3 max-pooling layers -> floor(H / 2^3) = floor(224 / 8) = 28
+  num_pooling_layers: 3
+  use_bn: true
+  use_relu: true
+  # Doubled by the scaling study (Table 11) on EuroSAT + ResNet-18
+  width_scale: 1.0
+  expected_parameters: 26499
+
+reprogram:
+  # Patch size 2^l with l = 3 (Section 5 "Impact of Patch Size" default)
+  patch_size: 8
+  delta_init: zero
+  normalize_mask: false
+
+training:
+  # Table 9: learning rate / decay schedule for the shared pattern delta
+  alpha_delta: 0.01
+  gamma_delta: 0.1
+  # 5-layer mask generator: alpha_2 = 0.01, gamma = 0.1 (Table 9)
+  alpha_mask: 0.01
+  gamma_mask: 0.1
+
+# Auto-derived values for this backbone (resolved at runtime by the config
+# loader / model factory):
+derived:
+  num_mask_layers: 5
+  alpha_mask: 0.01
+  gamma_mask: 0.1
+  mask_parameter_count: 26499
+  input_size: 224
+  low_res_mask_size: 28

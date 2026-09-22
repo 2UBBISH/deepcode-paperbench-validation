@@ -1,0 +1,25 @@
+# Core
+torch>=2.0
+numpy>=1.23
+scipy>=1.9
+Pillow>=9.0
+tqdm>=4.64
+
+# Metrics (LPIPS / FID).  The code falls back to bundled implementations when
+# these are unavailable, but the reference numbers in the paper were produced
+# with the official packages.
+lpips>=0.1.4
+pytorch-fid>=0.3.0
+
+# Dataset handling for the image experiments
+torchvision>=0.15
+
+# LDM backend (Section 5.2 of the paper evaluates DPMs-ANT on Latent Diffusion
+# Models as well as DDPMs).  Only needed for the `ldm_*` tasks.
+# NOTE: the upper bound keeps diffusers compatible with torch 2.2 (newer
+# releases require `torch.xpu`, which only exists in torch >= 2.5).
+diffusers>=0.20,<0.32
+einops>=0.6
+
+# Dev / tests
+pytest>=7.0

@@ -1,0 +1,19 @@
+# ResNet-50 (ImageNet-1K) as the frozen pre-trained model -- Table 1.
+backbone: resnet50
+image_size: 224
+num_layers: 5
+num_pool_layers: 3
+epochs: 200
+batch_size: null
+milestones: [100, 145]
+momentum: 0.9
+weight_decay: 0.0
+lr_delta: 0.01
+gamma_delta: 0.1
+lr_mask: 0.01
+gamma_mask: 0.1
+label_mapping: ilm
+num_workers: 4
+eval_every: 10
+pretrained: true
+device: cuda

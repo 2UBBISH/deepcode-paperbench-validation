@@ -1,0 +1,193 @@
+# =============================================================================
+# DPO configuration -- GPT2-medium alignment against toxic continuations
+# -----------------------------------------------------------------------------
+# Paper: "A Mechanistic Understanding of Alignment Algorithms:
+#         A Case Study on DPO and Toxicity"
+# Settings come from Appendix E, Table 8 (DPO hyperparameters) and Section 4.2
+# (pair dataset construction: 24,576 PPLM-toxic / greedy-non-toxic pairs,
+#  90:10 train/validation split, validation metric "loss/valid", patience 10).
+#
+# This file is merged on top of configs/default.yaml by scripts/train_dpo.py
+# (CLI flags > this file > Table 8 defaults). Both flat keys and a nested
+# `dpo:` section are provided so that any resolution order works.
+# =============================================================================
+
+seed: 0
+device: null            # null = auto (cuda if available, else cpu)
+
+# -----------------------------------------------------------------------------
+# Scope: reproduction covers GPT2-medium only (Llama2 / GLU paths out of scope)
+# -----------------------------------------------------------------------------
+in_scope:
+  model: gpt2-medium
+  family: gpt2
+  llama2: false
+  glu: false
+
+# -----------------------------------------------------------------------------
+# Models
+# -----------------------------------------------------------------------------
+model:
+  name: openai-community/gpt2-medium
+  family: gpt2
+  n_layers: 24
+  d_model: 1024
+  d_mlp: 4096
+  n_heads: 16
+  vocab_size: 50257
+
+reference_model:
+  name: openai-community/gpt2-medium   # frozen pi_ref = untrained GPT2-medium
+
+dpo_model:
+  name: gpt2_dpo
+  path: artifacts/models/gpt2_dpo
+
+model_name: openai-community/gpt2-medium
+reference_model_name: openai-community/gpt2-medium
+
+# -----------------------------------------------------------------------------
+# Preference pairs (Section 4.2, produced by scripts/generate_pairs.py)
+# -----------------------------------------------------------------------------
+data:
+  pairwise:
+    path: artifacts/data/pairs.jsonl
+    shard_dir: artifacts/data/pairs_shards
+    shard_size: 512
+    n_pairs: 24576                 # 24,576 pairs generated from Wikitext-2 prompts
+    valid_ratio: 0.1              # 90:10 train/validation split
+    max_length: 128
+    prompt_column: prompt
+    chosen_column: chosen          # preferred  = non-toxic greedy GPT2 continuation
+    rejected_column: rejected      # non-preferred = PPLM toxic continuation
+
+pairs_path: artifacts/data/pairs.jsonl
+shard_dir: artifacts/data/pairs_shards
+valid_ratio: 0.1
+max_pairs: null                    # null = use all available pairs
+
+# -----------------------------------------------------------------------------
+# DPO objective and optimiser -- Appendix E, Table 8
+# -----------------------------------------------------------------------------
+beta: 0.1                          # DPO temperature beta
+loss_type: sigmoid                 # sigmoid | hinge
+label_smoothing: 0.0
+
+learning_rate: 0.000001            # 1e-6
+lr: 0.000001                       # alias
+batch_size: 4
+batch: 4                           # alias
+grad_accum: 1                      # gradient accumulation steps
+gradient_accumulation_steps: 1     # alias
+max_grad_norm: 10.0
+optimizer: rmsprop                 # RMSProp
+adam_beta1: 0.9
+adam_beta2: 0.999
+weight_decay: 0.0
+warmup_steps: 0
+
+num_epochs: 10                     # capped by early stopping on loss/valid
+epochs: 10                         # alias
+max_length: 128
+
+# Early stopping / validation
+validation_metric: loss/valid
+patience: 10                       # patience = 10 (Table 8)
+early_stopping: true
+eval_steps: 100                    # 100 optimizer steps between validations
+eval_strategy: steps
+logging_steps: 10
+
+# Validation convergence target (best validation loss plateaus ~6,700 pairs)
+convergence_examples: 6700
+
+# Reference-model log-probability caching (pi_ref is frozen -> cache is exact)
+cache_reference_logps: true
+
+# -----------------------------------------------------------------------------
+# Nested section (merged over the flat keys above by DPOConfig.from_dict)
+# -----------------------------------------------------------------------------
+dpo:
+  beta: 0.1
+  loss_type: sigmoid
+  label_smoothing: 0.0
+  learning_rate: 0.000001
+  lr: 0.000001
+  batch_size: 4
+  batch: 4
+  grad_accum: 1
+  gradient_accumulation_steps: 1
+  max_grad_norm: 10.0
+  optimizer: rmsprop
+  validation_metric: loss/valid
+  patience: 10
+  num_epochs: 10
+  epochs: 10
+  max_length: 128
+  eval_steps: 100
+  eval_strategy: steps
+  logging_steps: 10
+  seed: 0
+  cache_reference_logps: true
+  early_stopping: true
+  convergence_examples: 6700
+
+train:
+  beta: 0.1
+  learning_rate: 0.000001
+  batch_size: 4
+  grad_accum: 1
+  max_grad_norm: 10.0
+  optimizer: rmsprop
+  validation_metric: loss/valid
+  patience: 10
+  num_epochs: 10
+  max_length: 128
+
+# -----------------------------------------------------------------------------
+# Paths / artifacts
+# -----------------------------------------------------------------------------
+output_dir: artifacts/models/gpt2_dpo
+probe_path: artifacts/probe/w_toxic.pt
+vectors_path: artifacts/vectors/toxic_vectors.pt
+eval_dir: artifacts/eval
+cache_dir: artifacts/cache
+
+# -----------------------------------------------------------------------------
+# Post-training evaluation (Section 3.3: toxicity / perplexity / F1)
+# -----------------------------------------------------------------------------
+evaluation:
+  n_challenge_prompts: 1199        # RealToxicityPrompts challenge subset
+  n_f1_sentences: 2000             # Wikipedia sentences for token-overlap F1
+  max_new_tokens: 20               # greedy 20-token generations
+  batch_size: 16
+  seed: 0
+  do_sample: false
+  toxicity_model: unitary/unbiased-toxic-roberta
+  perplexity_dataset: wikitext-2
+  perplexity_split: test
+  perplexity_seq_len: 1024
+  perplexity_stride: 512
+  run_after_training: true
+
+# -----------------------------------------------------------------------------
+# Paper reference values used by validation checks (Tables 2 & 4, Section 4.2)
+# -----------------------------------------------------------------------------
+reference:
+  n_pairs: 24576
+  convergence_examples: 6700
+  gpt2_toxicity: 0.453
+  gpt2_ppl: 21.70
+  gpt2_f1: 0.193
+  gpt2_dpo_toxicity: 0.208
+  gpt2_dpo_ppl: 23.34
+  gpt2_dpo_f1: 0.195
+  unaligned_toxicity: 0.458
+  unaligned_ppl: 23.30
+  unaligned_f1: 0.195
+
+logging:
+  verbose: true
+  progress: true
+  save_json: true
+  log_every: 10

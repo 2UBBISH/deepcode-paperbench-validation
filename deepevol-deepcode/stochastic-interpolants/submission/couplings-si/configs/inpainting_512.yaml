@@ -1,0 +1,119 @@
+# =============================================================================
+# Stochastic Interpolants with Data-Dependent Couplings
+# Config: ImageNet in-painting @ 512x512            (paper Sec. 4.1, Table 2)
+# -----------------------------------------------------------------------------
+# Values tagged [paper] come from the paper / addendum:
+#   - coupling  x0 = xi o x1 + (1 - xi) o zeta                     [Sec. 4.1]
+#   - mask      image tiled into 64 tiles, each enters mask p=0.3   [Sec. 4.1]
+#   - interp.   alpha_t = t, beta_t = 1 - t, gamma_t = 0             [Eq. 20]
+#   - velocity  b_t(x, xi) = 0 outside the mask (net output masked)  [Sec. 4.1]
+#   - arch      U-Net (Ho et al. 2020b) + mask as appended channels  [Sec. 4.1]
+#   - training  batch 32, 200k steps, Adam 2e-4, StepLR 0.99/1000,
+#               grad-clip 10000, no weight decay, no EMA   [Appendix B, addendum]
+# Values tagged [eng] are engineering defaults where the paper is silent.
+# =============================================================================
+
+name: inpainting_512
+task: inpainting
+seed: 0
+
+# ---------------------------------------------------------------------------
+# Data: ImageNet-1k at 512x512 (Sec. 4.1: "rho_1(x_1) to correspond to ImageNet
+# (either 256 or 512)").  Loaded from HuggingFace with trust_remote_code.
+# ---------------------------------------------------------------------------
+data:
+  dataset: imagenet-1k                 # [paper] HF `load_dataset("imagenet-1k")`
+  split: train
+  resolution: 512                      # [paper] ImageNet 512
+  num_classes: 1000                    # [paper] class labels are provided
+  channels: 3
+  data_range: "[-1, 1]"                # [eng] repo-wide image convention
+  cache_dir: null
+  num_workers: 4                       # [eng]
+  trust_remote_code: true              # [addendum] avoid stdin prompt
+  augmentation:
+    random_crop: false                 # [eng] center crop of the short side
+    hflip: true                        # [eng] standard ImageNet augmentation
+    hflip_prob: 0.5
+    pad: true
+    antialias: true
+
+# ---------------------------------------------------------------------------
+# Data-dependent coupling (Sec. 4.1): rho(x0, x1 | xi) = rho1(x1) rho0(x0|x1,xi)
+# ---------------------------------------------------------------------------
+coupling: inpainting
+base_mode: coupled                     # "independent" -> Table 2 baseline (FID ~1.35)
+coefficients: inpainting               # alpha_t = t, beta_t = 1 - t, gamma_t = 0
+sigma: 1.0                             # [paper] zeta ~ N(0, Id) on masked pixels
+requires_conditioning: true
+num_tiles: 64                          # [paper] 64 tiles
+missing_prob: 0.3                      # [paper] p = 0.3 per tile
+expand_channels: false                 # [paper] same mask value per spatial location
+
+# ---------------------------------------------------------------------------
+# Model: basic U-Net of Ho et al. (2020b), xi appended as image channels
+# (Appendix B hyper-parameters)
+# ---------------------------------------------------------------------------
+model: unet
+model_kwargs:
+  in_channels: 3
+  out_channels: 3
+  image_size: 512
+  channels: 256                        # [Appendix B] base channel width
+  dim_mults: [1, 1, 2, 3, 4]           # [Appendix B]
+  resnet_block_groups: 8               # [Appendix B] GroupNorm groups
+  num_classes: 1000                    # [paper] class-label conditioning
+  class_dropout_prob: 0.1              # [eng] enables CFG-style training
+  learned_sinusoidal_cond: true        # [Appendix B]
+  learned_sinusoidal_dim: 32           # [Appendix B]
+  attention_dim_head: 64               # [Appendix B]
+  attention_heads: 4                   # [Appendix B]
+  random_fourier_features: false       # [Appendix B]
+  conditioning_channels: 1             # [paper] mask appended to x_t channels
+  mask_observed: true                  # [Sec. 4.1] zero velocity on observed pixels
+
+# ---------------------------------------------------------------------------
+# Training: Algorithm 1 (simulation-free velocity regression, Eq. 22)
+# ---------------------------------------------------------------------------
+training:
+  batch_size: 32                       # [addendum]
+  steps: 200000                        # [addendum]
+  lr: 2.0e-4                           # [addendum] Adam
+  betas: [0.9, 0.999]                  # [eng] PyTorch defaults
+  weight_decay: 0.0                    # [addendum] no weight decay
+  grad_clip: 10000.0                   # [addendum] whole-parameter-vector norm
+  scheduler: step
+  lr_gamma: 0.99                       # [addendum]
+  lr_step_size: 1000                   # [addendum] every 1000 steps
+  ema: false                           # [paper] EMA not mentioned
+  precision: "32-true"                 # [eng] no mixed precision mentioned
+  log_every: 100
+  save_every: 10000
+  output_dir: runs/inpainting_512
+  resume: null
+  transport_cost_log: true             # [Prop. 3.1] log E[|I_dot_t|^2] diagnostic
+
+# ---------------------------------------------------------------------------
+# Sampling: Algorithm 2 -- probability-flow ODE (8) from t=0 to t=1
+# ---------------------------------------------------------------------------
+sampling:
+  method: dopri5                       # [Appendix B] Dopri solver
+  sampling_steps: 50                   # [eng] steps for the Euler variant
+  atol: 1.0e-5
+  rtol: 1.0e-5
+  project_observed: true               # [Sec. 4.1] keep xi o X_t = xi o x_1
+  num_samples: 50000                   # [Sec. 4.1] FID-50k
+  sample_batch_size: 32
+
+# ---------------------------------------------------------------------------
+# Evaluation: FID-50k (Table 2) and qualitative base/model/GT triples (Fig. 3)
+# ---------------------------------------------------------------------------
+eval:
+  eval_fid: true
+  fid_num_samples: 50000
+  fid_batch_size: 32
+  fid_dataset: imagenet
+  paper_fid: 1.13                      # [Table 2] Dependent Coupling (Ours)
+  paper_fid_baseline: 1.35             # [Table 2] Uncoupled Interpolant
+  qualitative: true
+  qualitative_count: 8

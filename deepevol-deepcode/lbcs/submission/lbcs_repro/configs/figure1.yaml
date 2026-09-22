@@ -1,0 +1,131 @@
+# =============================================================================
+# LBCS reproduction -- Figure 1 configuration overlay
+#
+# Figure 1 ("trivial solutions of RCS") contrasts:
+#   * Eq. (3):  min_m f1(m)  s.t. theta(m) in argmin L(m, theta)   (f1 only)
+#   * Eq. (4):  min_m (1 - lambda) f1(m) + lambda f2(m),  lambda = 0.5
+# and shows their failure modes (fixed coreset size / over-minimization of f2).
+#
+# This file is an OVERLAY: `main.py` / `scripts/run_all.py` deep-merge it on top
+# of `configs/default.yaml`.  Only deltas are listed here.
+#
+# Sources
+#   - Figure 1 + Section 2.1  : formulations Eq. (3) and Eq. (4), lambda = 0.5
+#   - Appendix C.3            : outer Adam lr = 2.5 with cosine scheduler, T = 1000
+#   - Addendum (Figure 1)     : inner loop SGD lr = 0.1, momentum = 0.9, 100 epochs,
+#                               ConvNet from Zhou et al. 2022, arbitrarily random
+#                               subset of MNIST / MNIST-S
+#   - Section 5.1             : MNIST-S = 1000 random MNIST training samples
+#
+# Values annotated `# PAPER` are stated in the paper.  Values annotated
+# `# SUGGESTED` are NOT given in the paper and are reproduction defaults chosen by
+# this implementation; they are collected here (never hard-coded in algorithm code)
+# so they can be changed without touching lbcs/, baselines/ or experiments/.
+# =============================================================================
+
+inherit:
+  - default.yaml
+
+experiment: figure1
+driver: lbcs_repro.experiments.figure1_trivial
+entrypoint: run_figure1
+
+seed: 0                 # PAPER-style fixed seed per repeat (suggested base seed)
+device: null            # null -> auto-detect (cuda if available else cpu)
+num_workers: 0          # SUGGESTED
+data_root: null         # null -> default torchvision root (or $LBCS_DATA_ROOT)
+output_dir: results/figure1
+save_artifacts: true
+plot: true
+verbose: true
+
+logging:
+  level: INFO
+  log_every: 50         # SUGGESTED: log outer-loop progress every N iterations
+  to_file: true
+  file_name: figure1.log
+
+# -----------------------------------------------------------------------------
+# Figure 1 protocol
+# -----------------------------------------------------------------------------
+figure1:
+  # --- problem setting -------------------------------------------------------
+  dataset: MNIST-S      # PAPER (Addendum): arbitrarily random MNIST subset / MNIST-S
+  n: 1000               # PAPER (Section 5.1): MNIST-S = 1000 random MNIST samples
+  k: 200                # SUGGESTED: predefined coreset size (paper does not state it)
+  lambda: 0.5           # PAPER (Eq. (4)): lambda = 1/2
+  formulations:         # PAPER: Eq. (3) and Eq. (4)
+    - eq3
+    - eq4
+
+  # --- outer loop (Appendix C.3) --------------------------------------------
+  outer_iters: 1000     # PAPER: T = 1000
+  outer_optimizer: adam # PAPER (Appendix C.3)
+  outer_lr: 2.5         # PAPER (Appendix C.3): Adam lr = 2.5
+  outer_scheduler: cosine   # PAPER (Appendix C.3): cosine scheduler
+  # SUGGESTED: Adam betas used for the outer optimizer (not stated in the paper)
+  outer_beta1: 0.9
+  outer_beta2: 0.999
+  outer_eps: 1.0e-8
+
+  # --- inner loop (Addendum / Appendix C.3) ---------------------------------
+  inner_optimizer: sgd  # PAPER: SGD for the Figure 1 inner loop
+  inner_lr: 0.1         # PAPER: lr = 0.1
+  inner_momentum: 0.9   # PAPER: momentum = 0.9
+  inner_epochs: 100     # PAPER: 100 epochs
+  batch_size: 128       # SUGGESTED
+  eval_batch_size: 256  # SUGGESTED
+  weight_decay: 0.0     # SUGGESTED
+
+  # --- model (Figure 1 / Section 5.1) ---------------------------------------
+  architecture: ConvNet # PAPER: ConvNet from Zhou et al. 2022 (2 conv blocks)
+
+  # --- evaluation -----------------------------------------------------------
+  # f1(m) = (1/n) * sum_i CE(h(x_i; theta(m)), y_i)  (Eq. (1))
+  # f2(m) = ||m||_0                                   (Eq. (2))
+  f1_eval_split: train   # SUGGESTED: evaluate the full-data objective on the pool
+  track: [f1, f2, expected_size]
+
+  # --- qualitative expectation (validation only, never an algorithm input) ---
+  # FAILURE MODES the driver checks (qualitative agreement is the success criterion):
+  #   eq3 -> f1 decreases while f2 stays ~ k                (fixed-size failure)
+  #   eq4 -> f2 becomes too small while f1 stays large      (over-minimization)
+  expected_failure_modes:
+    eq3:
+      type: fixed_size
+      description: "f1 decreases but f2 stays close to the predefined k"
+      fixed_size_tol: 0.10        # SUGGESTED: |f2 - k| / k tolerance
+    eq4:
+      type: over_minimized
+      description: "f2 collapses below k while f1 remains large"
+      shrink_threshold: 0.75      # SUGGESTED: f2/k below this is over-minimization
+      f1_worse_tol: 1.0           # SUGGESTED: f1 slack vs. its best observed value
+
+# -----------------------------------------------------------------------------
+# Inherited blocks reused unchanged (documented for convenience; do not redefine
+# here -- edit configs/default.yaml instead)
+#   default.yaml : inner_figure1 (sgd / lr 0.1 / momentum 0.9 / 100 epochs)
+#                  proxy.MNIST-S = ConvNet
+#                  lbcs.epsilon = 0.2, lbcs.T = 500, delta_init = 0.1, delta_lower = 1e-3
+#   lbcs/lexiflow : delta_init = 0.1, delta_lower = 1e-3   # SUGGESTED (not in paper)
+# -----------------------------------------------------------------------------
+
+# --- smoke test overrides (used by `--smoke`; drastically reduced budget) -----
+smoke:
+  figure1:
+    dataset: MNIST-S
+    n: 200              # SUGGESTED
+    k: 40               # SUGGESTED
+    outer_iters: 5      # SUGGESTED
+    inner_epochs: 1     # SUGGESTED
+    batch_size: 64      # SUGGESTED
+    formulations: [eq3, eq4]
+  save_artifacts: false
+  plot: false
+  verbose: true
+
+# --- explicitly out of scope for this reproduction ---------------------------
+out_of_scope:
+  - "section5.4 (ImageNet-1k) -- not implemented"
+  - "appendix_e.5 (continual learning) -- not implemented"
+  - "appendix_e.6 (streaming coreset selection) -- not implemented"

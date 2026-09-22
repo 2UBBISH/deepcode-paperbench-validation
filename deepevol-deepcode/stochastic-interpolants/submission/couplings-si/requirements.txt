@@ -1,0 +1,45 @@
+# ---------------------------------------------------------------------------
+# Stochastic Interpolants with Data-Dependent Couplings -- dependencies
+# ---------------------------------------------------------------------------
+# The paper does not pin exact package versions; the pins below are
+# known-good releases.  Python 3.10+ is required.
+#
+#   pip install -r requirements.txt
+#
+# Hardware note: the reported ImageNet 256/512 experiments (pixel-space U-Net
+# with 256 base channels, batch size 32, 200,000 steps) need a large-memory
+# GPU (>=24 GB recommended) and multi-GPU is advised through Lightning Fabric.
+# ---------------------------------------------------------------------------
+
+# --- core deep-learning stack -------------------------------------------------
+# torch >= 2.x, CUDA build recommended.  Install the CUDA wheel matching your
+# driver with e.g.:
+#   pip install torch==2.2.2 torchvision==0.17.2 --index-url https://download.pytorch.org/whl/cu121
+torch>=2.1,<2.4
+torchvision>=0.16,<0.19
+
+# Probability-flow ODE integration (Dopri5 solver, Algorithm 2 / Appendix B)
+torchdiffeq==0.2.3
+
+# --- training / parallelism ---------------------------------------------------
+lightning-fabric>=2.2,<2.5
+einops>=0.7
+numpy>=1.24,<2.0
+
+# --- data (ImageNet-1k via HuggingFace `datasets`) ----------------------------
+# load_dataset("imagenet-1k", trust_remote_code=True)
+datasets>=2.18,<3.0
+pyarrow>=14.0        # parquet backend for the HF imagenet-1k mirror
+Pillow>=10.0
+
+# --- evaluation: FID-50k (Inception-v3 pool3 feature Gaussians) ---------------
+# `torch-fidelity` is the primary implementation; `clean-fid` is an accepted
+# alternative (see eval/fid.py).  Both use standard ImageNet Inception stats.
+torch-fidelity>=0.3.0
+# clean-fid>=0.1.35        # optional alternative
+scipy>=1.11
+matplotlib>=3.7          # qualitative figures (Figs. 3-6)
+
+# --- misc ---------------------------------------------------------------------
+pyyaml>=6.0              # configs/*.yaml
+tqdm>=4.66               # progress bars

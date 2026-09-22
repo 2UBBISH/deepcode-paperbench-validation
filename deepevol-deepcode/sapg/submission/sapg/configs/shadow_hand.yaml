@@ -1,0 +1,117 @@
+# SAPG -- Shadow Hand configuration (paper Appendix B.2 / Table 3)
+#
+# Task group: shadow_hand  (in-hand reorientation of a cube with the 24-DoF Shadow Hand)
+# Method: SAPG (leader/follower split-and-aggregate policy gradients)
+#
+# Consumed by scripts/train.py -> sapg.utils.config.SAPGConfig.from_dict / build_config.
+# Unknown keys are silently dropped by the loader, so this file is a plain dict.
+
+method: sapg
+task: shadow_hand
+task_group: shadow_hand
+env_name: shadow_hand
+
+# ---------------------------------------------------------------------------
+# Block split / aggregation (Sections 4.2, 4.3, 4.6; Algorithm 1)
+# ---------------------------------------------------------------------------
+num_envs: 24576                 # N  -- total IsaacGym parallel environments (Sec. 5.2)
+num_policies: 6                 # M  -- policy blocks D_1..D_M
+leader_index: 1                 # leader i = 1 (1-based, Sec. 4.3)
+aggregation: leader_follower    # 'leader_follower' | 'symmetric' | 'none'
+off_policy_weight: 1.0          # lambda in Eq. 4
+subsample_off_policy: true      # |D'_1| = |D_1| uniform subsampling (Sec. 4.3)
+critic_coefficient: 4.0         # lambda' (Appendix B.1-B.3)
+
+# ---------------------------------------------------------------------------
+# Optimization (Appendix B.2, Table 3 -- Shadow Hand group)
+# ---------------------------------------------------------------------------
+learning_rate: 5.0e-4
+critic_learning_rate: 5.0e-4
+optimizer: adam
+adam_betas: [0.9, 0.999]        # not stated in the paper -> Adam defaults
+adam_eps: 1.0e-8
+clip_epsilon: 0.2               # Shadow/Allegro hand groups use eps = 0.2
+gamma: 0.99
+tau: 0.95                       # GAE lambda
+horizon_length: 8               # steps per rollout per env
+mini_epochs: 5                  # epochs over each rollout
+minibatch_size_multiplier: 4    # minibatch = num_envs * 4
+lstm_sequence_length: 8
+kl_threshold: 0.016             # KL-adaptive LR schedule
+grad_norm: 1.0
+bounds_loss_coefficient: 1.0e-4
+normalize_advantage: true
+
+# ---------------------------------------------------------------------------
+# Network architecture (Appendix B.2: MLP only, no LSTM)
+# ---------------------------------------------------------------------------
+actor_mlp_units: [512, 512, 256, 128]
+critic_mlp_units: [512, 512, 256, 128]
+actor_activation: elu
+use_lstm: false
+lstm_hidden_size: 768
+lstm_num_layers: 1
+learnable_sigma: true
+action_scale: 1.0
+
+# ---------------------------------------------------------------------------
+# Per-policy latent phi_j (Sec. 4.4) -- R^16 for ShadowHand / AllegroHand
+# ---------------------------------------------------------------------------
+phi_dim: 16
+per_block_sigma: false
+entropy_coefficient: 0.0        # sigma = 0.0 is best on Shadow Hand (Sec. 6.2)
+random_phi: false
+
+# ---------------------------------------------------------------------------
+# Environment / task (Appendix A)
+# obs = [q(24), qdot(24), object_pose(7), v(3), omega(3), goal_quat(4)] = 65
+# ---------------------------------------------------------------------------
+obs_dim: 65
+action_dim: 24
+joint_dim: 24
+goal_dim: 4
+max_episode_length: 200
+hold_steps: 10
+rot_tolerance: 0.5235987755982988   # pi/6
+object_size: 0.06
+randomize: true
+observation_noise: 0.0
+clip_actions: true
+clip_obs: 5.0
+use_curriculum: false               # easy task -> no success-tolerance curriculum
+
+# ---------------------------------------------------------------------------
+# Training budget / bookkeeping (Sec. 5.2: 2e10 transitions, 5 seeds)
+# ---------------------------------------------------------------------------
+max_samples: 2.0e10
+num_seeds: 5
+seed: 0
+log_dir: runs/shadow_hand
+device: cuda:0
+use_tensorboard: false
+use_wandb: false
+
+# ---------------------------------------------------------------------------
+# Baselines on this task (Sec. 5.2)
+# ---------------------------------------------------------------------------
+baselines:
+  ppo:
+    num_policies: 1
+    phi_dim: 0
+  pql:
+    method: pql
+  dexpbt:
+    method: dexpbt
+    num_policies: 6
+    exploit_interval: 10
+    replace_fraction: 0.5
+    mutation_factor: 1.2
+
+# Per-task overrides (task name -> values)
+tasks:
+  shadow_hand:
+    goal_dim: 4
+    obs_dim: 65
+    action_dim: 24
+    entropy_coefficient: 0.0
+    use_curriculum: false

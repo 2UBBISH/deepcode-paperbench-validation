@@ -1,0 +1,32 @@
+{
+  "records": [
+    {
+      "k": 200,
+      "epsilon": 0.2,
+      "seed": 0,
+      "T": 60,
+      "inner_epochs": 5,
+      "init_f1": 1.9323150634765625,
+      "init_f2": 200.0,
+      "final_f1": 0.1736558074951172,
+      "final_f2": 206.0,
+      "f1_improved": true,
+      "f2_reduced": false,
+      "num_queries": 112
+    },
+    {
+      "k": 200,
+      "epsilon": 0.4,
+      "seed": 0,
+      "T": 60,
+      "inner_epochs": 5,
+      "init_f1": 1.9323150634765625,
+      "init_f2": 200.0,
+      "final_f1": 0.16588243103027345,
+      "final_f2": 202.0,
+      "f1_improved": true,
+      "f2_reduced": false,
+      "num_queries": 114
+    }
+  ]
+}

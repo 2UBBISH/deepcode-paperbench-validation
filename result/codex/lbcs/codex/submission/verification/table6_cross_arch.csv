@@ -1,0 +1,3 @@
+k,method,seed,target,test_accuracy,coreset_size
+50,Uniform,0,wideresnet,10,50
+50,LBCS,0,wideresnet,10,50

@@ -1,0 +1,39 @@
+{
+  "multimodal_collect": {
+    "ppo": {
+      "mean": 3.952856029616669,
+      "stderr": 0.0,
+      "n_seeds": 1.0
+    },
+    "sapg_entropy0.003": {
+      "mean": 2.280463095754385,
+      "stderr": 0.0,
+      "n_seeds": 1.0
+    },
+    "sapg_entropy0.005": {
+      "mean": 2.3320923248926797,
+      "stderr": 0.0,
+      "n_seeds": 1.0
+    },
+    "sapg_high_offpolicy": {
+      "mean": 2.171250656247139,
+      "stderr": 0.0,
+      "n_seeds": 1.0
+    },
+    "sapg": {
+      "mean": 1.1113643824743726,
+      "stderr": 0.0,
+      "n_seeds": 1.0
+    },
+    "sapg_no_offpolicy": {
+      "mean": 0.24422213466217121,
+      "stderr": 0.0,
+      "n_seeds": 1.0
+    },
+    "sapg_symmetric": {
+      "mean": 2.3160006999969482,
+      "stderr": 0.0,
+      "n_seeds": 1.0
+    }
+  }
+}

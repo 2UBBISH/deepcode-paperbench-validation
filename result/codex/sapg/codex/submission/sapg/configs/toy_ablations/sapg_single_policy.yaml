@@ -1,0 +1,8 @@
+# M = 1 with the shared-backbone architecture: the "split without aggregation"
+# control condition.
+defaults: [../toy_sapg.yaml]
+algo:
+  name: sapg
+  num_policies: 1
+  aggregation: none
+  use_offpolicy: false

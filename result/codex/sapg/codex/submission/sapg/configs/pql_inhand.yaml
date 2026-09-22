@@ -1,0 +1,18 @@
+defaults: [inhand.yaml]
+algo:
+  name: pql
+  num_policies: 1
+  horizon: 1
+  replay_size: 1000000
+  batch_size: 4096
+  learning_rate: 5.0e-4
+  updates_per_iteration: 4
+  learning_starts: 100
+  exploration:
+    min_noise: 0.05
+    max_noise: 1.0
+    noise_type: gaussian
+    schedule: uniform_log
+  nstep: 1
+eval:
+  policy_ids: [0]

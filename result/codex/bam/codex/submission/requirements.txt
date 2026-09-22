@@ -1,0 +1,8 @@
+# Core dependencies of the reproduction.
+# The experiments run on CPU (JAX's default backend); jax[cuda12] can be used on
+# a GPU machine by replacing the jax/jaxlib pins below.
+numpy>=1.24
+scipy>=1.10
+jax>=0.4.20
+jaxlib>=0.4.20
+matplotlib>=3.6

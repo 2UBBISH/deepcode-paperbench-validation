@@ -1,0 +1,63 @@
+# Requirements for "Fine-tuning Reinforcement Learning Models is
+# Secretly a Forgetting Mitigation Problem" (Wolczyk et al., 2024).
+#
+# Install with:
+#     pip install -r requirements.txt
+#
+# Notes
+# -----
+# * The four knowledge-retention mechanisms (src/retention/*), the toy
+#   examples (src/toy/*) and the whole analysis stack (src/analysis/*) only
+#   need numpy / torch / pyyaml.  Everything else is environment specific and
+#   can be omitted on a CPU-only box (the code degrades gracefully to the
+#   `--stub` implementations in that case).
+# * `nle` (NetHack Learning Environment) must be built from source:
+#       pip install git+https://github.com/heiner/nle.git
+#   and requires a C toolchain + `cmake` (+ node/npm for the NetHack build).
+# * Meta-World v2 environments are used for RoboticSequence; the Continual
+#   World task ordering (Wolczyk et al., 2021) follows the same naming.
+
+# ---------------------------------------------------------------------------
+# Core scientific stack
+# ---------------------------------------------------------------------------
+numpy>=1.24
+scipy>=1.10
+pyyaml>=6.0
+tqdm>=4.65
+
+# ---------------------------------------------------------------------------
+# Deep learning (CUDA build recommended for NetHack / Montezuma)
+# ---------------------------------------------------------------------------
+torch>=2.1
+tensorboard>=2.13
+
+# ---------------------------------------------------------------------------
+# Environments
+# ---------------------------------------------------------------------------
+# NetHack: install from source (see header note)
+# nle
+git+https://github.com/heiner/nle.git#egg=nle
+# NetHack expert used for the per-level evaluation saves (branch jt-nld)
+#   git clone -b jt-nld https://github.com/cdmatters/autoascend
+# APPO runner for NetHack (Sample Factory)
+#   pip install sample-factory
+
+# Atari / Montezuma's Revenge (PPO + Random Network Distillation)
+gymnasium>=0.28
+ale-py>=0.8
+atari-py>=0.2.9 ; python_version < "3.11"
+
+# Meta-World v2 (RoboticSequence / Continual World)
+metaworld>=2.0
+
+# ---------------------------------------------------------------------------
+# Analysis and plotting
+# ---------------------------------------------------------------------------
+matplotlib>=3.7
+pandas>=2.0
+scikit-learn>=1.3
+
+# ---------------------------------------------------------------------------
+# Testing / tooling (optional)
+# ---------------------------------------------------------------------------
+pytest>=7.0

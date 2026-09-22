@@ -1,0 +1,23 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ipynb_checkpoints/
+.venv/
+venv/
+
+# Runtime artefacts (never commit datasets / logits / figures)
+data/datasets/
+results/
+tables/
+checkpoints/
+*.pth
+*.pt
+*.npy
+*.npz
+!data/hierarchy/*.npy
+
+# but keep the bundled hierarchy resources
+!data/hierarchy/imagenet_fiveai.csv
+!data/hierarchy/imagenet_fiveai.json
+!data/hierarchy/imagenet_class_index.json

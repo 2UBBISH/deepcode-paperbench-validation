@@ -1,0 +1,224 @@
+# =============================================================================
+# SMM (ICML 2024) - Output Label Mapping study configuration
+# -----------------------------------------------------------------------------
+# Reproduces Appendix D.1 / Table 10: the effect of the three non-parametric
+# output label mappings (Rlm, Flm, Ilm) on the target tasks, with and without
+# SMM (i.e. the shared-mask ``Full`` reference).
+#
+# Merge order (later files override earlier ones):
+#     base.yaml  ->  model_<backbone>.yaml  ->  label_mappings.yaml
+#
+# Default backbone for the study is ResNet-18 (Table 10 style); the runners may
+# override the backbone from the CLI (resnet18 | resnet50 | vit_b32).
+# =============================================================================
+
+name: label_mappings
+experiment: label_mappings
+description: >
+  Label-mapping study (Appendix D.1, Table 10): compare Rlm, Flm and Ilm output
+  label mappings with (SMM) and without (shared-mask Full) the sample-specific
+  multi-channel masks, over three seeds and the 11 target datasets.
+
+deterministic: true
+seeds: [0, 1, 2]
+
+# -----------------------------------------------------------------------------
+# Frozen pre-trained classifier (f_P)
+# -----------------------------------------------------------------------------
+model:
+  backbone: resnet18
+  pretrained: true
+  freeze: true
+  input_size: 224          # 384 for vit_b32
+  num_pretrained_classes: 1000
+  weights: IMAGENET1K_V1
+
+# -----------------------------------------------------------------------------
+# Mask generator f_mask (Appendix A.2 / Table 4)
+#   5 CNN layers for ResNet-18/ResNet-50 -> 26,499 parameters
+#   6 CNN layers for ViT-B32             -> 102,339 parameters
+# -----------------------------------------------------------------------------
+mask_generator:
+  num_layers: 5
+  base_channels: 8
+  out_channels: 3
+  num_pooling_layers: 3
+  use_bn: true
+  use_relu: true
+  width_scale: 1.0
+  expected_parameters: 26499
+
+# -----------------------------------------------------------------------------
+# Reprogramming f_in(x) = r(x) + delta * f_mask(r(x))   (Eq. 4)
+# -----------------------------------------------------------------------------
+reprogram:
+  patch_size: 8            # 2**l with l = 3
+  delta_init: zero         # Algorithm 1: delta initialised to all-zero
+  normalize_mask: false
+
+# -----------------------------------------------------------------------------
+# Label-mapping study definition
+# -----------------------------------------------------------------------------
+experiment_label_mappings:
+  # Canonical mapping order used for the table rows.
+  mappings: [rlm, flm, ilm]
+  mapping_display:
+    rlm: Rlm
+    flm: Flm
+    ilm: Ilm
+  default_mapping: ilm       # Ilm is the default for main Tables 1 and 2
+
+  # Whether the mapping is recomputed before every epoch (Algorithm 4).
+  # Rlm and Flm are computed once before training and kept fixed; Ilm is
+  # refreshed every epoch from the current f_in parameters.
+  recomputes_each_epoch:
+    rlm: false
+    flm: false
+    ilm: true
+
+  # Mapping styles understood by the reproducer/engine:
+  #   select  : f_out(logits) = logits[..., target_to_pretrained]
+  #   inject  : f_out builds the full |Y^P|-dimensional logit vector
+  mapping_style:
+    rlm: select
+    flm: select
+    ilm: select
+
+  # The "without SMM" reference is the shared-mask Full baseline, so both
+  # columns (with / without SMM) share an identical training schedule.
+  reference_method: full
+
+  # Paper reference improvements (Table 10): average accuracy gained by SMM
+  # over the same mapping without SMM, in percentage points.
+  reference_improvements:
+    rlm: 8.94
+    flm: 4.69
+    ilm: 5.68
+
+  # Injectivity requirement of Sec. 2.3: f_out(y1) != f_out(y2) for y1 != y2.
+  require_injective: true
+
+  # Rlm sampling: subset Y_sub^P (|Y_sub^P| = |Y^T|) drawn without replacement.
+  rlm:
+    sampling: without_replacement
+    seed_offset: 0            # deterministic per (seed, dataset)
+
+  # Ilm (Algorithm 4): recompute d (Algorithm 2) then the injective greedy
+  # assignment (Algorithm 3) before every epoch using the current f_in.
+  ilm:
+    refresh_every: 1
+    tie_break: lowest_index  # deterministic greedy argmax
+
+  # Flm (Algorithm 3): frequency matrix computed once with theta = 0
+  # (identity f_in), then a single greedy injective assignment.
+  flm:
+    compute_with_identity_f_in: true
+
+  datasets:
+    - cifar10
+    - cifar100
+    - svhn
+    - gtsrb
+    - flowers102
+    - dtd
+    - ucf101
+    - food101
+    - sun397
+    - eurosat
+    - oxfordpets
+
+  backbones: [resnet18, resnet50, vit_b32]
+
+# -----------------------------------------------------------------------------
+# Training (Algorithm 1 / Table 9)
+#   alpha_mask / gamma_mask are null: resolved at runtime from the depth of the
+#   mask generator -> 0.01 / 0.1 for 5 layers (ResNets) and 0.001 / 1.0 for
+#   6 layers (ViT-B32).
+# -----------------------------------------------------------------------------
+training:
+  epochs: 200
+  milestones: [100, 145]     # leading 0 in Table 9 treated as an artifact
+  alpha_delta: 0.01
+  gamma_delta: 0.1
+  alpha_mask: null
+  gamma_mask: null
+  optimizer: sgd             # paper does not specify; SGD+momentum chosen
+  momentum: 0.9
+  weight_decay: 0.0          # no regularisation specified in the paper
+  nesterov: false
+  grad_clip: null
+  batch_size: 256
+  test_batch_size: 256
+  batch_sizes:
+    default: 256
+    dtd: 64                  # Table 9
+    oxfordpets: 64           # Table 9
+  num_workers: 4
+  download: true
+  drop_last: false
+  label_mapping: ilm
+  mapping_refresh_every: 1
+  log_every: 10
+  eval_every: 1
+  verbose: true
+  max_train_batches: null    # debug knobs
+  max_eval_batches: null
+  save_checkpoint: false
+  save_dir: null
+
+# -----------------------------------------------------------------------------
+# Evaluation
+# -----------------------------------------------------------------------------
+evaluation:
+  topk: [1, 5]
+  batch_size: 256
+  num_workers: 4
+  max_batches: null
+  tsne_samples: 5000         # addendum: 5000 training samples per dataset
+
+# -----------------------------------------------------------------------------
+# Outputs
+# -----------------------------------------------------------------------------
+output:
+  root: outputs
+  results_dir: outputs/results
+  checkpoints_dir: outputs/checkpoints
+  logs_dir: outputs/logs
+  figures_dir: outputs/figures
+  results: label_mappings.json
+  table_file: table10_label_mappings.txt
+
+# -----------------------------------------------------------------------------
+# Run descriptors consumed by the dispatcher (main.py / experiments registry)
+# -----------------------------------------------------------------------------
+runs:
+  - name: table10_label_mappings
+    experiment: label_mappings
+    backbone: resnet18
+    label_mapping: ilm
+    mappings: [rlm, flm, ilm]
+    with_smm: [true, false]
+
+datasets:
+  - cifar10
+  - cifar100
+  - svhn
+  - gtsrb
+  - flowers102
+  - dtd
+  - ucf101
+  - food101
+  - sun397
+  - eurosat
+  - oxfordpets
+
+# -----------------------------------------------------------------------------
+# Notes
+# -----------------------------------------------------------------------------
+notes:
+  - "Table 10 reference improvements (SMM minus no-SMM average accuracy): Rlm +8.94, Flm +4.69, Ilm +5.68."
+  - "Ilm (Algorithm 4) is recomputed before every epoch from the current f_in; Rlm/Flm are fixed before training."
+  - "Flm (Algorithm 3) builds d once with theta = 0 (identity f_in): the greedy assignment consumes the largest d_{y^P,y^T}, then zeros the chosen row and column to preserve injectivity."
+  - "Rlm draws Y_sub^P (|Y_sub^P| = |Y^T|) uniformly without replacement before training."
+  - "Mappings are non-parametric: stored as integer index buffers, zero trainable parameters."
+  - "SMM should improve accuracy for all three mappings; the 'without SMM' column uses the shared-mask Full baseline with the identical 200-epoch schedule."

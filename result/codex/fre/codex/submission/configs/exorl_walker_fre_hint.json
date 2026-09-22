@@ -1,0 +1,5 @@
+{
+  "domain": "walker",
+  "prior_name": "FRE-hint",
+  "use_hint_priors": true
+}

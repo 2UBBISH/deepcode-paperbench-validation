@@ -1,0 +1,196 @@
+# =============================================================================
+# Section 5.3 -- "Robustness against Imperfect Supervision" (Figure 2 / Table 8)
+# =============================================================================
+# Declarative overlay config: deep-merges on top of `configs/default.yaml`.
+# Contains NO algorithm code -- only protocol values for the driver
+#   lbcs_repro.experiments.figure2_robustness :: run_figure2
+#
+# Paper text for this section (verbatim summary):
+#   * Coreset selection with corrupted labels: F-MNIST with 30% symmetric label
+#     noise ("the labels of 30% training data are flipped"), k in {1000,2000,
+#     3000,4000}; Figure 2(a).  A higher noise level (50%) is evaluated in
+#     Appendix E.2.
+#   * Coreset selection with class-imbalanced data: exponential type of class
+#     imbalance (Cao et al., 2019), imbalanced ratio = 0.01, "a similar setting
+#     as in (Xu et al., 2021)"; Figure 2(b).
+#   * Optimized coreset sizes for all these cases are in Appendix E.3 (Table 8
+#     in the reproduction plan).
+#   * Corruption is injected into the TRAINING data only; the test split stays
+#     clean (plan: "Imbalance must affect only the training set, never the test
+#     set.")
+#
+# Provenance tags:  # PAPER     -> explicitly stated in the paper/appendix/plan
+#                   # SUGGESTED -> reproduction default (paper silent)
+# =============================================================================
+
+inherit: [default.yaml]
+
+# ---- dispatch (consumed by main.py / scripts/run_all.py) --------------------
+driver: lbcs_repro.experiments.figure2_robustness
+entrypoint: run_figure2
+
+# ---- runtime ----------------------------------------------------------------
+seed: 0
+device: null            # SUGGESTED: null -> auto-select cuda when available
+num_workers: 0          # SUGGESTED
+data_root: null         # SUGGESTED: null -> LBCS_DATA_ROOT / torchvision default
+output_dir: results/figure2   # SUGGESTED
+save_artifacts: true
+plot: true
+verbose: true
+
+logging:
+  level: INFO
+  log_every: 50
+  to_file: true
+  file_name: figure2.log
+
+# ---- LBCS protocol (Algorithm 1, Section 5.2 settings reused) ---------------
+# The paper runs Section 5.3 with the same coreset-selection protocol as the
+# Section 5.2 clean comparison (F-MNIST inner proxy, epsilon = 0.2, T = 500).
+lbcs:
+  epsilon: 0.2          # PAPER (Section 5.2 setting reused for 5.3)
+  T: 500               # PAPER (Section 5.2 setting reused for 5.3)
+  k: 1000              # PAPER (first predefined size in the sweep)
+  delta_init: 0.1      # SUGGESTED (paper does not state a numeric value)
+  delta_lower: 0.001   # SUGGESTED (paper does not state a numeric value)
+  warm_start: true     # SUGGESTED (Section 3.2 acceleration trick (i))
+  group_size: 1        # SUGGESTED (Section 3.2 acceleration trick (iii); 1 = off)
+  cache_evaluations: true
+  cache_theta: false
+  pretrain_random_masks: false
+
+inner:
+  optimizer: adam      # PAPER (Section 5.2 inner loop)
+  lr: 0.001            # PAPER (Section 5.2 inner loop)
+  momentum: 0.9        # SUGGESTED (only used by SGD; irrelevant for Adam)
+  weight_decay: 0.0    # SUGGESTED
+  epochs: 100          # PAPER (inner loop trained to convergence)
+  batch_size: 128      # SUGGESTED
+  eval_batch_size: 256 # SUGGESTED
+  scheduler: null      # SUGGESTED
+
+# ---- post-selection target model on the constructed coreset -----------------
+target:
+  F-MNIST:
+    architecture: LeNet   # PAPER (Section 5.2 F-MNIST target)
+    optimizer: adam       # PAPER
+    lr: 0.001             # PAPER
+    momentum: 0.9         # SUGGESTED
+    weight_decay: 0.0     # SUGGESTED
+    epochs: 100           # PAPER
+    scheduler: null       # SUGGESTED
+
+proxy:
+  F-MNIST: LeNet          # PAPER (Section 5.2 F-MNIST proxy / theta(m))
+
+baselines:
+  suite: [Uniform, EL2N, GraNd, Influential, Moderate, CCS, Probabilistic]
+  uniform: {}
+  el2n:
+    reference_epochs: 100     # SUGGESTED
+    n_train_epochs: 1         # PAPER (single-pass EL2N)
+  grand:
+    reference_epochs: 100     # SUGGESTED
+    param_scope: last_layer   # SUGGESTED
+  influential:
+    reference_epochs: 100     # SUGGESTED
+    param_scope: last_layer   # SUGGESTED
+    hessian_approx: diag      # SUGGESTED
+  moderate:
+    median_mode: class        # PAPER (per-class median "Moderate")
+  ccs:
+    importance: l2            # SUGGESTED
+    alpha: 0.5                # SUGGESTED
+    preserve_distribution: true  # PAPER (coverage + importance, class-proportional)
+  probabilistic:
+    lambda: 0.5               # PAPER (Eq. (4) weighting, Zhou et al. 2022)
+    outer_iters: 500          # SUGGESTED
+    inner_optimizer: adam     # PAPER (Section 5.2)
+    inner_lr: 0.001           # PAPER (Section 5.2)
+
+# ---- Section 5.3 protocol ---------------------------------------------------
+# NOTE on condition naming (kept consistent with figure2_robustness.py):
+#   noise30   -> 30% symmetric label noise on F-MNIST  (PAPER, Figure 2(a))
+#   noise50   -> 50% symmetric label noise on F-MNIST  (PAPER, Appendix E.2)
+#   imbalance -> exponential class imbalance, ratio 0.01 (PAPER, Figure 2(b))
+robustness:
+  dataset: F-MNIST        # PAPER
+  conditions: [noise30, noise50, imbalance]
+  noise_rate_30: 0.30     # PAPER
+  noise_rate_50: 0.50     # PAPER (Appendix E.2)
+  imbalance_ratio: 0.01   # PAPER (exponential type, Cao et al. 2019)
+  imbalance_type: exp     # PAPER (exponential class imbalance)
+  ks: [1000, 2000, 3000, 4000]  # PAPER
+  methods: [Uniform, EL2N, GraNd, Influential, Moderate, CCS, Probabilistic]
+  epsilon: 0.2            # PAPER (Section 5.2 setting reused)
+  T: 500                  # PAPER (Section 5.2 setting reused)
+  repeats: 10             # PAPER (Section 5.3 statistics)
+  architecture: LeNet     # PAPER (F-MNIST proxy and target)
+  f1_eval_split: test     # SUGGESTED (evaluate f1 on the clean MNIST/F-MNIST test split)
+  track: [accuracy, coreset_size, accuracy_per_point, f1, f2]
+
+# ---- validation anchors (NEVER used as algorithm inputs) --------------------
+paper_reference:
+  # Figure 2 is read qualitatively from the paper's plots: LBCS should be the
+  # best (or statistically tied for best) method under both imperfect-supervision
+  # conditions, while also shrinking the coreset.
+  figure2:
+    noise30:
+      claim: "LBCS achieves the highest test accuracy under 30% symmetric label noise"
+      lbcs_best_or_competitive: true
+      coreset_size_below_k: true
+    imbalance:
+      claim: "LBCS remains effective under exponential class imbalance (ratio 0.01)"
+      lbcs_best_or_competitive: true
+      coreset_size_below_k: true
+
+  # Table 8 (Appendix E.3): optimized coreset sizes by LBCS, mean +- std over
+  # 10 repeats.  Layout: k -> [mean, std].
+  table8:
+    noise30:                       # 30% symmetric label noise
+      1000: [951.2, 4.9]
+      2000: [1866.1, 8.3]
+      3000: [2713.7, 10.8]
+      4000: [3675.6, 17.0]
+    noise50:                       # 50% symmetric label noise (Appendix E.2)
+      1000: [934.5, 5.6]
+      2000: [1856.5, 9.1]
+      3000: [2708.8, 11.2]
+      4000: [3668.4, 14.6]
+    imbalance:                     # exponential class imbalance, ratio 0.01
+      1000: [988.4, 6.7]
+      2000: [1893.8, 10.0]
+      3000: [2762.7, 14.2]
+      4000: [3757.4, 17.8]
+
+  # Sizes reported in the reproduction plan's validation notes.
+  size_tolerance: 25.0             # SUGGESTED: |measured - paper| tolerance for the
+                                   # "consistent with paper" report line
+
+expected_directions:
+  achieved_size_below_k: true            # LBCS always minimizes below the predefined k
+  lbcs_best_or_competitive: true         # LBCS best/tied under imperfect supervision
+  larger_k_larger_optimized_size: true   # optimized size grows with k
+
+# ---- fast CPU sanity check (--smoke) ---------------------------------------
+smoke:
+  conditions: [noise30]
+  ks: [200]
+  repeats: 1
+  T: 20
+  epsilon: 0.2
+  inner_epochs: 1
+  target_epochs: 1
+  batch_size: 64
+  eval_batch_size: 128
+  methods: [Uniform, Moderate, Probabilistic]
+  save_artifacts: false
+  plot: false
+  verbose: false
+
+# ---- reproduction boundary --------------------------------------------------
+out_of_scope:
+  section5.4: "ImageNet-1k coreset selection (not implemented)"
+  appendix_e.5: "Continual learning with constructed coresets (not implemented)"
+  appendix_e.6: "Streaming coreset selection (not implemented)"

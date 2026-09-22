@@ -1,0 +1,41 @@
+# Hyperparameters of the AllegroKuka tasks (Regrasping / Throw / Reorientation).
+# Source: Table 2, Sec. 5.2.
+defaults: [base.yaml]
+
+env:
+  name: regrasping
+  num_envs: 24576                # "we simulate 24576 parallel environments"
+
+model:
+  latent_dim: 32                 # phi_j in R^32 for the complex environments
+  activation: elu
+  action_bound: 1.0
+  actor:
+    type: lstm                   # recurrent policy for the AllegroKuka tasks
+    encoder_units: [768, 512, 256]
+    lstm_hidden_size: 768
+    lstm_num_layers: 1
+  critic:
+    type: lstm
+    encoder_units: [768, 512, 256]
+
+algo:
+  name: sapg
+  num_policies: 6
+  horizon: 16
+  mini_epochs: 2                 # Table 2
+  learning_rate: 1.0e-4          # Table 2
+  kl_threshold: 0.016
+  clip_epsilon: 0.1              # Table 2
+  critic_coef: 4.0
+  bounds_loss_coef: 0.0001
+  nstep: 3
+  max_env_steps: 2.0e10
+  eval_interval: 250
+  checkpoint_interval: 0
+  record_states_interval: 0
+
+eval:
+  episodes: 64
+  max_steps: 2048
+  policy_ids: [0]

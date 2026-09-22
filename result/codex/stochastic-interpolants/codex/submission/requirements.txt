@@ -1,0 +1,17 @@
+# Core requirements for training / sampling with stochastic interpolants
+torch>=2.0
+torchvision>=0.15
+numpy>=1.23
+scipy>=1.9            # sqrtm for FID, KDE for the mode counts of Figure 2
+matplotlib>=3.6       # figures
+pyyaml>=6.0           # configuration files
+tqdm>=4.64
+
+# Data (the addendum asks for ImageNet via HuggingFace)
+datasets>=2.14
+pillow>=9.0
+
+# Optional: the paper integrates the probability-flow ODE with torchdiffeq.
+# The repository ships a self-contained dopri5 solver as well, so this is not
+# required; install it only if you want to call method="torchdiffeq".
+# torchdiffeq>=0.2.3

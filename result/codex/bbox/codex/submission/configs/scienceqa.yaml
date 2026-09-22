@@ -1,0 +1,36 @@
+dataset: scienceqa
+output_dir: runs/scienceqa
+seed: 0
+
+adapter:
+  model_name: auto
+  adapter_size: "0.1B"
+  max_length: 512
+  learning_rate: 5.0e-6
+  batch_size: 64
+  num_train_steps: 6000
+  weight_decay: 0.01
+  alpha: 0.01
+  loss_type: nce
+
+inference:
+  beam_size: 3
+  num_samples_per_beam: 3
+  max_sentence_steps: 24
+  max_new_tokens: 64
+  max_solution_tokens: 512
+  temperature: 1.0
+  mode: full
+
+online:
+  num_iterations: 3
+  num_candidates_per_question: 5
+  init_candidates_per_question: 5
+  positive_source: combined
+  outcome_supervision: true
+
+llm:
+  name: gpt-3.5-turbo
+  provider: azure
+  max_new_tokens: 512
+  temperature: 1.0

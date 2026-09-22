@@ -1,0 +1,101 @@
+# =============================================================================
+# FRE — Zero-Shot Reinforcement Learning via Functional Reward Encodings
+# Python dependencies
+# =============================================================================
+#
+# Target interpreter: Python 3.8, 3.9, or 3.10 (the D4RL / mujoco-py era).
+#
+# -----------------------------------------------------------------------------
+# IMPORTANT INSTALL NOTES (read before `pip install -r requirements.txt`)
+# -----------------------------------------------------------------------------
+# 1) D4RL MUST be installed from a commit dated BEFORE June 2024 . The PyPI
+#    `d4rl` package and post-June-2024 git commit drift away from the datasets
+#    and environment semantics used in the paper (reward scales, goal
+#    definitions, `antmaze-large-diverse-v2` contents). Install it explicitly:
+#
+#        pip install git+https://github.com/Farama-Foundation/d4rl@\
+#            <pre-June-2024-commit-sha>
+#
+#    We intentionally do NOT pin `d4rl` in this file (see the commented block
+#    at the bottom) because a plain `d4rl` requirement would pull the wrong
+#    release.
+#
+# 2) MuJoCo: the paper/D4RL stack was built against MuJoCo 2.1 with
+#    `mujoco-py`. If you use the newer `mujoco` (>=2.3) bindings, D4RL's
+#    `antmaze` / `kitchen` environments may behave differently, so prefer
+#    `mujoco-py==2.1.2.14` + `mujoco210` for exact reproduction.
+#
+# 3) ExORL RND datasets (walker / cheetah) are NOT pip-installable; they are
+#    downloaded separately and placed under `./data` (see README). We require
+#    `dm_control` (optional) only if you want to run the live simulators rather
+#    than the offline dataset-replay fallback implemented in `fre/envs/`.
+#
+# 4) FB (Forward-Backward) and SF (Successor Features) baselines are NOT
+#    reimplemented here. Run them from:
+#        https://github.com/facebookresearch/controllable_agent
+#    (DDPG + ICM features on the same ExORL RND data).
+#
+# 5) A CUDA GPU (>=16 GB) is strongly recommended: the full reproduction is
+#    ~1M encoder steps + ~1M z-conditioned IQL steps per domain per seed.
+#    All code paths fall back to CPU, but full runs will be prohibitively slow.
+# =============================================================================
+
+# ---- Core numerics / deep learning -----------------------------------------
+torch>=1.13,<2.1
+numpy>=1.21,<1.25
+# Optional but recommended for the exact paper numbers (anticipated CUDA build).
+# Install the matching CUDA wheel for your driver separately, e.g.:
+#   pip install torch==2.0.1 --index-url https://download.pytorch.org/whl/cu118
+# If you do not need CUDA wheels, the plain `torch>=1.13` above suffices.
+numexpr>=2.8.4          # accelerator used by mujoco-py / gym
+
+# ---- RL environments --------------------------------------------------------
+gym==0.21.0             # gym 0.21 is the version D4RL (pre-June-2024) expects
+mujoco-py==2.1.2.14     # MuJoCo 2.1 Python bindings (requires mujoco210)
+# Newer MuJoCo bindings (alternative to mujoco-py; use only if you know what
+# you are doing — semantics differ from the D4RL reference stack):
+# mujoco==2.3.7
+mujoco==2.3.7
+
+# dm_control is used by ExORL live environments (walker/cheetah) and by D4RL's
+# Kitchen. Only required for live simulation; offline dataset replay works
+# without it.
+dm-control>=1.0.9,<1.1
+
+# ---- Domain datasets --------------------------------------------------------
+# d4rl: pin to a pre-June-2024 commit (see note 1 above). Example (not active):
+# d4rl @ git+https://github.com/Farama-Foundation/d4rl@<SHA-before-2024-06>
+h5py>=3.7.0             # D4RL/Kitchen dataset storage
+cloudpickle>=2.2.0      # D4RL dataset pickles
+gym-notices>=0.0.8      # required by mujoco-py / gym 0.21 dependency chain
+
+# ---- Reward-prior & evaluation extras --------------------------------------
+opensimplex>=0.4.3      # AntMaze random-simplex reward fields (seeds 1..5)
+scipy>=1.9.0            # numerical helpers (interp / distance / simplex fallback)
+scikit-learn>=1.1.0     # misc analytics in logging/eval aggregation
+
+# ---- Config, logging, progress ---------------------------------------------
+pyyaml>=6.0
+tqdm>=4.64.0
+pandas>=1.5.0
+matplotlib>=3.6.0       # qualitative figures / reward-field visualisation
+tensorboard>=2.11.0     # optional training curves
+
+# ---- Misc -------------------------------------------------------------------
+typing-extensions>=4.4.0
+dataclasses-json>=0.5.7 ; python_version >= "3.8"  # optional structured config IO
+psutil>=5.9.0
+
+# =============================================================================
+# Deliberately NOT pinned (install manually, see notes above)
+# =============================================================================
+# d4rl        -> pip install "git+https://github.com/Farama-Foundation/d4rl@<pre-2024-06 SHA>"
+# exorl       -> github.com/denisyarats/exorl   (dataset download utility only)
+# controllable_agent -> github.com/facebookresearch/controllable_agent  (FB / SF)
+# mujoco210   -> https://github.com/deepmind/mujoco/releases/tag/2.1.0
+#
+# Quick check after installation:
+#   python -c "import torch, gym, numpy; print(torch.__version__, gym.__version__)"
+#   python -c "import d4rl; import gym; gym.make('antmaze-large-diverse-v2')"
+#   python -c "import opensimplex; print(opensimplex.OpenSimplex(1).noise2d(0,0))"
+# =============================================================================

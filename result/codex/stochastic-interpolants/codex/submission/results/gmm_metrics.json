@@ -1,0 +1,17 @@
+{
+  "coupled": {
+    "transport_cost_bound": 1.3210824728012085,
+    "empirical_transport_cost": 1.2878979444503784,
+    "intermediate_modes_at_t_half": 3
+  },
+  "conditioned": {
+    "transport_cost_bound": 1.312147855758667,
+    "empirical_transport_cost": 1.2473654747009277,
+    "intermediate_modes_at_t_half": 3
+  },
+  "independent": {
+    "transport_cost_bound": 2.5556929111480713,
+    "empirical_transport_cost": 0.8059236407279968,
+    "intermediate_modes_at_t_half": 7
+  }
+}

@@ -1,0 +1,54 @@
+{
+  "name": "gp_pois_regr_ftilde",
+  "params": [
+    "rho",
+    "alpha",
+    "f_tilde[1]",
+    "f_tilde[2]",
+    "f_tilde[3]",
+    "f_tilde[4]",
+    "f_tilde[5]",
+    "f_tilde[6]",
+    "f_tilde[7]",
+    "f_tilde[8]",
+    "f_tilde[9]",
+    "f_tilde[10]",
+    "f_tilde[11]"
+  ],
+  "dim": 13,
+  "n_draws": 10000,
+  "mean": [
+    5.666522026062012,
+    2.921346664428711,
+    1.3331115245819092,
+    0.3009854853153229,
+    -0.14964814484119415,
+    -0.23574309051036835,
+    1.1449187994003296,
+    1.434816598892212,
+    0.6591396927833557,
+    -0.20601418614387512,
+    -0.4325791597366333,
+    -0.18077634274959564,
+    -0.012466554529964924
+  ],
+  "sd": [
+    0.6790202856063843,
+    0.7928213477134705,
+    0.351947546005249,
+    0.20280645787715912,
+    0.5131442546844482,
+    0.6293043494224548,
+    0.8112636804580688,
+    0.7849393486976624,
+    0.9207574129104614,
+    0.9055367708206177,
+    0.8379535675048828,
+    0.9294758439064026,
+    0.9916995763778687
+  ],
+  "source": {
+    "data": "https://raw.githubusercontent.com/stan-dev/posteriordb/master/posterior_database/data/data/gp_pois_regr.json.zip",
+    "draws": "https://raw.githubusercontent.com/stan-dev/posteriordb/master/posterior_database/reference_posteriors/draws/draws/gp_pois_regr-gp_pois_regr.json.zip"
+  }
+}

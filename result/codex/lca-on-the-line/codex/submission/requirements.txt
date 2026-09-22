@@ -1,0 +1,27 @@
+# Core scientific stack
+numpy>=1.21
+scipy>=1.7
+scikit-learn>=1.0
+pandas>=1.4
+matplotlib>=3.5
+Pillow>=9.0
+tqdm>=4.60
+
+# Deep learning
+torch>=2.0
+torchvision>=0.15
+
+# Datasets
+datasets>=2.14
+huggingface_hub>=0.16
+
+# Vision-language models (paper addendum requires both)
+open_clip_torch>=2.20
+ftfy>=6.1
+regex>=2022.0
+einops>=0.6
+# openai/CLIP is installed from source:
+#   pip install git+https://github.com/openai/CLIP.git
+
+# Optional: ALBEF / BLIP feature extractors (Appendix A)
+#   pip install salesforce-lavis

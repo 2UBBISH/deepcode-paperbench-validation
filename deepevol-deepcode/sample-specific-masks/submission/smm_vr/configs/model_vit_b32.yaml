@@ -1,0 +1,50 @@
+# Model-specific configuration overrides for the SMM paper (ICML 2024).
+# Frozen ImageNet-1K pre-trained ViT-B/32 backbone (paper Table 2, Appendix A.2, Table 9).
+# Layering order: base.yaml -> model_vit_b32.yaml -> train_smm.yaml / ablations.yaml
+# (later files override earlier keys).
+
+name: vit_b32
+
+backbone: vit_b32
+
+model:
+  backbone: vit_b32
+  torchvision_name: vit_b_32
+  pretrained: true
+  weights: IMAGENET1K_V1
+  freeze: true
+  input_size: 384
+  num_pretrained_classes: 1000
+  feature_layer: heads.head
+
+# 6-layer mask generator used for ViT-B32 (paper Sec. 3.2 / Table 4: 102,339 params).
+mask_generator:
+  num_layers: 6
+  base_channels: 8
+  out_channels: 3
+  num_pooling_layers: 3
+  use_bn: true
+  use_relu: true
+  width_scale: 1.0
+  expected_parameters: 102339
+
+reprogram:
+  patch_size: 8
+  delta_init: zero
+  normalize_mask: false
+
+# Table 9: 6-layer generator uses alpha_2 = 0.001, gamma = 1 (no decay).
+training:
+  alpha_delta: 0.01
+  gamma_delta: 0.1
+  alpha_mask: 0.001
+  gamma_mask: 1.0
+
+# Precomputed values for downstream modules / assertions.
+derived:
+  num_mask_layers: 6
+  alpha_mask: 0.001
+  gamma_mask: 1.0
+  mask_parameter_count: 102339
+  input_size: 384
+  low_res_mask_size: 48

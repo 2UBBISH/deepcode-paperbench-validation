@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fpc"
+version = "1.0.0"
+description = "Reproduction of 'Fine-tuning Reinforcement Learning Models is Secretly a Forgetting Mitigation Problem'"
+requires-python = ">=3.9"
+dependencies = ["numpy>=1.24", "scipy>=1.10", "torch>=2.0", "matplotlib>=3.7"]
+
+[tool.setuptools.packages.find]
+include = ["fpc*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+filterwarnings = ["ignore::DeprecationWarning"]

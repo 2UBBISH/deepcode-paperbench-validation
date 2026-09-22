@@ -1,0 +1,54 @@
+  (1 command(s) rejected / not run — fine)
+  ran    10.0s  python3 -V; python3 -c "import torch, transformers; print('torch', torch.__version__); print('tf', transformer
+  ran     0.3s  ls ~/.cache/huggingface 2>/dev/null; nvidia-smi 2>&1 | head -3; sysctl -n hw.memsize; sysctl -n hw.ncpu; echo 
+  ran     3.5s  curl -sS -m 20 "https://huggingface.co/api/datasets/bigscience/P3" | python3 -c "import json,sys; d=json.load(
+  ran     2.8s  curl -sS -m 20 "https://huggingface.co/api/datasets/bigscience/P3/tree/main" | python3 -c "import json,sys; d=
+  ran     8.0s  python3 - <<'PY'
+  ran     0.0s  cd /tmp && python3 - <<'PY'
+  ran     6.9s  cd /Users/apple/Documents/0919-test/codex/work/what-will-my-model-forget-codex-desktop && python3 -c "   ⚠️ training-looking
+  ran     0.3s  curl -sS -m 20 "https://huggingface.co/api/datasets/cais/mmlu" | python3 -c "import json,sys;d=json.load(sys.s
+  ran     0.2s  cd /Users/apple/Documents/0919-test/codex/work/what-will-my-model-forget-codex-desktop/submission && python3 -   ⚠️ training-looking
+  ran     0.2s  cd /Users/apple/Documents/0919-test/codex/work/what-will-my-model-forget-codex-desktop/submission && python3 -   ⚠️ training-looking
+  ran     0.3s  cd /Users/apple/Documents/0919-test/codex/work/what-will-my-model-forget-codex-desktop/submission && python3 -   ⚠️ training-looking
+  ran     0.3s  cd /Users/apple/Documents/0919-test/codex/work/what-will-my-model-forget-codex-desktop/submission && python3 -   ⚠️ training-looking
+  ran     0.3s  python3 -c "import pytest; print('pytest', pytest.__version__)" 2>&1 | tail -1; ls ~/.cache/huggingface/hub | 
+  ran     4.6s  cd /Users/apple/Documents/0919-test/codex/work/what-will-my-model-forget-codex-desktop/submission && python3 -
+  ran     4.5s  cd /Users/apple/Documents/0919-test/codex/work/what-will-my-model-forget-codex-desktop/submission && python3 -
+  ran     0.0s  cd /Users/apple/Documents/0919-test/codex/work/what-will-my-model-forget-codex-desktop/submission && timeout 9
+  ran    30.0s  cd /Users/apple/Documents/0919-test/codex/work/what-will-my-model-forget-codex-desktop/submission && python3 s
+  ran    30.0s  cd /Users/apple/Documents/0919-test/codex/work/what-will-my-model-forget-codex-desktop/submission && python3 -   ⚠️ training-looking
+  ran    30.0s  cd /Users/apple/Documents/0919-test/codex/work/what-will-my-model-forget-codex-desktop/submission && python3 -   ⚠️ training-looking
+  ran    30.0s  cd /Users/apple/Documents/0919-test/codex/work/what-will-my-model-forget-codex-desktop/submission && python3 s
+  ran    30.0s  cd /Users/apple/Documents/0919-test/codex/work/what-will-my-model-forget-codex-desktop/submission && python3 s
+  ran    23.9s  cd /Users/apple/Documents/0919-test/codex/work/what-will-my-model-forget-codex-desktop/submission && python3 -   ⚠️ training-looking
+  ran    30.0s  cd /Users/apple/Documents/0919-test/codex/work/what-will-my-model-forget-codex-desktop/submission && python3 -   ⚠️ training-looking
+  ran    30.0s  cd /Users/apple/Documents/0919-test/codex/work/what-will-my-model-forget-codex-desktop/submission && python3 s
+  ran    30.0s  cd /Users/apple/Documents/0919-test/codex/work/what-will-my-model-forget-codex-desktop/submission && python3 s
+  ran    30.0s  cd /Users/apple/Documents/0919-test/codex/work/what-will-my-model-forget-codex-desktop/submission && python3 s
+  ran     0.1s  cd /Users/apple/Documents/0919-test/codex/work/what-will-my-model-forget-codex-desktop && cat START_EPOCH && p   ⚠️ training-looking
+  ran    30.0s  cd /Users/apple/Documents/0919-test/codex/work/what-will-my-model-forget-codex-desktop/submission && python3 s
+  ran    30.0s  cd /Users/apple/Documents/0919-test/codex/work/what-will-my-model-forget-codex-desktop/submission && python3 -   ⚠️ training-looking
+  ran    30.0s  cd /Users/apple/Documents/0919-test/codex/work/what-will-my-model-forget-codex-desktop/submission && python3 s
+  ran     0.3s  cd /Users/apple/Documents/0919-test/codex/work/what-will-my-model-forget-codex-desktop/submission && python3 s
+  ran     0.0s  cd /Users/apple/Documents/0919-test/codex/work/what-will-my-model-forget-codex-desktop/submission && mkdir -p 
+  ran     6.1s  cd /Users/apple/Documents/0919-test/codex/work/what-will-my-model-forget-codex-desktop/submission && python3 -
+  ran     3.6s  cd /Users/apple/Documents/0919-test/codex/work/what-will-my-model-forget-codex-desktop/submission && python3 -
+  ran     7.0s  cd /Users/apple/Documents/0919-test/codex/work/what-will-my-model-forget-codex-desktop/submission && python3 -
+  ran     0.0s  cd /Users/apple/Documents/0919-test/codex/work/what-will-my-model-forget-codex-desktop/submission && python3 s
+  ran    30.0s  cd /Users/apple/Documents/0919-test/codex/work/what-will-my-model-forget-codex-desktop/submission && mkdir -p 
+  ran    30.0s  cd /Users/apple/Documents/0919-test/codex/work/what-will-my-model-forget-codex-desktop/submission && python3 s
+  ran    30.0s  cd /Users/apple/Documents/0919-test/codex/work/what-will-my-model-forget-codex-desktop/submission && python3 -   ⚠️ training-looking
+  ran     0.0s  cd /Users/apple/Documents/0919-test/codex/work/what-will-my-model-forget-codex-desktop/submission && cp smoke/
+  ran     2.9s  cd /Users/apple/Documents/0919-test/codex/work/what-will-my-model-forget-codex-desktop/submission && python3 -
+  ran     0.4s  cd /Users/apple/Documents/0919-test/codex/work/what-will-my-model-forget-codex-desktop/submission && python3 s
+  ran    30.0s  cd /Users/apple/Documents/0919-test/codex/work/what-will-my-model-forget-codex-desktop/submission && python3 -   ⚠️ training-looking
+  ran     2.0s  cd /Users/apple/Documents/0919-test/codex/work/what-will-my-model-forget-codex-desktop/submission && git add -
+  ran    30.0s  cd /Users/apple/Documents/0919-test/codex/work/what-will-my-model-forget-codex-desktop/submission && wc -l smo
+  ran    30.0s  cd /Users/apple/Documents/0919-test/codex/work/what-will-my-model-forget-codex-desktop/submission && python3 -   ⚠️ training-looking
+  ran    30.0s  cd /Users/apple/Documents/0919-test/codex/work/what-will-my-model-forget-codex-desktop/submission && python3 s
+  ran    30.0s  cd /Users/apple/Documents/0919-test/codex/work/what-will-my-model-forget-codex-desktop/submission && python3 s
+  ran     3.0s  cd /Users/apple/Documents/0919-test/codex/work/what-will-my-model-forget-codex-desktop/submission && python3 -
+  ran     3.3s  CHECK=$(mktemp -d /tmp/wwmf_check.XXXXXX) && git clone -q /Users/apple/Documents/0919-test/codex/work/what-wil   ⚠️ training-looking
+codex: 1 session file(s), 1 turn(s), models ['deepseek-flash'], output tokens 167215, thinking tokens 53853
+  /Users/apple/.codex/sessions/2026/09/21/rollout-2026-09-21T21-25-13-01a0c424-5ea6-7bb3-86cb-0b4e680a1352.jsonl
+CALIBER_REVIEW: 50 command(s) ran (695s total, 15 training-looking by keyword) — owner to glance at the list; none exceeded the long-experiment line

@@ -1,0 +1,46 @@
+# Requirements for reproducing:
+#   "A Mechanistic Understanding of Alignment Algorithms:
+#    A Case Study on DPO and Toxicity"
+#
+# Scope: GPT2-medium only. Llama2-7b / GLU code paths are stubbed and
+# explicitly out of scope. Toxicity scoring uses unitary/unbiased-toxic-roberta
+# instead of the Perspective API.
+#
+# Install (CUDA build of torch recommended for full reproduction):
+#   pip install -r requirements.txt
+#
+# CPU-only smoke tests work as well (see README.md "Quick smoke test").
+
+# --- Core deep learning -----------------------------------------------------
+# PyTorch 2.x; install the CUDA variant matching your driver if needed, e.g.
+#   pip install torch --index-url https://download.pytorch.org/whl/cu121
+torch>=2.0,<2.6
+
+# HuggingFace stack (AutoModel/AutoTokenizer + datasets mirrors)
+transformers>=4.36,<4.48
+datasets>=2.14,<3.0
+huggingface_hub>=0.20
+tokenizers>=0.14
+safetensors>=0.4
+accelerate>=0.24
+# Optional: only needed if you switch DPO training to the HF Trainer path.
+# (src/dpo_trainer.py implements the DPO loop directly and does not require it.)
+# peft>=0.7
+# trl>=0.7
+
+# --- Numerical / scientific -------------------------------------------------
+numpy>=1.24,<2.0
+scipy>=1.10
+scikit-learn>=1.3
+pandas>=2.0
+
+# --- Progress / config ------------------------------------------------------
+tqdm>=4.65
+pyyaml>=6.0
+
+# --- Plotting (src/analysis/plots.py, figure reproduction) ------------------
+matplotlib>=3.7
+seaborn>=0.12
+
+# --- Testing ----------------------------------------------------------------
+pytest>=7.4

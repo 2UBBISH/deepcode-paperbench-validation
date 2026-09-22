@@ -1,0 +1,22 @@
+# ResNet-18 (ImageNet-1K) as the frozen pre-trained model -- Table 1 and Table 3.
+# Optimisation settings follow Section 5 / Appendix C: 200 epochs, initial
+# learning rate 0.01, decay 0.1 at epochs 100 and 145 (the same schedule as
+# Chen et al., 2023), and Table 9 for the mask generator.
+backbone: resnet18
+image_size: 224
+num_layers: 5            # 5-layer CNN mask generator (Figure 8)
+num_pool_layers: 3       # l = 3 -> patch size 8 (Section 5, Figure 4)
+epochs: 200
+batch_size: null         # null -> Table 9 batch size (256; 64 for DTD/OxfordPets)
+milestones: [100, 145]
+momentum: 0.9
+weight_decay: 0.0
+lr_delta: 0.01           # alpha_1 of Algorithm 1
+gamma_delta: 0.1
+lr_mask: 0.01            # alpha_2 of Algorithm 1 (5-layer CNN, Table 9)
+gamma_mask: 0.1
+label_mapping: ilm       # f_out^Ilm (Appendix D.1 shows Rlm/Flm too)
+num_workers: 4
+eval_every: 10
+pretrained: true
+device: cuda

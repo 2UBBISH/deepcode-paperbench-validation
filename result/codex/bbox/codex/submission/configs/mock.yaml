@@ -1,0 +1,26 @@
+# Offline configuration used by the smoke tests: a deterministic mock LLM,
+# a tiny random adapter and a handful of steps.
+dataset: strategyqa
+output_dir: runs/mock
+seed: 0
+
+adapter:
+  model_name: auto
+  adapter_size: "0.1B"
+  num_train_steps: 5
+  batch_size: 4
+
+inference:
+  beam_size: 2
+  num_samples_per_beam: 2
+  max_sentence_steps: 3
+
+online:
+  num_iterations: 2
+  num_candidates_per_question: 2
+  init_candidates_per_question: 3
+  positive_source: ground_truth
+
+llm:
+  name: mock-llm
+  provider: mock

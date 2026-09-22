@@ -1,0 +1,18 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# full-scale training artifacts (logs, checkpoints, recorded states) are not
+# committed -- only the small CPU smoke-run artifacts under *_toy/ are
+runs/
+figures/
+results/
+logs/
+*.pt
+*.ckpt
+events.out.tfevents.*
+
+# asset files (URDFs/meshes) are provisioned outside the repository
+sapg/envs/isaacgym/assets/

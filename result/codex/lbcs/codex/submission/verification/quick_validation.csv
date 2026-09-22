@@ -1,0 +1,3 @@
+k,epsilon,seed,T,inner_epochs,init_f1,init_f2,final_f1,final_f2,f1_improved,f2_reduced,num_queries
+200,0.2,0,60,5,1.93232,200,0.173656,206,True,False,112
+200,0.4,0,60,5,1.93232,200,0.165882,202,True,False,114

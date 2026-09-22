@@ -1,0 +1,37 @@
+# Baseline hyper-parameters quoted in Appendix B.2 ("More Evaluation Protocols").
+lame:            # https://github.com/fiveai/LAME
+  batch_size: 64
+  k: 5           # chosen among {1, 5, 10, 20} on ImageNet-C
+
+t3a:             # https://github.com/matsuolab/T3A
+  batch_size: 64
+  num_supports: 20   # M, chosen among {1, 5, 20, 50, 100}
+
+tent:            # https://github.com/DequanWang/tent
+  optimizer: SGD
+  lr: 0.001
+  momentum: 0.9
+  batch_size: 64
+  trainable: layer-norm affine parameters
+
+sar:             # https://github.com/mr-eggplant/SAR
+  optimizer: SGD
+  lr: 0.001
+  momentum: 0.9
+  batch_size: 64
+  entropy_threshold: 0.4 * ln(C)   # E_0
+  trainable: layer-norm affine parameters of blocks 1..8 (ViT-Base)
+
+cotta:           # https://github.com/qinenergy/cotta
+  optimizer: SGD
+  lr: 0.05
+  momentum: 0.9
+  batch_size: 64
+  augmentation_threshold: 0.1      # p_th
+  num_augmentations: 32
+  restore_probability: 0.01
+  teacher_ema: 0.999
+  trainable: all parameters of ViT-Base
+
+bn_adapt:        # Schneider et al. (2020) / Nado et al. (2020), Table 10
+  mode: test-batch statistics of every BatchNorm layer

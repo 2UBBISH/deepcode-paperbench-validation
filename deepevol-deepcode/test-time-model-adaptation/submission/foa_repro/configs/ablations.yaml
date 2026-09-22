@@ -1,0 +1,318 @@
+> # =============================================================================
+# FOA ablation configuration
+# =============================================================================
+# Reproduces the two grids of the FOA paper:
+#   * Table 5 - component ablations of the unsupervised fitness (Eqn. 5) and the
+#               back-to-source activation shifting (Eqn. 7-9).
+#   * Table 9 - design-choice study over learnable parameters / optimizer / loss.
+#
+# All runs use the frozen ViT-Base backbone on ImageNet-C severity 5, batch
+# size 64, single-pass ordered online stream (Algorithm 1).  Numbers in the
+# comments are the paper's reported values (accuracy % / ECE %).
+#
+# Consumed by: scripts/run_ablations.py
+#   run_component_ablations(cfg) -> Table 5 grid
+#   run_design_study(cfg)        -> Table 9 grid
+# =============================================================================
+
+experiment:
+  name: foa_ablations
+  description: >-
+    Component ablations (Table 5) and design-choice study (Table 9) for FOA on
+    ImageNet-C severity 5 with a frozen full-precision ViT-Base.
+
+seed: 0
+output_dir: ./outputs/ablations
+
+# -----------------------------------------------------------------------------
+# Backbone: identical to the main ImageNet-C config (configs/foa_imagenetc.yaml)
+# -----------------------------------------------------------------------------
+model:
+  name: vit_base_patch16_224
+  checkpoint: null          # null -> src/models/vit_loader.py::FOA_CHECKPOINT_URL
+  pretrained: true
+  num_classes: 1000
+  precision: 32
+  device: cuda
+
+# -----------------------------------------------------------------------------
+# Learnable input prompt (Section 3.1, Appendix B.2)
+# 768 * 3 = 2304 CMA search dimensions
+# -----------------------------------------------------------------------------
+prompt:
+  num_prompts: 3            # N_p
+  init: uniform
+  init_range: 0.01          # paper only says "uniform initialization"
+
+# -----------------------------------------------------------------------------
+# CMA-ES (Eqn. 6, Algorithm 1)
+# K = ceil(4 + 3 * ln(2304)) = 28, tau^0 = 1.0, m^0 = 0, Sigma^0 = I
+# -----------------------------------------------------------------------------
+cma:
+  population_size: 28       # K
+  sigma0: 1.0               # tau^(0)
+  mean0: 0.0                # m^(0)
+  cov0: 1.0                 # Sigma^(0) = I
+  seed: 0
+
+# -----------------------------------------------------------------------------
+# Unsupervised fitness, Eqn. (5): entropy + lambda * activation discrepancy
+# beta = 1.0 -> batch statistics, no EMA on the test-batch statistics.
+# -----------------------------------------------------------------------------
+fitness:
+  use_entropy: true
+  use_discrepancy: true
+  lambda_base: 0.4          # 0.4 * BS/64 for C/V2/Sketch, 0.2 * BS/64 for R
+  lambda_scale_with_bs: true
+  beta: 1.0
+  layer_start: 1            # Eqn. (5) sums layers i = 1..N
+  entropy_reduction: sum
+  discrepancy_reduction: sum
+
+# -----------------------------------------------------------------------------
+# Back-to-source activation shifting, Eqn. (7)-(9)
+# -----------------------------------------------------------------------------
+shifting:
+  enabled: true
+  gamma: 1.0
+  alpha: 0.1
+
+# -----------------------------------------------------------------------------
+# Data: ImageNet-C severity 5 (15 corruptions), ordered single-pass stream
+# -----------------------------------------------------------------------------
+data:
+  dataset: imagenet-c
+  root: ./data
+  severity: 5
+  corruption: gaussian_noise
+  corruptions:
+    - gaussian_noise
+    - shot_noise
+    - impulse_noise
+    - defocus_blur
+    - glass_blur
+    - motion_blur
+    - zoom_blur
+    - snow
+    - frost
+    - fog
+    - brightness
+    - contrast
+    - elastic_transform
+    - pixelate
+    - jpeg_compression
+  batch_size: 64
+  num_workers: 4
+  shuffle: false            # online, single pass - never shuffled
+  image_size: 224
+  subset: null
+
+# -----------------------------------------------------------------------------
+# Source (ImageNet-1K) statistics bank: {mu_i^S, sigma_i^S}_{i=0..N}, Q = 32
+# -----------------------------------------------------------------------------
+source_stats:
+  path: ./checkpoints/source_stats_vit_base.pt
+  num_samples: 32           # Q
+  seed: 0
+  id_root: ./data
+
+# -----------------------------------------------------------------------------
+# Evaluation: top-1 accuracy and ECE with 15 equal-width bins
+# -----------------------------------------------------------------------------
+eval:
+  ece_bins: 15
+  report_per_corruption: true
+  report_mean_over_corruptions: true
+
+# =============================================================================
+# Table 5 - component ablation grid
+# =============================================================================
+# reference: paper-reported accuracy / ECE on ImageNet-C level 5 (15-corruption
+# average, ViT-Base, BS=64).
+#
+#   NoAdapt (no adaptation)                      55.5 / 10.5
+#   CMA + entropy only                           44.9 / 36.8   <- key motivation:
+#                                                                underperforms NoAdapt
+#   CMA + activation discrepancy only            63.4 /  9.4
+#   Activation shifting only                     59.1 / 12.7
+#   Entropy + discrepancy (no shifting)          65.4 /  3.3
+#   Full FOA (entropy + discrepancy + shift)     66.3 /  3.2
+# =============================================================================
+ablations:
+  components:
+    - name: no_adapt
+      label: NoAdapt
+      description: Frozen backbone, no prompt, no shifting, no CMA.
+      optimizer: none
+      use_entropy: false
+      use_discrepancy: false
+      shifting: false
+      reference_accuracy: 55.5
+      reference_ece: 10.5
+
+    - name: entropy_only
+      label: CMA + entropy
+      description: Eqn. (5) with the entropy term only (lambda = 0).
+      optimizer: cma
+      use_entropy: true
+      use_discrepancy: false
+      shifting: false
+      lambda: 0.0
+      reference_accuracy: 44.9
+      reference_ece: 36.8
+
+    - name: discrepancy_only
+      label: CMA + Act. Discrepancy
+      description: Eqn. (5) with the activation-discrepancy term only.
+      optimizer: cma
+      use_entropy: false
+      use_discrepancy: true
+      shifting: false
+      lambda: 0.4
+      reference_accuracy: 63.4
+      reference_ece: 9.4
+
+    - name: shifting_only
+      label: Act. Discrepancy shift only
+      description: Back-to-source activation shifting without any prompt optimization.
+      optimizer: none
+      use_entropy: false
+      use_discrepancy: false
+      shifting: true
+      reference_accuracy: 59.1
+      reference_ece: 12.7
+
+    - name: no_shifting
+      label: Entropy + Act. Discrepancy
+      description: Full Eqn. (5) fitness without the activation shift.
+      optimizer: cma
+      use_entropy: true
+      use_discrepancy: true
+      shifting: false
+      lambda: 0.4
+      reference_accuracy: 65.4
+      reference_ece: 3.3
+
+    - name: full
+      label: Full FOA
+      description: Entropy + activation discrepancy + activation shifting.
+      optimizer: cma
+      use_entropy: true
+      use_discrepancy: true
+      shifting: true
+      lambda: 0.4
+      reference_accuracy: 66.3
+      reference_ece: 3.2
+
+# =============================================================================
+# Table 9 - design-choice study: learnable parameters x optimizer x loss
+# =============================================================================
+# reference: paper-reported accuracy / ECE on ImageNet-C level 5 (ViT-Base).
+# NOTE the log/exp numbering follows the paper's Table 9 rows.
+#   NoAdapt                                       55.5 / 10.5
+#   TENT (norm affine + SGD + entropy)            59.6 / 18.5
+#   exp1: prompts      + SGD + entropy            38.0 / 25.2
+#   exp2: norm layers  + CMA + entropy             0.1 /  ...
+#   exp3: norm layers  + CMA + Eqn. (5)            0.1 /  ...
+#   exp4: prompts      + CMA + entropy            44.9 / 36.8
+#   exp5: norm layers  + SGD + Eqn. (5)           70.5 /  7.9
+#   ours: prompts      + CMA + Eqn. (5) + shift   65.4 /  3.3
+#
+# SGD + Eqn.(5) divides the entropy term by BS = 64 and uses lambda = 30.
+# prompts + SGD + entropy uses lr = 0.01 with 3 prompts.
+# =============================================================================
+design:
+  # shared SGD / CMA hyper-parameters for the design grid
+  sgd:
+    prompt_lr: 0.01         # prompts + SGD + entropy
+    norm_lr: 1.0e-3         # norm affine + SGD (TENT-style)
+    momentum: 0.9
+    weight_decay: 0.0
+    eqn5_lambda: 30.0       # SGD + Eqn. (5); entropy term divided by BS
+    num_steps: 1            # one optimizer step per test batch
+    batch_size: 64
+  cma:
+    population_size: 28     # K
+  variants:
+    - name: no_adapt
+      label: NoAdapt
+      params: none
+      optimizer: none
+      loss: none
+      reference_accuracy: 55.5
+      reference_ece: 10.5
+
+    - name: tent_norm_sgd_entropy
+      label: Norm affine + SGD + entropy (TENT)
+      params: norm_affine
+      optimizer: sgd
+      loss: entropy
+      lr: 1.0e-3
+      momentum: 0.9
+      reference_accuracy: 59.6
+      reference_ece: 18.5
+
+    - name: prompt_sgd_entropy
+      label: Prompts + SGD + entropy (exp1)
+      params: prompts
+      optimizer: sgd
+      loss: entropy
+      num_prompts: 3
+      lr: 0.01
+      reference_accuracy: 38.0
+      reference_ece: 25.2
+
+    - name: norm_cma_entropy
+      label: Norm affine + CMA + entropy (exp2)
+      params: norm_affine
+      optimizer: cma
+      loss: entropy
+      reference_accuracy: 0.1
+      reference_ece: null
+
+    - name: norm_cma_eqn5
+      label: Norm affine + CMA + Eqn. (5) (exp3)
+      params: norm_affine
+      optimizer: cma
+      loss: eqn5
+      lambda: 30.0
+      reference_accuracy: 0.1
+      reference_ece: null
+
+    - name: prompt_cma_entropy
+      label: Prompts + CMA + entropy (exp4)
+      params: prompts
+      optimizer: cma
+      loss: entropy
+      num_prompts: 3
+      reference_accuracy: 44.9
+      reference_ece: 36.8
+
+    - name: norm_sgd_eqn5
+      label: Norm affine + SGD + Eqn. (5) (exp5)
+      params: norm_affine
+      optimizer: sgd
+      loss: eqn5
+      lambda: 30.0
+      lr: 1.0e-3
+      momentum: 0.9
+      reference_accuracy: 70.5
+      reference_ece: 7.9
+
+    - name: ours
+      label: Prompts + CMA + Eqn. (5) + shift (ours)
+      params: prompts
+      optimizer: cma
+      loss: eqn5
+      num_prompts: 3
+      lambda: 0.4
+      shifting: true
+      reference_accuracy: 65.4
+      reference_ece: 3.3
+
+# -----------------------------------------------------------------------------
+# Which groups run by default (scripts/run_ablations.py --groups)
+# -----------------------------------------------------------------------------
+groups:
+  - components
+  - design

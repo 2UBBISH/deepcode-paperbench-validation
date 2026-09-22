@@ -1,0 +1,67 @@
+# ---------------------------------------------------------------------------
+# FOA reproduction -- Test-Time Model Adaptation with Only Forward Passes
+# (Forward-Optimization Adaptation)
+#
+# Python >= 3.10 required.
+#
+#   pip install -r requirements.txt
+#
+# Notes
+# -----
+# * Torch/torchvision are installed with a CUDA wheel matching the local driver.
+#   If you need a specific CUDA build, install it FIRST from
+#   https://pytorch.org/get-started/locally/ and then run
+#       pip install -r requirements.txt
+#   (the version constraints below are satisfied by the pre-installed wheel).
+# * FOA itself needs no gradient memory, but ViT-Base ViT inference benefits
+#   from a GPU with >= 16 GB VRAM (a single RTX 3090 is sufficient).
+# * `datasets` + `huggingface_hub` pull ImageNet-1K via
+#       load_dataset("imagenet-1k", trust_remote_code=True)
+#   (~150 GB on disk; set HF_HOME / `data.root` accordingly).
+# * External baseline / quantization repositories are vendored separately, see
+#   the "External code" section at the bottom of this file.
+# ---------------------------------------------------------------------------
+
+# ---- Core deep-learning stack ---------------------------------------------
+torch>=2.0.0,<2.6.0
+torchvision>=0.15.0,<0.21.0
+timm>=0.9.0,<1.1.0
+
+# ---- Datasets --------------------------------------------------------------
+datasets>=2.14.0
+huggingface_hub>=0.16.0
+Pillow>=9.5.0
+
+# ---- Numerics --------------------------------------------------------------
+numpy>=1.24.0,<2.0.0
+scipy>=1.10.0
+pandas>=2.0.0
+scikit-learn>=1.3.0          # kNN affinity for the LAME baseline
+
+# ---- Optimizer used by FOA (backpropagation-free CMA-ES) -------------------
+# CyberAgentAILab `cmaes` is the addendum-preferred backend for Eqn. (6).
+# `pycma` is accepted as a drop-in fallback (the wrapper auto-detects it).
+cmaes>=0.10.0
+cma>=3.3.0
+
+# ---- Configuration / progress / reporting ---------------------------------
+PyYAML>=6.0
+tqdm>=4.65.0
+
+# ---- Optional: sensitivity plots (Figure 2) --------------------------------
+matplotlib>=3.7.0
+
+# ---------------------------------------------------------------------------
+# External code (install separately, see README.md "External repositories")
+#   PTQ4ViT   https://github.com/hahnyuan/PTQ4ViT      # 8/6-bit quantization
+#   LAME      https://github.com/fiveai/LAME           # (self-contained port)
+#   T3A       https://github.com/matsuolab/T3A         # (self-contained port)
+#   TENT      https://github.com/DequanWang/tent       # (self-contained port)
+#   SAR       https://github.com/mr-eggplant/SAR       # (self-contained port)
+#   CoTTA     https://github.com/qinenergy/cotta       # (self-contained port)
+#   MEMO      https://github.com/zhangmarvin/memo      # optional
+#
+# All baselines ship as self-contained adapters under src/baselines/ so the
+# comparison table can be produced without cloning those repositories; the
+# official implementations are only needed if you want to cross-check numbers.
+# ---------------------------------------------------------------------------

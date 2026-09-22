@@ -1,0 +1,63 @@
+# =============================================================================
+# SNPSE — Sequential Neural Posterior Score Estimation
+# Reproduction of "Sequential Neural Posterior Score Estimation" (SNPSE/NPSE/TSNPSE)
+#
+# Environment: Python >= 3.9, PyTorch >= 2.0 (CUDA optional).
+# Install with:  pip install -r requirements.txt
+# =============================================================================
+
+# --- Core numerics / deep learning (paper: "Python >= 3.9, torch >= 2.0") -----
+torch>=2.0
+numpy>=1.23
+scipy>=1.9
+
+# --- Probability-flow ODE / reverse-time SDE integration ----------------------
+# NOTE: the sampler in snpse/snpse/sampler.py is self-contained (an inlined
+# Dormand-Prince 5(4) RK45 solver in pure PyTorch) so torchdiffeq is OPTIONAL.
+# It is listed because the plan's environment setup allows using it instead of
+# the built-in solver (see snpse/snpse/sampler.py: SamplerConfig.method).
+torchdiffeq>=0.2.3; extra == "torchdiffeq"
+
+# --- Simulator-based-inference baselines and metrics (Addendum requirement) ---
+# Provides: NPE, SNPE-C, C2ST and the eight benchmark tasks (Section E.1).
+# The code degrades gracefully to built-in implementations when sbibm is absent.
+sbibm>=1.1.1
+
+# --- Configs / logging / progress / figures ----------------------------------
+pyyaml>=6.0
+tqdm>=4.65
+pandas>=1.5
+matplotlib>=3.6
+
+# --- Optional: sklearn fallback classifier for C2ST (tasks/c2st.py) ----------
+# Used only when sbibm's C2ST implementation is unavailable.
+scikit-learn>=1.2
+
+# =============================================================================
+# NOT installable via pip — cloned separately (Section 5.3 / TSNPE baseline):
+#
+#   # Pyloric simulator (31 params -> 18 summary statistics) and the TSNPE
+#   # baseline are taken from the mackelab reference repository:
+#   git clone https://github.com/mackelab/tsnpe_neurips
+#
+#   # Reference implementation of this paper:
+#   git clone https://github.com/jacksimons15327/snpse_icml
+#
+# When mackelab/tsnpe_neurips is not on PYTHONPATH, tasks/pyloric.py uses a
+# deterministic torch fallback simulator and experiments/baselines.py raises an
+# actionable ImportError for --method tsnpe.
+# =============================================================================
+
+# =============================================================================
+# Version-pinning notes (per plan):
+#   * Follow the torch/numpy versions installed by sbibm.
+#   * Keep the SiLU (tanh-free) activation used by the score network.
+#   * Determinism: fixed seeds are set via snpse.utils.set_seed for reproducible
+#     C2ST comparisons; set PYTHONHASHSEED for full bit-level reproducibility.
+# =============================================================================
+
+# =============================================================================
+# Hardware: a single (optional) GPU is recommended — the benchmark score
+# networks are small MLPs. The pyloric experiment is simulator-bound, not GPU
+# bound. Everything runs on CPU.
+# =============================================================================

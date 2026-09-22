@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dpo-toxic-mechanistic"
+version = "1.0.0"
+description = "Reproduction of 'A Mechanistic Understanding of Alignment Algorithms: A Case Study on DPO and Toxicity' (Lee et al., ICML 2024)"
+requires-python = ">=3.9"
+dependencies = [
+    "torch>=2.0",
+    "transformers>=4.36",
+    "datasets>=2.14",
+    "numpy>=1.23",
+    "scipy>=1.10",
+    "scikit-learn>=1.2",
+    "matplotlib>=3.6",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]

@@ -1,0 +1,10 @@
+{
+  "comment": "Section 3.3.1 / Table 2 and Figure 3. CodeGen-mono on HumanEval.",
+  "models": ["codegen-350m-mono", "codegen-2b-mono", "codegen-6b-mono"],
+  "out_of_scope_models": ["codegen-16b-mono"],
+  "gammas": [1.0, 1.1, 1.25, 1.5, 1.75, 2.0],
+  "temperatures": [0.2, 0.6, 0.8],
+  "k": 100,
+  "pass_k": [1, 10, 100],
+  "max_new_tokens": 512
+}

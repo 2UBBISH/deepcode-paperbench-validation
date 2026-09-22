@@ -1,0 +1,15 @@
+# Core (CPU smoke tests + algorithms)
+torch>=2.0
+numpy>=1.24
+matplotlib>=3.7
+pyyaml>=6.0
+tensorboard>=2.12
+
+# Optional: the PCA diversity metric uses numpy's SVD; scikit-learn is optional
+scikit-learn>=1.2
+
+# Test suite
+pytest>=7.0
+
+# Full-scale reproduction only (GPU):
+# isaacgym           (NVIDIA IsaacGym Preview 4, installed separately)

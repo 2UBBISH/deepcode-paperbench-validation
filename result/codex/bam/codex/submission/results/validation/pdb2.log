@@ -1,0 +1,8 @@
+gp_pois_regr             BaM (B=32)       rel_mean  final=0.4402 (3.8s)
+gp_pois_regr             ADVI (B=32)      rel_mean  final=8.25 (2.6s)
+gp_pois_regr             GSM (B=32)       rel_mean  final=53.07 (2.5s)
+  saved /tmp/res_pdb2/posteriordb_gp_pois_regr_rel_mean.png
+gp_pois_regr             BaM (B=32)       rel_sd    final=1.138 (2.0s)
+gp_pois_regr             ADVI (B=32)      rel_sd    final=4.311 (2.8s)
+gp_pois_regr             GSM (B=32)       rel_sd    final=192.3 (2.4s)
+  saved /tmp/res_pdb2/posteriordb_gp_pois_regr_rel_sd.png

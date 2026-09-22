@@ -1,0 +1,31 @@
+  (1 command(s) rejected / not run — fine)
+  ran     1.2s  cd "/Users/apple/Documents/0919-test/codex/work/stay-on-topic-with-classifier-free-guidance-codex-desktop" && 
+  ran     1.4s  cd "/Users/apple/Documents/0919-test/codex/work/stay-on-topic-with-classifier-free-guidance-codex-desktop" &&    ⚠️ training-looking
+  ran     0.2s  cd /tmp && curl -sS -m 20 -o /dev/null -w "hf:%{http_code}\n" https://huggingface.co/api/models/gpt2 ; curl -s   ⚠️ training-looking
+  ran     0.7s  env | grep -iE "proxy|http" ; echo "---"; python3 - <<'PY'
+  ran    10.0s  cd "/Users/apple/Documents/0919-test/codex/work/stay-on-topic-with-classifier-free-guidance-codex-desktop/subm   ⚠️ training-looking
+  ran     0.8s  cd "/Users/apple/Documents/0919-test/codex/work/stay-on-topic-with-classifier-free-guidance-codex-desktop/subm
+  ran     0.0s  cd "/Users/apple/Documents/0919-test/codex/work/stay-on-topic-with-classifier-free-guidance-codex-desktop/subm
+  ran    13.5s  cd "/Users/apple/Documents/0919-test/codex/work/stay-on-topic-with-classifier-free-guidance-codex-desktop/subm
+  ran    15.4s  cd "/Users/apple/Documents/0919-test/codex/work/stay-on-topic-with-classifier-free-guidance-codex-desktop/subm
+  ran    12.1s  cd "/Users/apple/Documents/0919-test/codex/work/stay-on-topic-with-classifier-free-guidance-codex-desktop/subm
+  ran    30.0s  cd "/Users/apple/Documents/0919-test/codex/work/stay-on-topic-with-classifier-free-guidance-codex-desktop/subm   ⚠️ training-looking
+  ran    12.0s  cd "/Users/apple/Documents/0919-test/codex/work/stay-on-topic-with-classifier-free-guidance-codex-desktop/subm   ⚠️ training-looking
+  ran    10.8s  cd "/Users/apple/Documents/0919-test/codex/work/stay-on-topic-with-classifier-free-guidance-codex-desktop/subm   ⚠️ training-looking
+  ran    14.6s  cd "/Users/apple/Documents/0919-test/codex/work/stay-on-topic-with-classifier-free-guidance-codex-desktop/subm
+  ran    10.9s  cd "/Users/apple/Documents/0919-test/codex/work/stay-on-topic-with-classifier-free-guidance-codex-desktop/subm
+  ran    12.6s  cd "/Users/apple/Documents/0919-test/codex/work/stay-on-topic-with-classifier-free-guidance-codex-desktop/subm   ⚠️ training-looking
+  ran    16.4s  cd "/Users/apple/Documents/0919-test/codex/work/stay-on-topic-with-classifier-free-guidance-codex-desktop/subm   ⚠️ training-looking
+  ran     8.2s  cd "/Users/apple/Documents/0919-test/codex/work/stay-on-topic-with-classifier-free-guidance-codex-desktop/subm
+  ran     3.4s  cd "/Users/apple/Documents/0919-test/codex/work/stay-on-topic-with-classifier-free-guidance-codex-desktop/subm   ⚠️ training-looking
+  ran     8.3s  cd "/Users/apple/Documents/0919-test/codex/work/stay-on-topic-with-classifier-free-guidance-codex-desktop/subm
+  ran    13.8s  cd "/Users/apple/Documents/0919-test/codex/work/stay-on-topic-with-classifier-free-guidance-codex-desktop/subm
+  ran    17.6s  cd "/Users/apple/Documents/0919-test/codex/work/stay-on-topic-with-classifier-free-guidance-codex-desktop/subm   ⚠️ training-looking
+  ran    17.9s  cd "/Users/apple/Documents/0919-test/codex/work/stay-on-topic-with-classifier-free-guidance-codex-desktop/subm
+  ran    12.6s  cd "/Users/apple/Documents/0919-test/codex/work/stay-on-topic-with-classifier-free-guidance-codex-desktop/subm   ⚠️ training-looking
+  ran    21.3s  cd "/Users/apple/Documents/0919-test/codex/work/stay-on-topic-with-classifier-free-guidance-codex-desktop/subm
+  ran    12.1s  cd "/Users/apple/Documents/0919-test/codex/work/stay-on-topic-with-classifier-free-guidance-codex-desktop/subm
+  ran     3.6s  cd "/Users/apple/Documents/0919-test/codex/work/stay-on-topic-with-classifier-free-guidance-codex-desktop/subm
+codex: 1 session file(s), 1 turn(s), models ['deepseek-flash'], output tokens 147085, thinking tokens 47531
+  /Users/apple/.codex/sessions/2026/09/21/rollout-2026-09-21T21-00-53-01a0c40e-1a54-7402-9395-cdc8bb2dc253.jsonl
+CALIBER_REVIEW: 27 command(s) ran (281s total, 11 training-looking by keyword) — owner to glance at the list; none exceeded the long-experiment line

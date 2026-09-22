@@ -1,0 +1,98 @@
+# =============================================================================
+# Functional Reward Encodings (FRE) -- Python dependencies
+# -----------------------------------------------------------------------------
+# Reference implementation of:
+#   "Zero-Shot Reinforcement Learning via Functional Reward Encodings"
+#
+# Target interpreter: Python 3.9 / 3.10 (the paper's reference environment).
+#
+# Most dependencies are pure-Python / wheels. The two components that need
+# source installs are `d4rl` (must be a PRE-JUNE-2024 commit, see below) and
+# `mujoco` (2.3.x, required by those D4RL commits). `dm_control` is required for
+# the ExORL (DeepMind Control Suite) walker/cheetah domains.
+#
+# Install with:
+#     python -m pip install -r requirements.txt
+# then, for the offline datasets, follow the D4RL / ExORL notes in README.md.
+# =============================================================================
+
+# ------------------------------- core numerics -------------------------------
+numpy>=1.23,<2.0
+scipy>=1.9
+
+# ------------------------------- deep learning -------------------------------
+# PyTorch (>= 2.0) with CUDA. Encoder + policy training runs ~1M steps/domain.
+torch>=2.0
+# torchvision is not used by FRE, but is a transitive requirement of some
+# D4RL/ExORL helper scripts; keep it optional.
+# torchvision>=0.15
+
+# TensorBoard logging of encoder/decoder/policy metrics (optional but wired in
+# through `fre.run_fre.FRERunner`).
+tensorboard>=2.12
+
+# Progress bars used by all training loop entry points (`tqdm.auto`).
+tqdm>=4.65
+
+# Configuration files (`fre/configs/*.yaml`).
+pyyaml>=6.0
+
+# Optional convenience utilities (kept for API compatibility only).
+einops>=0.6
+
+# ------------------------------ RL environments ------------------------------
+# Gym API used by the D4RL environments and the FRE reward wrappers.
+gym==0.21.0
+# Older D4RL releases also import `gymnasium`-era shims; the pinned D4RL commit
+# below targets the classic gym API.
+# gymnasium>=0.28
+
+# MuJoCo 2.3.x is the engine version compatible with the pre-June-2024 D4RL
+# commits used here (mujoco-py is NOT required with these commits).
+mujoco>=2.3,<2.4
+
+# DeepMind Control Suite -- required by ExORL (walker/cheetah RND datasets) for
+# both the physics augmentation (Appendix C.2) and the online evaluation envs.
+dm_control>=1.0.12
+
+# `jax`/`jaxlib` are transitive imports of some D4RL builds (they are imported
+# at module load even for AntMaze/Kitchen usage).
+jax>=0.4,<0.5
+jaxlib>=0.4,<0.5
+
+# Deterministic opensimplex noise for the AntMaze `random-simplex` task set
+# (5 seeded height+velocity reward functions, Appendix C.1).
+opensimplex>=0.4
+
+# HDF5 fallback loader for Kitchen / generic `.hdf5` datasets
+# (`fre.data.dataset.load_npz_dataset`).
+h5py>=3.8
+
+# =============================================================================
+# Source installs (not on PyPI; pin to the paper's revisions)
+# =============================================================================
+#
+# 1) D4RL -- AntMaze (`antmaze-large-diverse-v2`) and Kitchen
+#    (`kitchen-mixed-v0`). MUST be a pre-June-2024 commit: the newer releases
+#    changed the environment/observation layout and dataset registration, which
+#    breaks the 32-bin XY discretization (Appendix C.1) and the Kitchen
+#    observation indices used in `fre/envs/kitchen_tasks.py`.
+#
+#     pip install git+https://github.com/Farama-Foundation/d4rl@<pre-2024-06-commit>
+#
+#    (clone + `pip install -e .` from a checkout of that commit works as well)
+#
+# 2) ExORL RND datasets (walker/cheetah) -- download the dataset archives and
+#    point `fre.data.dataset.load_exorl_dataset(dataset_dir=...)` at them.
+#    Dataset IDs used: walker-run, walker-walk, cheetah-run, cheetah-walk,
+#    cheetah-run-backwards, cheetah-walk-backwards.
+#
+# 3) FB / SF baselines are trained and evaluated with the external
+#    facebookresearch/controllable_agent repository (NOT re-implemented here):
+#
+#     git clone https://github.com/facebookresearch/controllable_agent
+#
+#    `fre.baselines.fb_sf_runner.FBSFRunner` builds the commands, exports the
+#    5120 (state, reward) adaptation samples, and parses the results; the repo
+#    itself must be cloned and installable (see its requirements.txt, which
+#    needs `jax`, `dm_control` and the RND ExORL data).

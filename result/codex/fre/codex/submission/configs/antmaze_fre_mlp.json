@@ -1,0 +1,6 @@
+{
+  "domain": "antmaze",
+  "prior_name": "FRE-mlp",
+  "encoder_steps": 150000,
+  "policy_steps": 850000
+}

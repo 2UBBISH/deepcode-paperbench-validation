@@ -1,0 +1,86 @@
+{
+  "model": "google/flan-t5-small",
+  "n_dpt": 24,
+  "n_dr": 12,
+  "n_dr_train": 3,
+  "n_dr_test": 3,
+  "n_upstream_correct": 16,
+  "steps": 20,
+  "forecast_train_steps": 20,
+  "base_em_dpt": 0.6666666666666666,
+  "forecasting_f1": {
+    "threshold": {
+      "precision": 95.83333333333334,
+      "recall": 95.83333333333334,
+      "f1": 95.83333333333334,
+      "n_pairs": 48.0,
+      "positive_rate": 0.5
+    },
+    "fixed_logit": {
+      "precision": 50.0,
+      "recall": 100.0,
+      "f1": 66.66666666666666,
+      "n_pairs": 48.0,
+      "positive_rate": 0.5
+    },
+    "trainable_logit": {
+      "precision": 50.0,
+      "recall": 100.0,
+      "f1": 66.66666666666666,
+      "n_pairs": 48.0,
+      "positive_rate": 0.5
+    },
+    "representation": {
+      "precision": 95.83333333333334,
+      "recall": 95.83333333333334,
+      "f1": 95.83333333333334,
+      "n_pairs": 48.0,
+      "positive_rate": 0.5
+    },
+    "representation_wo_prior": {
+      "precision": 50.0,
+      "recall": 100.0,
+      "f1": 66.66666666666666,
+      "n_pairs": 48.0,
+      "positive_rate": 0.5
+    }
+  },
+  "refinement": [
+    {
+      "method": "Vanilla FT",
+      "tuning_mode": "head",
+      "Succ.": 100.0,
+      "EM Drop %": -25.0,
+      "base_em": 0.6667,
+      "final_em": null,
+      "n_online": 2
+    },
+    {
+      "method": "Replay w/ Random",
+      "tuning_mode": "head",
+      "Succ.": 100.0,
+      "EM Drop %": -25.0,
+      "base_em": 0.6667,
+      "final_em": null,
+      "n_online": 2
+    },
+    {
+      "method": "Replay w/ Representation",
+      "tuning_mode": "head",
+      "Succ.": 100.0,
+      "EM Drop %": -21.875,
+      "base_em": 0.6667,
+      "final_em": null,
+      "n_online": 2
+    },
+    {
+      "method": "Replay w/ GT Forget",
+      "tuning_mode": "head",
+      "Succ.": 100.0,
+      "EM Drop %": -25.0,
+      "base_em": 0.6667,
+      "final_em": null,
+      "n_online": 2
+    }
+  ]
+}

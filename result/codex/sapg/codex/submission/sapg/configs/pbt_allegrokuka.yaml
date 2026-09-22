@@ -1,0 +1,19 @@
+# DexPBT baseline (Petrenko et al., 2023): population-based training with PPO.
+defaults: [allegrokuka.yaml]
+algo:
+  name: pbt
+  num_policies: 6
+  use_offpolicy: false
+  aggregation: none
+  pbt:
+    interval: 25                  # replace/mutate every `interval` iterations
+    eval_episodes: 16
+    keep_best_fraction: 0.5
+    hyperparameter_space:
+      learning_rate: [1.0e-4, 2.0e-4, 5.0e-4]
+      entropy_coef: [0.0, 0.001, 0.003]
+      clip_epsilon: [0.1, 0.2]
+      gamma: [0.99]
+      tau: [0.95]
+eval:
+  policy_ids: [0, 1, 2, 3, 4, 5]

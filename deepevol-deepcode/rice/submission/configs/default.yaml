@@ -1,0 +1,274 @@
+# =============================================================================
+# RICE: A Refining Scheme for Reinforcement Learning with Explanation
+# (Cheng et al., ICML 2024, PMLR 235)
+#
+# Default configuration shared by every application.  Per-application files
+# (hopper.yaml, walker2d.yaml, ...) are merged on top of this file by
+# `rice.utils.io.get_config`, so anything not overridden here applies.
+#
+# Where the paper does not state a value we fall back to Stable-Baselines3
+# defaults (gamma=0.99, gae_lambda=0.95, clip_range=0.2, lr=3e-4, n_epochs=10)
+# as mandated by the reproduction plan's "missing numerics -> defaults" rule.
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Reproduction / bookkeeping
+# -----------------------------------------------------------------------------
+name: default
+seed: 0
+# The paper repeats every experiment 3 times with different seeds and reports
+# mean +- std (Sec. 4.2, Experiment I).
+seeds: [0, 1, 2]
+device: cpu           # authors used 8x A100; CPU/small-GPU is fine for trends
+output_dir: outputs
+log_dir: outputs/logs
+save_dir: outputs/checkpoints
+results_dir: outputs/results
+verbose: true
+
+# -----------------------------------------------------------------------------
+# Environment
+# -----------------------------------------------------------------------------
+env:
+  id: hopper
+  gym_id: Hopper-v3
+  normalize_obs: false       # only Walker2d & HalfCheetah normalize (App. C.2)
+  max_episode_steps: 1000
+  sparse: false
+  sparse_threshold: 0.6
+  # d_max = maximum single-episode reward, used by the fidelity score
+  # fidelity = log(d / d_max) - log(l / L)   (Sec. 4.1 Evaluation Metrics)
+  d_max: null
+
+# -----------------------------------------------------------------------------
+# Pre-trained (frozen) target policy pi  -- Sec. 3.1 / App. C.1
+# SB3 default MlpPolicy = 2 x 64 tanh for dense/sparse MuJoCo.
+# -----------------------------------------------------------------------------
+target:
+  algo: ppo
+  hidden_sizes: [64, 64]
+  activation: tanh
+  lr: 3.0e-4
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_range: 0.2
+  n_epochs: 10
+  batch_size: 64
+  n_steps: 2048
+  total_timesteps: 1000000
+  policy: MlpPolicy
+  checkpoint: null           # path to a pre-trained pi; null -> train/load
+
+# -----------------------------------------------------------------------------
+# Stage 1 -- Explanation (mask network).  Sec. 3.3 / Algorithm 1
+# The mask network outputs a binary action a_t^m in {0,1}; executed action is
+# a_t if a_t^m = 0 (keep) and a_random if a_t^m = 1 (blind).  State importance
+# is the probability that the mask outputs "keep" (0).
+# Rewards are augmented as R'_t = R(s_t, a_t) + alpha * a_t^m.
+# -----------------------------------------------------------------------------
+explanation:
+  enabled: true
+  method: ours                       # ours | random | statemask | ig | airs
+  hidden_sizes: [64, 64]             # SB3 MlpPolicy-sized mask net (App. C.1)
+  activation: tanh
+  # alpha: Table 3 sets 1e-4 while Sec. 4.3/App. C.3 prose says 0.01; alpha is
+  # insensitive (Figure 9) -> default to the Table-3 value, expose for sweeps.
+  alpha: 1.0e-4
+  alpha_sweep: [0.01, 0.001, 0.0001]
+  use_blinding_bonus: true
+  reward_mode: augmented             # augmented | task
+  # Number of training samples for the mask network (Table 4 sample budgets)
+  total_timesteps: 300000
+  # Sampling / PPO (Algorithm 1 uses VANILLA PPO, no primal-dual update)
+  n_steps: 1000
+  lr: 3.0e-4
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_range: 0.2
+  n_epochs: 10
+  batch_size: 64
+  vf_coef: 0.5
+  ent_coef: 0.01
+  max_grad_norm: 0.5
+  normalize_advantage: true
+  K: 0.1                             # default K used when id'ing a critical state
+
+# -----------------------------------------------------------------------------
+# Fidelity score evaluation -- Sec. 4.1 / Experiment I
+# Sliding window of width l = L x K; pick the window with the highest AVERAGE
+# importance; fast-forward, take random actions for l steps, resume pi; then
+# fidelity = log(d / d_max) - log(l / L), where d = |R' - R|.
+# -----------------------------------------------------------------------------
+fidelity:
+  K_values: [0.10, 0.20, 0.30, 0.40]
+  n_trajectories: 500
+  seeds: [0, 1, 2]
+  deterministic_policy: true
+  action_mode: random
+  scoring: auto                      # auto | mask | random
+  window_metric: mean
+  max_tail_steps: 10000
+  store_details: false
+
+# -----------------------------------------------------------------------------
+# Stage 2 -- Refining (Algorithm 2)
+# Mixed initial state distribution
+#     mu(s) = beta * d_rho^pihat(s) + (1 - beta) * rho(s)
+# realised by drawing RAND_NUM ~ U(0,1): if RAND_NUM < p reset to the critical
+# state identified by the mask net (pi rolled for K steps), else s_0 ~ rho.
+# Intrinsic reward: lambda * || f(s_{t+1}) - fhat(s_{t+1}) ||^2 (RND).
+# -----------------------------------------------------------------------------
+refine:
+  enabled: true
+  method: ours                       # ours | ppo_finetune | statemask_r | jsrl | sac | gail | sil
+  p: 0.5                             # mixture probability (beta); 0.25/0.5 best
+  p_sweep: [0.0, 0.25, 0.5, 0.75, 1.0]
+  lam: 0.01                          # RND bonus coefficient
+  lam_sweep: [0.0, 0.1, 0.01, 0.001]
+  use_mixed_init: true
+  use_rnd: true
+  K: null                            # trajectory length K; null -> horizon T
+  copy_policy: true                  # pi stays frozen; pi_theta trained
+  total_timesteps: 200000
+  total_iterations: null
+  # PPO (unspecified in the paper -> SB3 defaults)
+  lr: 3.0e-4
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_range: 0.2
+  n_epochs: 10
+  batch_size: 64
+  vf_coef: 0.5
+  ent_coef: 0.0
+  max_grad_norm: 0.5
+  n_steps: null                      # null -> episode horizon T
+  normalize_advantage: true
+  target_kl: null
+  eval_episodes: 10
+  deterministic_eval: true
+
+# -----------------------------------------------------------------------------
+# Random Network Distillation (Burda et al. 2018) -- Sec. 3.3 / Algorithm 2
+# Fixed randomly-initialised target f + trainable predictor fhat (same shape).
+# Sizes are not specified by the paper -> small MLP.  Normalisation is not
+# specified either -> divide the squared error by a running std of the
+# prediction error (the plan's default).
+# -----------------------------------------------------------------------------
+rnd:
+  hidden_sizes: [64, 64]
+  activation: tanh
+  lr: 1.0e-4
+  lam: 0.01
+  normalize: true
+  normalization: running_std         # running_std | batch_std | none
+  clip_bonus: null
+  update_epochs: 1
+  batch_size: 256
+  reward_scale: 1.0
+
+# -----------------------------------------------------------------------------
+# Baseline hyper-parameters (Sec. 4.1, App. C.1)
+# All refining baselines share the SAME explanation as RICE for fairness.
+# -----------------------------------------------------------------------------
+baselines:
+  random_explanation:
+    mode: uniform
+    score_range: [0.0, 1.0]
+  statemask:
+    # StateMask's primal-dual mask training (min |eta(pi) - eta(pi_bar)|)
+    alpha_init: 0.01
+    dual_lr: 1.0e-4
+    delta: 0.1
+    alpha_min: 0.0
+    alpha_max: 10.0
+    dual_mode: enforce
+    # Table-4 mask-network sample budgets (StateMask and Ours share them)
+    total_timesteps: 300000
+  integrated_gradients:
+    n_steps: 16
+    baseline: zero
+    target: action
+    reduction: l1
+  airs:
+    hidden_sizes: [64, 64]
+    lr: 3.0e-4
+    epochs: 20
+    batch_size: 512
+    l1_coeff: 0.01
+    entropy_coeff: 0.0
+    train_samples: 20000
+    score_mode: hybrid
+  ppo_finetune:
+    lr: 1.0e-4                       # lowered LR, continue PPO (no RICE parts)
+    total_timesteps: 200000
+  jsrl:
+    lr: 3.0e-4
+    total_timesteps: 200000
+    max_guided_horizon: 1000
+    min_guided_horizon: 0
+    horizon_schedule: linear
+    guidance_mode: prefix
+    exclude_guided_transitions: true
+  sac_finetune:
+    lr: 3.0e-4
+    total_timesteps: 200000
+    batch_size: 256
+    buffer_size: 1000000
+    tau: 0.005
+  gail:
+    lr: 3.0e-4
+    disc_hidden_sizes: [100, 100]
+    lr_disc: 3.0e-4
+    total_timesteps: 200000
+    expert_timesteps: 100000
+    bc_pretrain_epochs: 10
+  sil:
+    lr: 3.0e-4
+    sil_coef: 1.0
+    buffer_size: 100000
+    min_buffer_size: 1000
+    total_timesteps: 200000
+
+# -----------------------------------------------------------------------------
+# Experiment drivers (Experiments I - V of Sec. 4.2)
+# -----------------------------------------------------------------------------
+experiments:
+  envs: [hopper, walker2d, reacher, halfcheetah, selfish_mining, cage2, autodriving]
+  dense_envs: [hopper, walker2d, reacher, halfcheetah]
+  app_envs: [selfish_mining, cage2, autodriving]
+  sparse_envs: [sparse_hopper, sparse_halfcheetah]
+  mujoco_envs: [hopper, walker2d, reacher, halfcheetah]
+  seeds: [0, 1, 2]
+  exp1:
+    name: fidelity_efficiency
+    K_values: [0.10, 0.20, 0.30, 0.40]
+    n_trajectories: 500
+    methods: [ours, statemask, random]
+  exp2:
+    name: refine_effectiveness
+    methods: [ours, ppo_finetune, statemask_r, jsrl]
+  exp3:
+    name: explanation_quality
+    explanations: [ours, statemask, random]
+  exp4:
+    name: sac_agent
+    env: hopper
+    methods: [ours, ppo_finetune, statemask_r, jsrl, sac_finetune]
+  exp5:
+    name: hyperparams
+    envs: [hopper, walker2d, reacher, halfcheetah]
+    p_sweep: [0.0, 0.25, 0.5, 0.75, 1.0]
+    lam_sweep: [0.0, 0.1, 0.01, 0.001]
+    alpha_sweep: [0.01, 0.001, 0.0001]
+  optional:
+    sil_envs: [hopper, walker2d, reacher, halfcheetah]
+    extra_explanations: [ig, airs]
+
+# -----------------------------------------------------------------------------
+# Plotting / reporting
+# -----------------------------------------------------------------------------
+plot:
+  dpi: 150
+  format: png
+  figsize: [6, 4]
+  show: false

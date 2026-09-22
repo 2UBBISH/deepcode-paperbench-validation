@@ -1,0 +1,27 @@
+# Core
+torch>=2.0
+numpy>=1.21
+scipy>=1.7
+pandas>=1.3
+
+# Benchmark tasks, baselines and the C2ST metric (the addendum requires sbibm)
+sbibm>=1.0.7
+sbi>=0.18.0
+
+# Plotting / notebook support for the figures
+matplotlib>=3.5
+
+# Tests
+pytest>=7.0
+
+# ---------------------------------------------------------------------------
+# Optional, only needed for specific parts of the reproduction:
+#
+#   * PyTorch implementation of the TSNPE baseline (Section 5.2):
+#         git clone https://github.com/mackelab/tsnpe_neurips third_party/tsnpe_neurips
+#         # and install the modified sbi fork it ships (`third_party/tsnpe_neurips/sbi`)
+#
+#   * Pyloric network simulator (Section 5.3):
+#         git clone https://github.com/mackelab/pyloric third_party/pyloric
+#         pip install -e third_party/pyloric     # requires NEURON
+# ---------------------------------------------------------------------------

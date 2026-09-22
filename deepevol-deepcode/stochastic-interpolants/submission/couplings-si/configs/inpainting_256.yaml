@@ -1,0 +1,119 @@
+# =============================================================================
+# In-painting on ImageNet 256x256  --  Section 4.1 / Table 2
+# "Stochastic Interpolants with Data-Dependent Couplings"
+#
+# Coupling (Eq. 16-19, Sec. 4.1):
+#     xi   ~ random 64-tile mask, each tile enters the mask with probability p = 0.3
+#     x0    = xi o x1 + (1 - xi) o zeta,     zeta ~ N(0, Id)   (sigma = 1)
+#     xi    = mask, its value shared across channels at a given spatial location
+# Interpolant (Eq. 20):
+#     alpha_t = t,  beta_t = 1 - t,  gamma_t = 0
+#     => I_0 = x0 (corrupted), I_1 = x1 (clean)
+# Structural invariant (Sec. 4.1):
+#     xi o I_t = xi o x1 for every t  =>  b_t(x, xi) = 0 outside the masked region,
+#     which is enforced by masking the network output (mask_observed: true).
+#
+# Model: basic U-Net from Ho et al. 2020b (lucidrain variant), mask appended to
+#        the input x_t as extra channels at every time step (Appendix B).
+# =============================================================================
+
+name: inpainting_256
+task: inpainting
+seed: 0
+
+# -----------------------------------------------------------------------------
+# Data  [Section 4.1: rho_1 = ImageNet at 256; addendum: HuggingFace download]
+# -----------------------------------------------------------------------------
+data:
+  dataset: imagenet-1k
+  split: train
+  resolution: 256                 # in-painting at 256 x 256
+  num_classes: 1000
+  channels: 3
+  data_range: "[-1, 1]"
+  cache_dir: null
+  num_workers: 4
+  augmentation:
+    random_crop: false
+    hflip: true
+    hflip_prob: 0.5
+    pad: true
+    antialias: true
+
+# -----------------------------------------------------------------------------
+# Coupling / interpolant  [Section 4.1]
+# -----------------------------------------------------------------------------
+coupling: inpainting
+base_mode: coupled                # "independent" reproduces the Table 2 baseline
+coefficients: inpainting          # alpha_t = t, beta_t = 1 - t, gamma_t = 0
+sigma: 1.0                        # zeta ~ N(0, Id) on the masked pixels [Section 4.1]
+requires_conditioning: true
+num_tiles: 64                     # image tiled into 64 (8 x 8) tiles   [Section 4.1]
+missing_prob: 0.3                 # each tile enters the mask with p = 0.3 [Section 4.1]
+expand_channels: false            # mask is (B, 1, H, W), shared across channels
+
+# -----------------------------------------------------------------------------
+# Model  [Appendix B]
+# -----------------------------------------------------------------------------
+model: unet
+in_channels: 3
+out_channels: 3
+image_size: 256
+channels: 256                     # Dim (channels): 256
+dim_mults: [1, 1, 2, 3, 4]        # Dim Mults: (1,1,2,3,4)
+resnet_block_groups: 8            # Resnet block groups: 8
+num_classes: 1000
+class_dropout_prob: 0.1           # [engineering] label dropout for CFG-style training
+learned_sinusoidal_cond: true     # Learned Sinusoidal Cond: True
+learned_sinusoidal_dim: 32        # Learned Sinusoidal Dim: 32
+attention_dim_head: 64            # Attention Dim Head: 64
+attention_heads: 4                # Attention Heads: 4
+random_fourier_features: false    # Random Fourier Features: False
+conditioning_channels: 1          # missingness mask appended to x_t [Appendix B]
+mask_observed: true               # zero the velocity on unmasked pixels [Section 4.1]
+
+# -----------------------------------------------------------------------------
+# Training (Algorithm 1)  [Appendix B + addendum]
+# -----------------------------------------------------------------------------
+training:
+  batch_size: 32                  # addendum
+  steps: 200000                   # addendum: 200,000 gradient steps
+  lr: 2.0e-4                      # Adam lr 2e-4
+  betas: [0.9, 0.999]
+  weight_decay: 0.0               # no weight decay
+  grad_clip: 10000.0              # clip gradient norms at 10,000
+  scheduler: step
+  lr_gamma: 0.99                  # StepLR gamma = 0.99
+  lr_step_size: 1000              # every N = 1000 steps
+  ema: false                      # [engineering] paper does not mention EMA
+  precision: "32-true"
+  log_every: 100
+  save_every: 10000
+  output_dir: runs/inpainting_256
+  resume: null
+  transport_cost_log: true        # log E[|I_dot_t|^2] (Prop. 3.1 diagnostic)
+
+# -----------------------------------------------------------------------------
+# Sampling (Algorithm 2)  [Appendix B: Dopri solver from torchdiffeq]
+# -----------------------------------------------------------------------------
+sampling:
+  method: dopri5
+  sampling_steps: 50
+  atol: 1.0e-5
+  rtol: 1.0e-5
+  project_observed: true          # re-impose xi o X_t = xi o x1 each step
+  num_samples: 50000              # FID-50k
+  sample_batch_size: 32
+
+# -----------------------------------------------------------------------------
+# Evaluation  [Table 2]
+# -----------------------------------------------------------------------------
+eval:
+  eval_fid: true
+  fid_num_samples: 50000
+  fid_batch_size: 32
+  fid_dataset: imagenet
+  paper_fid: 1.13                 # Dependent Coupling (Ours), Table 2
+  paper_fid_baseline: 1.35        # Uncoupled Interpolant baseline, Table 2
+  qualitative: true
+  qualitative_count: 8

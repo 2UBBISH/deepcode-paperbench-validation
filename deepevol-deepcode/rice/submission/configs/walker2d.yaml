@@ -1,0 +1,114 @@
+# Walker2d-v3 configuration for RICE
+# ---------------------------------------------------------------------------
+# Merged on top of configs/default.yaml by rice.utils.io.get_config("walker2d").
+# Walker2d is one of the two MuJoCo applications for which the paper applies
+# OBSERVATION NORMALIZATION (Appendix C.2), hence `env.normalize_obs: true`.
+# Reference values from Table 1 (mean +- std over 3 seeds):
+#   No Refine : 3339.68 +- 165.33   (paper "No-Refine" row for Walker2d)
+#   Ours      : 3423.28 +- 179.31
+# Exact numbers are not required - only the trend (Ours > PPO fine-tune,
+# StateMask-R not always helping).
+# ---------------------------------------------------------------------------
+name: walker2d
+
+env:
+  id: walker2d
+  gym_id: Walker2d-v3
+  app: mujoco
+  discrete_actions: false
+  # Appendix C.2: observations are normalized for Walker2d (and HalfCheetah).
+  normalize_obs: true
+  sparse: false
+  sparse_threshold: 0.6          # unused for the dense variant (SparseWalker2d sensitivity is out of scope)
+  max_episode_steps: 1000        # episode horizon T; Algorithm 2 uses K = T by default
+  d_max: 3600.0                  # max single-episode reward, needed by the fidelity score
+  obs_dim: 17
+  action_dim: 6
+
+target:
+  algo: ppo
+  policy: MlpPolicy              # SB3 default MlpPolicy (addendum "Architectures")
+  hidden_sizes: [64, 64]
+  activation: tanh
+  lr: 3.0e-4
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_range: 0.2
+  n_epochs: 10
+  batch_size: 64
+  n_steps: 2048
+  total_timesteps: 1_000_000
+  checkpoint: policies/walker2d_ppo.zip
+  # Table 1 reference regime ("No Refine") used only for trend validation.
+  expected_return: 3339.68
+  expected_std: 165.33
+
+explanation:
+  enabled: true
+  method: ours                   # ours | random | statemask | ig | airs
+  hidden_sizes: [64, 64]
+  activation: tanh
+  # Table 3 value; the figure/text conflict (0.01) is treated as insensitivity.
+  alpha: 1.0e-4
+  use_blinding_bonus: true
+  reward_mode: augmented         # R'_t = R(s_t, a_t) + alpha * a_t^m
+  total_timesteps: 300_000       # Table-4 mask-training sample budget
+  lr: 3.0e-4
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_range: 0.2
+  n_epochs: 10
+  batch_size: 64
+  K: 0.1                         # default fidelity window fraction
+
+refine:
+  enabled: true
+  method: ours                   # ours | ppo_finetune | statemask_r | jsrl | sac | gail | sil
+  p: 0.5                         # mixture weight beta of mu(s) (Algorithm 2)
+  lam: 0.01                      # RND intrinsic-reward coefficient
+  use_mixed_init: true
+  use_rnd: true
+  K: null                        # null -> episode horizon T
+  copy_policy: true              # keep frozen pi, train pi_theta
+  total_timesteps: 200_000
+  lr: 3.0e-4
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_range: 0.2
+  n_epochs: 10
+  batch_size: 64
+  eval_episodes: 10
+  deterministic_eval: true
+  expected_return: 3423.28
+  expected_std: 179.31
+
+rnd:
+  hidden_sizes: [64, 64]
+  activation: tanh
+  lr: 1.0e-4
+  lam: 0.01
+  normalize: true
+  normalization: running_std
+  clip_bonus: null
+  update_epochs: 1
+  batch_size: 256
+  reward_scale: 1.0
+
+experiments:
+  exp1:
+    envs: [walker2d]
+    K_values: [0.10, 0.20, 0.30, 0.40]
+    n_trajectories: 500
+    seeds: [0, 1, 2]
+  exp2:
+    envs: [walker2d]
+  exp3:
+    envs: [walker2d]
+    explanations: [random, statemask, ours]
+  exp4:
+    envs: [walker2d]
+  exp5:
+    envs: [walker2d]
+    p_sweep: [0.0, 0.25, 0.5, 0.75, 1.0]
+    lam_sweep: [0.0, 0.1, 0.01, 0.001]
+    alpha_sweep: [0.01, 0.001, 0.0001]

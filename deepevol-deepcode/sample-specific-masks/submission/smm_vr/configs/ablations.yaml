@@ -1,0 +1,203 @@
+# =============================================================================
+# SMM (ICML 2024) -- Ablation experiment configuration
+# =============================================================================
+# Reproduces:
+#   * "Impact of Masking"  -> Table 3   (masking variants, ResNet-18)
+#   * "Impact of Patch Size" -> Figure 4 (patch size sweep, ResNet-18)
+#
+# Layering order (later overrides earlier):
+#   base.yaml  ->  model_<backbone>.yaml  ->  ablations.yaml
+#
+# All values are transcribed from the paper:
+#   Sec. 3.2 / Appendix A.2            -> mask generator (5 CNN layers for ResNets)
+#   Sec. 3.3 / Appendix A.3 / Table 5  -> patch-wise interpolation (patch size 2^l)
+#   Sec. 5 "Impact of Masking" / Table 3
+#   Sec. 5 "Impact of Patch Size" / Figure 4
+#   Sec. 5 "Baselines" / Appendix C Table 9 -> schedule (200 epochs, milestones 100/145)
+# =============================================================================
+
+name: ablations
+experiment: ablations
+description: >-
+  Masking-strategy ablation (Table 3) and patch-size study (Figure 4) for SMM
+  with the frozen ImageNet-1K ResNet-18 backbone.
+
+# -----------------------------------------------------------------------------
+# Model (ablations are run with ResNet-18 by default, per Table 3 / Figure 4)
+# -----------------------------------------------------------------------------
+model:
+  backbone: resnet18
+  pretrained: true
+  freeze: true
+  input_size: 224
+  num_pretrained_classes: 1000
+  weights: IMAGENET1K_V1
+
+mask_generator:
+  # 5 CNN layers for ResNet-18 / ResNet-50 (Appendix A.2).
+  num_layers: 5
+  base_channels: 8
+  out_channels: 3
+  # 3 x 2x2 max-pooling layers with the default patch size 8 (l = 3).
+  num_pooling_layers: 3
+  use_bn: true
+  use_relu: true
+  width_scale: 1.0
+  expected_parameters: 26499
+
+reprogram:
+  patch_size: 8
+  delta_init: zero
+  normalize_mask: false
+
+# -----------------------------------------------------------------------------
+# Table 3 -- Impact of Masking (four variants)
+# -----------------------------------------------------------------------------
+experiment_ablations:
+  masking:
+    variants:
+      - only_delta
+      - only_fmask
+      - single_channel_fmask
+      - ours
+    variant_display:
+      only_delta: "Only delta"
+      only_fmask: "Only f_mask"
+      single_channel_fmask: "Single-channel f_mask^s"
+      ours: "Ours (SMM)"
+    # Datasets listed in Table 3 (ResNet-18).
+    datasets:
+      - cifar10
+      - cifar100
+      - svhn
+      - gtsrb
+      - flowers102
+      - dtd
+      - ucf101
+      - food101
+      - sun397
+      - eurosat
+      - oxfordpets
+    # Reference averages reported by the paper (Table 3 bottom row).
+    reference_averages:
+      ours: 52.53
+      single_channel_fmask: 49.70
+      only_delta: 46.85
+      only_fmask: 42.59
+    ordering:
+      - ours
+      - single_channel_fmask
+      - only_delta
+      - only_fmask
+
+  # ---------------------------------------------------------------------------
+  # Figure 4 -- Impact of Patch Size
+  # l is the number of 2x2 max-pooling layers in f_mask;
+  # patch size = 2^l in {1, 2, 4, 8, 16}.  Default (all datasets) is patch 8.
+  # ---------------------------------------------------------------------------
+  patch_size:
+    l_values: [0, 1, 2, 3, 4]
+    patch_sizes: [1, 2, 4, 8, 16]
+    default_l: 3
+    default_patch_size: 8
+    # Figure 4 in the paper uses ResNet-18 on a subset of target tasks.
+    datasets:
+      - cifar10
+      - svhn
+      - flowers102
+      - eurosat
+    # Expected qualitative trend: accuracy improves up to patch size 8 and then
+    # plateaus (or slightly declines) for patch size 16.
+    expected_peak_patch_size: 8
+
+# -----------------------------------------------------------------------------
+# Training schedule -- identical to the main runs for a fair comparison
+# (Sec. 5 "Baselines" + Appendix C, Table 9)
+# -----------------------------------------------------------------------------
+training:
+  epochs: 200
+  # Table 9 lists milestones "0, 100, 145"; the leading 0 is treated as an
+  # artifact and dropped (see implementation notes in the plan / README).
+  milestones: [100, 145]
+  alpha_delta: 0.01
+  gamma_delta: 0.1
+  # null -> resolved at runtime from mask_generator.num_layers:
+  #   5 layers (ResNets): alpha_mask = 0.01, gamma_mask = 0.1
+  #   6 layers (ViT-B32): alpha_mask = 0.001, gamma_mask = 1.0
+  alpha_mask: 0.01
+  gamma_mask: 0.1
+  optimizer: sgd
+  momentum: 0.9
+  weight_decay: 0.0
+  nesterov: false
+  grad_clip: null
+  batch_size: 256
+  test_batch_size: 256
+  batch_sizes:
+    default: 256
+    dtd: 64
+    oxfordpets: 64
+  num_workers: 4
+  download: true
+  drop_last: false
+  label_mapping: ilm
+  mapping_refresh_every: 1
+  log_every: 10
+  eval_every: 1
+  verbose: true
+  max_train_batches: null
+  max_eval_batches: null
+  save_checkpoint: false
+  save_dir: null
+
+# -----------------------------------------------------------------------------
+# Evaluation / reporting
+# -----------------------------------------------------------------------------
+evaluation:
+  topk: [1, 5]
+  batch_size: 256
+  num_workers: 4
+  max_batches: null
+  tsne_samples: 5000
+
+seeds: [0, 1, 2]
+deterministic: true
+
+datasets:
+  - cifar10
+  - cifar100
+  - svhn
+  - gtsrb
+  - flowers102
+  - dtd
+  - ucf101
+  - food101
+  - sun397
+  - eurosat
+  - oxfordpets
+
+output:
+  root: outputs
+  results_dir: outputs/results
+  checkpoints_dir: outputs/checkpoints
+  logs_dir: outputs/logs
+  figures_dir: outputs/figures
+  masking_results: ablations_masking.json
+  patch_size_results: ablations_patch_size.json
+  patch_size_curves: patch_size_curves.json
+  patch_size_figure: figure4_patch_size.pdf
+
+# -----------------------------------------------------------------------------
+# Run descriptors consumed by experiments/run_ablations.py + main.py dispatcher
+# -----------------------------------------------------------------------------
+runs:
+  - name: table3_masking
+    mode: masking
+    backbone: resnet18
+    label_mapping: ilm
+    variants: [only_delta, only_fmask, single_channel_fmask, ours]
+  - name: figure4_patch_size
+    mode: patch_size
+    backbone: resnet18
+    label_mapping: ilm
+    l_values: [0, 1, 2, 3, 4]

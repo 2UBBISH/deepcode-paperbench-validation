@@ -1,0 +1,22 @@
+Files in this directory are an unmodified copy of
+
+    https://github.com/openai/guided-diffusion
+    guided_diffusion/{unet.py, nn.py, fp16_util.py, script_util.py}
+
+released under the MIT licence (see LICENSE in this directory).
+
+They are vendored (rather than re-implemented) so that the public checkpoints
+used by the paper
+
+    256x256_classifier.pt
+    https://openaipublic.blob.core.windows.net/diffusion/jul-2021/256x256_classifier.pt
+
+    256x256_diffusion_uncond.pt
+    https://openaipublic.blob.core.windows.net/diffusion/jul-2021/256x256_diffusion_uncond.pt
+
+load with exactly the architecture they were trained with.  Nothing in the
+paper's own repository (blacklisted) is used.
+
+Differences from upstream: none.  The only change is that the relative import
+``from .fp16_util import ...`` resolves inside this package.
+

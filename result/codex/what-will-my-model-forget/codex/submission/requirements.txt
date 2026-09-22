@@ -1,0 +1,17 @@
+# Reproducing "What Will My Model Forget? Forecasting Forgotten Examples in
+# Language Model Refinement" (Jin & Ren, ICML 2024).
+#
+# The full reproduction (BART0_Large / FLAN-T5_Large / FLAN-T5_3B, 36 upstream
+# tasks x 100 examples, per-example fine-tuning) requires a GPU.  The code also
+# runs end-to-end at a reduced scale on CPU/MPS (see smoke/run_smoke.py).
+torch>=2.0
+transformers>=4.38
+datasets>=2.14
+accelerate>=0.20
+peft>=0.10          # LoRA (Sec. 4.1 / addendum)
+huggingface_hub>=0.20
+numpy>=1.23
+scikit-learn>=1.2
+pyyaml>=6.0
+tqdm>=4.65
+matplotlib>=3.6     # Figure 2(a) / Figure 3 style plots

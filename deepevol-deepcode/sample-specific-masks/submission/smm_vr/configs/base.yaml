@@ -1,0 +1,121 @@
+# =============================================================================
+# SMM (Sample-specific Multi-channel Masks for Visual Reprogramming), ICML 2024
+# Base configuration -- shared defaults for every experiment.
+#
+# Glue file: values here mirror the paper text / addendum:
+#   * input size        224 for ResNet-18/50, 384 for ViT-B/32   (Sec. 5)
+#   * epochs            200, milestones [100, 145]               (Table 9)
+#   * alpha_1 (delta)   0.01, gamma 0.1                          (Table 9)
+#   * alpha_2 (phi)     0.01 / gamma 0.1 for the  5-layer f_mask
+#                       0.001 / gamma 1.0 for the 6-layer f_mask (Table 9)
+#   * batch size        256; DTD and OxfordPets use 64           (Table 9)
+#   * patch size        8 (l = 3)                                (Sec. 5)
+#   * seeds             three runs -> mean +- std                (Sec. 5)
+# =============================================================================
+
+project: smm_vr
+experiment: main
+
+# ------------------------------- runtime -------------------------------------
+device: null            # null -> auto-detect cuda / cpu
+seeds: [0, 1, 2]        # three seeds, reported as mean +- std
+deterministic: true
+verbose: true
+
+# ------------------------------- data ----------------------------------------
+data:
+  root: data            # dataset root (falls back to $SMM_DATA_ROOT)
+  download: true
+  num_workers: 4
+  pin_memory: null      # null -> auto
+  batch_size: 256
+  test_batch_size: 256
+  drop_last: false
+  # Per-dataset batch-size overrides (Table 9)
+  batch_sizes:
+    dtd: 64
+    oxfordpets: 64
+  # The 11 main target tasks (Appendix C, Table 6)
+  datasets:
+    - cifar10
+    - cifar100
+    - svhn
+    - gtsrb
+    - flowers102
+    - dtd
+    - ucf101
+    - food101
+    - sun397
+    - eurosat
+    - oxfordpets
+  # Optional 12th target task (failure-case study, Appendix D.4 / Table 12)
+  extra_datasets:
+    - stanfordcars
+  split_seed: 0         # split RNG is independent of the training seeds
+  train_fraction: null  # debug helper: class-balanced subsampling
+
+# ------------------------------- model ---------------------------------------
+model:
+  backbone: resnet18    # resnet18 | resnet50 | vit_b32 | vit_large
+  pretrained: true      # ImageNet-1K weights
+  freeze: true          # every parameter requires_grad = False
+  input_size: null      # null -> 224 (ResNets) / 384 (ViT-B/32)
+  num_pretrained_classes: 1000
+
+# --------------------------- mask generator f_mask ---------------------------
+mask_generator:
+  num_layers: null      # null -> 5 for ResNets, 6 for ViT-B/32
+  base_channels: 8
+  out_channels: 3
+  num_pooling_layers: 3 # 3 x 2x2 max-pooling -> floor(H/8) x floor(W/8)
+  use_bn: true
+  use_relu: true
+  width_scale: 1.0      # scaling study (Table 11) doubles this progressively
+
+# --------------------------- reprogramming f_in ------------------------------
+reprogram:
+  patch_size: 8         # 2^l, l = 3 by default
+  delta_init: zero      # Algorithm 1: delta <- 0
+  normalize_mask: false
+
+# ------------------------------- training ------------------------------------
+training:
+  epochs: 200
+  milestones: [100, 145]
+  optimizer: sgd        # optimizer is unspecified in the paper -> SGD
+  momentum: 0.9
+  weight_decay: 0.0     # no weight decay is specified
+  nesterov: false
+  grad_clip: null
+  alpha_delta: 0.01     # alpha_1
+  gamma_delta: 0.1
+  alpha_mask: null      # null -> 0.01 (5 layers) / 0.001 (6 layers)
+  gamma_mask: null      # null -> 0.1  (5 layers) / 1.0   (6 layers)
+  batch_size: 256
+  test_batch_size: 256
+  num_workers: 4
+  download: true
+  drop_last: false
+  log_every: 10
+  eval_every: 1
+  label_mapping: ilm    # default output mapping for Tables 1 and 2
+  mapping_refresh_every: 1
+  max_train_batches: null
+  max_eval_batches: null
+  save_checkpoint: false
+
+# ---------------------------- evaluation -------------------------------------
+evaluation:
+  topk: [1, 5]
+  batch_size: 256
+  num_workers: 4
+  max_batches: null
+  tsne_samples: 5000    # 5000 randomly selected training samples per dataset
+
+# ------------------------------- outputs -------------------------------------
+output:
+  root: outputs
+  results_dir: outputs/results
+  checkpoints_dir: outputs/checkpoints
+  logs_dir: outputs/logs
+  figures_dir: outputs/figures

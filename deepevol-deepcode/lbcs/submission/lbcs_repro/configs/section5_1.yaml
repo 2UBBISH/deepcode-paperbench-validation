@@ -1,0 +1,127 @@
+# =============================================================================
+# Section 5.1 — Preliminary superiority of LBCS (Table 1)
+# =============================================================================
+# Experiment: run Algorithm 1 (LBCS) on MNIST-S (1,000 random MNIST samples)
+# with a ConvNet proxy, sweeping predefined coreset sizes k in {200, 400} and
+# the compromise parameter epsilon in {0.2, 0.3, 0.4}; report mean +- std of the
+# achieved objectives f1(m) (full-data cross-entropy, Eq. (1)) and
+# f2(m) = ||m||_0 (coreset size, Eq. (2)) over 20 repeats.
+#
+# This file is a declarative OVERLAY: it deep-merges on top of
+# `configs/default.yaml`. Only deltas are listed here. Every value is tagged
+#   # PAPER     -> stated in the paper (Section 5.1 / Algorithm 1 / Table 1)
+#   # SUGGESTED -> not numerically specified by the paper; reproduction default
+#                  (centralised here so it can be changed without editing code)
+#
+# Consumed by:
+#   lbcs_repro/experiments/table1_prelim.py  (run_table1 / Table1Config.from_dict)
+#   lbcs_repro/main.py, lbcs_repro/scripts/run_all.py
+# =============================================================================
+
+inherit:
+  - default.yaml
+
+driver: lbcs_repro.experiments.table1_prelim
+entrypoint: run_table1
+
+seed: 0                 # SUGGESTED base seed; per-repeat seeds derived via resolve_seed
+device: null            # SUGGESTED null -> auto-select CUDA if available else CPU
+num_workers: 0          # SUGGESTED (paper hardware: NVIDIA GTX3090)
+data_root: null         # SUGGESTED null -> torchvision default (env LBCS_DATA_ROOT)
+output_dir: results/table1
+save_artifacts: true    # SUGGESTED write results/table1/{table1.json,csv,txt,raw.jsonl,checks.json}
+plot: false             # SUGGESTED Table 1 is reported as a table, not a figure
+verbose: true
+
+logging:
+  level: INFO
+  log_every: 50         # SUGGESTED log once per 50 outer iterations
+  to_file: true
+  file_name: table1.log
+
+# -----------------------------------------------------------------------------
+# Section 5.1 protocol (Algorithm 1 on MNIST-S with a ConvNet)
+# -----------------------------------------------------------------------------
+table1:
+  dataset: MNIST-S      # PAPER 1000 random MNIST training samples
+  n: 1000               # PAPER MNIST-S size (selection pool)
+  ks: [200, 400]        # PAPER predefined coreset sizes
+  epsilons: [0.2, 0.3, 0.4]  # PAPER compromise values
+  repeats: 20           # PAPER 20 repeats, report mean +- std
+  architecture: ConvNet # PAPER ConvNet from Zhou et al. 2022 (Figure 1 / Sec 5.1)
+
+  # --- Algorithm 1 outer loop -------------------------------------------------
+  T: 500                # SUGGESTED (Section 5.1 does not state T; default T=500)
+  delta_init: 0.1       # SUGGESTED (paper does not state delta_init)
+  delta_lower: 0.001    # SUGGESTED (paper does not state delta_lower)
+  warm_start: true      # SUGGESTED acceleration trick (i): pretrain then finetune
+  group_size: 1         # SUGGESTED acceleration trick (iii): 1 => no grouping
+  cache_evaluations: true   # SUGGESTED reuse F(m) for repeated masks
+
+  # --- Algorithm 1 inner loop: theta(m) <- argmin_theta L(m, theta) ------------
+  inner_optimizer: adam # PAPER Section 5.2 inner-loop optimizer
+  inner_lr: 0.001       # PAPER Section 5.2 inner-loop learning rate
+  inner_momentum: 0.9   # SUGGESTED (momentum unused by Adam)
+  inner_epochs: 100     # PAPER inner loop trained "until convergence" (100 epochs)
+  weight_decay: 0.0     # SUGGESTED no weight decay for MNIST-S proxy training
+  batch_size: 128       # SUGGESTED
+  eval_batch_size: 256  # SUGGESTED batch size for the full-data f1(m) evaluation
+  scheduler: null       # SUGGESTED no LR scheduler in the inner loop
+
+  # --- Evaluation -------------------------------------------------------------
+  f1_eval_split: test   # SUGGESTED full-data objective evaluated on the MNIST test split
+  track: [f1, f2, expected_size]
+
+# -----------------------------------------------------------------------------
+# Validation anchors (NEVER fed to the algorithm; used only to compare measured
+# mean +- std values against the paper's Table 1).
+# Layout: paper_reference[key][k] = [f1_mean, f1_std, f2_mean, f2_std]
+# -----------------------------------------------------------------------------
+table1.paper_reference:
+  initial_f1:
+    200: 3.21           # PAPER initial (random-mask) f1 before any update
+    400: 2.16           # PAPER
+  initial_f2:
+    200: 200.0          # PAPER initialized size equals predefined k
+    400: 400.0          # PAPER
+  "0.2":
+    200: [1.92, 0.33, 190.7, 3.9]   # PAPER Table 1
+    400: [1.05, 0.26, 384.1, 4.4]   # PAPER Table 1
+  "0.3":
+    200: [2.26, 0.35, 185.0, 4.6]   # PAPER Table 1
+    400: [1.29, 0.33, 373.0, 6.0]   # PAPER Table 1
+  "0.4":
+    200: [2.48, 0.30, 175.5, 7.7]   # PAPER Table 1
+    400: [1.82, 0.41, 366.2, 8.1]   # PAPER Table 1
+
+# -----------------------------------------------------------------------------
+# Expected qualitative directions verified by the driver (table1_prelim.py)
+# -----------------------------------------------------------------------------
+expected_directions:
+  achieved_f1_lower_than_initial: true    # PAPER both f1 and f2 improve on init
+  achieved_f2_lower_than_initial: true    # PAPER
+  larger_epsilon_non_increasing_f2: true  # PAPER larger epsilon -> smaller size
+  larger_epsilon_non_decreasing_f1: true  # PAPER larger epsilon -> larger f1
+
+# -----------------------------------------------------------------------------
+# Smoke-test overrides: `--smoke` runs a fast end-to-end check on GPU-less CPU
+# -----------------------------------------------------------------------------
+smoke:
+  n: 200                # SUGGESTED
+  ks: [40, 80]          # SUGGESTED
+  epsilons: [0.2, 0.3]  # SUGGESTED
+  repeats: 1            # SUGGESTED
+  T: 20                 # SUGGESTED
+  inner_epochs: 1       # SUGGESTED
+  batch_size: 64        # SUGGESTED
+  eval_batch_size: 128  # SUGGESTED
+  save_artifacts: false
+  verbose: false
+
+# -----------------------------------------------------------------------------
+# Explicitly out of scope for this reproduction (must never be executed here)
+# -----------------------------------------------------------------------------
+out_of_scope:
+  - section5.4    # ImageNet-1k experiments
+  - appendix_e.5  # continual learning
+  - appendix_e.6  # streaming coreset selection

@@ -1,0 +1,8 @@
+defaults: [inhand.yaml]
+algo:
+  name: ppo
+  num_policies: 1
+  aggregation: none
+  use_offpolicy: false
+eval:
+  policy_ids: [0]

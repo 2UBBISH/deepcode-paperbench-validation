@@ -1,0 +1,28 @@
+{
+ "judged_score": 0.9573836657169991,
+ "judged_invalid": 4,
+ "reparsed_score": 0.9611726236726237,
+ "reparsed_invalid": 0,
+ "leaves": {
+  "6e6558f9-765b-463e-a170-becf47ed9f0c": {
+   "valid_score": true,
+   "score": 1,
+   "explanation": "The code implements FRE-mlp training on AntMaze using the exact hyperparameters from Appendix A (batch size 512, 150k/850k steps, architecture, etc.) and the MLP prior matches Appendix B. The judge verified all components and found the criterion fully met."
+  },
+  "f901be1c-2239-4d5c-b34c-9a839842fbe4": {
+   "valid_score": true,
+   "score": 1,
+   "explanation": "The OPAL algorithm is fully implemented with a trajectory VAE, latent-conditioned policy, and training loop. The train_baseline.py entry point accepts --domain kitchen, which loads kitchen-complete-v0 via build_dataset, enabling full OPAL training on that dataset. The batch driver scripts/run_baselines.sh also trains OPAL on kitchen. The criterion is met."
+  },
+  "2e132b5f-15a0-4774-9b6f-6e2538c5ef9f": {
+   "valid_score": true,
+   "score": 1,
+   "explanation": "The code in baselines/opal.py correctly implements the privileged evaluation: it samples 10 skills from a unit Gaussian per episode, rolls out the policy for the full episode for each skill, and selects the best-performing rollout based on maximum return."
+  },
+  "2ff868ca-cb09-4867-8ba2-46340e1039a2": {
+   "valid_score": true,
+   "score": 1,
+   "explanation": "The submission implements the ant-random-simplex evaluation by constructing 5 seeded opensimplex tasks, evaluating each, and averaging their scores, which matches the paper's description."
+  }
+ }
+}

@@ -1,0 +1,132 @@
+# FRE configuration — AntMaze (antmaze-large-diverse-v2)
+# Paper: "Zero-Shot Reinforcement Learning via Functional Reward Encodings"
+#
+# Loaded by fre/main.py (--config) and usable by fre/train_encoder.py,
+# fre/train_policy.py and fre/evaluate.py via their respective CLI flags.
+#
+# AntMaze specifics (Sec 4 / App B):
+#   * 29-d raw observation, 8-d action, episode length 2000.
+#   * XY positions (dims 0,1) are REMOVED from linear reward-function generation.
+#   * Goal success uses 32x32 XY discretisation with a bin-distance threshold of 2.
+#   * Encoder pretraining uses the short 150k-step schedule; policy uses 850k.
+
+domain: antmaze
+sub_domain: null
+
+# ---------------------------------------------------------------------------
+# Data / environment
+# ---------------------------------------------------------------------------
+dataset: antmaze-large-diverse-v2
+data_root: null            # set to ./data if datasets are stored locally
+max_episode_steps: 2000
+obs_dim: 29
+action_dim: 8
+xy_dims: [0, 1]
+xy_extent: 36.0
+xy_bins: 32
+goal_threshold: 2.0
+center_start: true
+
+# ---------------------------------------------------------------------------
+# Phase 1 — FRE encoder + reward decoder (Algorithm 1, Eq. 6)
+# ---------------------------------------------------------------------------
+encoder:
+  steps: 150000
+  batch_size: 512
+  lr: 0.0001
+  beta: 0.01
+  context_size: 32          # K context (state, reward) pairs
+  decoder_size: 8           # K' held-out decoder states
+  latent_dim: 128
+  state_emb_dim: 64         # 64-d state projection
+  reward_emb_dim: 64        # 64-d reward embedding (64 + 64 = 128-d token)
+  num_blocks: 4             # transformer blocks
+  num_heads: 4
+  mlp_dim: 256              # 128 -> 256 -> 128 transformer MLP
+  dropout: 0.0
+  decoder_hidden: [512, 512, 512]
+  grad_clip: 10.0
+  log_interval: 1000
+  eval_interval: 5000
+  checkpoint_interval: 25000
+  exclude_xy: true          # remove XY dims from linear reward generation
+
+# ---------------------------------------------------------------------------
+# Phase 2 — z-conditioned IQL policy (Sec 4.3)
+# ---------------------------------------------------------------------------
+policy:
+  steps: 850000
+  batch_size: 512
+  lr: 0.0001
+  discount: 0.88
+  expectile: 0.8
+  awr_temperature: 3.0
+  target_update_rate: 0.001
+  hidden_sizes: [512, 512, 512]
+  context_size: 32
+  latent_dim: 128
+  num_reward_functions: 512   # reward functions sampled per RL batch
+  reward_resample_interval: 1
+  grad_clip: 1.0
+  log_interval: 1000
+  eval_interval: 25000
+  checkpoint_interval: 50000
+  exclude_xy: true
+
+# ---------------------------------------------------------------------------
+# Reward prior p(eta) (Sec 4.2, App B) — uniform mixture
+# ---------------------------------------------------------------------------
+prior:
+  families: [goal_reaching, linear, mlp]
+  weights: [0.33, 0.33, 0.33]
+  goal_reaching:
+    p_current: 0.2
+    p_future: 0.5
+    p_random: 0.3
+    future_mode: geometric
+    geom_p: 0.5
+    goal_threshold: 2.0
+    reward_success: 0.0
+    reward_failure: -1.0
+    metric: euclidean
+    dims: [0, 1]            # AntMaze goals are XY goals
+  linear:
+    mask_prob: 0.9
+    weight_range: 1.0
+    exclude_dims: [0, 1]    # remove XY positions
+  mlp:
+    hidden_sizes: [32]
+    activation: tanh
+    init_scale: 1.0
+    clip: 1.0
+
+# ---------------------------------------------------------------------------
+# Phase 3 — zero-shot evaluation (Table 1 / Figure 5)
+# ---------------------------------------------------------------------------
+eval:
+  num_episodes: 20
+  num_seeds: 5
+  context_size: 32          # exactly 32 (state, reward) pairs at test time
+  deterministic: true
+  base_seed: 0
+  score_mode: success_rate
+  tasks:
+    goals: [[28, 0], [0, 15], [35, 24], [12, 24], [33, 16]]
+    directional: [[-1, 0], [0, 1], [0, -1], [1, 0]]
+    simplex_seeds: [1, 2, 3, 4, 5]
+    paths: [path-center, path-loop, path-edges]
+
+# ---------------------------------------------------------------------------
+# Table 4 ablation subsets (AntMaze totals)
+# ---------------------------------------------------------------------------
+ablation: all                 # all | goals | lin | mlp | lin-mlp | goal-mlp | goal-lin
+hint: false                   # Figure 6 FRE-hint prior
+
+# ---------------------------------------------------------------------------
+# Run / bookkeeping
+# ---------------------------------------------------------------------------
+seed: 0
+device: auto                  # auto | cuda | cpu
+output_dir: ./runs
+log_file: null
+dry_run: false

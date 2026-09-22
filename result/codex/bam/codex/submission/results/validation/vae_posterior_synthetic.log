@@ -1,0 +1,11 @@
+AVI reconstruction MSE: 0.33659
+B=10: BaM lambda=10.0, ADVI lr=0.05
+B=10: final MSE BaM 0.33323 (best 0.33313 at 90 grad evals), ADVI 0.33476 (best 0.33476), GSM 0.33564
+    budget 3000: BaM (B=10) best MSE 0.33313 after 90 gradient evaluations
+    budget 3000: ADVI (B=10) best MSE 0.33476 after 100 gradient evaluations
+    budget 3000: GSM (B=10) best MSE 0.33564 after 100 gradient evaluations
+B=40: BaM lambda=200.0, ADVI lr=0.05
+B=40: final MSE BaM 0.33148 (best 0.33144 at 320 grad evals), ADVI 0.33459 (best 0.33459), GSM 0.33560
+    budget 3000: BaM (B=40) best MSE 0.33144 after 320 gradient evaluations
+    budget 3000: ADVI (B=40) best MSE 0.33459 after 400 gradient evaluations
+    budget 3000: GSM (B=40) best MSE 0.33560 after 400 gradient evaluations

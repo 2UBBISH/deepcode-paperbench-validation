@@ -1,0 +1,23 @@
+# Core
+torch>=2.0
+transformers>=4.38
+tokenizers>=0.15
+datasets>=2.18
+accelerate>=0.27
+numpy>=1.24
+pyyaml>=6.0
+tqdm>=4.65
+
+# Adapter backbones (DeBERTa-v3 / BERT tokenizers)
+sentencepiece>=0.1.99
+protobuf>=3.20
+
+# Black-box LLM APIs
+openai>=1.10
+
+# Baselines (GPU only, not needed for the BBOX-ADAPTER runs)
+peft>=0.8
+bitsandbytes>=0.41
+
+# Development
+pytest>=7.0

@@ -1,0 +1,5 @@
+# Sec. 4.5 / Sec. 6.3 ablation on the in-hand tasks: sigma = 0.005.
+defaults: [../sapg_shadow_hand.yaml]
+algo:
+  name: sapg
+  entropy_coef: 0.005

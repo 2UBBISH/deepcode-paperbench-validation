@@ -1,0 +1,193 @@
+== unit tests ==
+test_bam_beats_advi_per_gradient_evaluation (test_bam_updates.TestBaMUpdates)
+Section 5.1 trend: BaM reaches a much smaller KL for the same budget. ... ok
+test_convergence_on_gaussian_target (test_bam_updates.TestBaMUpdates) ... ok
+test_gsm_recovers_gaussian_target (test_bam_updates.TestBaMUpdates) ... ok
+test_large_regularization_one_sample_recovers_gsm (test_bam_updates.TestBaMUpdates)
+Appendix C.3: ``B = 1`` and ``lambda -> inf`` reproduces GSM's updates. ... ok
+test_low_rank_and_full_solver_agree (test_bam_updates.TestBaMUpdates) ... ok
+test_match_step_matches_closed_form (test_bam_updates.TestBaMUpdates) ... ok
+test_zero_regularization_limit_leaves_iterates_unchanged (test_bam_updates.TestBaMUpdates)
+Section 3.1: when ``lambda_t -> 0`` the updates have no effect. ... ok
+test_affine_invariance (test_divergence.TestScoreBasedDivergence)
+Theorem A.4: the divergence is invariant under affine reparameterizations. ... ok
+test_annealing (test_divergence.TestScoreBasedDivergence)
+Theorem A.5: for ``p ∝ q^beta`` the divergence equals ``D (beta - 1)^2``. ... ok
+test_exponential_tilting (test_divergence.TestScoreBasedDivergence)
+Theorem A.6: for ``p ∝ q exp(theta^T z)`` the divergence is ``theta^T Psi theta``. ... ok
+test_monte_carlo_matches_closed_form (test_divergence.TestScoreBasedDivergence) ... ok
+test_nonnegativity_and_equality (test_divergence.TestScoreBasedDivergence) ... ok
+test_relation_to_kl_with_equal_covariance (test_divergence.TestScoreBasedDivergence)
+Corollary A.8: half the divergence equals the KL divergence. ... ok
+test_low_rank_solver_matches_general_solver (test_matrix_equations.TestQuadraticMatrixEquation) ... ok
+test_monotonicity_lemma (test_matrix_equations.TestQuadraticMatrixEquation)
+Lemma B.4: a smaller ``T`` (i.e. ``T >= U``) gives a smaller solution. ... ok
+test_small_U_limit (test_matrix_equations.TestQuadraticMatrixEquation)
+With ``U -> 0`` the solution tends to ``V`` (as in the limit ``lambda -> 0``). ... ok
+test_solution_satisfies_equation_and_is_pd (test_matrix_equations.TestQuadraticMatrixEquation) ... ok
+test_kl_gaussian_matches_monte_carlo (test_metrics.TestMetrics) ... ok
+test_kl_of_identical_distributions_is_zero (test_metrics.TestMetrics) ... ok
+test_non_gaussian_kl_estimators_are_consistent (test_metrics.TestMetrics)
+For a sinh-arcsinh target with small skew the KL is close to the Gaussian one. ... ok
+test_reconstruction_mse (test_metrics.TestMetrics) ... ok
+test_relative_errors (test_metrics.TestMetrics) ... ok
+test_bam_covariance_stays_positive_definite_on_ill_conditioned_posterior (test_pipeline.TestPipeline)
+Regression test: on the (very ill-conditioned) GP Poisson regression ... ok
+test_deep_generative_mse_metric (test_pipeline.TestPipeline) ... ok
+test_gaussian_metrics_and_method_dispatch (test_pipeline.TestPipeline) ... ok
+test_plot_curves_writes_a_file (test_pipeline.TestPipeline) ... /Users/apple/Library/Python/3.9/lib/python/site-packages/matplotlib/_fontconfig_pattern.py:64: PyparsingDeprecationWarning: 'oneOf' deprecated - use 'one_of'
+  prop = Group((name + Suppress("=") + comma_separated(value)) | oneOf(_CONSTANTS))
+/Users/apple/Library/Python/3.9/lib/python/site-packages/matplotlib/_fontconfig_pattern.py:85: PyparsingDeprecationWarning: 'parseString' deprecated - use 'parse_string'
+  parse = parser.parseString(pattern)
+/Users/apple/Library/Python/3.9/lib/python/site-packages/matplotlib/_fontconfig_pattern.py:89: PyparsingDeprecationWarning: 'resetCache' deprecated - use 'reset_cache'
+  parser.resetCache()
+/Users/apple/Library/Python/3.9/lib/python/site-packages/matplotlib/_mathtext.py:45: PyparsingDeprecationWarning: 'enablePackrat' deprecated - use 'enable_packrat'
+  ParserElement.enablePackrat()
+In /Users/apple/Library/Python/3.9/lib/python/site-packages/matplotlib/mpl-data/stylelib/classic.mplstyle: 'parseString' deprecated - use 'parse_string'
+In /Users/apple/Library/Python/3.9/lib/python/site-packages/matplotlib/mpl-data/stylelib/classic.mplstyle: 'resetCache' deprecated - use 'reset_cache'
+/Users/apple/Library/Python/3.9/lib/python/site-packages/matplotlib/_fontconfig_pattern.py:85: PyparsingDeprecationWarning: 'parseString' deprecated - use 'parse_string'
+  parse = parser.parseString(pattern)
+/Users/apple/Library/Python/3.9/lib/python/site-packages/matplotlib/_fontconfig_pattern.py:89: PyparsingDeprecationWarning: 'resetCache' deprecated - use 'reset_cache'
+  parser.resetCache()
+/Users/apple/Library/Python/3.9/lib/python/site-packages/matplotlib/_mathtext.py:2010: PyparsingDeprecationWarning: 'oneOf' deprecated - use 'one_of'
+  p.space          = oneOf(self._space_widths)("space")
+/Users/apple/Library/Python/3.9/lib/python/site-packages/matplotlib/_mathtext.py:2012: PyparsingDeprecationWarning: 'oneOf' deprecated - use 'one_of'
+  p.style_literal  = oneOf(
+/Users/apple/Library/Python/3.9/lib/python/site-packages/matplotlib/_mathtext.py:2015: PyparsingDeprecationWarning: 'leaveWhitespace' deprecated - use 'leave_whitespace'
+  p.symbol         = Regex(
+/Users/apple/Library/Python/3.9/lib/python/site-packages/matplotlib/_mathtext.py:2024: PyparsingDeprecationWarning: 'oneOf' deprecated - use 'one_of'
+  p.start_group    = Optional(r"\math" + oneOf(self._fontnames)("font")) + "{"
+/Users/apple/Library/Python/3.9/lib/python/site-packages/matplotlib/_mathtext.py:2027: PyparsingDeprecationWarning: 'oneOf' deprecated - use 'one_of'
+  p.delim          = oneOf(self._delims)
+/Users/apple/Library/Python/3.9/lib/python/site-packages/matplotlib/_mathtext.py:1984: PyparsingDeprecationWarning: 'setName' deprecated - use 'set_name'
+  val.setName(key)
+/Users/apple/Library/Python/3.9/lib/python/site-packages/matplotlib/_mathtext.py:1987: PyparsingDeprecationWarning: 'setParseAction' deprecated - use 'set_parse_action'
+  val.setParseAction(getattr(self, key))
+/Users/apple/Library/Python/3.9/lib/python/site-packages/matplotlib/_mathtext.py:1748: PyparsingDeprecationWarning: 'setParseAction' deprecated - use 'set_parse_action'
+  return Empty().setParseAction(raise_error)
+/Users/apple/Library/Python/3.9/lib/python/site-packages/matplotlib/_mathtext.py:2088: PyparsingDeprecationWarning: 'endQuoteChar' argument is deprecated, use 'end_quote_char'
+  p.text = cmd(r"\text", QuotedString('{', '\\', endQuoteChar="}"))
+/Users/apple/Library/Python/3.9/lib/python/site-packages/matplotlib/_mathtext.py:2097: PyparsingDeprecationWarning: 'oneOf' deprecated - use 'one_of'
+  + OneOrMore(oneOf(["_", "^"]) - p.placeable)("subsuper")
+/Users/apple/Library/Python/3.9/lib/python/site-packages/matplotlib/_mathtext.py:2146: PyparsingDeprecationWarning: 'unquoteResults' argument is deprecated, use 'unquote_results'
+  p.math_string   = QuotedString('$', '\\', unquoteResults=False)
+/Users/apple/Library/Python/3.9/lib/python/site-packages/matplotlib/_mathtext.py:2147: PyparsingDeprecationWarning: 'leaveWhitespace' deprecated - use 'leave_whitespace'
+  p.non_math      = Regex(r"(?:(?:\\[$])|[^$])*").leaveWhitespace()
+/Users/apple/Library/Python/3.9/lib/python/site-packages/matplotlib/_mathtext.py:2170: PyparsingDeprecationWarning: 'parseString' deprecated - use 'parse_string'
+  result = self._expression.parseString(s)
+/Users/apple/Library/Python/3.9/lib/python/site-packages/matplotlib/_mathtext.py:2197: PyparsingDeprecationWarning: 'parseString' deprecated - use 'parse_string'
+  return self._math_expression.parseString(toks[0][1:-1], parseAll=True)
+/Users/apple/Library/Python/3.9/lib/python/site-packages/pyparsing/util.py:466: PyparsingDeprecationWarning: 'parseAll' argument is deprecated, use 'parse_all'
+  return fn(self, *args, **kwargs)
+/Users/apple/Library/Python/3.9/lib/python/site-packages/matplotlib/_mathtext.py:2178: PyparsingDeprecationWarning: 'resetCache' deprecated - use 'reset_cache'
+  ParserElement.resetCache()
+ok
+test_posterior_metrics (test_pipeline.TestPipeline) ... ok
+test_run_repeats_and_summarise (test_pipeline.TestPipeline) ... ok
+test_score_matches_finite_differences (test_targets.TestDeepGenerativePosterior) ... ok
+test_reference_draws_are_stationary (test_targets.TestPosteriorModels) ... ok
+test_reference_draws_have_high_density (test_targets.TestPosteriorModels) ... ok
+test_variational_summaries_are_in_constrained_space (test_targets.TestPosteriorModels)
+The lognormal moments used for the relative-error metrics are exact. ... ok
+test_density_is_normalized (test_targets.TestSinhArcsinh) ... ok
+test_gaussian_limit (test_targets.TestSinhArcsinh) ... ok
+test_samples_match_density (test_targets.TestSinhArcsinh)
+The empirical distribution of the samples matches the density. ... ok
+test_score_matches_finite_differences (test_targets.TestSinhArcsinh) ... ok
+test_bounds_hold_for_all_regularization_levels (test_theory.TestTheorem31) ... ok
+test_decay_rate_matches_theory (test_theory.TestTheorem31)
+The measured decay of ``||eps_t||`` is close to the predicted ``(1-delta)``. ... ok
+test_matches_finite_batch_run (test_theory.TestTheorem31)
+The finite-batch run approaches the infinite-batch recursion as B grows. ... ok
+test_one_step_convergence (test_theory.TestTheorem31)
+Corollary D.5: in the limit ``B -> inf`` followed by ``lambda -> inf``, ... ok
+test_per_iteration_inequalities (test_theory.TestTheorem31)
+eqs. (19)-(20): ||eps_{t+1}|| <= (1-delta)||eps_t|| and ... ok
+
+----------------------------------------------------------------------
+Ran 41 tests in 43.331s
+
+OK
+== posteriordb data ==
+arK: dim=7 draws=(10000, 7) -> /Users/apple/Documents/0919-test/codex/work/bam-codex-desktop/submission/data/posteriordb
+gp_pois_regr: dim=13 draws=(10000, 13) -> /Users/apple/Documents/0919-test/codex/work/bam-codex-desktop/submission/data/posteriordb
+eight_schools_centered: dim=10 draws=(10000, 10) -> /Users/apple/Documents/0919-test/codex/work/bam-codex-desktop/submission/data/posteriordb
+== Section 5.1 (Gaussian, quick) ==
+D=   4 BaM (B=2)          forward_kl  final=9.992e-16  (1.0s)
+D=   4 BaM (B=5)          forward_kl  final=-1.11e-16  (0.5s)
+D=   4 ADVI (B=2)         forward_kl  final=0.01627  (2.2s)
+D=   4 Fisher (B=2)       forward_kl  final=0.2469  (1.3s)
+D=   4 Score (B=2)        forward_kl  final=0.3477  (1.3s)
+D=   4 GSM (B=2)          forward_kl  final=-6.661e-16  (0.9s)
+  saved /Users/apple/Documents/0919-test/codex/work/bam-codex-desktop/submission/results/gaussian_D4_forward_kl.png
+D=   4 BaM (B=2)          reverse_kl  final=1.11e-16  (0.3s)
+D=   4 BaM (B=5)          reverse_kl  final=1.11e-16  (0.3s)
+D=   4 ADVI (B=2)         reverse_kl  final=0.01544  (1.5s)
+D=   4 Fisher (B=2)       reverse_kl  final=0.1455  (1.3s)
+D=   4 Score (B=2)        reverse_kl  final=0.181  (1.4s)
+D=   4 GSM (B=2)          reverse_kl  final=8.882e-16  (0.9s)
+  saved /Users/apple/Documents/0919-test/codex/work/bam-codex-desktop/submission/results/gaussian_D4_reverse_kl.png
+D=  16 BaM (B=2)          forward_kl  final=-3.109e-14  (0.7s)
+D=  16 BaM (B=5)          forward_kl  final=-1.688e-14  (0.7s)
+D=  16 ADVI (B=2)         forward_kl  final=12.41  (2.1s)
+D=  16 Fisher (B=2)       forward_kl  final=61.2  (1.6s)
+D=  16 Score (B=2)        forward_kl  final=75.69  (1.5s)
+D=  16 GSM (B=2)          forward_kl  final=3.197e-14  (1.0s)
+  saved /Users/apple/Documents/0919-test/codex/work/bam-codex-desktop/submission/results/gaussian_D16_forward_kl.png
+D=  16 BaM (B=2)          reverse_kl  final=5.596e-14  (0.3s)
+D=  16 BaM (B=5)          reverse_kl  final=-1.776e-15  (0.3s)
+D=  16 ADVI (B=2)         reverse_kl  final=3.808  (1.7s)
+D=  16 Fisher (B=2)       reverse_kl  final=9.029  (1.5s)
+D=  16 Score (B=2)        reverse_kl  final=10.72  (1.6s)
+D=  16 GSM (B=2)          reverse_kl  final=-5.596e-14  (1.0s)
+  saved /Users/apple/Documents/0919-test/codex/work/bam-codex-desktop/submission/results/gaussian_D16_reverse_kl.png
+== Section 5.1 (sinh-arcsinh, quick) ==
+skew=0.2 BaM (B=2)          forward_kl  final=0.1605 (3.3s)
+skew=0.2 BaM (B=5)          forward_kl  final=0.1943 (1.5s)
+skew=0.2 ADVI (B=5)         forward_kl  final=0.3379 (2.1s)
+skew=0.2 Fisher (B=5)       forward_kl  final=0.2312 (1.8s)
+skew=0.2 Score (B=5)        forward_kl  final=0.1684 (1.7s)
+skew=0.2 GSM (B=5)          forward_kl  final=0.1371 (1.0s)
+  saved /Users/apple/Documents/0919-test/codex/work/bam-codex-desktop/submission/results/shash_skew_forward_kl.png
+tail=0.1 BaM (B=2)          forward_kl  final=1.002e+14 (1.0s)
+tail=0.1 BaM (B=5)          forward_kl  final=1.001e+14 (0.9s)
+tail=0.1 ADVI (B=5)         forward_kl  final=6.071e+12 (1.8s)
+tail=0.1 Fisher (B=5)       forward_kl  final=1.555e+13 (1.7s)
+tail=0.1 Score (B=5)        forward_kl  final=5.285e+14 (1.7s)
+tail=0.1 GSM (B=5)          forward_kl  final=135.3 (1.3s)
+  saved /Users/apple/Documents/0919-test/codex/work/bam-codex-desktop/submission/results/shash_tail_forward_kl.png
+skew=0.2 BaM (B=2)          reverse_kl  final=0.153 (0.9s)
+skew=0.2 BaM (B=5)          reverse_kl  final=0.1537 (1.0s)
+skew=0.2 ADVI (B=5)         reverse_kl  final=0.2732 (1.6s)
+skew=0.2 Fisher (B=5)       reverse_kl  final=0.1856 (1.6s)
+skew=0.2 Score (B=5)        reverse_kl  final=0.1245 (1.7s)
+skew=0.2 GSM (B=5)          reverse_kl  final=0.1226 (1.0s)
+  saved /Users/apple/Documents/0919-test/codex/work/bam-codex-desktop/submission/results/shash_skew_reverse_kl.png
+tail=0.1 BaM (B=2)          reverse_kl  final=16.12 (0.7s)
+tail=0.1 BaM (B=5)          reverse_kl  final=15.91 (0.8s)
+tail=0.1 ADVI (B=5)         reverse_kl  final=12.79 (1.5s)
+tail=0.1 Fisher (B=5)       reverse_kl  final=13.1 (1.7s)
+tail=0.1 Score (B=5)        reverse_kl  final=19.6 (1.8s)
+tail=0.1 GSM (B=5)          reverse_kl  final=117.5 (1.1s)
+  saved /Users/apple/Documents/0919-test/codex/work/bam-codex-desktop/submission/results/shash_tail_reverse_kl.png
+== Section 5.2 (posteriordb, quick) ==
+arK                      BaM (B=8)        rel_mean  final=16.58 (1.3s)
+arK                      ADVI (B=8)       rel_mean  final=25.83 (1.7s)
+arK                      GSM (B=8)        rel_mean  final=962.5 (0.4s)
+  saved /Users/apple/Documents/0919-test/codex/work/bam-codex-desktop/submission/results/posteriordb_arK_rel_mean.png
+arK                      BaM (B=8)        rel_sd    final=2.011 (0.4s)
+arK                      ADVI (B=8)       rel_sd    final=172.5 (0.9s)
+arK                      GSM (B=8)        rel_sd    final=565.2 (0.4s)
+  saved /Users/apple/Documents/0919-test/codex/work/bam-codex-desktop/submission/results/posteriordb_arK_rel_sd.png
+== Theorem 3.1 ==
+lambda=     0.1 alpha=0.00881 beta=0.00881 delta=0.000801 | eps bound True | Delta bound True | per-iteration True/True | final ||eps||=4.64e+00 ||Delta||=9.56e-01
+lambda=       1 alpha=0.00881 beta=0.00881 delta=0.0044 | eps bound True | Delta bound True | per-iteration True/True | final ||eps||=2.68e-14 ||Delta||=1.49e-11
+lambda=      10 alpha=0.00881 beta=0.00881 delta=0.00801 | eps bound True | Delta bound True | per-iteration True/True | final ||eps||=8.35e-61 ||Delta||=1.52e-12
+lambda=     100 alpha=0.00881 beta=0.00881 delta=0.00872 | eps bound True | Delta bound True | per-iteration True/True | final ||eps||=6.82e-119 ||Delta||=1.41e-13
+  saved /Users/apple/Documents/0919-test/codex/work/bam-codex-desktop/submission/results/theorem31_errors.png
+finite batch (B=4096) vs infinite batch: max relative difference in ||eps_t|| = 0.005
+Corollary D.5 (one step, B -> inf then lambda -> inf):
+  lambda=100: ||eps_1||=7.300e-01  ||Delta_1||=5.697e-01
+  lambda=10000: ||eps_1||=1.240e-02  ||Delta_1||=9.825e-03
+  lambda=1e+06: ||eps_1||=1.251e-04  ||Delta_1||=9.908e-05
+done; see results/

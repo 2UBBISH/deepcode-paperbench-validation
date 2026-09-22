@@ -1,0 +1,339 @@
+# =============================================================================
+# SNPSE — default configuration
+# Sequential Neural Posterior Score Estimation (ICML 2024 submission)
+#
+# This file collects ALL hyper-parameters used by
+#   * snpse/snpse/{sdes,losses,score_network,trainer,sampler,npse,tsnpse,
+#                   snpse_variants,nlse,hpr}.py
+#   * snpse/tasks/{benchmarks,pyloric,c2st}.py
+#   * snpse/experiments/{run_benchmarks,run_pyloric,run_ablations,baselines}.py
+#
+# Values that the paper leaves unspecified are marked with `# DEFAULT` and are
+# the choices recorded in the reproduction plan (Song et al. 2021 SDE-specific
+# weightings, 1000-step uniform time grid, PyTorch Adam defaults, RK45 with
+# atol = rtol = 1e-5).
+#
+# Forward-SDE specific settings (VE/VP constants, sampling tolerances, HPR
+# sizes, per-task dimensionalities) live in `configs/sde_config.yaml`; this file
+# references them through the `sde:` block so `--config configs/default.yaml`
+# is sufficient on its own.
+#
+# Paper sections: §2.2 (NPSE), §3.1 (TSNPSE), §3.2 (variants), §5.1 (setup),
+# §5.2 (benchmarks), §5.3 (pyloric), §E.1 (§tasks), §E.2 (pyloric), §E.3
+# (implementation details).
+# =============================================================================
+
+default: npse
+
+# -----------------------------------------------------------------------------
+# Run identity / reproducibility
+# -----------------------------------------------------------------------------
+run:
+  name: snpse
+  seed: 0
+  deterministic: false        # torch.use_deterministic_algorithms
+  device: null                # null -> cuda if available else cpu
+  dtype: float32
+  output_dir: results
+  verbose: true
+  progress_bar: true
+
+# -----------------------------------------------------------------------------
+# Experimental data budgets (Section 5.2 / E.3.1)
+# -----------------------------------------------------------------------------
+data:
+  budgets: [1000, 10000, 100000]     # simulation budgets N for the benchmark grid
+  default_budget: 10000
+  observation_index: 1                # sbibm reference observation
+  cache_dir: null                     # null -> $SNPSE_DATA_DIR or ~/.cache/snpse/datasets
+  use_cache: true
+  standardise: true                   # affine whitening of theta_t and x (E.3.2)
+
+# -----------------------------------------------------------------------------
+# Forward noising SDE (E.3.1) — see configs/sde_config.yaml for the full block
+# -----------------------------------------------------------------------------
+sde:
+  default: ve
+  ve:
+    sigma_min:
+      low_dim: 0.01                   # dim == 2  (SIR, Two Moons)
+      low_dim_threshold: 2
+      default: 0.05                   # all other dimensionalities
+    sigma_max:
+      mode: technique1                # Song & Ermon (2020) Technique 1
+      fixed: 1.0
+      technique1:
+        eps: 1.0e-8
+        min_points: 2
+      round1_only: true               # ADDENDUM: sequential methods use round-1 data only
+    T: 1.0
+  vp:
+    beta_min: 0.1
+    beta_max: 11.0
+    beta_schedule: linear
+    T: 1.0
+  # `lambda_t` weighting of the DSM loss is left unspecified by the paper ->
+  # use the SDE-specific likelihood weighting of Song et al. (2021): g(t)^2.
+  # DEFAULT
+  weighting:
+    mode: sde                         # "sde" -> lambda_t = g(t)^2 ; "none" -> lambda_t = 1
+    time_sampling: uniform            # t ~ U(0, 1), one draw per datapoint
+  time:
+    t_min: 0.0
+    t_max: 1.0
+
+# -----------------------------------------------------------------------------
+# Score network s_psi(theta_t, x, t) (Section 5.1, E.3.2)
+# -----------------------------------------------------------------------------
+network:
+  parameterisation: score             # "score" | "energy" (Appendix G)
+  hidden_dim: 256
+  n_layers: 3                         # three Linear layers per MLP
+  activation: silu                    # SiLU, no tanh
+  time_emb_dim: 64                    # sinusoidal t embedding
+  theta_emb_dim: null                 # null -> max(30, 4 * d_theta)
+  x_emb_dim: null                     # null -> max(30, 4 * d_x)
+  t_max: 1.0
+  init: xavier_uniform                # DEFAULT (paper unspecified)
+  bias_init: zero                     # DEFAULT
+
+# -----------------------------------------------------------------------------
+# Training loop (Section 5.1, E.3.2)
+# -----------------------------------------------------------------------------
+training:
+  optimiser: adam
+  lr: 1.0e-4
+  betas: [0.9, 0.999]                 # DEFAULT (PyTorch Adam defaults)
+  eps: 1.0e-8                         # DEFAULT
+  weight_decay: 0.0                   # DEFAULT
+  grad_clip: null                     # DEFAULT
+  max_iters: 3000
+  batch_size: null                    # null -> 50 (1e3,1e4) / 500 (1e5); see below
+  batch_sizes:
+    "1000": 50
+    "10000": 200
+    "100000": 500
+  val_fraction: 0.15                  # 15% hold-out for early stopping
+  val_batch_size: 512
+  patience: 1000                      # stop if val loss flat for 1000 steps
+  min_delta: 0.0
+  restore_best: true
+  log_every: 100
+  loss:
+    objective: npse                   # npse (eq 7) | tsnpse (eq 11) | snpse_a (eq 79)
+                                      # | snpse_b (eq 15/99) | snpse_c (eq 102)
+                                      # | nlse (eq 57) | prior_score (eq 64)
+    reduce: mean
+    one_sample_per_datapoint: true    # single t ~ U(0,1) and theta_t ~ p_{t|0} /
+
+# -----------------------------------------------------------------------------
+# Reverse-time sampling / density evaluation (Section 2.2, E.3.3)
+# -----------------------------------------------------------------------------
+sampler:
+  method: rk45                        # DEFAULT: probability-flow ODE, eq (3)
+  atol: 1.0e-5                        # DEFAULT
+  rtol: 1.0e-5                        # DEFAULT
+  n_steps: 1000                       # DEFAULT: 1000-step uniform time grid
+  t_max: 1.0
+  t_min: 0.0
+  trace_estimator: auto               # exact for d <= 32, Hutchinson/Skilling otherwise
+  exact_threshold: 32
+  hutchinson_probes: 1
+  chunk_size: 512
+  reverse_sde:
+    enabled: false                    # if true use eq (2) Euler-Maruyama instead of the ODE
+    method: euler
+    n_steps: 1000
+  reference:
+    ve: gaussian                      # N(0, sigma_max^2 I)
+    vp: gaussian                      # N(0, I)
+  num_samples: 10000
+
+# -----------------------------------------------------------------------------
+# Sequential inference (Section 3.1, Algorithm 1)
+# -----------------------------------------------------------------------------
+sequential:
+  num_rounds: 10                      # R
+  proposal_mode: latest               # "latest" -> pbar^{r-1} ; "mixture" -> ptilde^r (eq 10)
+  eps: 5.0e-4                         # HPR truncation quantile (kappa)
+  n_hpr_samples: 20000                # posterior draws used to estimate HPR_eps (eq 9)
+  hypercube_margin: 0.0
+  hpr_batch_size: 4096
+  hpr_max_batches: 200                # rejection-sampling cap
+  reuse_standardisers: true
+  warm_start: false                   # DEFAULT: retrain from scratch each round
+  compute_final_region: true
+  track_round_diagnostics: true
+  num_samples: 10000
+
+# Alternative sequential variants (Section 3.2, Appendices C.2-C.4)
+variants:
+  snpse_a:
+    correction: sir                   # post-hoc sampling-importance resampling (eq 12-14)
+    resample_size: null               # null -> round budget
+    resample_with_replacement: true
+    clip_weights: null
+  snpse_b:
+    correction: importance_weight     # importance-weighted DSM loss (eq 15/99)
+    normalise_weights: true
+    clip_weights: 10.0
+  snpse_c:
+    correction: score_space           # s + grad log ptilde_t - grad log p_t (eq 19/103/123)
+    use_analytic_prior_score: true
+    n_proposal_score_samples: 20000
+    proposal_score_iters: null        # null -> max_iters
+
+# -----------------------------------------------------------------------------
+# NLSE (Appendix B, Algorithm 2)
+# -----------------------------------------------------------------------------
+nlse:
+  mode: nlse                          # "nlse" (eq 57/55) | "npse" (eq 7)
+  prior_score:
+    mode: auto                        # analytic when available, else Algorithm 2 (eq 64)
+    n_samples: 20000
+    max_iters: 3000
+    batch_size: 200
+    hidden_dim: 256
+    n_layers: 3
+    time_emb_dim: 64
+    lr: 1.0e-4
+    families:                         # closed-form perturbed prior (eq 58/59)
+      uniform: analytic
+      gaussian: analytic
+      gmm: analytic
+      other: learned
+
+# -----------------------------------------------------------------------------
+# Tasks (Section E.1) — eight sbibm benchmarks
+# -----------------------------------------------------------------------------
+tasks:
+  names:
+    - gaussian_linear
+    - gaussian_mixture
+    - two_moons
+    - gaussian_linear_uniform
+    - bernoulli_glm
+    - slcp
+    - sir
+    - lotka_volterra
+  backend: auto                       # auto | sbibm | fallback
+  dimensions:                         # informational; mirrors sde_config.yaml
+    gaussian_linear:         {dim_theta: 10,  dim_x: 10,  sde: ve}
+    gaussian_mixture:        {dim_theta: 2,   dim_x: 2,   sde: ve}
+    two_moons:               {dim_theta: 2,   dim_x: 2,   sde: ve}
+    gaussian_linear_uniform: {dim_theta: 10,  dim_x: 10,  sde: ve}
+    bernoulli_glm:           {dim_theta: 10,  dim_x: 10,  sde: ve}
+    slcp:                    {dim_theta: 5,   dim_x: 8,   sde: vp}
+    sir:                     {dim_theta: 2,   dim_x: 10,  sde: ve}
+    lotka_volterra:          {dim_theta: 4,   dim_x: 10,  sde: vp}
+  recommendation:                     # VE preferred low-dim, VP high-dim (Section 5.2)
+    low_dim_max: 10
+    high_dim_min: 11
+
+# -----------------------------------------------------------------------------
+# Pyloric neuroscience task (Section 5.3, E.2)
+# -----------------------------------------------------------------------------
+pyloric:
+  dim_theta: 31
+  dim_x: 18
+  sde: vp
+  num_rounds: 9
+  initial_simulations: 30000
+  simulations_per_round: 20000
+  num_samples: 10000
+  eps: 5.0e-4
+  n_hpr_samples: 20000
+  invalid_statistic:
+    offset_std: 2.0                   # replace invalid stats with mean - 2 * std
+    n_prior_predictive: 10000
+  coverage:
+    enabled: true
+    levels: [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.95]
+    num_posterior_draws: 200
+    reference_pool: 1000
+  posterior_predictive_samples: 500
+
+# -----------------------------------------------------------------------------
+# C2ST metric (Section 5.2; sbibm default settings)
+# -----------------------------------------------------------------------------
+c2st:
+  n_folds: 10
+  scoring: accuracy
+  z_score: true
+  hidden_layer_sizes: [50, 50]
+  max_iter: 1000
+  num_reference_samples: null         # null -> number of posterior samples
+  backend: auto                       # auto | sbibm | sklearn | torch
+
+# -----------------------------------------------------------------------------
+# Baselines (Section 5.2 / F) — external implementations, not re-implemented
+# -----------------------------------------------------------------------------
+baselines:
+  methods: [npe, snpe_c, tsnpe, fmpe]
+  backend: auto                       # auto | sbibm | mackelab | fallback
+  npe:
+    backend: sbibm                    # sbibm default hyper-parameters
+  snpe_c:
+    backend: sbibm                    # APT loss, sbibm defaults
+  tsnpe:
+    backend: mackelab                 # github.com/mackelab/tsnpe_neurips
+    repo: https://github.com/mackelab/tsnpe_neurips
+  fmpe:
+    backend: published                # numbers transcribed from Dax et al. 2023, App. F
+  fallback:                           # used only if the external backends are unavailable
+    n_components: 10
+    hidden_dim: 256
+    n_layers: 3
+    lr: 1.0e-4
+    max_iters: 3000
+    clip_weights: 10.0
+    proposal: mixture
+  num_rounds: 10
+  num_samples: 10000
+
+# -----------------------------------------------------------------------------
+# Experiment sweep definition (Sections 5.2-5.4, Figures 2-5)
+# -----------------------------------------------------------------------------
+experiments:
+  methods: [npse, tsnpse]
+  sdes: [ve, vp]
+  budgets: [1000, 10000, 100000]
+  num_samples: 10000
+  num_rounds: 10
+  max_iters: 3000
+  c2st_folds: 10
+  observation_index: 1
+  figure_grid: true
+  ablations:
+    sections: [variants, nlse, sde]
+    variant_tasks: [slcp, gaussian_linear_uniform]
+    variant_methods: [snpse_a, snpse_b, snpse_c, tsnpse, npse]
+    variant_budgets: [10000]
+    nlse_tasks: [gaussian_linear, slcp]
+    nlse_budget: 10000
+    nlse_methods: [nlse, npse]
+    sde_tasks: [gaussian_linear, gaussian_mixture, two_moons, gaussian_linear_uniform,
+                bernoulli_glm, slcp, sir, lotka_volterra]
+    sde_methods: [npse, tsnpse]
+    sde_budgets: [10000]
+  expectations:                       # qualitative paper claims checked after a sweep
+    tsnpse_best_on: [slcp, lotka_volterra]
+    snpse_c_fails: true               # C2ST ~ 1
+    nlse_matches_npse_when_prior_score_analytic: true
+    c2st_ideal: 0.5
+
+# -----------------------------------------------------------------------------
+# Baselines referenced from the paper (literature values, not reproduced)
+# -----------------------------------------------------------------------------
+references:
+  reference_implementation: https://github.com/jacksimons15327/snpse_icml
+  tsnpe: https://github.com/mackelab/tsnpe_neurips
+  sbibm: null                         # pip install sbibm
+  pyloric: https://github.com/mackelab/tsnpe_neurips
+
+# -----------------------------------------------------------------------------
+# Optional Python-package aliases used by the config loader
+# -----------------------------------------------------------------------------
+aliases:
+  sdes: [ve, vp]
+  methods: [npse, tsnpse, snpse_a, snpse_b, snpse_c, nlse, npe, snpe_c, tsnpe, fmpe]

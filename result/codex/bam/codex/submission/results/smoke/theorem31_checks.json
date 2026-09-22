@@ -1,0 +1,98 @@
+{
+  "config": {
+    "dim": 8,
+    "n_iters": 60,
+    "lambdas": [
+      0.1,
+      1.0,
+      10.0,
+      100.0
+    ],
+    "seed": 0,
+    "batch_check": 6,
+    "outdir": "/Users/apple/Documents/0919-test/codex/work/bam-codex-desktop/submission/results"
+  },
+  "checks": {
+    "lambda=0.1": {
+      "alpha": 0.008806652126631766,
+      "beta": 0.008806652126631766,
+      "delta": 0.0008006047387847059,
+      "eps_bound_holds": true,
+      "Delta_bound_holds": true,
+      "per_iteration_eps_holds": true,
+      "per_iteration_Delta_holds": true,
+      "final_eps_norm": 4.63826549107331,
+      "final_Delta_norm": 0.9558539947994539
+    },
+    "lambda=1.0": {
+      "alpha": 0.008806652126631766,
+      "beta": 0.008806652126631766,
+      "delta": 0.004403326063315883,
+      "eps_bound_holds": true,
+      "Delta_bound_holds": true,
+      "per_iteration_eps_holds": true,
+      "per_iteration_Delta_holds": true,
+      "final_eps_norm": 2.6835740909180128e-14,
+      "final_Delta_norm": 1.493808439680204e-11
+    },
+    "lambda=10.0": {
+      "alpha": 0.008806652126631766,
+      "beta": 0.008806652126631766,
+      "delta": 0.00800604738784706,
+      "eps_bound_holds": true,
+      "Delta_bound_holds": true,
+      "per_iteration_eps_holds": true,
+      "per_iteration_Delta_holds": true,
+      "final_eps_norm": 8.349960836554767e-61,
+      "final_Delta_norm": 1.5156096752231466e-12
+    },
+    "lambda=100.0": {
+      "alpha": 0.008806652126631766,
+      "beta": 0.008806652126631766,
+      "delta": 0.00871945755112056,
+      "eps_bound_holds": true,
+      "Delta_bound_holds": true,
+      "per_iteration_eps_holds": true,
+      "per_iteration_Delta_holds": true,
+      "final_eps_norm": 6.824046749516881e-119,
+      "final_Delta_norm": 1.4124772512240193e-13
+    }
+  },
+  "finite_batch": {
+    "batch_size": 4096,
+    "lambda": 1.0,
+    "infinite_batch_eps": [
+      7.128249156831967,
+      5.055073951670904,
+      4.445971148997885,
+      4.0651477027941425,
+      3.7617823860867485,
+      3.4900514934778912,
+      3.2302639141219722
+    ],
+    "finite_batch_eps": [
+      7.1282491568319735,
+      5.031721036288074,
+      4.4302239516667345,
+      4.04676064070171,
+      3.747051183184812,
+      3.4786773807467215,
+      3.2144521033980915
+    ],
+    "max_relative_difference": 0.00489489748956892
+  },
+  "one_step_convergence": {
+    "lambda=100": {
+      "eps_1": 0.7299712452593373,
+      "Delta_1": 0.5696774672811541
+    },
+    "lambda=10000": {
+      "eps_1": 0.012401447189933015,
+      "Delta_1": 0.009825325764784846
+    },
+    "lambda=1e+06": {
+      "eps_1": 0.00012506733968630884,
+      "Delta_1": 9.908445352111437e-05
+    }
+  }
+}

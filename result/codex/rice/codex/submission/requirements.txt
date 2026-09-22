@@ -1,0 +1,12 @@
+torch>=1.13
+gymnasium>=0.29,<1.0
+mujoco>=3.1
+stable-baselines3>=2.3
+numpy>=1.23,<2          # torch 2.2 / stable-baselines3 2.3 are built against numpy 1.x
+matplotlib>=3.7
+pandas>=2.0
+
+# optional (only needed for the corresponding application)
+# imageio            # rendering backend required by gymnasium's MuJoCo envs
+# CybORG             # CAGE Challenge 2 (network defence)
+# metadrive-simulator  # autonomous driving (Macro-v1)

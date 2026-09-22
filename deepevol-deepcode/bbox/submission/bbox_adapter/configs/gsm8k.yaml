@@ -1,0 +1,217 @@
+# BBox-Adapter configuration -- GSM8K (grade-school math word problems)
+#
+# Paper references:
+#   * Section 4.1 Implementations / Appendix H.2 : LR 5e-6, batch 64, 6000 steps,
+#     AdamW weight decay 0.01, beam size 3, max length 512, temperature 1.0.
+#   * Appendix F.1 : split 7473 train / 1319 test.
+#   * Appendix J   : four-shot Chain-of-Thought Hub prompt ending with
+#     "#### The answer is <n>".  For Mixtral-8x7B / davinci-002 the instruction
+#     sentence is dropped and only the stacked examples are kept (Appendix J).
+#   * Section 3.2 / Eq. (2)-(3) : ranking NCE loss + alpha * E[g^2] regularizer.
+#   * Section 3.3 : sentence-level beam search (Eq. 4) with adapter evaluator.
+#   * Section 3.4 / Algorithm 1 : online adaptation with SEL + outcome supervision.
+#   * Section 4.3 / Table 2 : GSM8K adapted accuracies 73.86 (GT), 73.50 (AI), 74.28
+#     (Combined) vs 67.51 base gpt-3.5-turbo.
+#   * Section 4.4 / Table 4 : single-step 71.13 (train $7.54 / inference $3.10)
+#     and full-step 74.28 (train $11.58 / inference $12.46) per 1k questions.
+#
+# Paper-silent knobs carry documented defaults (see "not specified" comments):
+#   alpha = 0.01 (sweep {1e-3, 1e-2, 1e-1}), T = 4, M = 5, K_init = 5,
+#   n = 2 samples per beam, 10% linear warmup, mean/CLS pooling.
+#
+# This file may be loaded standalone (yaml.safe_load) or deep-merged on top of
+# configs/default.yaml, in which case keys set here override the base defaults.
+
+name: bbox_adapter_gsm8k
+dataset: gsm8k
+size: 0.1b                 # 0.1b -> microsoft/deberta-v3-base, 0.3b -> deberta-v3-large
+backbone: null             # resolved from (dataset, size)
+seed: 0
+output_dir: runs/gsm8k
+
+# ---------------------------------------------------------------------------
+# Dataset specification (Appendix F.1, Appendix J)
+# ---------------------------------------------------------------------------
+data:
+  hf_path: gsm8k
+  hf_config: main
+  train_split: train
+  test_split: test
+  n_train: 7473
+  n_test: 1319
+  question_field: question
+  answer_field: answer
+  answer_type: numeric            # integer answer after the '####' terminator
+  prompt_key: gsm8k
+  metric: accuracy
+  n_shot: 4                       # Appendix J: four-shot Chain-of-Thought Hub prompt
+  drop_instruction_models: [mixtral, davinci]   # Appendix J: examples only for these
+  use_terminator: true
+  terminator: "####"              # prompt ends with "#### The answer is <n>"
+
+# ---------------------------------------------------------------------------
+# Black-box proposal generator (Section 4.1, Appendix C, Appendix H.2)
+# Text-only client -- never requests logprobs / hidden states.
+# ---------------------------------------------------------------------------
+blackbox:
+  model: gpt-3.5-turbo
+  kind: bbox
+  max_len: 512
+  temperature: 1.0                # BBox-Adapter sampling temperature (H.2)
+  top_p: 1.0
+  n: 1
+  allow_mock: true                # fall back to the offline mock without credentials
+
+# ---------------------------------------------------------------------------
+# Scalar energy adapter g_theta (Section 3.1, Section 4.1 Implementations)
+# ---------------------------------------------------------------------------
+adapter:
+  backbone: null                  # microsoft/deberta-v3-base for 0.1b / -large for 0.3b
+  pooling: null                   # -> "mean" for DeBERTa-v3, "cls" for BERT (not specified)
+  head_hidden: 0                  # 0 => Dropout + Linear(H, 1) scalar head
+  dropout: 0.0
+  freeze_backbone: false
+  max_length: 512
+  output_scale: 1.0
+  head_init_std: 0.02
+  size: 0.1b
+
+# ---------------------------------------------------------------------------
+# Ranking-based NCE objective (Eq. 2, Eq. 3; Section 4.5 ablation)
+# ---------------------------------------------------------------------------
+loss:
+  name: nce                       # nce | mlm  (Table 5 ablation)
+  alpha: 0.01                     # NOT SPECIFIED in the paper; sweep {1e-3, 1e-2, 1e-1}
+  reduction: mean
+  temperature: 1.0
+  label_smoothing: 0.0
+  energy_clamp: null
+  reg_mode: split                 # alpha*E[g^2] applied to positives and negatives
+  reg_schedule: constant
+  reg_warmup_steps: 0
+  use_regularizer: true
+
+# ---------------------------------------------------------------------------
+# Algorithm 1 online adaptation (Section 3.4, Appendix H.2)
+# ---------------------------------------------------------------------------
+training:
+  lr: 5.0e-6                      # eta
+  batch_size: 64
+  max_train_steps: 6000           # total mini-batch gradient steps
+  weight_decay: 0.01
+  betas: [0.9, 0.999]             # NOT SPECIFIED
+  max_grad_norm: 1.0              # NOT SPECIFIED
+  schedule: constant              # NOT SPECIFIED
+  warmup_fraction: 0.1            # NOT SPECIFIED
+  n_iterations: 4                 # T ; NOT SPECIFIED (Fig. 3b plateau)
+  n_candidates: 5                 # M candidates sampled from adapted inference
+  k_init: 5                       # K initial prompted candidates per query
+  samples_per_beam: 2             # n sentence samples per beam per step
+  use_beam_search: true           # false => cheaper single-step ranking variant
+  outcome_supervision: true       # Section 3.4 outcome supervision filter
+  sel_mode: ground_truth          # ground_truth | ai_feedback | combined
+  device: auto
+  log_every: 50
+  eval_every: 1
+  save_every: 0
+
+# ---------------------------------------------------------------------------
+# Sentence-level beam search (Eq. 4; Section 3.3)
+# ---------------------------------------------------------------------------
+beam_search:
+  beam_size: 3                    # Appendix H.2
+  n_samples: 2                    # n sentence proposals per beam per step
+  max_steps: 6
+  stop_signal: "####"
+  temperature: 1.0
+  max_len: 512
+  normalization: none             # score length normalization off by default (not specified)
+  length_penalty: 0.0
+  deduplicate: true
+  stop_when_all_complete: true
+  include_prompt_in_energy: true
+  keep_candidates: true
+
+# ---------------------------------------------------------------------------
+# Positive / negative buffers, Eq. (5) and Eq. (6) (Section 3.4)
+# ---------------------------------------------------------------------------
+buffer:
+  sel_mode: ground_truth
+  k_init: 5
+  m_candidates: 5
+  max_positives: 8
+  max_negatives: 64
+  deduplicate: true
+  outcome_supervision: true
+  ai_feedback_n_ranked: 5
+
+# ---------------------------------------------------------------------------
+# GPT-4 AI feedback rater (Section 3.4, Appendix G, Appendix J)
+# ---------------------------------------------------------------------------
+feedback:
+  enabled: true
+  model: gpt-4
+  temperature: 0.0
+  n_ranked: 5
+  retries: 2
+  fallback: majority
+  prompt_style: best              # best-answer format for GSM8K
+  criteria: [Coherency, Reasonability, Correctness, Format]
+
+# ---------------------------------------------------------------------------
+# Evaluation harness (Section 4.2, Appendix E)
+# ---------------------------------------------------------------------------
+eval:
+  metric: accuracy
+  n_test: 1319
+  gpt_judge: false
+  toxicity_threshold: 0.5
+  report_delta: true
+  num_seeds: 1
+
+# ---------------------------------------------------------------------------
+# Baselines (Section 4.1 Baselines, Appendix F.2 Table 8, Appendix H.2)
+# ---------------------------------------------------------------------------
+baselines:
+  cot:
+    enabled: true
+    temperature: 0.0
+    n_shot: 4
+  azure_sft:
+    enabled: false
+    model: gpt-3.5-turbo
+    epochs: 3                     # Table 8 (H.2 conflicting value: 5)
+    batch_size: null              # Azure OpenAI service default
+    lr_multiplier: null           # Azure OpenAI service default
+  sft_lora:
+    enabled: false
+    model: mistralai/Mixtral-8x7B-v0.1
+    lora_r: 128                   # 0.1B-equivalent; 384 for 0.3B-equivalent
+    lora_alpha: 256               # alpha = 2r
+    lora_dropout: 0.1
+    lr: 2.0e-4
+    weight_decay: 0.001
+    batch_size: 8
+    grad_accum: 1
+    max_grad_norm: 0.3
+    epochs: 3
+    optimizer: paged_adamw_32bit
+    lr_scheduler: cosine
+    max_length: 512
+
+# ---------------------------------------------------------------------------
+# Cost accounting for Table 4 ($ / 1k questions, gpt-3.5-turbo-1106 pricing)
+# ---------------------------------------------------------------------------
+cost:
+  enabled: true
+  model_for_pricing: gpt-3.5-turbo-1106
+  usd_per_1k_input_tokens: 0.0015
+  usd_per_1k_output_tokens: 0.002
+  per_questions: 1000
+
+# ---------------------------------------------------------------------------
+# GPU memory measurement for Table 6 (report only the 0.1B adapter per Addendum)
+# ---------------------------------------------------------------------------
+vram:
+  enabled: false
+  report_only_0_1b: true

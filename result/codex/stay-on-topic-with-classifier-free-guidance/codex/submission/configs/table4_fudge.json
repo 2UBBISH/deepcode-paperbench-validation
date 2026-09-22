@@ -1,0 +1,9 @@
+{
+  "comment": "Section 6 / Table 4. CFG vs FUDGE for sentiment and toxicity control with GPT-2.",
+  "model": "gpt2",
+  "tasks": ["sentiment", "toxicity"],
+  "gammas": [1, 2, 3, 4, 5, 6],
+  "lambdas": [0.5, 1.0, 2.0, 5.0],
+  "n_samples": 64,
+  "max_new_tokens": 32
+}

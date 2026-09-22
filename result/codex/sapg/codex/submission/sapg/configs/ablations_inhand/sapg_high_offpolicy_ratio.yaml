@@ -1,0 +1,5 @@
+# Sec. 6.3 ablation on the in-hand tasks: high off-policy ratio.
+defaults: [../sapg_shadow_hand.yaml]
+algo:
+  name: sapg
+  offpolicy_subsample: false

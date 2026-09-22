@@ -1,0 +1,19 @@
+# Core dependencies (CPU is sufficient; no GPU is required to run the code).
+torch>=2.0
+numpy>=1.24,<2.0
+
+# --- Dataset / environment extras -------------------------------------------------
+# D4RL provides the AntMaze and Kitchen datasets used in the paper.  The addendum
+# recommends a revision from before June 2024 for reproducibility:
+#   pip install git+https://github.com/Farama-Foundation/d4rl@<pre-June-2024-commit>
+# gym
+# d4rl
+#
+# ExORL datasets (walker / cheetah RND) are downloaded with the ExORL downloader
+# (github.com/denisyarats/exorl) and loaded from EXORL_DATA_DIR.
+# dm_control
+#
+# Optional: if `opensimplex` is installed, the ant-random-simplex tasks use the
+# exact upstream noise implementation.  Otherwise the vendored implementation in
+# fre/utils/simplex.py is used, so this dependency is not required.
+# opensimplex

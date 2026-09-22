@@ -1,0 +1,159 @@
+# =============================================================================
+# FRE configuration: Kitchen domain
+# Zero-Shot Reinforcement Learning via Functional Reward Encodings
+# -----------------------------------------------------------------------------
+# Consumed by fre/main.py, fre/train_encoder.py, fre/train_policy.py,
+# fre/evaluate.py.  Kitchen is the easiest of the three FRE domains: the seven
+# standard D4RL subtasks expose sparse binary completion flags directly in the
+# last 7 observation dimensions, so no reward engineering (physics append / XY
+# discretisation) is required.  This mirrors the schema of configs/antmaze.yaml
+# and configs/exorl.yaml so a single loader can drive all three domains.
+# =============================================================================
+
+# --- run / dispatch ---------------------------------------------------------
+domain: kitchen
+sub_domain: null                 # Kitchen has no sub-domains (walker/cheetah)
+seed: 0
+device: auto                     # auto | cpu | cuda
+output_dir: ./runs
+log_file: null
+dry_run: false
+
+# Table 4 subset prior (all | goals | lin | mlp | lin-mlp | goal-mlp | goal-lin)
+ablation: all
+# Figure 6 FRE-hint flag (Kitchen has no XY/velocity dims, so unused)
+hint: false
+hint_dims: null
+
+# --- data / env -------------------------------------------------------------
+# D4RL Kitchen.  The paper loads the pre-June-2024 D4RL version.
+#   kitchen-complete-v0 : the full demonstration mixture used by FRE
+#   kitchen-mixed-v0 / kitchen-partial-v0 : alternative splits
+dataset: kitchen-complete-v0
+dataset_alternatives:
+  - kitchen-complete-v0
+  - kitchen-mixed-v0
+  - kitchen-partial-v0
+data_root: ./data
+
+raw_obs_dim: 60                  # D4RL Kitchen observation dim
+obs_dim: 60                      # no physics augmentation for Kitchen
+action_dim: 9
+
+max_episode_steps: 1000
+normalise_observations: false    # Kitchen uses raw observations
+normalisation_eps: 0.001
+
+# The seven standard D4RL Kitchen subtasks, read from obs[-7:] completion flags.
+subtasks:
+  - microwave
+  - kettle
+  - slide
+  - hinge
+  - light
+  - bottom_burner
+  - top_burner
+
+flag_offset: -7                  # completion flags live in the last 7 dims
+flag_threshold: 0.5
+reward_style: sparse             # use existing D4RL sparse subtask rewards
+reward_success: 1.0
+reward_failure: 0.0
+terminate_on_success: false      # episodes run the full 1000 steps
+progress_control: dataset        # offline replay follows demonstrated trajectory
+
+# --- phase 1: encoder / decoder pretraining (Algorithm 1) -------------------
+encoder:
+  steps: 1000000                 # 1M for ExORL/Kitchen per the strided schedule
+  batch_size: 512
+  lr: 0.0001
+  beta: 0.01                     # info-bottleneck KL weight, Eq.(6)
+  context_size: 32               # K encoder (state, reward) pairs
+  decoder_size: 8                # K' held-out decoder states
+  latent_dim: 128                # z dimension
+  state_emb_dim: 64              # learned linear projection of the raw state
+  reward_emb_dim: 64             # learned embedding of the discretised reward
+  num_reward_bins: 32            # rescale -> *32 -> floor
+  reward_rescale: 32.0
+  num_blocks: 4                  # transformer blocks (no pos-enc, no causal mask)
+  num_heads: 4
+  mlp_dim: 256                   # transformer MLP 128 -> 256 -> 128
+  dropout: 0.0
+  decoder_hidden: [512, 512, 512]
+  grad_clip: 10.0
+  log_interval: 1000
+  eval_interval: 5000
+  checkpoint_interval: 25000
+  use_mean_latent_for_eval: true
+  exclude_xy: false              # no XY dims in Kitchen
+
+# --- phase 2: z-conditioned IQL policy (Algorithm 1) ------------------------
+policy:
+  steps: 1000000                 # 1M for ExORL/Kitchen
+  batch_size: 512
+  lr: 0.0001
+  discount: 0.88                 # gamma
+  expectile: 0.8                 # IQL expectile for V
+  awr_temperature: 3.0           # AWR exponent temperature for pi
+  target_update_rate: 0.001      # soft target update (single target net)
+  hidden_sizes: [512, 512, 512]
+  context_size: 32
+  latent_dim: 128
+  num_reward_functions: 512      # reward functions sampled per RL batch
+  reward_resample_interval: 1    # re-sample eta & re-encode z every iteration
+  max_grad_norm: 1.0
+  log_interval: 1000
+  eval_interval: 25000
+  checkpoint_interval: 100000
+  exclude_xy: false
+
+# --- unsupervised reward prior p(eta)  (Sec 4.2 / App B) --------------------
+prior:
+  families: [goal_reaching, linear, mlp]
+  weights: [0.33, 0.33, 0.33]
+
+  goal_reaching:
+    p_current: 0.2               # HER: goal = a state in the sampled batch
+    p_future: 0.5                # HER: a future state in the same trajectory
+    p_random: 0.3                # HER: any dataset state
+    future_mode: geometric
+    geom_p: 0.5
+    goal_threshold: 2.0
+    reward_success: 0.0          # -1 until goal reached, 0 after
+    reward_failure: -1.0
+    metric: euclidean
+    include_success_sample: true # guarantee >=1 context pair contains the goal
+    dims: null                   # full observation space
+
+  linear:
+    mask_prob: 0.9               # binary mask zeroes each dim w.p. 0.9
+    weight_range: 1.0            # w ~ U(-1, 1)^d
+    clip: 1.0
+    exclude_dims: null           # no XY removal in Kitchen
+
+  mlp:
+    hidden_sizes: [32]           # (state_dim, 32, 1) tanh MLP
+    activation: tanh
+    init_scale: 1.0              # N(0, init_scale / sqrt(avg layer dim))
+    output_scale: 1.0
+    clip: 1.0
+
+# --- zero-shot evaluation ---------------------------------------------------
+eval:
+  num_episodes: 20               # 20 episodes per task
+  num_seeds: 5                   # 5 seeds
+  context_size: 32               # exactly 32 (state, reward) pairs at test time
+  decoder_size: 8
+  deterministic: true
+  base_seed: 0
+  score_mode: success_rate       # normalized return in [0, 100]
+  tasks:
+    # Standard D4RL Kitchen subtasks; keys map to KitchenSubtaskReward names.
+    names:
+      - kitchen-microwave
+      - kitchen-kettle
+      - kitchen-slide
+      - kitchen-hinge
+      - kitchen-light
+      - kitchen-bottom_burner
+      - kitchen-top_burner

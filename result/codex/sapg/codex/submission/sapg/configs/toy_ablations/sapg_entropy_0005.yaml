@@ -1,0 +1,4 @@
+defaults: [../toy_sapg.yaml]
+algo:
+  name: sapg
+  entropy_coef: 0.005

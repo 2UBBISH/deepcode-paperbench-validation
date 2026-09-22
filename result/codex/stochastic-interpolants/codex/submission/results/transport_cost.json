@@ -1,0 +1,68 @@
+{
+  "eq21": {
+    "2": {
+      "coupled_mc": 0.5019307136535645,
+      "coupled_theory": 0.5,
+      "independent_mc": 4.485860347747803,
+      "independent_theory": 4.481204032897949
+    },
+    "8": {
+      "coupled_mc": 1.9935603141784668,
+      "coupled_theory": 2.0,
+      "independent_mc": 17.961647033691406,
+      "independent_theory": 17.97920036315918
+    },
+    "64": {
+      "coupled_mc": 16.00457763671875,
+      "coupled_theory": 16.0,
+      "independent_mc": 143.95989990234375,
+      "independent_theory": 144.04917907714844
+    },
+    "256": {
+      "coupled_mc": 64.01274871826172,
+      "coupled_theory": 64.0,
+      "independent_mc": 575.78759765625,
+      "independent_theory": 575.9756469726562
+    }
+  },
+  "prop31_exact_velocity": {
+    "d2_coupled": {
+      "transport_cost": 0.027978897094726562,
+      "bound": 0.49914270639419556,
+      "inequality_holds": true,
+      "generated_variance": 1.0015869140625
+    },
+    "d2_independent": {
+      "transport_cost": 0.028479674831032753,
+      "bound": 4.51559591293335,
+      "inequality_holds": true,
+      "generated_variance": 0.9915111064910889
+    },
+    "d8_coupled": {
+      "transport_cost": 0.1125802993774414,
+      "bound": 1.9968993663787842,
+      "inequality_holds": true,
+      "generated_variance": 1.007453441619873
+    },
+    "d8_independent": {
+      "transport_cost": 0.11484938859939575,
+      "bound": 18.11922264099121,
+      "inequality_holds": true,
+      "generated_variance": 0.9996750950813293
+    }
+  },
+  "prop31_learned_velocity": {
+    "coupled": {
+      "transport_cost": 0.026253730058670044,
+      "bound": 0.5056478977203369,
+      "abs_mean_generated": 0.017434827983379364,
+      "generated_variance": 1.0053690671920776
+    },
+    "independent": {
+      "transport_cost": 0.03393914923071861,
+      "bound": 4.55323600769043,
+      "abs_mean_generated": 0.06501323729753494,
+      "generated_variance": 1.023000717163086
+    }
+  }
+}

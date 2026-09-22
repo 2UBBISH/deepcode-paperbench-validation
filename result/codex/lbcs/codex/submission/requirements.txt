@@ -1,0 +1,11 @@
+# Core dependencies of the reproduction (CPU or CUDA both work).
+torch>=1.13
+torchvision>=0.14
+numpy>=1.21
+scipy>=1.7
+scikit-learn>=1.0
+
+# Figures produced by experiments/exp_fig1_trivial.py and
+# experiments/exp_fig2_robustness.py (optional; both scripts skip plotting
+# gracefully when matplotlib is missing).
+matplotlib>=3.5

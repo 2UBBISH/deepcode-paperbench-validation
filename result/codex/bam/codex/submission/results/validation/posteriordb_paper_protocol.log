@@ -1,0 +1,32 @@
+arK                      BaM (B=8)        rel_mean  final=24.13 (21.5s)
+arK                      BaM (B=32)       rel_mean  final=0.04372 (8.4s)
+arK                      ADVI (B=8)       rel_mean  final=5.639 (18.0s)
+arK                      GSM (B=8)        rel_mean  final=0.1268 (20.9s)
+arK                      ADVI (B=32)      rel_mean  final=72.77 (10.0s)
+arK                      GSM (B=32)       rel_mean  final=0.1267 (12.9s)
+  saved results/validation/posteriordb_arK_rel_mean.png
+arK                      BaM (B=8)        rel_sd    final=3.007 (16.4s)
+arK                      BaM (B=32)       rel_sd    final=0.03911 (6.6s)
+arK                      ADVI (B=8)       rel_sd    final=7.219 (16.1s)
+arK                      GSM (B=8)        rel_sd    final=0.02529 (22.1s)
+arK                      ADVI (B=32)      rel_sd    final=57.92 (9.9s)
+arK                      GSM (B=32)       rel_sd    final=0.02874 (13.3s)
+  saved results/validation/posteriordb_arK_rel_sd.png
+Traceback (most recent call last):
+  File "/Users/apple/Documents/0919-test/codex/work/bam-codex-desktop/submission/experiments/run_posteriordb.py", line 139, in <module>
+    main()
+  File "/Users/apple/Documents/0919-test/codex/work/bam-codex-desktop/submission/experiments/run_posteriordb.py", line 119, in main
+    res = run_repeats(target_factory, spec, metric, n_runs=args.n_runs,
+  File "/Users/apple/Documents/0919-test/codex/work/bam-codex-desktop/submission/src/bam/runner.py", line 156, in run_repeats
+    out = run_method(target, spec, key, mu0, Sigma0)
+  File "/Users/apple/Documents/0919-test/codex/work/bam-codex-desktop/submission/src/bam/runner.py", line 72, in run_method
+    out = bam.run(key, spec.n_iters, mu0, Sigma0)
+  File "/Users/apple/Documents/0919-test/codex/work/bam-codex-desktop/submission/src/bam/bam.py", line 144, in run
+    out = self.step(mu, Sigma, keys[t], t)
+  File "/Users/apple/Documents/0919-test/codex/work/bam-codex-desktop/submission/src/bam/bam.py", line 88, in step
+    Z = sample_gaussian(key, mu, np.linalg.cholesky(Sigma), B)  # (B, D)
+  File "/Users/apple/Library/Python/3.9/lib/python/site-packages/numpy/linalg/linalg.py", line 779, in cholesky
+    r = gufunc(a, signature=signature, extobj=extobj)
+  File "/Users/apple/Library/Python/3.9/lib/python/site-packages/numpy/linalg/linalg.py", line 115, in _raise_linalgerror_nonposdef
+    raise LinAlgError("Matrix is not positive definite")
+numpy.linalg.LinAlgError: Matrix is not positive definite

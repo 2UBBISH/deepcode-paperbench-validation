@@ -1,0 +1,6 @@
+restart,f1_final,f2_final,f1_threshold,satisfies_f1_constraint,satisfies_f2_optimality,condition1_violations,condition1_steps,condition1_fraction,num_evaluations
+0,0.279605,1,0.335526,True,True,2,15,0.866667,801
+1,0.279605,1,0.335526,True,True,3,14,0.785714,801
+2,0.279605,1,0.335526,True,True,5,22,0.772727,801
+3,0.279605,1,0.335526,True,True,5,26,0.807692,801
+4,0.279605,1,0.335526,True,True,3,16,0.8125,801

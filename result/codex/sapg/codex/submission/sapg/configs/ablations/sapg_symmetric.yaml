@@ -1,0 +1,5 @@
+# Sec. 4.2 / Sec. 6.3: "Ours (symmetric off-policy)".
+defaults: [../sapg_allegrokuka_regrasping.yaml]
+algo:
+  name: sapg
+  aggregation: symmetric

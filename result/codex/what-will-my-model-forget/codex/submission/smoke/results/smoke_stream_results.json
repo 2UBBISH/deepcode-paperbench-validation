@@ -1,0 +1,49 @@
+{
+  "table3_style": [
+    {
+      "method": "Vanilla FT",
+      "tuning_mode": "head",
+      "Succ.": 100.0,
+      "EM Drop %": -25.0,
+      "base_em": 0.6667,
+      "final_em": 0.5,
+      "n_online": 2
+    },
+    {
+      "method": "Replay w/ Random",
+      "tuning_mode": "head",
+      "Succ.": 100.0,
+      "EM Drop %": -25.0,
+      "base_em": 0.6667,
+      "final_em": 0.5,
+      "n_online": 2
+    },
+    {
+      "method": "Replay w/ Representation",
+      "tuning_mode": "head",
+      "Succ.": 100.0,
+      "EM Drop %": -25.0,
+      "base_em": 0.6667,
+      "final_em": 0.5,
+      "n_online": 2
+    }
+  ],
+  "figure3_style": {
+    "threshold": [
+      {
+        "precision": 100.0,
+        "recall": 100.0,
+        "f1": 100.0,
+        "step": 1.0
+      }
+    ],
+    "representation": [
+      {
+        "precision": 100.0,
+        "recall": 100.0,
+        "f1": 100.0,
+        "step": 1.0
+      }
+    ]
+  }
+}

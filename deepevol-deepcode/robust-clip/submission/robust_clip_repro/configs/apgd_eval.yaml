@@ -1,0 +1,147 @@
+# =============================================================================
+# APGD robustness evaluation configuration (ImageNet, zero-shot CLIP / Robust CLIP)
+# -----------------------------------------------------------------------------
+# This file configures `python -m robust_clip_repro.eval_imagenet` (and the
+# `--mode imagenet` dispatch in `main.py`) for the APGD-based threat models.
+#
+# PROVENANCE POLICY (from the reproduction plan / Addendum):
+#   * APGD must come from the required upstream repository
+#     https://github.com/fra31/robust-finetuning  ->  src.fra31/robust-finetuning
+#   * APGD internals are NEVER overwritten with the custom PGD settings
+#     (no momentum 0.9, no uniform random init override, no custom step size).
+#     Upstream defaults are preserved unless the Addendum states otherwise.
+#   * The Addendum does NOT state eps / alpha / iterations for the general
+#     attack budget. Those values below are therefore tagged
+#     UNSPECIFIED_BY_ADDENDUM and are supplied externally; values that come
+#     from the paper body are tagged PAPER BODY.
+#   * Precision policy (Addendum): half-precision attacks store perturbations as
+#     int16, single-precision attacks store them as int32.
+#   * The l_inf / l_2 ball is always computed around NON-normalized pixels.
+# =============================================================================
+
+# Root block consumed by eval_imagenet.load_config + ImageNetEvalConfig.from_dict.
+# The loader also accepts the same keys at the top level, or nested under
+# `attack:` / `model:` sections.
+apgd_eval:
+  # ---------------------------------------------------------------------------
+  # Experiment metadata
+  # ---------------------------------------------------------------------------
+  dataset_name: ImageNet            # PAPER BODY (zero-shot ImageNet evaluation)
+  dataset_id: imagenet-1k           # ADDENDUM (HuggingFace load_dataset id)
+  split: validation                 # ADDENDUM (HF ImageNet validation split)
+  trust_remote_code: true           # ADDENDUM (required: avoids stdin blocking)
+  resolution: 224                   # PAPER BODY (CLIP ViT-L/14@224)
+  top_k: 5
+  shuffle: true
+  seed: 0                           # UNSPECIFIED_BY_ADDENDUM (external default)
+  batch_size: 1                     # UNSPECIFIED_BY_ADDENDUM (external default)
+
+  # Number of samples used for the clean pass vs. the (attacked) robust pass.
+  # PAPER BODY: robust accuracy is reported on 1000 samples.
+  num_samples: null                 # null -> all samples available from the loader
+  num_robust_samples: 1000          # PAPER BODY
+
+  # ---------------------------------------------------------------------------
+  # Victim model (zero-shot OpenCLIP vision tower + prompt templates)
+  # ---------------------------------------------------------------------------
+  model_name: clip                  # clip | robust_clip | dummy
+  clip_model: ViT-L-14              # PAPER BODY (OpenAI CLIP ViT-L/14)
+  clip_pretrained: openai           # PAPER BODY
+  clip_checkpoint: null             # path to a Robust CLIP vision encoder checkpoint
+  class_names: null                 # null -> read from the HF dataset features
+  class_index_file: null            # optional explicit class-name list
+
+  # Zero-shot prompt templates. null -> built-in CLIP_benchmark template set
+  # (80 ImageNet prompts) from eval_imagenet.get_imagenet_templates().
+  templates: null                   # UNSPECIFIED_BY_ADDENDUM (prompt source)
+
+  # ---------------------------------------------------------------------------
+  # Attack selection (APGD only in this config)
+  # ---------------------------------------------------------------------------
+  attacks:                          # PAPER BODY (APGD on CE and targeted DLR)
+    - apgd_ce
+    - apgd_targeted_dlr
+  use_upstream_apgd: true           # ADDENDUM (require fra31/robust-finetuning)
+  norm: linf                        # PAPER BODY (l_inf threat model; l2 optional)
+
+  # ---------------------------------------------------------------------------
+  # Attack budget -- REQUIRED FROM THE CONFIG/CLI
+  # The Addendum specifies the APGD *source and internals*, not the budget.
+  # PAPER BODY reports eps in {2/255, 4/255} for the robust-accuracy table.
+  # ---------------------------------------------------------------------------
+  epsilons:                         # PAPER BODY (fill with ["2/255", "4/255"])
+    - "2/255"
+    - "4/255"
+
+  # NB: alpha / iterations / restarts below are only used to *report* the run.
+  # APGD's own step-size schedule (alpha = 2 * eps, cosine step reduction,
+  # rho = 0.75, n_iter = 100, n_restarts = 1) is taken from upstream and is NOT
+  # overridden by these values.
+  alpha: null                       # UNSPECIFIED_BY_ADDENDUM (upstream schedule)
+  iterations: 100                   # PAPER BODY (APGD n_iter = 100)
+  restarts: 1                       # UNSPECIFIED_BY_ADDENDUM (upstream default)
+  loss: ce                          # APGD loss family (ce | dlr for the two specs)
+  target_mode: untargeted           # untargeted for apgd_ce, targeted-DLR for apgd_targeted_dlr
+
+  # ---------------------------------------------------------------------------
+  # Precision policy (ADDENDUM) -- applies to perturbation storage/reload
+  # ---------------------------------------------------------------------------
+  precision: single                 # single -> int32 storage; half -> int16 storage
+  int_dtype_half: int16             # ADDENDUM
+  int_dtype_single: int32           # ADDENDUM
+  quant_scale: 100000.0             # fixed-point scale used by utils/precision.py
+
+  # ---------------------------------------------------------------------------
+  # Upstream APGD defaults (informational; do NOT override the library internals)
+  # ---------------------------------------------------------------------------
+  apgd_defaults:                    # UPSTREAM fra31/robust-finetuning
+    n_iter: 100
+    n_restarts: 1
+    rho: 0.75
+    momentum: 0.75
+    alpha_factor: 2.0
+    eot_iter: 1
+    n_target_classes: 9
+
+  # ---------------------------------------------------------------------------
+  # Input-space bookkeeping: the ball is around NON-normalized pixels.
+  # ---------------------------------------------------------------------------
+  projection_space: pixel           # ADDENDUM (project around raw, non-normalized inputs)
+  clamp: [0.0, 1.0]                 # raw pixel range
+  normalization:                    # PAPER BODY (OpenAI CLIP mean/std), applied AFTER attack
+    mean: [0.48145466, 0.4578275, 0.40821073]
+    std: [0.26862954, 0.26130258, 0.27577711]
+
+  # ---------------------------------------------------------------------------
+  # Runtime / outputs
+  # ---------------------------------------------------------------------------
+  device: null                      # null -> auto (cuda if available, else cpu)
+  output_dir: results               # UNSPECIFIED_BY_ADDENDUM (external default)
+  output_file: null                 # null -> auto name results/imagenet_apgd_<model>_<eps>.json
+  verbose: true
+  smoke_test: false                 # true -> model-free orchestration self-check
+
+  # ---------------------------------------------------------------------------
+  # Provenance bookkeeping (logged by the harness; nothing here is inferred)
+  # ---------------------------------------------------------------------------
+  provenance:
+    addendum:
+      - "APGD source: https://github.com/fra31/robust-finetuning"
+      - "Do not overwrite APGD internals with the custom PGD settings"
+      - "Perturbations: int16 for half-precision, int32 for single-precision"
+      - "l_inf/l_2 ball computed around NON-normalized inputs"
+      - "ImageNet loaded via HuggingFace load_dataset('imagenet-1k', trust_remote_code=True)"
+      - "Vision encoder: OpenAI CLIP ViT-L/14@224 consumed through OpenCLIP"
+    paper_body:
+      - "APGD attacked with CE and targeted-DLR losses"
+      - "APGD n_iter = 100"
+      - "Robust accuracy reported on 1000 ImageNet samples"
+      - "Resolution 224"
+      - "eps in {2/255, 4/255}"
+    unspecified_by_addendum:
+      - eps              # supply explicitly via config/CLI
+      - alpha            # upstream APGD schedule
+      - restarts         # upstream APGD default
+      - batch_size
+      - seed
+      - prompt_templates

@@ -1,0 +1,22 @@
+{
+  "model_name": "roberta-base",
+  "task": "sst2",
+  "target_sparsity": 0.6,
+  "initial_rank": 8,
+  "target_rank": 64,
+  "top_adapter_fraction": 0.5,
+  "scaling": 2.0,
+  "ema_beta": 0.85,
+  "mask_alpha": 0.01,
+  "adjust_interval": 50,
+  "use_adaptive_pruning": true,
+  "use_adaptive_tuning": true,
+  "use_distillation": true,
+  "use_kurtosis": true,
+  "salience_based_allocation": true,
+  "adapt_ffn": true,
+  "learning_rate": 0.0002,
+  "batch_size": 32,
+  "epochs": 40,
+  "distill_epochs": 20
+}

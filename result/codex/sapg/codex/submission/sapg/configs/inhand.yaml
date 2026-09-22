@@ -1,0 +1,37 @@
+# Hyperparameters of the two easy in-hand reorientation tasks
+# (ShadowHand / AllegroHand).  Source: Tables 3 and 4, Sec. 5.2.
+defaults: [base.yaml]
+
+env:
+  name: shadow_hand
+  num_envs: 24576
+
+model:
+  latent_dim: 16                 # phi_j in R^16 for the simpler tasks
+  activation: elu
+  action_bound: 1.0
+  actor:
+    type: mlp
+    units: [512, 512, 256, 128]  # ShadowHand configuration (Table 3)
+  critic:
+    type: mlp
+    units: [512, 512, 256, 128]
+
+algo:
+  name: sapg
+  num_policies: 6
+  horizon: 8
+  mini_epochs: 5
+  learning_rate: 5.0e-4
+  kl_threshold: 0.016
+  clip_epsilon: 0.1
+  critic_coef: 4.0
+  bounds_loss_coef: 0.0001
+  nstep: 3
+  max_env_steps: 2.0e10
+  eval_interval: 250
+
+eval:
+  episodes: 64
+  max_steps: 512
+  policy_ids: [0]

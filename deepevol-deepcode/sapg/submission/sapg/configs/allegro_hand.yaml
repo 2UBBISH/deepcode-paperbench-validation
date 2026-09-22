@@ -1,0 +1,120 @@
+# SAPG configuration: AllegroHand task group (Appendix B.3 / Table 4)
+# Task: in-hand cube reorientation with the 16-DoF Allegro Hand.
+# Consumed by sapg.utils.config.SAPGConfig.from_dict / build_config (unknown keys dropped).
+# Hyperparameters reproduce the paper's Table 4 group:
+#   MLP 512x256x128 ELU (no LSTM), phi_j in R^16, LR 5e-4, clip epsilon 0.2,
+#   horizon length 8, 5 mini-epochs, entropy coefficient 0.0 (best per-task choice).
+
+# ---------------------------------------------------------------------------
+# Run selection
+# ---------------------------------------------------------------------------
+method: sapg                 # sapg | ppo | pql | dexpbt
+task: allegro_hand
+task_group: allegro_hand
+env_name: allegro_hand
+
+# ---------------------------------------------------------------------------
+# Block split / aggregation (Sec. 4.3, Algorithm 1)
+# ---------------------------------------------------------------------------
+num_envs: 24576              # N: massively parallel IsaacGym environments
+num_policies: 6              # M: 1 leader + M-1 followers
+leader_index: 1              # 1-based leader index
+aggregation: leader_follower # leader_follower | symmetric | none
+off_policy_weight: 1.0       # lambda in Eq. 3/4
+subsample_off_policy: true   # |D'_1| = |D_1| (Sec. 4.3)
+
+# ---------------------------------------------------------------------------
+# Optimization (Table 4)
+# ---------------------------------------------------------------------------
+learning_rate: 5.0e-4
+critic_learning_rate: 5.0e-4
+optimizer: adam
+adam_betas: [0.9, 0.999]
+adam_eps: 1.0e-8
+clip_epsilon: 0.2
+gamma: 0.99
+tau: 0.95                    # interpreted as GAE lambda
+horizon_length: 8
+mini_epochs: 5
+minibatch_size_multiplier: 4
+lstm_sequence_length: 8
+kl_threshold: 0.016
+grad_norm: 1.0
+bounds_loss_coefficient: 1.0e-4
+critic_coefficient: 4.0      # lambda' (critic coefficient)
+normalize_advantage: true
+
+# ---------------------------------------------------------------------------
+# Network architecture (Table 4: MLP 512x256x128 ELU)
+# ---------------------------------------------------------------------------
+actor_mlp_units: [512, 256, 128]
+critic_mlp_units: [512, 256, 128]
+actor_activation: elu
+use_lstm: false
+lstm_hidden_size: 768
+lstm_num_layers: 1
+learnable_sigma: true
+action_scale: 1.0
+
+# ---------------------------------------------------------------------------
+# Per-policy latent phi_j (Sec. 4.4 / Appendix B.3 Note)
+# ---------------------------------------------------------------------------
+phi_dim: 16                  # R^16 for ShadowHand / AllegroHand tasks
+per_block_sigma: false
+entropy_coefficient: 0.0     # best per-task choice for AllegroHand (Sec. 6.2)
+random_phi: false
+
+# ---------------------------------------------------------------------------
+# Environment / task (Appendix A)
+# ---------------------------------------------------------------------------
+obs_dim: 49                  # [q(16), qdot(16), object_pose(7), v(3), omega(3), g_quat(4)]
+action_dim: 16               # 16-DoF Allegro Hand
+joint_dim: 16
+goal_dim: 4                  # goal quaternion
+max_episode_length: 200
+hold_steps: 10
+rot_tolerance: 0.5235987755982988  # pi/6
+object_size: 0.06
+randomize: true
+observation_noise: 0.0
+clip_actions: true
+clip_obs: 5.0
+use_curriculum: false        # easy task: fixed rotation tolerance
+
+# ---------------------------------------------------------------------------
+# Budget / bookkeeping
+# ---------------------------------------------------------------------------
+max_samples: 2.0e10          # ~2e10 transitions per experiment
+num_seeds: 5
+seed: 0
+log_dir: runs/allegro_hand
+device: cuda:0
+use_tensorboard: false
+use_wandb: false
+
+# ---------------------------------------------------------------------------
+# Baseline overrides (Sec. 5.2): PPO / PQL / DexPBT share N=24576
+# ---------------------------------------------------------------------------
+baselines:
+  ppo:
+    num_policies: 1
+    phi_dim: 0
+    entropy_coefficient: 0.0
+  pql:
+    method: pql
+    num_policies: 1
+  dexpbt:
+    method: dexpbt
+    num_policies: 6
+    entropy_coefficient: 0.0
+
+# ---------------------------------------------------------------------------
+# Per-task overrides (single task for this group)
+# ---------------------------------------------------------------------------
+tasks:
+  allegro_hand:
+    goal_dim: 4
+    obs_dim: 49
+    action_dim: 16
+    use_curriculum: false
+    entropy_coefficient: 0.0

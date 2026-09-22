@@ -1,0 +1,200 @@
+# =============================================================================
+# BBox-Adapter - default configuration
+# -----------------------------------------------------------------------------
+# Paper: "Lightweight Adapting for Black-Box Large Language Models"
+# Source: Section 3.2/3.4, Appendix H.2, Appendix F.2, Appendix E
+#
+# Appendix H.2 (verbatim settings):
+#   * black-box LLMs: gpt-3.5-turbo (Azure OpenAI) and mixtral-8x7B-v0.1 (HF)
+#   * BBox-Adapter: maximum generated solution length 512, temperature 1.0
+#     (temperature 1.0 keeps the black-box LLM diverse; it only *proposes*)
+#   * adapter backbone: deberta-v3-base (86M) / deberta-v3-large (304M) for
+#     StrategyQA, GSM8K, ScienceQA; bert-base-cased (110M) for TruthfulQA
+#   * learning rate eta = 5e-6, batch size = 64, training steps = 6,000
+#   * optimizer AdamW, weight decay = 0.01
+#   * SFT baseline: max generation length 512, temperature 0.0,
+#     gpt-3.5-turbo fine-tuning epochs = 5 (cf. Appendix F.2 which uses 3)
+#
+# NOTE (documented deviations / paper-silent defaults):
+#   * `alpha` (Eq. 3 regularisation coefficient) is not specified in the paper;
+#     default 1e-2 with sweep {1e-3, 1e-2, 1e-1} (see configs.SWEEP/regularizer).
+#   * `n_candidates` (M) / `k_init` (K) / `samples_per_beam` (n) unify the
+#     paper's M,K vs k,n notation clash (Section 3.3 vs Section 3.4).
+#   * `n_iterations` (T) default 4, consistent with the Fig. 3(b) plateau.
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Identity / bookkeeping
+# -----------------------------------------------------------------------------
+name: default
+dataset: strategyqa            # strategyqa | gsm8k | truthfulqa | scienceqa | toxigen
+size: 0.1b                     # 0.1b (86M deberta-v3-base) | 0.3b (304M deberta-v3-large)
+backbone: null                 # explicit HF id overrides `size`; null -> per-dataset default
+seed: 0
+output_dir: runs/default
+
+# -----------------------------------------------------------------------------
+# Black-box LLM (proposal generator) - Section 4.1, Appendix H.2
+# -----------------------------------------------------------------------------
+blackbox:
+  model: gpt-3.5-turbo         # gpt-3.5-turbo | davinci-002 | mixtral-8x7b
+  kind: bbox                   # bbox | sft | cot | toxigen | rater
+  max_len: 512                 # Appendix H.2: max generated solution length
+  temperature: 1.0             # Appendix H.2: temperature 1.0 for proposals
+  top_p: 1.0
+  n: 1                         # samples per generate() call (beam step draws n)
+  allow_mock: true             # fall back to deterministic mock if no credentials
+  # Azure / HF endpoints are read from the environment, never committed:
+  #   AZURE_OPENAI_API_KEY, AZURE_OPENAI_ENDPOINT, AZURE_OPENAI_API_VERSION,
+  #   AZURE_OPENAI_DEPLOYMENT, HF_TOKEN
+
+# -----------------------------------------------------------------------------
+# Adapter (scalar energy model g_theta) - Section 3.1, Appendix H.2
+# -----------------------------------------------------------------------------
+adapter:
+  backbone: null               # null -> resolved from dataset/size
+  pooling: null                # null -> "cls" (BERT) / "mean" (DeBERTa-v3)
+  head_hidden: 0               # 0 -> Dropout+Linear(H,1)
+  dropout: 0.0
+  freeze_backbone: false
+  max_length: 512              # Appendix H.2 (max length for a generated solution)
+  output_scale: 1.0            # energies stay in nats (Eq. 2 softmax)
+  head_init_std: 0.02
+
+# -----------------------------------------------------------------------------
+# Objective: ranking-based NCE (Eq. 2 / Eq. 3) - Section 3.2, Appendix A/B
+# -----------------------------------------------------------------------------
+loss:
+  name: nce                    # nce | mlm  (mlm = Section 4.5 ablation)
+  alpha: 0.01                  # Eq. (3) alpha * E[g_theta^2]  (paper-silent default)
+  reduction: mean              # mean implements the expectation in Eq. (3)
+  temperature: 1.0
+  label_smoothing: 0.0
+  energy_clamp: null
+  reg_mode: split              # Eq. (3) averages positives and negatives separately
+  reg_schedule: constant
+  reg_warmup_steps: 0
+  use_regularizer: true
+
+# -----------------------------------------------------------------------------
+# Online adaptation (Algorithm 1) - Section 3.4, Eq. (7), Appendix H.2
+# -----------------------------------------------------------------------------
+training:
+  lr: 0.000005                 # eta = 5e-6  (Appendix H.2)
+  batch_size: 64               # Appendix H.2
+  max_train_steps: 6000        # Appendix H.2 (total mini-batch gradient steps)
+  weight_decay: 0.01           # Appendix H.2 (AdamW)
+  betas: [0.9, 0.999]
+  max_grad_norm: 1.0
+  schedule: constant           # constant | cosine
+  warmup_fraction: 0.1         # 10% linear warmup (paper-silent default)
+  n_iterations: 4              # T outer iterations (Algorithm 1)
+  n_candidates: 5              # M candidates sampled from p_theta_t (Eq. 5/6)
+  k_init: 5                    # K initial prompted responses per query
+  samples_per_beam: 1          # n sentence samples per beam per step (Eq. 4)
+  use_beam_search: true        # false -> single-step variant (Table 4)
+  outcome_supervision: true    # Section 3.4 outcome supervision
+  sel_mode: ground_truth       # ground_truth | ai_feedback | combined | random
+  device: null                 # null -> cuda if available else cpu
+  log_every: 50
+  eval_every: 1
+  save_every: 1
+
+# -----------------------------------------------------------------------------
+# Adapted inference: sentence-level beam search (Eq. 4) - Section 3.3
+# -----------------------------------------------------------------------------
+beam_search:
+  beam_size: 3                 # default beam size k (Section 3.3, Fig. 3a)
+  n_samples: 1                 # n sentence samples per beam per step
+  max_steps: 6                 # max sentence-level steps L
+  stop_signal: "####"
+  temperature: 1.0             # black-box proposal temperature
+  max_len: 512
+  normalization: none          # none | length | sentences (paper: none)
+  length_penalty: 0.0
+  deduplicate: true
+  stop_when_all_complete: true
+  include_prompt_in_energy: false
+  keep_candidates: true
+
+# -----------------------------------------------------------------------------
+# Buffers / SEL (Eq. 5, Eq. 6) - Section 3.4
+# -----------------------------------------------------------------------------
+buffer:
+  sel_mode: ground_truth
+  k_init: 5
+  m_candidates: 5
+  max_positives: 1             # one positive per query (Eq. 2 contrastive set)
+  max_negatives: 16
+  deduplicate: true
+  outcome_supervision: true
+  ai_feedback_n_ranked: 5      # TruthfulQA ranked top-5 (Appendix G)
+
+# -----------------------------------------------------------------------------
+# AI feedback rater (gpt-4) - Section 3.4, Appendix G
+# -----------------------------------------------------------------------------
+feedback:
+  enabled: false               # true for ai_feedback / combined SEL modes
+  model: gpt-4
+  temperature: 0.0
+  n_ranked: 5
+  retries: 2
+  fallback: majority           # majority | first | raise
+  criteria:                    # Appendix G: four evaluation criteria
+    - Coherency
+    - Reasonability
+    - Correctness
+    - Format
+
+# -----------------------------------------------------------------------------
+# Evaluation - Section 4.2-4.7, Appendix E
+# -----------------------------------------------------------------------------
+eval:
+  metric: accuracy             # accuracy | true_info | toxicity
+  n_test: null                 # null -> paper test split size
+  gpt_judge: false             # TruthfulQA True+Info via GPT judge (Appendix E)
+  toxicity_threshold: 0.5      # RoBERTa judge -> Toxic% binary decision
+
+# -----------------------------------------------------------------------------
+# Baselines - Section 4.1 Baselines, Appendix F.2, Appendix H.2
+# -----------------------------------------------------------------------------
+baselines:
+  cot:
+    temperature: 0.0
+    max_len: 512
+  azure_sft:
+    temperature: 0.0
+    max_len: 512
+    epochs: 3                  # Appendix F.2 uses 3; Appendix H.2 states 5
+    batch_size: default        # Azure service default
+    lr_multiplier: default     # Azure service default
+  sft_lora:
+    model: mistralai/Mixtral-8x7B-v0.1
+    lora_r: 128                # 0.1B-equivalent; 384 for 0.3B-equivalent
+    lora_alpha_multiplier: 2   # alpha = 2r
+    lora_dropout: 0.1
+    lr: 0.0002
+    weight_decay: 0.001
+    batch_size: 8              # per GPU
+    max_grad_norm: 0.3
+    optim: paged_adamw_32bit
+    lr_scheduler: cosine
+    temperature: 0.0
+    max_len: 512
+
+# -----------------------------------------------------------------------------
+# Cost accounting - Table 4 (gpt-3.5-turbo-1106 pricing)
+# -----------------------------------------------------------------------------
+cost:
+  enabled: true
+  model_for_pricing: gpt-3.5-turbo-1106
+  usd_per_1k_input_tokens: 0.0015
+  usd_per_1k_output_tokens: 0.002
+  per_questions: 1000
+
+# -----------------------------------------------------------------------------
+# VRAM measurement - Table 6 (reported for the 0.1B adapter only, Addendum)
+# -----------------------------------------------------------------------------
+vram:
+  enabled: false
+  report_only_0_1b: true

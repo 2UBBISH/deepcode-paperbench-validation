@@ -1,0 +1,77 @@
+# BBox-Adapter — "Lightweight Adapting for Black-Box Large Language Models"
+# Dependency pinning derived from the paper's Appendix H.2 / environment description:
+#   Python 3.10.13, AMD EPYC 7702 64-core CPU @1.50 GHz, NVIDIA A100-SXM4-80GB (CUDA 11.8+).
+#
+# Install:
+#   python -m venv .venv && source .venv/bin/activate
+#   pip install -r requirements.txt
+#
+# Notes
+# -----
+# * `torch` must be a CUDA build for A100 (cu118 or cu121 wheels). The CPU fallback works
+#   for the offline self-tests (MockLLMClient + tests/) but not for real training runs.
+# * BBox-Adapter itself only needs a single A100-80GB: the 0.1B/0.3B energy adapter
+#   (DeBERTa-v3-base/large, BERT-base-cased) plus a black-box LLM served over the
+#   Azure OpenAI REST API (no local weights).
+# * The SFT-LoRA baseline (Mixtral-8x7B-v0.1) was trained on 4x A100-SXM4-80GB; the
+#   half-precision Mixtral inference path needs ~90 GiB and therefore uses 2 GPUs
+#   (device_map="auto").
+# * The code degrades gracefully: with no Azure credentials / no `transformers` weights
+#   available, `bbox_adapter.llm.blackbox_client` falls back to MockLLMClient and every
+#   module remains importable.
+
+# ---------------------------------------------------------------------------
+# Core language / numerics
+# ---------------------------------------------------------------------------
+numpy>=1.24,<2.0
+pandas>=2.0,<3.0
+scipy>=1.11,<2.0
+
+# ---------------------------------------------------------------------------
+# Deep learning stack (adapter g_theta + Mixtral inference + LoRA baseline)
+# ---------------------------------------------------------------------------
+torch>=2.1,<3.0
+transformers>=4.36,<4.45
+sentencepiece>=0.1.99
+tokenizers>=0.15,<0.20
+accelerate>=0.25,<0.35
+peft>=0.7,<0.11
+safetensors>=0.4
+huggingface_hub>=0.20
+einops>=0.7
+
+# ---------------------------------------------------------------------------
+# Datasets (StrategyQA, GSM8K, TruthfulQA, ScienceQA, ToxiGen)
+# StrategyQA 2059/229, GSM8K 7473/1319, TruthfulQA 717/100 (random), ScienceQA 2000/500
+# (image questions excluded), ToxiGen 2000/500.
+# ---------------------------------------------------------------------------
+datasets>=2.14,<2.20
+pyarrow>=14.0
+
+# ---------------------------------------------------------------------------
+# Black-box LLM access (Azure OpenAI REST: gpt-3.5-turbo, davinci-002, gpt-4 rater)
+# The client speaks plain REST via `requests`; the openai SDK is optional but supported.
+# ---------------------------------------------------------------------------
+requests>=2.31
+openai>=1.6,<2.0
+azure-identity>=1.15
+python-dotenv>=1.0
+
+# ---------------------------------------------------------------------------
+# Configuration, CLI, progress, metrics, plotting
+# ---------------------------------------------------------------------------
+PyYAML>=6.0
+tqdm>=4.66
+scikit-learn>=1.3
+matplotlib>=3.8
+
+# ---------------------------------------------------------------------------
+# Evaluation (ToxiGen: RoBERTa hate-speech classifier — facebook/roberta-hate-speech-dynabench-r4-target)
+# TruthfulQA GPT-judge uses the same Azure OpenAI client as the AI feedback rater.
+# ---------------------------------------------------------------------------
+# (no extra dependency: the RoBERTa judge is loaded through `transformers`)
+
+# ---------------------------------------------------------------------------
+# Testing / dev
+# ---------------------------------------------------------------------------
+pytest>=7.4

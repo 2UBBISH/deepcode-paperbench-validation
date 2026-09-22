@@ -1,0 +1,185 @@
+# =============================================================================
+# LBCS reproduction — default configuration
+# -----------------------------------------------------------------------------
+# This file centralises every value that the paper states AND every value it
+# does NOT state.  Paper-stated values carry a `# PAPER` comment; anything
+# labelled `# SUGGESTED` is a sensible default chosen by this reproduction
+# (the paper leaves it unspecified).  Experiment drivers load a section file
+# that deep-merges over these defaults, so nothing needs editing in the
+# algorithm code to change a setting.
+#
+# Scope: ImageNet-1k (Sec 5.4), continual learning (App. E.5) and streaming
+#        (App. E.6) are explicitly OUT OF SCOPE.
+# =============================================================================
+
+seed: 0                 # SUGGESTED — base seed; repeats derive seed = base + repeat
+
+# ----------------------------------------------------------------------------
+# Global runtime
+# ----------------------------------------------------------------------------
+device: null            # null -> auto (cuda if available else cpu)
+num_workers: 0          # SUGGESTED — 0 keeps CPU smoke tests deterministic
+data_root: null         # null -> torchvision default (or $LBCS_DATA_ROOT)
+output_root: "results"  # where experiment artifacts are written
+save_artifacts: true
+verbose: false
+
+# ----------------------------------------------------------------------------
+# Logging
+# ----------------------------------------------------------------------------
+logging:
+  level: "INFO"
+  log_every: 0          # 0 -> only summary logs
+  to_file: false
+  file_name: "lbcs.log"
+
+# ----------------------------------------------------------------------------
+# LBCS — Algorithm 1 defaults
+# ----------------------------------------------------------------------------
+lbcs:
+  epsilon: 0.2          # PAPER (Sec 5.1/5.2 use 0.2; 0.3/0.4 also swept)
+  T: 500                # PAPER (Sec 5.2); 1000 for Figure 1
+  k: 1000               # PAPER sweep start (Sec 5.2)
+  delta_init: 0.1       # SUGGESTED (paper does not state)
+  delta_lower: 0.001    # SUGGESTED (paper does not state)
+  warm_start: true      # PAPER acceleration trick (i): pretrain then finetune
+  group_size: 1         # PAPER acceleration trick (iii); 1 = disabled
+  cache_evaluations: true
+  cache_theta: false
+  pretrain_random_masks: false
+
+# ----------------------------------------------------------------------------
+# Inner loop  theta(m) <- argmin_theta L(m, theta)
+# ----------------------------------------------------------------------------
+inner:
+  optimizer: "adam"     # PAPER (Sec 5.2 uses Adam)
+  lr: 0.001             # PAPER (Sec 5.2 lr = 0.001 with Adam)
+  momentum: 0.9         # PAPER (Figure 1 uses SGD momentum 0.9)
+  weight_decay: 0.0     # SUGGESTED
+  epochs: 100           # PAPER (inner loop trained to convergence / 100 epochs)
+  batch_size: 128       # SUGGESTED
+  eval_batch_size: 256  # SUGGESTED
+  scheduler: null       # null -> constant LR inside the inner loop
+
+# Figure-1 specific inner loop (SGD lr 0.1 momentum 0.9, 100 epochs)
+inner_figure1:
+  optimizer: "sgd"      # PAPER
+  lr: 0.1               # PAPER
+  momentum: 0.9         # PAPER
+  weight_decay: 0.0     # SUGGESTED
+  epochs: 100           # PAPER
+  batch_size: 128
+
+# ----------------------------------------------------------------------------
+# Post-selection TARGET model training (Sec 5.2 / App. D.2)
+# ----------------------------------------------------------------------------
+target:
+  F-MNIST:
+    architecture: "LeNet"     # PAPER
+    optimizer: "adam"         # PAPER
+    lr: 0.001                 # PAPER
+    momentum: 0.9
+    weight_decay: 0.0         # SUGGESTED
+    epochs: 100               # PAPER
+    scheduler: null
+    batch_size: 128           # SUGGESTED
+  SVHN:
+    architecture: "SVHNTargetCNN"   # PAPER (Table 7 CNN)
+    optimizer: "adam"               # PAPER
+    lr: 0.001                       # PAPER
+    momentum: 0.9
+    weight_decay: 0.0               # SUGGESTED
+    epochs: 100                     # PAPER
+    scheduler: null
+    batch_size: 128
+  CIFAR-10:
+    architecture: "ResNet18"        # PAPER
+    optimizer: "sgd"                # PAPER
+    lr: 0.1                         # PAPER
+    momentum: 0.9                   # PAPER
+    weight_decay: 0.0005            # SUGGESTED
+    epochs: 200                     # PAPER
+    scheduler: "cosine"             # PAPER
+    batch_size: 128                 # SUGGESTED
+
+# ----------------------------------------------------------------------------
+# Proxy (inner-loop) architectures per dataset
+# ----------------------------------------------------------------------------
+proxy:
+  MNIST-S: "ConvNet"        # PAPER (Sec 5.1 / Figure 1, Zhou et al. 2022)
+  MNIST: "ConvNet"
+  F-MNIST: "LeNet"          # PAPER
+  SVHN: "SVHNCNN"           # PAPER (Table 7 inner CNN)
+  CIFAR-10: "CIFARCNN"      # PAPER (Table 7 inner CNN)
+
+# ----------------------------------------------------------------------------
+# Baselines (Sec 5.2 comparison suite / App. D.1)
+# ----------------------------------------------------------------------------
+baselines:
+  suite: ["Uniform", "EL2N", "GraNd", "Influential", "Moderate", "CCS", "Probabilistic"]
+  reference_epochs: 100     # SUGGESTED — proxy used to score EL2N/GraNd/etc.
+  el2n:
+    reduction: "norm"
+  grand:
+    param_scope: "last_layer"
+    reduction: "norm"
+  influential:
+    param_scope: "last_layer"
+    hessian_approx: "diag"
+    damping: 0.01
+    cg_iters: 30
+    normalize: false
+  moderate:
+    metric: "l2"
+    median_mode: "class"
+  ccs:
+    importance: "l2"
+    alpha: 0.5
+    preserve_distribution: true
+  probabilistic:
+    lambda: 0.5
+    use_size_objective: true
+    outer_iters: 500        # SUGGESTED (Sec 5.2 budget)
+    outer_lr: 2.5           # PAPER (Figure 1 uses Adam lr 2.5)
+    cosine: true
+
+# ----------------------------------------------------------------------------
+# Tricky-bilevel (Figure 1) formulations
+# ----------------------------------------------------------------------------
+figure1:
+  dataset: "MNIST-S"
+  n: 1000                 # PAPER (1000 random MNIST samples)
+  k: 200                  # SUGGESTED (arbitrary fixed subset)
+  lambda: 0.5             # PAPER
+  formulations: ["eq3", "eq4"]
+  outer_iters: 1000       # PAPER
+  outer_lr: 2.5           # PAPER
+  outer_optimizer: "adam" # PAPER
+  outer_scheduler: "cosine"  # PAPER
+  inner_epochs: 100       # PAPER
+  inner_lr: 0.1           # PAPER
+  inner_momentum: 0.9     # PAPER
+  inner_optimizer: "sgd"  # PAPER
+  architecture: "ConvNet" # PAPER
+
+# ----------------------------------------------------------------------------
+# Robustness (Sec 5.3 / App. E.2 / E.3)
+# ----------------------------------------------------------------------------
+robustness:
+  dataset: "F-MNIST"
+  conditions: ["noise30", "noise50", "imbalance"]
+  noise_rate_30: 0.30     # PAPER
+  noise_rate_50: 0.50     # PAPER
+  imbalance_ratio: 0.01   # PAPER
+  ks: [1000, 2000, 3000, 4000]   # PAPER
+  repeats: 10             # PAPER (Sec 5.3)
+  eval_split: "test"      # test set is never corrupted
+
+# ----------------------------------------------------------------------------
+# Repeat protocol (paper statistical reporting)
+# ----------------------------------------------------------------------------
+repeats:
+  section5_1: 20          # PAPER
+  section5_2: 10          # PAPER
+  section5_3: 10          # PAPER
+  section6: 10            # PAPER

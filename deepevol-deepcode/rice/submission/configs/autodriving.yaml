@@ -1,0 +1,342 @@
+# =============================================================================
+# RICE -- per-application configuration: Autonomous Driving (MetaDrive Macro-v1)
+# =============================================================================
+# Applied on top of configs/default.yaml by rice.utils.io.get_config("autodriving").
+#
+# Paper references:
+#   Sec. 4.1  -- applications: Hopper, Walker2d, Reacher, HalfCheetah, Selfish
+#               Mining, CAGE Challenge 2 and Autonomous Driving (MetaDrive).
+#   Sec. 4.2  -- "Autonomous Driving" is one of the dense applications refined in
+#               Experiment II; its final reward improves from 10.30 (No-Refine)
+#               to 17.03 (Ours).
+#   App. C.1  -- the driving agent policy is the DI-engine default VAC network,
+#               i.e. a shared MLP body with separate policy/value heads for the
+#               2-dimensional continuous action (steering, acceleration/brake).
+#   App. C.2  -- observation normalization is only applied to Walker2d and
+#               HalfCheetah; therefore normalize_obs is disabled here.
+#
+# Notes on paper-silent numerics (reproduction-plan defaults):
+#   * alpha      -> Table 3 value 1e-4 (Sec.4.3/C.3 prose says 0.01; alpha is
+#                   insensitive, so the Table-3 value is used and swept in Exp V)
+#   * PPO params -> SB3 defaults (gamma 0.99, GAE 0.95, clip 0.2, lr 3e-4,
+#                   n_epochs 10)
+#   * RND        -> small [64, 64] MLP, running-std normalization (unspecified)
+#   * refine.K   -> null, i.e. default to the episode horizon T (Algorithm 2)
+# =============================================================================
+
+name: autodriving
+
+seed: 0
+seeds: [0, 1, 2]
+
+device: cpu
+output_dir: outputs/autodriving
+log_dir: logs/autodriving
+save_dir: checkpoints/autodriving
+results_dir: results/autodriving
+verbose: true
+
+# -----------------------------------------------------------------------------
+# Environment: MetaDrive Macro-v1 (DI-drive)
+#   The 2-D continuous action maps to (steering, acceleration) with the negative
+#   acceleration branch realised as braking. Episodes terminate on crash /
+#   out-of-road / route completion and are capped by max_episode_steps.
+# -----------------------------------------------------------------------------
+env:
+  id: autodriving
+  gym_id: MetaDrive-Macro-v1
+  registered_id: MetaDrive-Macro-v1
+  app: driving
+  discrete_actions: false
+  normalize_obs: false
+  sparse: false
+  sparse_threshold: null
+  max_episode_steps: 1000
+  d_max: 100.0
+  obs_dim: null            # resolved at runtime from the MetaDrive observation space
+  action_dim: 2            # [steering, acceleration/brake]
+  action_low: [-1.0, -1.0]
+  action_high: [1.0, 1.0]
+  # MetaDrive Macro-v1 configuration knobs used by the RICE env factory.
+  macrodrive:
+    environment_num: 1
+    start_seed: 0
+    traffic_density: 0.1
+    accident_prob: 0.0
+    decision_repeat: 5
+    horizon: 1000
+    random_traffic: false
+
+# -----------------------------------------------------------------------------
+# Target policy pi (frozen after pre-training)
+#   Architecture: DI-engine default VAC (shared MLP body + policy/value heads).
+# -----------------------------------------------------------------------------
+target:
+  algo: ppo
+  policy: VAC
+  backend: di-engine
+  vac:
+    hidden_sizes: [64, 64]
+    activation: relu
+    actor_head: [128]
+    critic_head: [128]
+  hidden_sizes: [64, 64]
+  activation: tanh
+  lr: 0.0003
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_range: 0.2
+  n_epochs: 10
+  batch_size: 64
+  n_steps: 2048
+  total_timesteps: 1000000
+  checkpoint: policies/autodriving_ppo.zip
+  # Trend reference only (Sec. 4.2 / Table 1 "No Refine").
+  expected_return: 10.30
+  expected_std: null
+
+# -----------------------------------------------------------------------------
+# Stage 1 -- Explanation (mask network, Algorithm 1: vanilla PPO + alpha*a_t^m)
+# -----------------------------------------------------------------------------
+explanation:
+  enabled: true
+  method: ours                    # ours | random | statemask | ig | airs
+  hidden_sizes: [64, 64]
+  activation: tanh
+  alpha: 0.0001                   # Table 3 value (Sec. 4.3/C.3 text says 0.01)
+  alpha_sweep: [0.01, 0.001, 0.0001]
+  use_blinding_bonus: true
+  reward_mode: augmented          # R'_t = R(s_t, a_t) + alpha * a_t^m
+  total_timesteps: 2443260        # Table 4 sample budget for autodriving
+  lr: 0.0003
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_range: 0.2
+  n_epochs: 10
+  batch_size: 64
+  K: 0.1                          # default trajectory length fraction for fidelity
+  checkpoint: policies/autodriving_mask.pt
+  # Trend reference only (Table 4 mask-training wall-clock, seconds).
+  expected_time_ours: null
+  expected_time_statemask: null
+
+# -----------------------------------------------------------------------------
+# Experiment I -- fidelity evaluation (sliding window, 500 trajectories x 3 seeds)
+# -----------------------------------------------------------------------------
+fidelity:
+  K_values: [0.10, 0.20, 0.30, 0.40]
+  n_trajectories: 500
+  seeds: [0, 1, 2]
+  deterministic_policy: true
+  action_mode: random
+  scoring: auto                   # auto -> mask when a mask net is given
+  window_metric: mean             # highest AVERAGE importance window
+  max_tail_steps: 10
+  store_details: true
+
+# -----------------------------------------------------------------------------
+# Stage 2 -- Refining (Algorithm 2: mixed-init mu(s) + RND intrinsic reward)
+# -----------------------------------------------------------------------------
+refine:
+  enabled: true
+  method: ours                    # ours | ppo_finetune | statemask_r | jsrl | sac | gail | sil
+  p: 0.5                          # = beta in mu(s)=beta*d_rho^pihat(s)+(1-beta)*rho(s)
+  p_sweep: [0.0, 0.25, 0.5, 0.75, 1.0]
+  lam: 0.01                       # RND intrinsic-reward weight
+  lam_sweep: [0.0, 0.1, 0.01, 0.001]
+  use_mixed_init: true
+  use_rnd: true
+  K: null                         # null -> episode horizon T
+  copy_policy: true               # keep pretrained pi frozen; train pi_theta
+  total_timesteps: 200000
+  lr: 0.0003
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_range: 0.2
+  n_epochs: 10
+  batch_size: 64
+  n_steps: null                   # null -> episode horizon T
+  eval_episodes: 10
+  deterministic_eval: true
+  checkpoint: policies/autodriving_refined.zip
+  # Trend reference only (Sec. 4.2 / Table 1 "Ours").
+  expected_return: 17.03
+  expected_std: null
+
+# -----------------------------------------------------------------------------
+# Random Network Distillation (Stage-2 exploration bonus)
+# -----------------------------------------------------------------------------
+rnd:
+  hidden_sizes: [64, 64]
+  activation: tanh
+  lr: 0.0001
+  lam: 0.01
+  normalize: true
+  normalization: running_std      # paper-unspecified -> divide by running std
+  clip_bonus: null
+  update_epochs: 1
+  batch_size: 256
+  reward_scale: 1.0
+
+# -----------------------------------------------------------------------------
+# Baselines
+# -----------------------------------------------------------------------------
+baselines:
+  random_explanation:
+    mode: uniform
+    seed: null
+    topk_fraction: 0.1
+
+  statemask:
+    # Primal-dual StateMask variant: min |eta(pi) - eta(pi_bar)| via a
+    # Lagrangian multiplier alpha. Used for both the explanation and the
+    # StateMask-R refining baseline.
+    alpha_init: 0.01
+    dual_lr: 0.0001
+    delta: 0.1
+    alpha_min: 0.0
+    alpha_max: 10.0
+    dual_mode: enforce
+    total_timesteps: 2443260      # Table 4 budget (same as ours)
+    lr: 0.0003
+    gamma: 0.99
+    gae_lambda: 0.95
+    clip_range: 0.2
+    n_epochs: 10
+    batch_size: 64
+    refine_p: 1.0                 # StateMask-R always resets to critical state
+    refine_use_rnd: false
+
+  integrated_gradients:
+    n_steps: 16
+    baseline: zero
+    target: action
+    reduction: l1
+    normalize: false
+
+  airs:
+    hidden_sizes: [64, 64]
+    lr: 0.0003
+    epochs: 20
+    batch_size: 512
+    l1_coeff: 0.01
+    entropy_coeff: 0.0
+    score_mode: hybrid
+    train_samples: 20000
+
+  ppo_finetune:
+    # Plain PPO fine-tuning with a lowered learning rate; no mixed-init, no RND.
+    lr: 0.0001
+    total_timesteps: 200000
+    gamma: 0.99
+    gae_lambda: 0.95
+    clip_range: 0.2
+    n_epochs: 10
+    batch_size: 64
+    use_mixed_init: false
+    use_rnd: false
+    p: 0.0
+    lam: 0.0
+
+  jsrl:
+    # Jump-Start RL: guided policy pi_g = frozen pi, trainable pi_e initialized
+    # from pi_g; guided horizon annealed to 0.
+    lr: 0.0003
+    total_timesteps: 200000
+    max_guided_horizon: 1000
+    min_guided_horizon: 0
+    horizon_schedule: linear
+    guidance_mode: prefix
+    exclude_guided_transitions: true
+
+  sac_finetune:
+    enabled: true                 # continuous action space -> applicable
+    lr: 0.0003
+    total_timesteps: 200000
+    hidden_sizes: [256, 256]
+    buffer_size: 1000000
+    batch_size: 256
+    learning_starts: 100
+    tau: 0.005
+    gamma: 0.99
+    use_mixed_init: false
+    use_rnd: false
+
+  gail:
+    enabled: true                 # Exp IV style approximate-policy pathway
+    lr: 0.0003
+    total_timesteps: 200000
+    expert_timesteps: 100000
+    hidden_sizes: [64, 64]
+    disc_hidden_sizes: [100, 100]
+    disc_epochs: 1
+    bc_pretrain_epochs: 10
+    use_discriminator: true
+
+  sil:
+    enabled: true
+    lr: 0.0003
+    total_timesteps: 200000
+    sil_coef: 1.0
+    sil_batch_size: 128
+    buffer_size: 100000
+    min_buffer_size: 1000
+    positive_only: true
+    positive_quantile: 0.5
+
+# -----------------------------------------------------------------------------
+# Experiment drivers (Sec. 4.2 Experiment Design I-V)
+# -----------------------------------------------------------------------------
+experiments:
+  envs: [autodriving]
+  dense_envs: [autodriving]
+  app_envs: [autodriving]
+  seeds: [0, 1, 2]
+
+  exp1_fidelity_efficiency:
+    enabled: true
+    envs: [autodriving]
+    K_values: [0.10, 0.20, 0.30, 0.40]
+    n_trajectories: 500
+    seeds: [0, 1, 2]
+    methods: [random, statemask, ours]
+    measure_training_time: true
+
+  exp2_refine_effectiveness:
+    enabled: true
+    envs: [autodriving]
+    explanation: ours
+    refiners: [no_refine, ppo_finetune, statemask_r, jsrl, ours]
+    seeds: [0, 1, 2]
+
+  exp3_explanation_quality:
+    enabled: true
+    envs: [autodriving]
+    refiner: ours
+    explanations: [random, statemask, ours]
+    seeds: [0, 1, 2]
+
+  exp4_sac_agent:
+    enabled: false                # Exp IV is Hopper-only
+    envs: []
+
+  exp5_hyperparams:
+    enabled: true
+    envs: [autodriving]
+    p_sweep: [0.0, 0.25, 0.5, 0.75, 1.0]
+    lam_sweep: [0.0, 0.1, 0.01, 0.001]
+    alpha_sweep: [0.01, 0.001, 0.0001]
+    seeds: [0, 1, 2]
+
+  optional:
+    sil_envs: []
+    extra_explanations: [integrated_gradients, airs]
+
+# -----------------------------------------------------------------------------
+# Plotting
+# -----------------------------------------------------------------------------
+plot:
+  dpi: 150
+  format: pdf
+  figsize: [6, 4]
+  show: false

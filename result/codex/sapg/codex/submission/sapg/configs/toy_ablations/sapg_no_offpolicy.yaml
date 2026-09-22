@@ -1,0 +1,5 @@
+defaults: [../toy_sapg.yaml]
+algo:
+  name: sapg
+  aggregation: none
+  use_offpolicy: false

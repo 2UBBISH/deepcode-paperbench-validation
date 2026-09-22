@@ -1,0 +1,97 @@
+  (1 command(s) rejected / not run — fine)
+  ran     4.7s  cd "/Users/apple/Documents/0919-test/codex/work/adaptive-pruning-codex-desktop" && python3 --version; which py
+  ran     4.3s  cd "/Users/apple/Documents/0919-test/codex/work/adaptive-pruning-codex-desktop" && python3 -c "import numpy, s   ⚠️ training-looking
+  ran     0.0s  cd /tmp && timeout 120 python3 -c "   ⚠️ training-looking
+  ran     8.9s  cd /tmp && python3 -c "   ⚠️ training-looking
+  ran    10.0s  cd /tmp && python3 -c "   ⚠️ training-looking
+  ran    10.0s  cd "/Users/apple/Documents/0919-test/codex/work/adaptive-pruning-codex-desktop/submission" && python3 -c "   ⚠️ training-looking
+  ran    10.0s  cd "/Users/apple/Documents/0919-test/codex/work/adaptive-pruning-codex-desktop/submission" && python3 -c "   ⚠️ training-looking
+  ran    10.0s  cd /tmp && python3 -c "   ⚠️ training-looking
+  ran     6.6s  python3 -c "import transformers, os; print(os.path.dirname(transformers.__file__))"; sed -n '/class T5Stack/,/
+  ran     3.4s  F="$(python3 -c 'import transformers,os;print(os.path.dirname(transformers.__file__))')/models/t5/modeling_t5.
+  ran     3.4s  F="$(python3 -c 'import transformers,os;print(os.path.dirname(transformers.__file__))')/models/t5/modeling_t5.
+  ran     3.7s  cd /tmp && python3 -c "
+  ran     2.8s  cd "/Users/apple/Documents/0919-test/codex/work/adaptive-pruning-codex-desktop/submission" && python3 -c "   ⚠️ training-looking
+  ran    10.0s  cd "/Users/apple/Documents/0919-test/codex/work/adaptive-pruning-codex-desktop/submission" && python3 -c "   ⚠️ training-looking
+  ran     7.1s  cd "/Users/apple/Documents/0919-test/codex/work/adaptive-pruning-codex-desktop/submission" && cat > /tmp/smoke   ⚠️ training-looking
+  ran    10.0s  cd "/Users/apple/Documents/0919-test/codex/work/adaptive-pruning-codex-desktop/submission" && PYTHONPATH=. pyt
+  ran    10.0s  cd "/Users/apple/Documents/0919-test/codex/work/adaptive-pruning-codex-desktop/submission" && PYTHONPATH=. pyt
+  ran    10.0s  cd "/Users/apple/Documents/0919-test/codex/work/adaptive-pruning-codex-desktop/submission" && PYTHONPATH=. pyt
+  ran    10.0s  cd "/Users/apple/Documents/0919-test/codex/work/adaptive-pruning-codex-desktop/submission" && PYTHONPATH=. pyt
+  ran    10.0s  cd "/Users/apple/Documents/0919-test/codex/work/adaptive-pruning-codex-desktop/submission" && PYTHONPATH=. pyt
+  ran    10.0s  cd "/Users/apple/Documents/0919-test/codex/work/adaptive-pruning-codex-desktop/submission" && PYTHONPATH=. pyt
+  ran    10.0s  cd "/Users/apple/Documents/0919-test/codex/work/adaptive-pruning-codex-desktop/submission" && PYTHONPATH=. pyt
+  ran     0.0s  cd /tmp/run1 && python3 -c "
+  ran     0.0s  cd "/Users/apple/Documents/0919-test/codex/work/adaptive-pruning-codex-desktop/submission" && python3 - <<'PY'
+  ran     9.3s  cd "/Users/apple/Documents/0919-test/codex/work/adaptive-pruning-codex-desktop/submission" && PYTHONPATH=. pyt   ⚠️ training-looking
+  ran     2.7s  F="$(python3 -c 'import transformers,os;print(os.path.dirname(transformers.__file__))')/models/roberta/modelin
+  ran    10.0s  cd "/Users/apple/Documents/0919-test/codex/work/adaptive-pruning-codex-desktop/submission" && PYTHONPATH=. pyt   ⚠️ training-looking
+  ran    10.0s  cd "/Users/apple/Documents/0919-test/codex/work/adaptive-pruning-codex-desktop/submission" && PYTHONPATH=. pyt   ⚠️ training-looking
+  ran    10.0s  cd "/Users/apple/Documents/0919-test/codex/work/adaptive-pruning-codex-desktop/submission" && PYTHONPATH=. pyt   ⚠️ training-looking
+  ran    10.0s  cd "/Users/apple/Documents/0919-test/codex/work/adaptive-pruning-codex-desktop/submission" && PYTHONPATH=. pyt   ⚠️ training-looking
+  ran     8.0s  cd "/Users/apple/Documents/0919-test/codex/work/adaptive-pruning-codex-desktop/submission" && PYTHONPATH=. pyt   ⚠️ training-looking
+  ran     2.9s  F="$(python3 -c 'import transformers,os;print(os.path.dirname(transformers.__file__))')/models/t5/modeling_t5.
+  ran     8.8s  cd "/Users/apple/Documents/0919-test/codex/work/adaptive-pruning-codex-desktop/submission" && PYTHONPATH=. pyt   ⚠️ training-looking
+  ran     0.0s  cd "/Users/apple/Documents/0919-test/codex/work/adaptive-pruning-codex-desktop/submission" && mkdir -p tests &   ⚠️ training-looking
+  ran     0.0s  cd "/Users/apple/Documents/0919-test/codex/work/adaptive-pruning-codex-desktop/submission" && PYTHONPATH=. pyt
+  ran     5.1s  cd "/Users/apple/Documents/0919-test/codex/work/adaptive-pruning-codex-desktop/submission" && pip3 install -q 
+  ran     4.8s  cd "/Users/apple/Documents/0919-test/codex/work/adaptive-pruning-codex-desktop/submission" && PYTHONPATH=. pyt
+  ran     2.1s  cd "/Users/apple/Documents/0919-test/codex/work/adaptive-pruning-codex-desktop/submission" && PYTHONPATH=. pyt
+  ran     8.8s  cd "/Users/apple/Documents/0919-test/codex/work/adaptive-pruning-codex-desktop/submission" && PYTHONPATH=. pyt
+  ran     7.9s  cd "/Users/apple/Documents/0919-test/codex/work/adaptive-pruning-codex-desktop/submission" && PYTHONPATH=. pyt
+  ran     9.4s  cd "/Users/apple/Documents/0919-test/codex/work/adaptive-pruning-codex-desktop/submission" && PYTHONPATH=. pyt
+  ran    30.0s  cd "/Users/apple/Documents/0919-test/codex/work/adaptive-pruning-codex-desktop/submission" && PYTHONPATH=. pyt
+  ran     8.3s  cd "/Users/apple/Documents/0919-test/codex/work/adaptive-pruning-codex-desktop/submission" && PYTHONPATH=. pyt
+  ran    30.0s  cd "/Users/apple/Documents/0919-test/codex/work/adaptive-pruning-codex-desktop/submission" && cat > /tmp/reals   ⚠️ training-looking
+  ran     0.0s  cd /tmp/apt_real2 && python3 -c "
+  ran     0.0s  date; echo "elapsed since start:"; python3 -c "
+  ran     2.0s  cd "/Users/apple/Documents/0919-test/codex/work/adaptive-pruning-codex-desktop/submission" && (setsid nohup en
+  ran    30.0s  cd "/Users/apple/Documents/0919-test/codex/work/adaptive-pruning-codex-desktop/submission" && PYTHONPATH=. pyt
+  ran    30.0s  pkill -f "smoke1.py" 2>/dev/null; sleep 1; cd "/Users/apple/Documents/0919-test/codex/work/adaptive-pruning-co   ⚠️ training-looking
+  ran    30.0s  cd "/Users/apple/Documents/0919-test/codex/work/adaptive-pruning-codex-desktop/submission" && PYTHONPATH=. OMP
+  ran    10.0s  cd /tmp && python3 -c "   ⚠️ training-looking
+  ran    30.0s  cd "/Users/apple/Documents/0919-test/codex/work/adaptive-pruning-codex-desktop/submission" && cat > /tmp/smoke   ⚠️ training-looking
+  ran    30.0s  cd "/Users/apple/Documents/0919-test/codex/work/adaptive-pruning-codex-desktop/submission" && sed -i '' 's/max
+  ran    30.0s  cd "/Users/apple/Documents/0919-test/codex/work/adaptive-pruning-codex-desktop/submission" && PYTHONPATH=. OMP
+  ran    30.0s  cd "/Users/apple/Documents/0919-test/codex/work/adaptive-pruning-codex-desktop/submission" && cat > /tmp/bases   ⚠️ training-looking
+  ran    17.7s  cd "/Users/apple/Documents/0919-test/codex/work/adaptive-pruning-codex-desktop/submission" && PYTHONPATH=. OMP
+  ran    16.0s  cd "/Users/apple/Documents/0919-test/codex/work/adaptive-pruning-codex-desktop/submission" && PYTHONPATH=. OMP
+  ran    15.5s  cd "/Users/apple/Documents/0919-test/codex/work/adaptive-pruning-codex-desktop/submission" && cat > /tmp/bases   ⚠️ training-looking
+  ran    25.4s  cd "/Users/apple/Documents/0919-test/codex/work/adaptive-pruning-codex-desktop/submission" && PYTHONPATH=. OMP
+  ran    30.0s  cd "/Users/apple/Documents/0919-test/codex/work/adaptive-pruning-codex-desktop/submission" && PYTHONPATH=. OMP
+  ran    30.0s  cd "/Users/apple/Documents/0919-test/codex/work/adaptive-pruning-codex-desktop/submission" && PYTHONPATH=. OMP
+  ran    30.0s  cd "/Users/apple/Documents/0919-test/codex/work/adaptive-pruning-codex-desktop/submission" && PYTHONPATH=. OMP
+  ran    18.7s  cd "/Users/apple/Documents/0919-test/codex/work/adaptive-pruning-codex-desktop/submission" && PYTHONPATH=. OMP   ⚠️ training-looking
+  ran    19.9s  cd "/Users/apple/Documents/0919-test/codex/work/adaptive-pruning-codex-desktop/submission" && PYTHONPATH=. OMP
+  ran    11.8s  cd "/Users/apple/Documents/0919-test/codex/work/adaptive-pruning-codex-desktop/submission" && PYTHONPATH=. OMP
+  ran     5.5s  cd "/Users/apple/Documents/0919-test/codex/work/adaptive-pruning-codex-desktop/submission" && PYTHONPATH=. pyt   ⚠️ training-looking
+  ran    30.0s  cd /tmp && python3 - <<'PY' 2>&1 | grep -v Warning | tail -20   ⚠️ training-looking
+  ran    13.1s  cd "/Users/apple/Documents/0919-test/codex/work/adaptive-pruning-codex-desktop/submission" && PYTHONPATH=. OMP
+  ran    13.5s  cd "/Users/apple/Documents/0919-test/codex/work/adaptive-pruning-codex-desktop/submission" && PYTHONPATH=. OMP
+  ran     4.9s  cd "/Users/apple/Documents/0919-test/codex/work/adaptive-pruning-codex-desktop/submission" && PYTHONPATH=. pyt   ⚠️ training-looking
+  ran     4.7s  cd "/Users/apple/Documents/0919-test/codex/work/adaptive-pruning-codex-desktop/submission" && PYTHONPATH=. pyt   ⚠️ training-looking
+  ran     4.6s  cd "/Users/apple/Documents/0919-test/codex/work/adaptive-pruning-codex-desktop/submission" && PYTHONPATH=. pyt
+  ran    12.3s  cd "/Users/apple/Documents/0919-test/codex/work/adaptive-pruning-codex-desktop/submission" && PYTHONPATH=. OMP
+  ran    13.0s  cd "/Users/apple/Documents/0919-test/codex/work/adaptive-pruning-codex-desktop/submission" && PYTHONPATH=. OMP
+  ran    30.0s  cd "/Users/apple/Documents/0919-test/codex/work/adaptive-pruning-codex-desktop/submission" && PYTHONPATH=. OMP
+  ran    15.0s  cd "/Users/apple/Documents/0919-test/codex/work/adaptive-pruning-codex-desktop/submission" && PYTHONPATH=. OMP
+  ran    19.1s  cd "/Users/apple/Documents/0919-test/codex/work/adaptive-pruning-codex-desktop/submission" && grep -n "_flatte   ⚠️ training-looking
+  ran    25.9s  cd "/Users/apple/Documents/0919-test/codex/work/adaptive-pruning-codex-desktop/submission" && PYTHONPATH=. OMP
+  ran    30.0s  cd "/Users/apple/Documents/0919-test/codex/work/adaptive-pruning-codex-desktop/submission" && PYTHONPATH=. OMP   ⚠️ training-looking
+  ran    13.8s  cd "/Users/apple/Documents/0919-test/codex/work/adaptive-pruning-codex-desktop/submission" && PYTHONPATH=. OMP
+  ran    28.2s  cd "/Users/apple/Documents/0919-test/codex/work/adaptive-pruning-codex-desktop/submission" && PYTHONPATH=. OMP
+  ran     0.0s  cd "/Users/apple/Documents/0919-test/codex/work/adaptive-pruning-codex-desktop/submission" && grep -n "prefix_   ⚠️ training-looking
+  ran     0.0s  cd "/Users/apple/Documents/0919-test/codex/work/adaptive-pruning-codex-desktop/submission" && python3 - <<'PY'   ⚠️ training-looking
+  ran     0.4s  cd "/Users/apple/Documents/0919-test/codex/work/adaptive-pruning-codex-desktop/submission" && python3 -m compi
+  ran     0.1s  cd "/Users/apple/Documents/0919-test/codex/work/adaptive-pruning-codex-desktop/submission" && python3 - <<'PY'   ⚠️ training-looking
+  ran    27.2s  cd "/Users/apple/Documents/0919-test/codex/work/adaptive-pruning-codex-desktop/submission" && PYTHONPATH=. OMP
+  ran    30.0s  cd "/Users/apple/Documents/0919-test/codex/work/adaptive-pruning-codex-desktop/submission" && cat > /tmp/realr   ⚠️ training-looking
+  ran    30.0s  cd "/Users/apple/Documents/0919-test/codex/work/adaptive-pruning-codex-desktop/submission" && PYTHONPATH=. OMP
+  ran    30.0s  cd "/Users/apple/Documents/0919-test/codex/work/adaptive-pruning-codex-desktop/submission" && PYTHONPATH=. pyt
+  ran    12.4s  cd "/Users/apple/Documents/0919-test/codex/work/adaptive-pruning-codex-desktop/submission" && PYTHONPATH=. pyt
+  ran    30.0s  cd "/Users/apple/Documents/0919-test/codex/work/adaptive-pruning-codex-desktop/submission" && export PYTHONPAT
+  ran    30.0s  cd "/Users/apple/Documents/0919-test/codex/work/adaptive-pruning-codex-desktop/submission" && export PYTHONPAT
+  ran    12.5s  cd "/Users/apple/Documents/0919-test/codex/work/adaptive-pruning-codex-desktop/submission" && export PYTHONPAT
+codex: 1 session file(s), 1 turn(s), models ['deepseek-flash'], output tokens 221539, thinking tokens 93767
+  /Users/apple/.codex/sessions/2026/09/20/rollout-2026-09-20T22-11-34-01a0bf28-7409-7d50-b7fb-880f761391d7.jsonl
+CALIBER_REVIEW: 93 command(s) ran (1246s total, 35 training-looking by keyword) — owner to glance at the list; none exceeded the long-experiment line

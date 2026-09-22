@@ -1,0 +1,68 @@
+{
+  "table_1_agent_refining_performance": {
+    "columns": ["No Refine", "PPO", "JSRL", "StateMask-R", "Ours", "Random", "StateMask", "Ours"],
+    "rows": {
+      "Hopper": [3559.44, 3638.75, 3635.08, 3652.06, 3663.91, 3648.98, 3661.86, 3663.91],
+      "Walker2d": [3768.79, 3965.63, 3963.57, 3966.96, 3982.79, 3969.64, 3982.67, 3982.79],
+      "Reacher": [-5.79, -3.04, -3.23, -3.45, -2.66, -3.11, -2.69, -2.66],
+      "HalfCheetah": [2024.09, 2133.31, 2128.04, 2085.28, 2138.89, 2132.01, 2136.23, 2138.89],
+      "SelfishMining": [14.36, 14.93, 14.88, 14.53, 16.56, 15.09, 16.49, 16.56],
+      "CageChallenge2": [-23.64, -23.58, -22.97, -26.98, -20.02, -25.94, -20.07, -20.02],
+      "AutoDriving": [10.30, 13.37, 11.26, 7.62, 17.03, 11.72, 16.28, 17.03]
+    },
+    "group_1": "fix explanation (ours), vary refining method",
+    "group_2": "fix refining method (ours), vary explanation method"
+  },
+  "table_4_mask_training_time_seconds": {
+    "samples": {
+      "Hopper": 300000,
+      "Walker2d": 300000,
+      "Reacher": 300000,
+      "HalfCheetah": 300000,
+      "SelfishMining": 1500000,
+      "CageChallenge2": 10000000,
+      "AutoDriving": 2443260
+    },
+    "StateMask": {
+      "Hopper": 15393,
+      "Walker2d": 2240,
+      "Reacher": 8571,
+      "HalfCheetah": 1579,
+      "SelfishMining": 9520,
+      "CageChallenge2": 79382,
+      "AutoDriving": 109802
+    },
+    "Ours": {
+      "Hopper": 12426,
+      "Walker2d": 1899,
+      "Reacher": 7033,
+      "HalfCheetah": 1317,
+      "SelfishMining": 8360,
+      "CageChallenge2": 65400,
+      "AutoDriving": 88761
+    },
+    "average_time_reduction_percent": 16.8
+  },
+  "table_5_self_imitation_learning_out_of_scope": {
+    "SIL": {"Hopper": 3646.46, "Walker2d": 3967.66, "Reacher": -2.87, "HalfCheetah": 2069.80},
+    "Ours": {"Hopper": 3663.91, "Walker2d": 3982.79, "Reacher": -2.66, "HalfCheetah": 2138.89}
+  },
+  "table_6_other_explanations_out_of_scope": {
+    "Hopper": {"Random": 3648.98, "IntegratedGradients": 3653.24, "AIRS": 3654.49, "Ours": 3663.91},
+    "Walker2d": {"Random": 3969.64, "IntegratedGradients": 3972.15, "AIRS": 3976.35, "Ours": 3982.79},
+    "Reacher": {"Random": -3.11, "IntegratedGradients": -2.99, "AIRS": -2.89, "Ours": -2.66},
+    "HalfCheetah": {"Random": 2132.01, "IntegratedGradients": 2132.81, "AIRS": 2133.98, "Ours": 2138.89}
+  },
+  "figure_2_sparse_mujoco": {
+    "note": "RICE > JSRL > PPO fine-tuning > StateMask-R for SparseHopper and SparseHalfCheetah, in final performance and in refining efficiency; refining with a random explanation is worse than with our mask network."
+  },
+  "figure_3_sac_hopper": {
+    "note": "Refining the GAIL-imitated SAC policy: RICE > PPO fine-tuning > SAC fine-tuning > JSRL > StateMask-R; fine-tuning with SAC does not escape the bottleneck."
+  },
+  "figure_7_8_hyperparameters": {
+    "note": "p in {0.25, 0.5} is best (p = 0 and p = 1 are worse); lambda = 0.01 is best in most applications and any lambda > 0 beats lambda = 0."
+  },
+  "figure_9_alpha": {
+    "note": "The fidelity score is insensitive to alpha in {0.01, 0.001, 0.0001}."
+  }
+}

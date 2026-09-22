@@ -1,0 +1,28 @@
+eight_schools_centered   BaM (B=8)        rel_mean  final=0.4577 (6.7s)
+eight_schools_centered   BaM (B=32)       rel_mean  final=0.4005 (3.1s)
+eight_schools_centered   ADVI (B=8)       rel_mean  final=2.985 (6.8s)
+eight_schools_centered   GSM (B=8)        rel_mean  final=0.197 (6.5s)
+eight_schools_centered   ADVI (B=32)      rel_mean  final=3.049 (3.9s)
+eight_schools_centered   GSM (B=32)       rel_mean  final=0.35 (4.1s)
+  saved /tmp/pdbs_unc_paper/posteriordb_eight_schools_centered_rel_mean.png
+eight_schools_centered   BaM (B=8)        rel_sd    final=1.074 (5.5s)
+eight_schools_centered   BaM (B=32)       rel_sd    final=1.049 (2.5s)
+eight_schools_centered   ADVI (B=8)       rel_sd    final=2.25 (5.9s)
+eight_schools_centered   GSM (B=8)        rel_sd    final=0.7526 (6.4s)
+eight_schools_centered   ADVI (B=32)      rel_sd    final=2.471 (3.7s)
+eight_schools_centered   GSM (B=32)       rel_sd    final=0.8215 (3.7s)
+  saved /tmp/pdbs_unc_paper/posteriordb_eight_schools_centered_rel_sd.png
+gp_pois_regr             BaM (B=8)        rel_mean  FAILED: LinAlgError: Eigenvalues did not converge
+gp_pois_regr             BaM (B=32)       rel_mean  FAILED: LinAlgError: Eigenvalues did not converge
+gp_pois_regr             ADVI (B=8)       rel_mean  final=8.128 (8.9s)
+gp_pois_regr             GSM (B=8)        rel_mean  final=0.5181 (9.5s)
+gp_pois_regr             ADVI (B=32)      rel_mean  final=8.003 (9.5s)
+gp_pois_regr             GSM (B=32)       rel_mean  final=17.11 (8.7s)
+  saved /tmp/pdbs_unc_paper/posteriordb_gp_pois_regr_rel_mean.png
+gp_pois_regr             BaM (B=8)        rel_sd    FAILED: LinAlgError: Eigenvalues did not converge
+gp_pois_regr             BaM (B=32)       rel_sd    FAILED: LinAlgError: Eigenvalues did not converge
+gp_pois_regr             ADVI (B=8)       rel_sd    final=4.988 (7.2s)
+gp_pois_regr             GSM (B=8)        rel_sd    final=0.9102 (7.7s)
+gp_pois_regr             ADVI (B=32)      rel_sd    final=5.469 (9.7s)
+gp_pois_regr             GSM (B=32)       rel_sd    final=14.3 (10.0s)
+  saved /tmp/pdbs_unc_paper/posteriordb_gp_pois_regr_rel_sd.png

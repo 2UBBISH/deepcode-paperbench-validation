@@ -1,0 +1,7 @@
+dataset,k,method,seed,repetition,table,test_accuracy,coreset_size,accuracy_per_1000_datapoints
+fmnist,50,Uniform,0,0,table2,13.67,50,273.4
+fmnist,50,Moderate,0,0,table2,18.52,50,370.4
+fmnist,50,LBCS,0,0,table2,13.67,50,273.4
+fmnist,100,Uniform,0,0,table2,10.51,100,105.1
+fmnist,100,Moderate,0,0,table2,19.82,100,198.2
+fmnist,100,LBCS,0,0,table2,10.51,100,105.1

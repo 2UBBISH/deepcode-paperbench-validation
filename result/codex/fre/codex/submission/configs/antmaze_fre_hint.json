@@ -1,0 +1,6 @@
+{
+  "domain": "antmaze",
+  "prior_name": "FRE-hint",
+  "use_hint_priors": true,
+  "hint_ratio": 0.5
+}

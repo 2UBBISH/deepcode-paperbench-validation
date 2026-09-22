@@ -1,0 +1,13 @@
+# SAPG on the ShadowHand in-hand reorientation task (sigma = 0).
+defaults: [inhand.yaml]
+env:
+  name: shadow_hand
+model:
+  actor:
+    units: [512, 512, 256, 128]
+  critic:
+    units: [512, 512, 256, 128]
+algo:
+  name: sapg
+  entropy_coef: 0.0
+  clip_epsilon: 0.1

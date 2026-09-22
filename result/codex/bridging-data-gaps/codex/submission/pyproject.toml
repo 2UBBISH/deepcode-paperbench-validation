@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dpms-ant"
+version = "0.1.0"
+description = "Reproduction of 'Bridging Data Gaps in Diffusion Models with Adversarial Noise-Based Transfer Learning' (DPMs-ANT, ICML 2024)"
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = [
+    "torch>=2.0",
+    "numpy>=1.23",
+    "scipy>=1.9",
+    "Pillow>=9.0",
+    "tqdm>=4.64",
+]
+
+[project.optional-dependencies]
+metrics = ["lpips>=0.1.4", "pytorch-fid>=0.3.0", "torchvision>=0.15"]
+ldm = ["diffusers>=0.20", "einops>=0.6"]
+dev = ["pytest>=7.0"]
+
+[tool.setuptools.packages.find]
+include = ["dpms_ant*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+filterwarnings = ["ignore::RuntimeWarning"]
+

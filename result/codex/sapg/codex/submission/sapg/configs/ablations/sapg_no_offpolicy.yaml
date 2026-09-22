@@ -1,0 +1,6 @@
+# Sec. 6.3: "Ours (w/o off-policy)" -- SAPG without the off-policy combination.
+defaults: [../sapg_allegrokuka_regrasping.yaml]
+algo:
+  name: sapg
+  use_offpolicy: false
+  aggregation: none

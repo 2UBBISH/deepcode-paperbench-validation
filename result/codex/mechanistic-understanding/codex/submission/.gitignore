@@ -1,0 +1,21 @@
+# run outputs (models, features, generated pairs, figures)
+artifacts/
+*.pt
+*.bin
+*.safetensors
+*.npz
+*.arrow
+
+# python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ipynb_checkpoints/
+*.egg-info/
+build/
+dist/
+
+# secrets / environment
+agent.env
+.env
+.DS_Store

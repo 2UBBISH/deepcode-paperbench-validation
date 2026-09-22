@@ -1,0 +1,28 @@
+# Core
+torch>=2.0
+torchvision>=0.15
+numpy>=1.23
+Pillow>=9.4
+tqdm
+
+# CLIP backbone (vision encoder of LLaVA / OpenFlamingo) + timm
+open_clip_torch>=2.24
+timm>=0.9
+huggingface_hub>=0.20
+
+# LLaVA-1.5 / datasets / tokenizers
+transformers>=4.38
+accelerate>=0.26
+datasets>=2.16
+sentencepiece
+matplotlib>=3.7            # Figure 1 (radar plot)
+
+# OpenFlamingo 9B (only needed for scripts/eval_openflamingo.sh).
+# NOTE: the released package pins torch==2.0.1 and targets transformers ~4.30,
+# so install it into a *separate* environment (or with --no-deps) together with
+# the transformers version it expects; the vision-encoder swap itself only uses
+# `model.vision_encoder` and `Flamingo._encode_vision_x`.
+open-flamingo @ git+https://github.com/mlfoundations/open_flamingo.git
+
+# Tests
+pytest>=7.4

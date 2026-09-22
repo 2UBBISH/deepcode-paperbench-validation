@@ -1,0 +1,26 @@
+{
+  "model": "flan_t5_3b",
+  "refinement_data": "mmlu",
+  "tuning_mode": "head",
+  "seed": 0,
+  "data_root": "data",
+  "cache_root": "cache",
+  "output_root": "outputs",
+  "examples_per_upstream_task": 100,
+  "max_input_len": 512,
+  "max_target_len": 32,
+  "eval_batch_size": 16,
+  "stream_fraction": 0.125,
+  "device": "auto",
+  "steps_override": null,
+  "lr_override": null,
+  "hyperparameters": {
+    "steps_single_error": 100,
+    "lr_single_error": 0.0001,
+    "lr_sequential": 1e-05,
+    "replay": {
+      "batch_size": 4,
+      "every_n_steps": 5
+    }
+  }
+}

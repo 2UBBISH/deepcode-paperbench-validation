@@ -1,0 +1,91 @@
+# APT configuration: RoBERTa-base + SQuAD v2.0
+#
+# Sources
+# -------
+# * Table 6 (Appendix A): SQuAD column -> learning rate 2e-4, batch size 32,
+#   epochs 40, distill epochs 20.
+# * Appendix A: "we first prune and train the LM with the self-distillation
+#   objective, and then fine-tune the pruned LM to recover its end-task
+#   performance."  Pre-determined target sparsity gamma_T, cubic scheduling
+#   gamma_t = gamma_T + (1 - gamma_T)(1 - t/T)^3, gradual mask decay alpha < 1,
+#   EMA salience.
+# * Addendum ("APT Implementation"): EMA 0.85/0.15, mu = min(1., (global_step -
+#   pruning_start_step) / (pruning_end_step - pruning_start_step)), teacher
+#   layer-mapping recomputed every step, tau = 4 (CoFi), and distillation
+#   weights: GLUE -> L_pred + 0.9 L_layer; SQuAD and CNN/DM ->
+#   0.1 L_pred + 0.9 L_layer.
+#
+# The adapter rank is initialized to 8 and the scaling factor is 2 (Appendix A).
+# 60% sparsity is the headline setting of Table 2.
+
+# ---------------------------------------------------------------------------
+# Model / task
+# ---------------------------------------------------------------------------
+model_name_or_path: roberta-base
+model_type: roberta
+task: squad_v2
+table6_group: squad
+
+# ---------------------------------------------------------------------------
+# Table 6 hyper-parameters (SQuAD column)
+# ---------------------------------------------------------------------------
+learning_rate: 2.0e-4
+batch_size: 32
+epochs: 40
+distill_epochs: 20
+
+# ---------------------------------------------------------------------------
+# APT / Algorithm 1
+# ---------------------------------------------------------------------------
+target_sparsity: 0.60
+initial_rank: 8
+scaling: 2.0
+mask_alpha: 0.01
+ema_beta: 0.85
+tau: 4
+tuning_budget_initial: 1.0
+tuning_budget_final: 2.0
+top_fraction: 0.5
+use_distillation: true
+use_kurtosis: true
+
+# ---------------------------------------------------------------------------
+# Distillation loss weighting (SQuAD: 0.1 L_pred + 0.9 L_layer)
+# ---------------------------------------------------------------------------
+pred_distill_weight: 0.1
+layer_distill_weight: 0.9
+
+# ---------------------------------------------------------------------------
+# Optimization
+# ---------------------------------------------------------------------------
+optimizer: adamw
+weight_decay: 0.01
+warmup_ratio: 0.06
+lr_kind: linear
+max_grad_norm: 1.0
+seed: 42
+
+# ---------------------------------------------------------------------------
+# Data / tokenization (SQuAD v2.0 sliding window, Appendix A / data pipeline)
+# ---------------------------------------------------------------------------
+max_seq_length: 384
+doc_stride: 128
+max_query_length: 64
+n_best_size: 20
+max_answer_length: 30
+null_score_diff_threshold: 0.0
+max_target_length: 128
+dynamic_padding: false
+num_workers: 0
+
+# ---------------------------------------------------------------------------
+# Runtime / evaluation
+# ---------------------------------------------------------------------------
+device: cuda
+output_dir: outputs/apt_roberta_squad_v2
+logging_steps: 50
+eval_steps: 0        # 0 = evaluate once per epoch
+save_steps: 0        # 0 = save once per epoch
+inference_batch_size: 128
+fp16: false
+bf16: false

@@ -1,0 +1,8 @@
+# SAPG on Throw (best entropy coefficient sigma = 0 for this task).
+defaults: [allegrokuka.yaml]
+env:
+  name: throw
+algo:
+  name: sapg
+  entropy_coef: 0.0
+  aggregation: leader_follower

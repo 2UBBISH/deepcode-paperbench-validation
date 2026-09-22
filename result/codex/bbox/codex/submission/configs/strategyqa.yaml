@@ -1,0 +1,37 @@
+# BBOX-ADAPTER on StrategyQA (Appendix H.2 defaults).
+dataset: strategyqa
+output_dir: runs/strategyqa
+seed: 0
+
+adapter:
+  model_name: auto            # -> microsoft/deberta-v3-base for the 0.1B adapter
+  adapter_size: "0.1B"        # switch to "0.3B" for deberta-v3-large
+  max_length: 512
+  learning_rate: 5.0e-6
+  batch_size: 64
+  num_train_steps: 6000
+  weight_decay: 0.01
+  alpha: 0.01                 # l2 regularisation of the energies (Eq. 3)
+  loss_type: nce
+
+inference:
+  beam_size: 3
+  num_samples_per_beam: 3
+  max_sentence_steps: 24
+  max_new_tokens: 64
+  max_solution_tokens: 512
+  temperature: 1.0
+  mode: full
+
+online:
+  num_iterations: 3
+  num_candidates_per_question: 5
+  init_candidates_per_question: 5
+  positive_source: ground_truth
+  outcome_supervision: true
+
+llm:
+  name: gpt-3.5-turbo
+  provider: azure
+  max_new_tokens: 512
+  temperature: 1.0

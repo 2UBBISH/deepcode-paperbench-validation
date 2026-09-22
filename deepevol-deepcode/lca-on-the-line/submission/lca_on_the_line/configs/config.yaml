@@ -1,0 +1,379 @@
+# =============================================================================
+# LCA-on-the-Line : reproduction configuration
+# -----------------------------------------------------------------------------
+# Central configuration consumed by every script under lca_on_the_line/scripts/.
+#
+#   python scripts/run_correlation.py        --config configs/config.yaml
+#   python scripts/run_ood_prediction.py     --config configs/config.yaml
+#   python scripts/run_latent_hierarchy.py   --config configs/config.yaml
+#   python scripts/run_soft_label_probe.py   --config configs/config.yaml
+#   python scripts/run_prompt_eval.py        --config configs/config.yaml
+#
+# CLI flags always override the values defined here.
+# Everything is optional: the scripts degrade gracefully (cache-only /
+# synthetic) when a path is missing.
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Paths
+# -----------------------------------------------------------------------------
+# Root of the ImageNet-1k validation data (ImageFolder style).
+# Expected layout: <dataset_root>/val/<wnid>/*.JPEG   (or val/<class-name>/...)
+# When null the HF "imagenet-1k" loader is used (trust_remote_code=True).
+dataset_root: null
+
+# Local roots for the five OOD datasets (see `ood_datasets` below).
+# Each entry may be null -> HuggingFace / synthetic fallback.
+ood_roots:
+  v2: null          # ImageNet-v2 MatchedFrequency (HF vaishaal/ImageNetV2 @ d626240)
+  s: null           # ImageNet-Sketch (HF songweig/imagenet_sketch or ImageFolder)
+  r: null           # ImageNet-R (ImageFolder, wnid-ordered class dirs)
+  a: null           # ImageNet-A (ImageFolder / official .npy)
+  objectnet: null   # ObjectNet (root with 313 class folders + mapping)
+
+# Optional explicit files (null -> resolved automatically from dataset roots)
+objectnet_mapping_file: null   # objectnet_to_imagenet1k_mapping checkpoint
+imagenet_a_npy: null           # ImageNet-A official imagenet-a.npy
+
+# WordNet taxonomy for the ImageNet-1k classes: imagenet_fiveai.csv
+# https://github.com/jvlmdr/hiercls  (fallback: nltk hypernym expansion)
+hierarchy:
+  csv_path: null
+  allow_synthetic: true        # build a deterministic balanced tree when CSV missing
+  num_classes: 1000
+  log_base: 2.0                # information content base (Section D.2.1)
+
+# Directory for cached per-(model, dataset) .npz outputs:
+#   <cache_dir>/outputs/<model>__<dataset>.npz   {features, logits, targets}
+# Feature caching is strongly advised: evaluating 75 models is expensive.
+cache_dir: cache
+output_dir: cache
+outputs: cache
+
+# Directory for JSON/PNG artifacts produced by the scripts.
+results_dir: results
+
+# ---------------------------------------------------------------
+# Data / loader
+# ---------------------------------------------------------------
+data:
+  num_classes: 1000
+  resolution: 224              # overridden per model (299 for inception_v3)
+  crop_pct: 0.875
+  batch_size: 256
+  num_workers: 4
+  pin_memory: true
+  max_samples: null            # cap #samples per dataset (null = full split)
+  max_batches: null            # cap #batches per dataset (debug / smoke tests)
+  allow_synthetic: false       # true -> generate fake images when data missing
+  seed: 0
+  # ImageNet normalisation statistics (paper uses standard preprocessing)
+  mean: [0.485, 0.456, 0.406]
+  std: [0.229, 0.224, 0.225]
+
+# Canonical OOD dataset list and their paper display names (Table 1/2/3).
+ood_datasets: [v2, s, r, a, objectnet]
+ood_display_names:
+  v2: ImgN-v2
+  s: ImgN-S
+  r: ImgN-R
+  a: ImgN-A
+  objectnet: ObjNet
+
+# -----------------------------------------------------------------------------
+# Metrics (Sections 2, D.1, D.2, D.3)
+# -----------------------------------------------------------------------------
+metrics:
+  lca_mode: information        # "information" (D_LCA^I) | "depth" (D_LCA^P)
+  base: 2.0                    # log base for information content
+  misclassified_only: true     # D_LCA averages over misclassified samples only
+  temperature: 1.0             # softmax temperature for ELCA
+  compute_elca: true           # D_ELCA over full softmax probabilities
+  compute_top5: true
+  # ELCA is sensitive to logit temperature: never compare across modalities
+  note_elca_not_cross_modal: true
+
+# Correlation / prediction metrics (Tables 2 and 3)
+correlation:
+  abs_values: true             # paper reports |R^2|, |PEA|, |KEN|, |SPE|
+  scaler: minmax               # LCA is not in [0, 1] -> min-max scaling
+  baseline_scaler: probit      # accuracy baselines use the probit transform
+  fit_on_error: true           # Figure 5 regresses on top-1 error
+  predictors: [id_lca, id_top1]
+  sanity_tolerance: 0.12       # tolerance vs Table 2 reference R^2 / PEA
+
+# Reproduce Table 3: OOD Top-1 prediction methods
+ood_prediction:
+  methods: [id_top1, ac, aline_d, aline_s, id_lca]
+  subset: all                  # all | vm | vlm
+  metric: top1
+  calibrate_temperature: true  # temperature-scale logits for the AC baseline
+  leave_one_out: false         # LOO fitting for honest MAE estimates
+  agreement_d: hard            # Aline-D uses hard agreement + depth pairs
+  agreement_s: soft            # Aline-S uses soft agreement + width pairs
+  max_logit_samples: 20000     # subsample for temperature fitting
+  temperature_bounds: [0.01, 100.0]
+  tolerance: 0.06              # vs Table 3 reference MAEs
+
+# Reproduction gates (paper-checked targets; scripts warn, never hard-fail)
+sanity_tolerance: 0.15         # Table 8 per-model tolerance
+success_criteria:
+  min_r2_severe_shift: 0.7     # S / R / A / ObjectNet must exceed this
+  min_pea_severe_shift: 0.7
+  require_lca_beats_id_top1_mae: true
+
+# -----------------------------------------------------------------------------
+# Latent K-means hierarchy (Section 4.3.1 / E.1 / Table 4)
+# -----------------------------------------------------------------------------
+latent_hierarchy:
+  max_level: 9                 # levels i = 1..9, 2^i centres per level
+  base_level: 10               # deepest level used as the "class leaf" height
+  feature_source: last_hidden  # M(X) = penultimate/vision-tower features
+  normalize_features: false
+  normalize_class_means: false
+  n_init: 10                   # sklearn KMeans n_init
+  init: k-means++              # paper-silent default
+  max_iter: 300
+  seed: 0                      # per-level seed = seed + level (reproducibility)
+  num_source_models: 75        # 36 VMs + 39 VLMs
+  max_source_models: null      # cap for quick runs
+
+# -----------------------------------------------------------------------------
+# Taxonomy-aligned soft labels / linear probing (Section 4.3.2, E.2, E.3, E.5)
+# -----------------------------------------------------------------------------
+alignment:
+  lambda_weight: 0.03          # L = lambda * L_standard + L_soft
+  temperature: 25.0            # exponent T applied to M_LCA before MinMax
+  alignment_mode: CE           # "CE" | "BCE" (multi-label treatment)
+  reduction: mean
+  processed_matrix: false
+  label_smoothing: 0.0
+  # Linear probe hyper-parameters (Appendix E.5)
+  learning_rate: 0.001
+  batch_size: 1024
+  epochs: 50
+  weight_decay: 0.05           # paper-silent default (AdamW)
+  optimizer: adamw
+  scheduler: cosine
+  warmup_type: linear
+  warmup_lr: 0.00001           # 1e-5
+  warmup_ratio: 0.05           # ~5% of steps
+  normalize_features: true     # L2-normalise features before the linear layer
+  seed: 0
+  # Weight interpolation W_interp = alpha * W_ce + (1 - alpha) * W_ce+soft
+  interp_alpha_start: 0.0
+  interp_alpha_stop: 1.0
+  interp_alpha_step: 0.1
+  id_tolerance: 0.0            # "no-ID-drop" tolerance vs CE accuracy
+  pro_ood_id_tolerance: 2.0    # allowed ID drop for the "pro-OOD" point
+  # Table 5/6 experiment settings
+  backbones: [resnet18, resnet50, vit_b_32]
+  table6_backbone: resnet18
+  latent_sources: [resnet50, mnasnet1_0, vit_b_16]
+
+# -----------------------------------------------------------------------------
+# Taxonomy-aware prompt engineering (Section 4.3.3 / Table 14)
+# -----------------------------------------------------------------------------
+prompt_engineering:
+  encoder: CLIP_ViT32           # CLIP ViT-B/32 zero-shot (paper Table 14)
+  backend: auto                 # auto | clip (OpenAI) | open_clip
+  model_name: ViT-B/32          # OpenAI CLIP name ("ViT-B-32" for OpenCLIP)
+  custom_prompts: false         # use the 80-template ImageNet prompt bank
+  templates: [baseline, stack_parent, taxonomy_parent, shuffle_parent]
+  max_ancestors: 2
+  shuffle_seed: 0
+  logit_scale: 100.0
+  batch_size: 64
+  num_workers: 4
+  tolerance: 0.05               # vs Table 14 reference Top-1
+  datasets: [imagenet, v2, s, r, a, objectnet]
+
+# -----------------------------------------------------------------------------
+# Section C simulated study (Table 7)
+# -----------------------------------------------------------------------------
+simulation:
+  num_classes: 4
+  num_samples: 10000
+  num_trials: 100
+  seed: 0
+  backend: auto                 # auto | sklearn | numpy
+  missing_strategy: zero        # imputation for features unobserved at OOD time
+  compute_elca: false
+  class_means:
+    1: [1, 1, 0]
+    2: [3, 17, 0]
+    3: [15, 7, 0]
+    4: [17, 21, 0]
+  id_features: [0, 1, 2]
+  ood_features: [0, 2]
+  models:
+    f: [0, 2]                   # causal features x1, x3
+    g: [1, 2]                   # confounding features x2, x3
+  tolerance:
+    id_error: 0.06
+    ood_error: 0.09
+    id_lca: 0.35
+
+# -----------------------------------------------------------------------------
+# Runtime
+# -----------------------------------------------------------------------------
+device: auto                   # auto | cpu | cuda | cuda:0
+seed: 0
+overwrite_cache: false
+from_cache_only: false
+verbose: false
+
+# =============================================================================
+# Model zoo registry (Appendix A)
+# -----------------------------------------------------------------------------
+# Section 4 evaluates 75 models publicly available: 36 vision models (VMs) and
+# 39 vision-language models (VLMs). ImageNet-pretrained, no fine-tuning.
+# =============================================================================
+
+# 36 torchvision VMs (all weights=IMAGENET1K_*; see src/models/vm_zoo.py)
+vision_models:
+  - alexnet
+  - convnext_tiny
+  - densenet121
+  - densenet161
+  - densenet169
+  - densenet201
+  - efficientnet_b0
+  - googlenet
+  - inception_v3
+  - mnasnet0_5
+  - mnasnet0_75
+  - mnasnet1_0
+  - mnasnet1_3
+  - mobilenet_v3_large
+  - mobilenet_v3_small
+  - regnet_y_1_6gf
+  - wide_resnet101_2
+  - resnet18
+  - resnet34
+  - resnet50
+  - resnet101
+  - resnet152
+  - shufflenet_v2_x2_0
+  - squeezenet1_0
+  - squeezenet1_1
+  - swin_b
+  - vgg11
+  - vgg11_bn
+  - vgg13
+  - vgg13_bn
+  - vgg16
+  - vgg16_bn
+  - vgg19
+  - vgg19_bn
+  - vit_b_32
+  - vit_l_32
+
+# 39 VLMs: 27 OpenCLIP (vision) + 2 ALBEF/BLIP + 7 OpenAI CLIP + 3 OpenCLIP
+# large-scale. Full list lives in src/models/vlm_zoo.py (VLM_MODEL_SPECS = 39).
+# 30 OpenCLIP configurations (incl. ALBEF / BLIP feature extractors)
+openclip_models:
+  - RN50
+  - RN101
+  - RN50x4
+  - ViT-B-32
+  - ViT-B-16
+  - ViT-L-14
+  - ViT-L-14-336
+  - ViT-B-32-quickgelu
+  - ViT-B-16-plus-240
+  - ViT-H-14
+  - coca_ViT-B-32
+  - coca_ViT-L-14
+  - convnext_base_w
+  - convnext_base_w_320
+  - convnext_large_d
+  - convnext_large_d_320
+  - convnext_xxlarge
+  - EVA01-g-14
+  - EVA01-g-14-plus
+  - EVA02-B-16
+  - EVA02-L-14
+  - EVA02-L-14-336
+  - EVA02-E-14
+  - nllb-clip-base
+  - nllb-clip-large
+  - xlm-roberta-base-ViT-B-32
+  - ViT-bigG-14
+  - ViT-L-14-336px
+  - roberta-ViT-B-32
+  - ALBEF
+  - BLIP
+
+# 7 OpenAI CLIP models (git+https://github.com/openai/CLIP)
+openai_clip_models:
+  - RN50
+  - RN101
+  - RN50x4
+  - ViT-B/32
+  - ViT-B/16
+  - ViT-L/14
+  - ViT-L/14@336px
+
+# Backbones used by the alignment experiments (Tables 5/6/9/10)
+probe_backbones:
+  - resnet18
+  - resnet50
+  - vit_b_32
+
+# Aliases used throughout the paper <-> registry keys
+model_aliases:
+  CLIP_RN50: openai_clip_RN50
+  CLIP_RN101: openai_clip_RN101
+  CLIP_RN50x4: openai_clip_RN50x4
+  CLIP_ViT32: openai_clip_ViT-B/32
+  CLIP_ViT16: openai_clip_ViT-B/16
+  CLIP_ViT14: openai_clip_ViT-L/14
+  CLIP_ViT14_336: openai_clip_ViT-L/14@336px
+  ViT-B/32: openai_clip_ViT-B/32
+  VIT_B_32: vit_b_32
+  VIT_L_32: vit_l_32
+  mnasnet: mnasnet1_0
+  regnet: regnet_y_1_6gf
+  wide_resnet: wide_resnet101_2
+  swin: swin_b
+
+# -----------------------------------------------------------------------------
+# Table reference values (used only for gating / sanity checks; never fitted)
+# -----------------------------------------------------------------------------
+references:
+  table2:
+    # ID LCA vs OOD Top-1 correlations
+    s:         {r2: 0.816, pea: 0.903}
+    r:         {r2: 0.779, pea: 0.883}
+    a:         {r2: 0.704, pea: 0.839}
+    objectnet: {r2: 0.915, pea: 0.956}
+    v2:        {r2: 0.339, pea: 0.582}
+  table2_baseline_id_top1:
+    # ID Top-1 collapses on severe shift
+    s: {r2: 0.075}
+    r: {r2: 0.020}
+    a: {r2: 0.009}
+  table3:
+    # MAE of predicted OOD Top-1
+    id_lca:    {v2: 0.162, s: 0.093, r: 0.114, a: 0.103, objectnet: 0.048}
+    id_top1:   {s: 0.230, r: 0.277, a: 0.192, objectnet: 0.178}
+  table4:
+    # mean PEA across the 75 latent hierarchies
+    pea:
+      v2: 0.815
+      s: 0.773
+      r: 0.712
+      a: 0.662
+      objectnet: 0.930
+  table8:
+    # per-model ID/OOD (LCA, ELCA, Top1) spot checks
+    resnet18:    {id_lca: 3.05, id_top1: 0.698}
+    resnet50:    {id_lca: 2.89, id_top1: 0.733}
+    clip_rn50:   {id_lca: 2.55, id_top1: 0.579}
+    clip_rn50x4: {id_lca: 2.42, id_top1: 0.641}
+  table14:
+    # CLIP-ViT32 zero-shot Top-1 with taxonomy prompts
+    imagenet:
+      baseline: 0.589
+      taxonomy_parent: 0.626

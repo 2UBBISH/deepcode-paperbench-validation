@@ -1,0 +1,42 @@
+# Requirements for "Challenges in Training PINNs: A Loss Landscape Perspective"
+# (ICML 2024, PMLR 235) -- reproduction codebase.
+#
+# Environment used in the paper: Python 3.10.12, PyTorch 2.0.0, CUDA 11.8 (Titan V).
+# The whole pipeline is pure PyTorch autograd + dense linear algebra; a GPU is
+# recommended but a CPU fallback works (slowly, especially NNCG on the wave PDE).
+
+# --- Core deep-learning stack (paper Sec. 2.2: PyTorch 2.0.0) -----------------
+torch==2.0.0
+
+# --- Numerical / linear algebra (QR, Cholesky, SVD, eig for Algorithms 5/6) ---
+numpy>=1.23,<2.0
+scipy>=1.9.0
+
+# --- Spectral-density estimation (stochastic Lanczos quadrature) --------------
+# The addendum explicitly allows PyHessian (or an equivalent SLQ implementation).
+# src/spectral/spectral_density.py implements a native SLQ backend and only uses
+# PyHessian when backend="pyhessian"; install it for the optional backend.
+pyhessian>=0.1
+
+# --- Plotting (Figures 1-8) ---------------------------------------------------
+matplotlib>=3.6
+
+# --- Config loading (configs/default.yaml, read with yaml.safe_load) -----------
+pyyaml>=6.0
+
+# --- Optional conveniences used by the experiment runners ---------------------
+tqdm>=4.64
+pandas>=1.5
+
+# --- Testing (tests/test_problems.py also runs standalone without pytest) -----
+pytest>=7.0
+
+# -----------------------------------------------------------------------------
+# CUDA 11.8 note:
+#   If `pip install torch==2.0.0` does not pick up CUDA 11.8 automatically, use
+#       pip install torch==2.0.0 --index-url https://download.pytorch.org/whl/cu118
+#   and verify with:  python -c "import torch; print(torch.__version__, torch.cuda.is_available())"
+#
+# Second-order routines (NNCG / NystromPCG / SLQ) run in float64 by default
+# (see configs/default.yaml -> runtime.dtype), which is required for stability.
+# -----------------------------------------------------------------------------

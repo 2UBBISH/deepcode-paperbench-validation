@@ -1,0 +1,10 @@
+lambda=     0.1 alpha=0.00881 beta=0.00881 delta=0.000801 | eps bound True | Delta bound True | per-iteration True/True | final ||eps||=4.64e+00 ||Delta||=9.56e-01
+lambda=       1 alpha=0.00881 beta=0.00881 delta=0.0044 | eps bound True | Delta bound True | per-iteration True/True | final ||eps||=2.68e-14 ||Delta||=1.49e-11
+lambda=      10 alpha=0.00881 beta=0.00881 delta=0.00801 | eps bound True | Delta bound True | per-iteration True/True | final ||eps||=8.35e-61 ||Delta||=1.52e-12
+lambda=     100 alpha=0.00881 beta=0.00881 delta=0.00872 | eps bound True | Delta bound True | per-iteration True/True | final ||eps||=6.82e-119 ||Delta||=1.41e-13
+  saved results/smoke/theorem31_errors.png
+finite batch (B=4096) vs infinite batch: max relative difference in ||eps_t|| = 0.005
+Corollary D.5 (one step, B -> inf then lambda -> inf):
+  lambda=100: ||eps_1||=7.300e-01  ||Delta_1||=5.697e-01
+  lambda=10000: ||eps_1||=1.240e-02  ||Delta_1||=9.825e-03
+  lambda=1e+06: ||eps_1||=1.251e-04  ||Delta_1||=9.908e-05

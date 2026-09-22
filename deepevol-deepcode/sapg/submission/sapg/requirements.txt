@@ -1,0 +1,36 @@
+# SAPG: Split and Aggregate Policy Gradients -- dependencies
+# ---------------------------------------------------------------
+# Python 3.8 - 3.10 is required (see paper reproduction environment setup).
+#
+# Notes:
+#   * torch must be a CUDA build for the paper's N = 24576 IsaacGym setting.
+#   * IsaacGym is NOT distributed on PyPI. Install it separately following
+#     NVIDIA's instructions (https://developer.nvidia.com/isaac-gym) and make
+#     sure the `isaacgym` / `isaacgymenvs` packages are importable. When they
+#     are absent the environment facade transparently falls back to a pure
+#     PyTorch surrogate (`SAPG_FORCE_SURROGATE=1` forces it explicitly).
+#   * scikit-learn / matplotlib / tensorboard / wandb are optional: the code
+#     degrades gracefully when they are missing (numpy SVD fallback for PCA,
+#     no-op plotting, console-only logging).
+
+# --- deep learning (CUDA build required) ---
+torch>=2.0,<2.5        # Adam with PyTorch defaults is used throughout
+# torchvision and torchaudio are not used
+
+# --- scientific stack ---
+numpy>=1.23
+scipy>=1.9
+scikit-learn>=1.1      # optional: PCA backend for the Fig. 7 diversity metric
+matplotlib>=3.6        # optional: Figures 5-8 rendering (Agg backend)
+
+# --- config / logging ---
+PyYAML>=6.0
+tensorboard>=2.10      # optional: torch.utils.tensorboard SummaryWriter
+wandb>=0.15            # optional: Weights & Biases logging
+
+# --- testing ---
+pytest>=7.0
+
+# --- simulation (install manually, not on PyPI) ---
+# isaacgym            # GPU-driven parallel simulation, N = 24576 environments
+# isaacgymenvs        # task registry used by sapg/envs/isaac_env.py

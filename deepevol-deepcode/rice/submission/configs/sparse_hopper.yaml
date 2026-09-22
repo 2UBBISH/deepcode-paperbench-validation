@@ -1,0 +1,283 @@
+# =============================================================================
+# RICE — SparseHopper configuration
+#
+# Paper: "RICE: A Refining Scheme for Reinforcement Learning with Explanation"
+#        (Cheng et al., ICML 2024, PMLR 235)
+#
+# This file specialises configs/default.yaml for the *sparse-reward* Hopper
+# variant used in Experiment II (refining effectiveness on sparse-reward
+# environments, Figure 2). It is loaded via
+#
+#     from rice.utils.io import get_config
+#     cfg = get_config("sparse_hopper")      # default.yaml <- sparse_hopper.yaml
+#
+# Sparse reward follows Mazoure et al. (2019) / Appendix C.2: the reward is the
+# forward x-position only when it exceeds a threshold (Hopper: 0.6), otherwise
+# 0. Section references below are to the ICML 2024 paper.
+#
+# Reproduction notes (per the reproduction plan + addendum):
+#   * Only the *trend* matters, not the exact numbers.
+#   * alpha defaults to the Table 3 value (1e-4); Sec. 4.3 / Appendix C.3 prose
+#     says 0.01 but alpha is treated as insensitive (Fig. 9) and is swept in
+#     Experiment V.  It is exposed through `alpha_sweep`.
+#   * All PPO hyper-parameters that the paper leaves unstated use
+#     Stable-Baselines3 defaults (gamma=0.99, GAE lambda=0.95, clip=0.2,
+#     lr=3e-4, n_epochs=10).
+#   * RND normalisation form is unspecified -> divide by the running std of the
+#     prediction error; RND net sizes unspecified -> small [64, 64] MLP.
+#   * `refine.K: null` and `refine.n_steps: null` default to the episode
+#     horizon T (Algorithm 2 ambiguity handling rule).
+# =============================================================================
+
+name: sparse_hopper
+seed: 0
+seeds: [0, 1, 2]
+device: cpu
+
+output_dir: results
+log_dir: results/logs
+save_dir: results/checkpoints
+results_dir: results
+verbose: true
+
+# -----------------------------------------------------------------------------
+# Environment (sparse-reward Hopper, Appendix C.2 threshold = 0.6)
+# -----------------------------------------------------------------------------
+env:
+  id: sparse_hopper
+  gym_id: Hopper-v3
+  registered_id: SparseHopper-v0
+  app: mujoco
+  discrete_actions: false
+  normalize_obs: false          # App. C.2 normalizes only Walker2d / HalfCheetah
+  sparse: true
+  sparse_threshold: 0.6         # App. C.2: reward = forward-x only if x > 0.6
+  max_episode_steps: 1000
+  d_max: 3800.0                 # max single-episode reward, fidelity normalizer
+  obs_dim: 11
+  action_dim: 3
+
+# -----------------------------------------------------------------------------
+# Stage 0 — frozen pre-trained (sub-optimal / bottlenecked) target policy pi
+# (SB3 default MlpPolicy: 2x64 tanh, per the addendum "Architectures")
+# -----------------------------------------------------------------------------
+target:
+  algo: ppo
+  policy: MlpPolicy
+  hidden_sizes: [64, 64]
+  activation: tanh
+  lr: 3.0e-4
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_range: 0.2
+  n_epochs: 10
+  batch_size: 64
+  n_steps: 2048
+  total_timesteps: 1000000
+  checkpoint: policies/sparse_hopper_ppo.zip
+  # Trend-validation reference only: dense Hopper "No Refine" regime (Table 1).
+  expected_return: null
+  expected_std: null
+
+# -----------------------------------------------------------------------------
+# Stage 1 — explanation: mask network trained with Algorithm 1
+# (vanilla PPO + blinding bonus alpha * a_t^m; ~16.8% faster than StateMask)
+# -----------------------------------------------------------------------------
+explanation:
+  enabled: true
+  method: ours                  # ours | random | statemask | ig | airs
+  hidden_sizes: [64, 64]
+  activation: tanh
+  alpha: 1.0e-4                 # Table 3 value (Sec. 4.3 prose says 0.01)
+  alpha_sweep: [0.01, 0.001, 0.0001]
+  use_blinding_bonus: true      # R'_t = R(s_t, a_t) + alpha * a_t^m
+  reward_mode: augmented        # augmented | task
+  total_timesteps: 300000       # Table-4 fixed sample budget (MuJoCo)
+  lr: 3.0e-4
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_range: 0.2
+  n_epochs: 10
+  batch_size: 64
+  K: 0.1                        # fidelity sliding-window fraction
+  checkpoint: policies/sparse_hopper_mask.pt
+  # Table-4 mask-net training-time reference (Hopper row, seconds).
+  expected_time_ours: 12426
+  expected_time_statemask: 15393
+
+# -----------------------------------------------------------------------------
+# Experiment I — fidelity evaluation protocol (Sec. 4.1 / 4.2)
+# fidelity = log(d / d_max) - log(l / L),  l = L x K,  K in {10,20,30,40}%
+# 500 trajectories x 3 seeds.
+# -----------------------------------------------------------------------------
+fidelity:
+  K_values: [0.10, 0.20, 0.30, 0.40]
+  n_trajectories: 500
+  seeds: [0, 1, 2]
+  deterministic_policy: true
+  action_mode: random           # random actions inside the selected window
+  scoring: auto                 # auto | mask | random
+  window_metric: mean           # window with the highest AVERAGE importance
+  max_tail_steps: 10
+  store_details: true
+
+# -----------------------------------------------------------------------------
+# Stage 2 — refining: Algorithm 2 (mixed initial state distribution + RND)
+#   mu(s) = beta * d_rho^{pi_hat}(s) + (1 - beta) * rho(s),  beta realised as p
+#   R_t   = R_t^{task} + lambda * || f(s_{t+1}) - f_hat(s_{t+1}) ||^2
+# -----------------------------------------------------------------------------
+refine:
+  enabled: true
+  method: ours                  # ours | ppo_finetune | statemask_r | jsrl | sac | gail | sil
+  p: 0.5                        # mixed-init probability (== beta)
+  p_sweep: [0.0, 0.25, 0.5, 0.75, 1.0]
+  lam: 0.01                     # RND intrinsic-reward coefficient
+  lam_sweep: [0.0, 0.1, 0.01, 0.001]
+  use_mixed_init: true
+  use_rnd: true
+  K: null                       # null -> episode horizon T
+  copy_policy: true             # keep pi frozen, train pi_theta initialised from pi
+  total_timesteps: 200000
+  lr: 3.0e-4
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_range: 0.2
+  n_epochs: 10
+  batch_size: 64
+  n_steps: null                 # null -> episode horizon T
+  eval_episodes: 10
+  deterministic_eval: true
+  checkpoint: policies/sparse_hopper_refined.zip
+  # Sparse-reward results are reported as curves (Figure 2), not table values.
+  expected_return: null
+  expected_std: null
+
+# -----------------------------------------------------------------------------
+# RND module (exploration bonus; sizes/normalisation unspecified in the paper)
+# -----------------------------------------------------------------------------
+rnd:
+  hidden_sizes: [64, 64]
+  activation: tanh
+  lr: 1.0e-4
+  lam: 0.01
+  normalize: true
+  normalization: running_std
+  clip_bonus: null
+  update_epochs: 1
+  batch_size: 256
+  reward_scale: 1.0
+
+# -----------------------------------------------------------------------------
+# Baselines (Sec. 4.1). Refining baselines reuse the SAME explanation as RICE
+# for a fair comparison; explanation baselines {random, statemask, ig, airs}
+# are paired with RICE's refiner in Experiment III.
+# -----------------------------------------------------------------------------
+baselines:
+  random_explanation:
+    enabled: true
+    seed: null
+    mode: uniform
+
+  statemask:
+    enabled: true
+    alpha_init: 0.01            # primal-dual Lagrangian multiplier init
+    dual_lr: 1.0e-4
+    delta: 0.1
+    alpha_min: 0.0
+    alpha_max: 10.0
+    dual_mode: enforce
+    total_timesteps: 300000
+
+  integrated_gradients:
+    enabled: false
+    n_steps: 16
+    baseline: zero
+    target: action
+    reduction: l1
+
+  airs:
+    enabled: false
+    epochs: 20
+    lr: 3.0e-4
+    attention_mode: softmax
+    score_mode: hybrid
+
+  ppo_finetune:
+    enabled: true
+    lr: 1.0e-4                  # lowered LR, continue plain PPO
+    total_timesteps: 200000
+
+  jsrl:
+    enabled: true
+    total_timesteps: 200000
+    schedule: linear
+    max_guided_horizon: 1000
+
+  sac_finetune:
+    enabled: false              # Experiment IV is Hopper dense only
+
+  gail:
+    enabled: false              # Experiment IV is Hopper dense only
+
+  sil:
+    enabled: true               # optional Table-5 comparison (4 MuJoCo envs)
+    sil_coef: 1.0
+    buffer_size: 100000
+    total_timesteps: 200000
+
+# -----------------------------------------------------------------------------
+# Experiment drivers
+# -----------------------------------------------------------------------------
+experiments:
+  envs: [sparse_hopper]
+  dense_envs: [hopper, walker2d, reacher, halfcheetah]
+  app_envs: [selfish_mining, cage2, autodriving]
+  sparse_envs: [sparse_hopper, sparse_halfcheetah]
+  mujoco_envs: [hopper, walker2d, reacher, halfcheetah]
+  seeds: [0, 1, 2]
+
+  exp1:
+    enabled: true
+    envs: [sparse_hopper]
+    methods: [ours, statemask, random]
+    K_values: [0.10, 0.20, 0.30, 0.40]
+    n_trajectories: 500
+    seeds: [0, 1, 2]
+
+  exp2:
+    enabled: true
+    envs: [sparse_hopper]
+    methods: [ours, ppo_finetune, statemask_r, jsrl]
+    explanation: ours
+    seeds: [0, 1, 2]
+
+  exp3:
+    enabled: true
+    envs: [sparse_hopper]
+    explanations: [random, statemask, ours]
+    refiner: ours
+    seeds: [0, 1, 2]
+
+  exp4:
+    enabled: false              # SAC experiment is Hopper (dense) only
+    envs: [hopper]
+
+  exp5:
+    enabled: true
+    envs: [sparse_hopper]
+    p_sweep: [0.0, 0.25, 0.5, 0.75, 1.0]
+    lam_sweep: [0.0, 0.1, 0.01, 0.001]
+    alpha_sweep: [0.01, 0.001, 0.0001]
+
+  optional:
+    sil_envs: [sparse_hopper]
+    extra_explanations: [integrated_gradients, airs]
+
+# -----------------------------------------------------------------------------
+# Plotting
+# -----------------------------------------------------------------------------
+plot:
+  dpi: 150
+  format: pdf
+  figsize: [6, 4]
+  show: false

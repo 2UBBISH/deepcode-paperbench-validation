@@ -1,0 +1,6 @@
+# Sec. 6.3 ablation on the in-hand tasks: "Ours (w/o off-policy)".
+defaults: [../sapg_shadow_hand.yaml]
+algo:
+  name: sapg
+  use_offpolicy: false
+  aggregation: none

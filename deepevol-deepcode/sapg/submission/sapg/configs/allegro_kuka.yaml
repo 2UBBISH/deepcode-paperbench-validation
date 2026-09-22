@@ -1,0 +1,100 @@
+# SAPG configuration - AllegroKuka task group (hard tasks)
+# Reproduces the hyperparameter column "AllegroKuka" of Table 2 (Appendix B.1).
+# Used for Regrasping, Throw and Reorientation on the Allegro hand + Kuka arm.
+#
+# Paper references:
+#   - N = 24576 parallel environments, M = 6 policies (§4.3, §5.2)
+#   - actor backbone B_theta = MLP 768x512x256 (ELU) -> LSTM(1 layer, 768 hidden)
+#     with a learnable input-independent sigma vector (§5.2, Appendix B.1)
+#   - phi_j in R^32 for the AllegroKuka task group (§5.2)
+#   - off-policy weight lambda = 1, critic coefficient lambda' = 4.0 (§4.1)
+#   - bounds loss coefficient 1e-4, KL threshold 0.016, grad-norm clip 1.0 (§5.2)
+
+# ---- What to run -----------------------------------------------------------
+method: sapg              # sapg | ppo | pql | dexpbt
+task_group: allegro_kuka
+env_name: AllegroKuka
+
+# ---- Parallelism / block split --------------------------------------------
+num_envs: 24576           # N (Paper §5.2)
+num_policies: 6           # M
+leader_index: 1           # leader is policy i = 1 (§4.3, Algorithm 1)
+aggregation: leader_follower
+off_policy_weight: 1.0    # lambda (Eq. 4)
+subsample_off_policy: true  # |D'_1| = |D_1| (§4.3)
+
+# ---- PPO / optimisation ---------------------------------------------------
+learning_rate: 0.0001     # 1e-4 (Table 2)
+critic_learning_rate: 0.0001
+optimizer: adam
+adam_betas: [0.9, 0.999]
+adam_eps: 0.00000001      # 1e-8
+kl_threshold: 0.016
+grad_norm: 1.0
+bounds_loss_coefficient: 0.0001   # 1e-4
+critic_coefficient: 4.0           # lambda'
+clip_epsilon: 0.1
+gamma: 0.99
+tau: 0.95                 # interpreted as the GAE lambda
+horizon_length: 16
+mini_epochs: 2
+minibatch_size_multiplier: 4      # minibatch = num_envs * 4
+lstm_sequence_length: 16
+
+# ---- Networks (Appendix B.1) ---------------------------------------------
+actor_mlp_units: [768, 512, 256]
+critic_mlp_units: [768, 512, 256]
+actor_activation: elu
+use_lstm: true
+lstm_hidden_size: 768
+lstm_num_layers: 1
+action_scale: 1.0
+
+# ---- Per-policy latent phi_j ---------------------------------------------
+phi_dim: 32               # R^32 for AllegroKuka (§5.2)
+per_block_sigma: false    # sigma*(j-1)*H only in the entropy-exploration variant (§4.5)
+entropy_coefficient: 0.0  # sigma = 0 for Regrasping / Throw; 0.005 for Reorientation
+random_phi: false
+
+# ---- Environment / task dimensions ---------------------------------------
+# o_t = [q, qdot, x_t, v_t, omega_t, g_t, z_t]
+#   q, qdot      in R^23 (Allegro 16 + Kuka 7)
+#   x_t          in R^7  (object pose)
+#   v_t, omega_t in R^3
+#   g_t          in R^3 (Regrasping / Throw) or R^7 (Reorientation)
+obs_dim: 63
+action_dim: 23
+action_scale_actions: 1.0
+
+# ---- Curriculum (Appendix A / §5.1) --------------------------------------
+use_curriculum: true
+success_tolerance: 0.075          # 7.5 cm
+min_success_tolerance: 0.01       # 1 cm
+success_tolerance_decrement: 0.9  # shrink 10% ...
+success_threshold: 3.0            # ... once avg successes/episode crosses 3
+hold_steps: 30                    # K = 30 consecutive steps in tolerance
+
+# ---- Bookkeeping ----------------------------------------------------------
+seed: 0
+log_dir: runs/allegro_kuka
+device: cuda:0
+
+# ---- Task-level overrides (Table 2 applies to all three hard tasks) ------
+# Select with: scripts/train.py --config configs/allegro_kuka.yaml --task <name>
+tasks:
+  regrasping:
+    task: regrasping
+    goal_dim: 3
+    obs_dim: 63
+    entropy_coefficient: 0.0
+  throw:
+    task: throw
+    goal_dim: 3
+    obs_dim: 63
+    bucket_radius: 0.10
+    entropy_coefficient: 0.0
+  reorientation:
+    task: reorientation
+    goal_dim: 7
+    obs_dim: 67
+    entropy_coefficient: 0.005   # best per-task choice (§6.2 / Table 1)

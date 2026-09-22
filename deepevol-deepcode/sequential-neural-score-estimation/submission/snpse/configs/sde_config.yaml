@@ -1,0 +1,135 @@
+# =============================================================================
+# SNPSE -- forward noising SDE configuration (Appendix E.3.1)
+# =============================================================================
+#
+# The SNPSE paper (Sections 2.2 / E.3.1) uses two forward noising processes:
+#
+#   VE-SDE (variance exploding, Song & Ermon 2019/2020):
+#       d(theta_t) = g(t) dW_t,                        g(t) = sigma_min * (sigma_max/sigma_min)^t
+#       p_{t|0}(theta_t|theta_0) = N(theta_0, sigma_t^2 I),
+#       sigma_t = sigma_min * (sigma_max/sigma_min)^t
+#
+#   VP-SDE (variance preserving, Song et al. 2021):
+#       d(theta_t) = -1/2 beta(t) theta_t dt + sqrt(beta(t)) dW_t,  beta(t) linear
+#       p_{t|0}(theta_t|theta_0) = N(exp(-B(t)/2) theta_0, (1 - exp(-B(t))) I),
+#       B(t) = int_0^t beta(s) ds
+#
+# Time runs on t in [0, 1] (paper convention).  The reverse process is solved
+# from t = T down to t = 0 with the probability-flow ODE (eq. 3-4), optionally
+# with the reverse-time SDE (eq. 2).
+#
+# All values below are the ones specified by the paper; the few entries the
+# paper leaves unstated are marked "DEFAULT (paper silent)".
+# =============================================================================
+
+# Name of the SDE selected by default for a run.  Overridable from the CLI
+# (`--sde ve|vp`) and by experiments/run_benchmarks.py (VE x VP sweep).
+default: ve
+
+# -----------------------------------------------------------------------------
+# Variance Exploding SDE
+# -----------------------------------------------------------------------------
+ve:
+  # sigma_min: paper uses 0.01 for 2-D parameter spaces (SIR, Two Moons) and
+  # 0.05 for everything else (Appendix E.3.1).
+  sigma_min:
+    low_dim: 0.01          # dim(theta) == 2
+    low_dim_threshold: 2
+    default: 0.05          # dim(theta) > 2
+  # sigma_max: computed with Song & Ermon (2020) "Technique 1" from reference
+  # data.  For SEQUENTIAL methods (TSNPSE / SNPSE-A/B/C) the paper addendum
+  # requires sigma_max to be computed from the FIRST ROUND training data ONLY
+  # (never from later, proposal-biased rounds).
+  sigma_max:
+    mode: technique1        # "technique1" | "fixed"
+    fixed: 1.0              # used only when mode == fixed
+    technique1:
+      # small additive constant inside log(sigma_max/sigma_min) (unstated)
+      eps: 1.0e-8
+      # if data has fewer than this many points, Technique 1 is skipped
+      min_points: 2
+    round1_only: true       # Addendum requirement for sequential methods
+  T: 1.0
+
+# -----------------------------------------------------------------------------
+# Variance Preserving SDE
+# -----------------------------------------------------------------------------
+vp:
+  beta_min: 0.1             # paper default (Appendix E.3.1)
+  beta_max: 11.0            # paper default (Appendix E.3.1)
+  beta_schedule: linear     # beta(t) = beta_min + t * (beta_max - beta_min)
+  T: 1.0
+
+# -----------------------------------------------------------------------------
+# DSM loss weighting
+# -----------------------------------------------------------------------------
+# The paper does not specify lambda_t explicitly, so we follow the SDE-specific
+# weighting of Song et al. (2021) for continuous-time score matching:
+#     lambda_t = g(t)^2   (equivalently the "likelihood" weighting).
+# Setting weighting: none uses lambda_t = 1 for all t.
+weighting:
+  mode: sde         # "sde" -> lambda_t = g(t)^2 ; "none" -> lambda_t = 1
+  time_sampling: uniform   # t ~ U(0, 1)  (paper: one MC sample per datapoint)
+
+# -----------------------------------------------------------------------------
+# Probability-flow ODE / reverse-time SDE sampling (Section E.3.3)
+# -----------------------------------------------------------------------------
+sampler:
+  method: rk45              # adaptive Dormand-Prince 5(4) -- DEFAULT (paper silent)
+  atol: 1.0e-5              # DEFAULT (paper silent)
+  rtol: 1.0e-5              # DEFAULT (paper silent)
+  n_steps: 1000             # fixed-step grid for euler/heun/rk4 -- DEFAULT (paper silent)
+  t_max: 1.0
+  t_min: 0.0
+  trace_estimator: auto     # exact for d <= 32, Hutchinson/Skilling otherwise
+  hutchinson_probes: 1
+  chunk_size: 512
+  # reverse-time SDE (eq. 2) alternative to the probability-flow ODE
+  reverse_sde:
+    enabled: false
+    n_steps: 1000
+    method: euler           # Euler-Maruyama
+  # terminal reference distribution at t = T
+  reference:
+    ve: gaussian            # N(0, sigma_max^2 I)
+    vp: gaussian            # N(0, I)
+
+# -----------------------------------------------------------------------------
+# HPR_eps truncation (Section 3.1, TSNPSE; Section E.3.3)
+# -----------------------------------------------------------------------------
+# kappa is the eps-quantile of the posterior log-density evaluated on
+# num_samples posterior draws obtained with the probability-flow ODE and the
+# instantaneous change-of-variables formula (eq. 5).
+hpr:
+  eps: 5.0e-4               # paper value
+  num_samples: 20000        # posterior draws used to estimate kappa (paper value)
+  hypercube_margin: 0.0     # cheap empirical-hypercube pre-screen margin
+  max_batches: 200           # rejection-sampling safety limit (DEFAULT, paper silent)
+  batch_size: 4096          # vectorised rejection batch size (DEFAULT, paper silent)
+
+# -----------------------------------------------------------------------------
+# Recommended dimensionality split (Section 5.2)
+# -----------------------------------------------------------------------------
+recommendation:
+  # VE is preferred in low dimension, VP in high dimension.
+  low_dim_max: 10           # dim(theta) <= 10  -> prefer VE
+  high_dim_min: 11          # dim(theta) >= 11  -> prefer VP
+  note: >
+    The paper reports that VE-SDE tends to perform better in low-dimensional
+    parameter spaces whereas VP-SDE is preferable in higher dimensions
+    (e.g. the 31-dimensional pyloric task, Section 5.3).
+
+# -----------------------------------------------------------------------------
+# Per-task overrides for the eight sbibm benchmarks (Section E.1)
+# -----------------------------------------------------------------------------
+# dim(theta) drives the automatic sigma_min selection for the VE SDE.
+tasks:
+  gaussian_linear:        {dim_theta: 10, sigma_min: 0.05}
+  gaussian_mixture:       {dim_theta: 2,  sigma_min: 0.01}
+  two_moons:              {dim_theta: 2,  sigma_min: 0.01}
+  gaussian_linear_uniform: {dim_theta: 10, sigma_min: 0.05}
+  bernoulli_glm:          {dim_theta: 10, sigma_min: 0.05}
+  slcp:                   {dim_theta: 5,  sigma_min: 0.05}
+  sir:                    {dim_theta: 2,  sigma_min: 0.01}
+  lotka_volterra:         {dim_theta: 4,  sigma_min: 0.05}
+  pyloric:                {dim_theta: 31, sigma_min: 0.05, sde: vp}

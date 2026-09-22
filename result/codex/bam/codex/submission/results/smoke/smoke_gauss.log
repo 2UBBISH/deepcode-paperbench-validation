@@ -1,0 +1,28 @@
+D=   4 BaM (B=2)          forward_kl  final=9.992e-16  (1.0s)
+D=   4 BaM (B=5)          forward_kl  final=-1.11e-16  (0.5s)
+D=   4 ADVI (B=2)         forward_kl  final=0.01627  (2.3s)
+D=   4 Fisher (B=2)       forward_kl  final=0.2469  (1.3s)
+D=   4 Score (B=2)        forward_kl  final=0.3477  (1.6s)
+D=   4 GSM (B=2)          forward_kl  final=-6.661e-16  (1.1s)
+  saved results/smoke/gaussian_D4_forward_kl.png
+D=   4 BaM (B=2)          reverse_kl  final=1.11e-16  (0.3s)
+D=   4 BaM (B=5)          reverse_kl  final=1.11e-16  (0.4s)
+D=   4 ADVI (B=2)         reverse_kl  final=0.01544  (2.0s)
+D=   4 Fisher (B=2)       reverse_kl  final=0.1455  (1.6s)
+D=   4 Score (B=2)        reverse_kl  final=0.181  (1.6s)
+D=   4 GSM (B=2)          reverse_kl  final=8.882e-16  (1.1s)
+  saved results/smoke/gaussian_D4_reverse_kl.png
+D=  16 BaM (B=2)          forward_kl  final=-3.109e-14  (0.8s)
+D=  16 BaM (B=5)          forward_kl  final=-1.688e-14  (0.6s)
+D=  16 ADVI (B=2)         forward_kl  final=12.41  (2.1s)
+D=  16 Fisher (B=2)       forward_kl  final=61.2  (1.6s)
+D=  16 Score (B=2)        forward_kl  final=75.69  (1.6s)
+D=  16 GSM (B=2)          forward_kl  final=3.197e-14  (1.2s)
+  saved results/smoke/gaussian_D16_forward_kl.png
+D=  16 BaM (B=2)          reverse_kl  final=5.596e-14  (0.4s)
+D=  16 BaM (B=5)          reverse_kl  final=-1.776e-15  (0.3s)
+D=  16 ADVI (B=2)         reverse_kl  final=3.808  (1.9s)
+D=  16 Fisher (B=2)       reverse_kl  final=9.029  (1.9s)
+D=  16 Score (B=2)        reverse_kl  final=10.72  (1.6s)
+D=  16 GSM (B=2)          reverse_kl  final=-5.596e-14  (1.1s)
+  saved results/smoke/gaussian_D16_reverse_kl.png

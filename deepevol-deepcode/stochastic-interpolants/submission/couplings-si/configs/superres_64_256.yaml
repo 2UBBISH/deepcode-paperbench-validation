@@ -1,0 +1,77 @@
+# Super-resolution 64x64 -> 256x256
+# Stochastic Interpolants with Data-Dependent Couplings, Section 4.2 (Table 3)
+#
+# Coupling:  x0 = U(D(x1)) + sigma * zeta        (data-dependent base)
+#            xi = U(D(x1))                        (image-shaped conditioning)
+# Interpolant: gamma0 preset -> alpha_t = 1 - t, beta_t = t, gamma_t = 0
+#
+# Values marked [Appendix B] are fixed by the paper.
+# Values marked [engineering] are not specified by the paper (sensible defaults).
+
+task: superres
+name: superres_64_256
+
+# ---------------------------------------------------------------- data
+dataset: imagenet-1k
+split: train
+resolution: 256                # high-resolution target x1
+low_resolution: 64             # low-resolution conditioning D(x1)
+num_classes: 1000
+channels: 3                    # image channels (C)
+num_workers: 8
+pin_memory: true
+data_range: "[-1, 1]"
+
+# ------------------------------------------------- coupling / interpolant
+coupling: superres
+coefficients: gamma0           # alpha_t = 1-t, beta_t = t, gamma_t = 0  [Sec. 4.2]
+sigma: 0.05                    # [engineering] small positive -> smooths base density
+down_mode: area                # D: average pooling / area interpolation
+up_mode: bilinear              # U: bilinear upsampling
+antialias: true
+
+# ---------------------------------------------------------------- model
+model: unet                    # velocity net b_hat_t(x, xi)  [Appendix B]
+channels: 256                  # base channel count            [Appendix B]
+dim_mults: [1, 1, 2, 3, 4]     #                              [Appendix B]
+resnet_block_groups: 8         # GroupNorm groups in ResBlocks  [Appendix B]
+learned_sinusoidal_cond: true  #                              [Appendix B]
+learned_sinusoidal_dim: 32     #                              [Appendix B]
+attention_dim_head: 64         #                              [Appendix B]
+attention_heads: 4             #                              [Appendix B]
+random_fourier_features: false #                              [Appendix B]
+class_dropout_prob: 0.1        # [engineering] label dropout for CFG
+mask_observed: false           # SR has no exact fixed-pixel invariant
+conditioning_channels: 3       # xi = U(D(x1)) appended to x_t  [Sec. 4.2]
+
+# -------------------------------------------------------------- training
+batch_size: 32                 # [Appendix B / addendum]
+steps: 200000                  # 200,000 gradient steps         [addendum]
+lr: 2.0e-4                     # Adam learning rate             [Appendix B]
+betas: [0.9, 0.999]            # [engineering] PyTorch defaults
+weight_decay: 0.0              # no weight decay                [Appendix B]
+grad_clip: 10000.0             # whole-parameter-vector norm    [Appendix B]
+scheduler: step
+lr_gamma: 0.99                 # StepLR gamma                   [Appendix B]
+lr_step_size: 1000             # every 1000 steps               [Appendix B]
+ema: false                     # [engineering] not mentioned in the paper
+log_every: 100
+sample_every: 0                # 0 = disabled
+save_every: 10000
+seed: 0
+precision: "32-true"
+
+# -------------------------------------------------------------- sampling
+method: dopri5                 # probability-flow ODE (torchdiffeq Dopri)  [Appendix B]
+sampling_steps: 50             # [engineering] used for fixed-step / Euler
+atol: 1.0e-5
+rtol: 1.0e-5
+num_samples: 50000             # FID-50k
+qualitative_count: 8           # Fig. 4 / Fig. 6 rows
+
+# ------------------------------------------------------------ evaluation
+eval_fid: true
+fid_num_samples: 50000
+paper_fid_train: 2.13          # Table 3
+paper_fid_valid: 2.05          # Table 3
+reported_only_baselines: [improved_ddpm, sr3, adm, cascaded_diffusion, i2sb]

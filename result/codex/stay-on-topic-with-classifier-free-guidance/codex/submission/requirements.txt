@@ -1,0 +1,22 @@
+# Core requirements for the reproduction.
+#
+# The environment used for grading is expected to provide these; the code is
+# written so that the core CFG maths (cfglm/cfg.py, cfglm/stats.py,
+# cfglm/flops.py) only needs torch + numpy + scipy.
+
+torch>=1.13
+transformers>=4.30
+datasets>=2.12
+numpy>=1.23
+scipy>=1.9
+accelerate>=0.20
+sentencepiece>=0.1.99
+pandas>=1.5
+matplotlib>=3.6
+
+# Optional: canonical zero-shot evaluation backend (cfglm/lm_eval_adapter.py).
+# The native harness in cfglm/harness.py does not require it.
+# lm-eval>=0.4.2
+
+# Optional: development dependencies
+# pytest>=7

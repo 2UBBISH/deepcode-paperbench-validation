@@ -1,0 +1,29 @@
+# Core dependencies for reproducing "Robust CLIP: Unsupervised Adversarial
+# Fine-Tuning of Vision Embeddings for Robust Large Vision-Language Models"
+# (Schlarmann, Singh, Croce, Hein, ICML 2024).
+#
+# Everything except `open-flamingo` is enough for (i) FARE / TeCoA adversarial
+# fine-tuning of CLIP, (ii) zero-shot classification + AutoAttack evaluation and
+# (iii) the LLaVA based evaluations (captioning, VQA, POPE, SQA-I, targeted
+# attacks, jailbreaking attacks).
+
+torch>=2.1
+torchvision>=0.16
+open_clip_torch>=2.24
+timm>=0.9
+transformers>=4.37
+datasets>=2.16
+accelerate>=0.25
+numpy<2
+pillow>=9.0
+scipy>=1.10
+pandas>=1.5
+sentencepiece
+ftfy
+regex
+tqdm
+
+# Optional (only needed for the OpenFlamingo rows of Table 1 / Table 2):
+#   pip install git+https://github.com/mlfoundations/open_flamingo.git
+# The OpenFlamingo evaluation code degrades gracefully with a clear error
+# message when the package is not installed (see robust_clip/models/lvlm/open_flamingo.py).

@@ -1,0 +1,81 @@
+# Configuration for the PosteriorDB / BridgeStan experiment
+# (Section 5.2, Figure 5.3 and Appendix E.6 of the BaM paper)
+#
+# Protocol: BaM with the decaying schedule lambda_t = B D / (t + 1) is compared
+# against ADVI, Score-ADVI, Fisher-ADVI and GSM on three hierarchical Bayesian
+# models at batch sizes {8, 32}, averaged over 5 runs. The cost axis is the
+# number of gradient evaluations (wallclock timing is out of scope).
+
+experiment: "posteriordb"
+description: >-
+  BaM vs ADVI / Score / Fisher / GSM on ark (D=7), gp-pois-regr (D=13) and
+  eight-schools-centered (D=10); metric = relative mean/SD error vs HMC samples.
+
+seed: 0
+n_runs: 5
+
+# PosteriorDB models, in paper order. Dimensions are fixed by the Stan models:
+#   ark                    D = 7
+#   gp-pois-regr           D = 13
+#   eight-schools-centered D = 10
+settings: ["ark", "gp-pois-regr", "eight-schools-centered"]
+
+methods: ["bam", "advi", "score", "fisher", "gsm"]
+
+# BaM uses the match step with inverse regularisation lambda_t = B D / (t + 1),
+# i.e. the decaying schedule required for the non-Gaussian / real-data targets.
+bam:
+  schedule: "BD/(t+1)"
+  batch_sizes: [8, 32]
+
+# All gradient-based baselines share the same batch size(s) as BaM so that the
+# gradient-evaluation axis is comparable across methods.
+baseline_batch_sizes: [8, 32]
+
+# Grid-searched Adam learning rates (per the paper's protocol; a shorter pilot
+# run selects the value for each method/model combination).
+advi:
+  learning_rate: 0.02
+  learning_rate_grid: [0.05, 0.02, 0.01, 0.005, 0.001]
+
+score:
+  learning_rate:
+    "ark": 0.01
+    "gp-pois-regr": 0.001
+    "eight-schools-centered": 0.001
+  learning_rate_grid: [0.05, 0.02, 0.01, 0.005, 0.001]
+
+fisher:
+  learning_rate: 0.05
+  learning_rate_grid: [0.1, 0.05, 0.02, 0.01, 0.005, 0.001]
+
+# GSM (Algorithm 3) is hyper-parameter free.
+gsm:
+  learning_rate: null
+
+# Target / initialisation.
+target:
+  name: "posteriordb"
+  # mu_0 ~ Uniform[0, 0.1]^D, Sigma_0 = I  (documented default from the plan).
+  init_mean_scale: 0.1
+  init_cov: "identity"
+  # Reference HMC draws used for the relative mean/SD error metrics. When these
+  # are unavailable the loader falls back to a flagged Gaussian surrogate.
+  reference_samples: null
+  allow_surrogate: true
+
+# Gradient-evaluation budgets per model (cost axis; wallclock out of scope).
+grad_budget:
+  "ark": 20000
+  "gp-pois-regr": 30000
+  "eight-schools-centered": 30000
+
+# Reporting.
+metric: "relative_mean_error"
+report_both_errors: true      # relative mean error and relative SD error
+history_points: 120
+budget_scale: 1.0
+
+outdir: "results"
+save: true
+figures: true

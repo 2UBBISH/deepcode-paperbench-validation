@@ -1,0 +1,5 @@
+training on (2000, 32, 32, 3) images
+epoch    0  -ELBO 4025.18  lr 3.10e-05
+epoch    2  -ELBO 3969.62  lr 9.30e-05
+training took 18.7s
+saved checkpoint to /tmp/ckpt/cifar_small.npz

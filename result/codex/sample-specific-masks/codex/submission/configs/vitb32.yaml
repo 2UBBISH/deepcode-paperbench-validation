@@ -1,0 +1,22 @@
+# ViT-B/32 (ImageNet-1K) as the frozen pre-trained model -- Table 2.
+# Appendix C: the initial learning rate and decay were tuned on CIFAR-10
+# (Table 7) and the unified setting alpha = 0.001, gamma = 1 (no decay) is used
+# for every dataset; the mask generator has 6 layers (Figure 9, Table 9).
+backbone: vit_b32
+image_size: 384
+num_layers: 6            # 6-layer CNN mask generator (Figure 9)
+num_pool_layers: 3       # patch size 8
+epochs: 200
+batch_size: null
+milestones: [100, 145]
+momentum: 0.9
+weight_decay: 0.0
+lr_delta: 0.001          # Table 7: best CIFAR-10 accuracy at alpha = 0.001, gamma = 1
+gamma_delta: 1.0
+lr_mask: 0.001
+gamma_mask: 1.0
+label_mapping: ilm
+num_workers: 4
+eval_every: 10
+pretrained: true
+device: cuda

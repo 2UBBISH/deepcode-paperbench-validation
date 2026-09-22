@@ -1,0 +1,15 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ipynb_checkpoints/
+# experiment outputs and datasets (source only, as required by the task)
+/runs/
+/checkpoints/
+*.pt
+*.pth
+*.ckpt
+/data/
+cache/
+wandb/
+.DS_Store

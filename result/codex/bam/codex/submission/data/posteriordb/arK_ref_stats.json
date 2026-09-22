@@ -1,0 +1,36 @@
+{
+  "name": "arK",
+  "params": [
+    "alpha",
+    "beta[1]",
+    "beta[2]",
+    "beta[3]",
+    "beta[4]",
+    "beta[5]",
+    "sigma"
+  ],
+  "dim": 7,
+  "n_draws": 10000,
+  "mean": [
+    -0.0007186491275206208,
+    0.6921634078025818,
+    0.439043253660202,
+    0.10581601411104202,
+    -0.0354350320994854,
+    -0.30151158571243286,
+    0.15056681632995605
+  ],
+  "sd": [
+    0.010708202607929707,
+    0.07055085897445679,
+    0.08730977773666382,
+    0.09308250993490219,
+    0.08604180812835693,
+    0.06988314539194107,
+    0.007774709723889828
+  ],
+  "source": {
+    "data": "https://raw.githubusercontent.com/stan-dev/posteriordb/master/posterior_database/data/data/arK.json.zip",
+    "draws": "https://raw.githubusercontent.com/stan-dev/posteriordb/master/posterior_database/reference_posteriors/draws/draws/arK-arK.json.zip"
+  }
+}

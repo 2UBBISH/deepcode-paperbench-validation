@@ -1,0 +1,54 @@
+# In-painting, ImageNet-256x256, independent coupling (Table 2, baseline)
+task: inpainting
+seed: 0
+
+# standard stochastic interpolant: Gaussian base with gamma_t = sqrt(2t(1-t))
+interpolant: linear
+
+coupling:
+  name: independent
+  base_scale: 1.0
+
+data:
+  kind: imagenet
+  name: imagenet-1k
+  image_size: 256
+  channels: 3
+  num_classes: 1000
+  num_workers: 8
+
+model:
+  kind: unet_imagenet
+  dim: 256
+  dim_mults: [1, 1, 2, 3, 4]
+  resnet_block_groups: 8
+  learned_sinusoidal_cond: true
+  learned_sinusoidal_dim: 32
+  random_fourier_features: false
+  attn_dim_head: 64
+  attn_heads: 4
+  attn_resolutions: [16, 32]
+  image_size: 256
+  num_classes: 1000
+  data_channels: 3
+  time_scale: 1000.0
+
+optim:
+  batch_size: 32
+  lr: 2.0e-4
+  lr_decay_every: 1000
+  lr_decay_gamma: 0.99
+  weight_decay: 0.0
+  grad_clip_norm: 10000.0
+  max_steps: 200000
+  ema: true
+  ema_beta: 0.995
+  log_every: 50
+  save_every: 5000
+
+sampling:
+  method: dopri5
+  steps: 250
+  guidance_scale: 1.0
+
+out_dir: runs/inpainting_256_baseline

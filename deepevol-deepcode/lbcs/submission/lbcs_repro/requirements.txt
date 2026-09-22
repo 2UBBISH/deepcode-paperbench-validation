@@ -1,0 +1,57 @@
+# =============================================================================
+# LBCS reproduction ("Refined Coreset Selection" / Lexicographic Bilevel
+# Coreset Selection) -- Python dependencies
+# =============================================================================
+#
+# Environment (see plan environment_setup):
+#   * Python 3.9 - 3.10
+#   * PyTorch + torchvision (CUDA build for NVIDIA GPUs; CPU wheel is enough
+#     for the smoke tests / unit validation)
+#   * No Kaggle access and no API keys: every dataset (MNIST, MNIST-S,
+#     Fashion-MNIST, SVHN, CIFAR-10) is downloaded through torchvision.
+#
+# Install (conda example):
+#   conda create -n lbcs python=3.10 -y && conda activate lbcs
+#   # install a CUDA-enabled torch/torchvision that matches your driver first:
+#   pip install torch==2.1.2 torchvision==0.16.2 --index-url https://download.pytorch.org/whl/cu121
+#   pip install -r requirements.txt
+#
+# Notes
+#   * `torch`/`torchvision` are listed here so that a plain
+#     `pip install -r requirements.txt` also works (CPU wheels); the CUDA build
+#     should be installed first as shown above if GPU training is desired.
+#   * `timm` is only used for the optional ViT-small cross-check in
+#     `models/vit_small.py` (the self-contained ViT-small implementation is the
+#     default and does not require timm).
+#   * `tensorboard` is optional; the reproduction writes JSON/JSONL/CSV/TXT
+#     artifacts under `results/` (see `utils/logging.py`).
+#   * `pyyaml` is required by `main.py` / `scripts/run_all.py` and the
+#     `configs/*.yaml` overlays.
+#   * No package below is used to obtain data from Kaggle or any private source.
+# =============================================================================
+
+# --- Core numerics -----------------------------------------------------------
+numpy>=1.23,<2.0
+scipy>=1.9,<1.12
+scikit-learn>=1.2,<1.5
+pandas>=1.5,<2.3
+
+# --- Deep learning -----------------------------------------------------------
+# Install the CUDA-matched wheel first when running on the paper's GTX3090
+# hardware; these pins correspond to a CPU/CUDA-compatible default build.
+torch>=2.0,<2.3
+torchvision>=0.15,<0.18
+
+# --- Optional: timm-based ViT-small / WideResNet (Section 6 cross-arch) ------
+timm>=0.9,<0.10
+
+# --- Configuration / CLI / reporting -----------------------------------------
+pyyaml>=6.0,<7.0
+tqdm>=4.65,<4.67
+matplotlib>=3.6,<3.9
+tensorboard>=2.13,<2.17
+
+# --- Testing helpers (offline self-tests: `python -m lbcs_repro.<module>`) ---
+# Only the standard library `unittest` is used by the bundled `_selftest`
+# hooks; pytest is optional and convenient for ad-hoc verification.
+pytest>=7.3,<8.1

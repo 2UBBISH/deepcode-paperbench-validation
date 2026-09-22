@@ -1,0 +1,148 @@
+# ============================================================================
+# Global configuration for "What Will My Model Forget?
+# Forecasting Forgotten Examples in Language Model Refinement"
+# ============================================================================
+# All paths are relative to the repository root unless absolute.
+
+seed: 42
+device: cuda
+dtype: float32            # float32 | bfloat16
+output_dir: artifacts
+cache_dir: artifacts/caches
+log_dir: artifacts/logs
+
+# ---------------------------------------------------------------------------
+# Base pretrained language models (f_0)
+#   BART0_Large  : INK-USC/ReCross (facebook/bart-large backbone, P3-train FT)
+#   FLAN-T5_L    : google/flan-t5-large
+#   FLAN-T5_3B   : google/flan-t5-3b
+#   FLAN-T5_small: google/flan-t5-small  (backbone of h for the T5 experiments)
+# ---------------------------------------------------------------------------
+models:
+  BART0_L:
+    name: facebook/bart-large
+    bart0_weights: INK-USC/ReCross
+    n_params: 400M
+    is_t5: false
+  FLAN-T5_L:
+    name: google/flan-t5-large
+    n_params: 780M
+    is_t5: true
+  FLAN-T5_3B:
+    name: google/flan-t5-3b
+    n_params: 3B
+    is_t5: true
+  FLAN-T5_small:
+    name: google/flan-t5-small
+    n_params: 80M
+    is_t5: true
+
+# ---------------------------------------------------------------------------
+# Data pipeline (Sec. 4.1 + Addendum)
+# ---------------------------------------------------------------------------
+data:
+  p3_dataset: bigscience/P3
+  examples_per_task: 100          # "balanced sample of 100 examples per task"
+  n_pt_target: 3600               # 36 tasks x 100
+  mmlu_data_dir: data/mmlu        # original Berkeley release (data.tar)
+  recal_task_source: local        # local | hub   (ReCross P3-test tasks)
+  recal_json_dir: data/recal_p3   # per-task json files from INK-USC/ReCross
+  # 36 P3 *train* tasks used for D_PT (Addendum). See config/tasks.yaml.
+  max_input_len: 512
+  max_output_len: 64
+  r_train_ratio: 0.6              # 60% D_R^Train
+  r_test_ratio: 0.4               # 40% D_R^Test
+
+# ---------------------------------------------------------------------------
+# Model refinement (Sec. 4.1 + Addendum). LRs per (model, mode).
+# K steps: 30 for LoRA / Full FT, 100 for Head-only.
+# ---------------------------------------------------------------------------
+refinement:
+  steps: 30                       # LoRA / Full FT (single error)
+  head_steps: 100                 # Head-only (single error)
+  # sequential (continual) refinement uses smaller LRs (Sec. 4.1)
+  sequential_steps: 30
+  head_sequential_steps: 100
+  lr:
+    single:                       # fixing ONE error at a time
+      BART0_L:      {full_ft: 1.0e-5, lora: 1.0e-5, head: 1.0e-3}
+      FLAN-T5_L:    {full_ft: 1.0e-4, lora: 1.0e-4, head: 1.0e-4}
+      FLAN-T5_3B:   {full_ft: 1.0e-5, lora: 1.0e-4, head: 1.0e-4}
+      FLAN-T5_small:{full_ft: 1.0e-4, lora: 1.0e-4, head: 1.0e-4}
+    sequential:                   # fixing MULTIPLE errors sequentially
+      BART0_L:      {full_ft: 1.0e-6, lora: 1.0e-6, head: 1.0e-3}
+      FLAN-T5_L:    {full_ft: 1.0e-5, lora: 1.0e-5, head: 1.0e-4}
+      FLAN-T5_3B:   {full_ft: 1.0e-5, lora: 1.0e-5, head: 1.0e-4}
+      FLAN-T5_small:{full_ft: 1.0e-5, lora: 1.0e-5, head: 1.0e-4}
+  optimizer: AdamW
+  betas: [0.9, 0.999]
+  weight_decay: 0.0
+  max_grad_norm: 1.0
+  lora:
+    r: 16
+    lora_alpha: 32
+    lora_dropout: 0.1
+    bias: none
+    target_modules: ['q', 'v']
+    task_type: SEQ_2_SEQ_LM
+
+# ---------------------------------------------------------------------------
+# Encoding function h (Sec. 3.2 / 3.3, Appendix B)
+#   BART0 exps   -> BART0 backbone  + 2-layer MLP
+#   FLAN-T5 exps -> FLAN-T5_small   + 2-layer MLP
+# ---------------------------------------------------------------------------
+encoder_h:
+  backbone:
+    BART0_L:    BART0_L
+    FLAN-T5_L:  FLAN-T5_small
+    FLAN-T5_3B: FLAN-T5_small
+  mlp_hidden: 768                 # paper gives no width -> default 768
+  mlp_layers: 2
+  repr_dim: 768                   # d of h(x,y) for the representation model
+  token_dim: 768                  # d of h(x,y) in R^{T x d} for the logit kernel
+  lm_lr: 1.0e-5                   # "optimize the LM components with LR 1e-5"
+  mlp_lr: 1.0e-4                  # "the MLP with a learning rate of 1e-4"
+  dropout: 0.0
+  freeze_backbone: false
+
+# ---------------------------------------------------------------------------
+# Forecaster training (Appendix B)
+# ---------------------------------------------------------------------------
+forecaster:
+  max_steps: 100000
+  batch_size: 16                  # 8 positive + 8 negative
+  n_positive: 8
+  n_negative: 8
+  positive_weight: 0.1            # alpha, down-weight positives
+  threshold_gamma_grid: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 20, 30, 50]
+  cache_topk: 100                 # top-k logits stored per output token of y_j
+  eval_every: 1000
+  save_every: 10000
+
+# ---------------------------------------------------------------------------
+# Replay-based refinement (Sec. 4.2, 5.2, Appendix D.2)
+# ---------------------------------------------------------------------------
+replay:
+  modes: [none, random, threshold, logit, representation, gt]
+  batch_size: 8                   # BART0_L / FLAN-T5_L
+  every_n_steps: 10
+  batch_size_large: 4             # FLAN-T5_3B
+  every_n_steps_large: 5
+  distillation: kl                # kl | mse   (Buzzega et al. 2020a)
+  distill_temperature: 1.0
+  distill_weight: 1.0
+
+# ---------------------------------------------------------------------------
+# Continual-stream evaluation (Sec. 5.1 Fig. 3 + Addendum)
+# ---------------------------------------------------------------------------
+stream:
+  fraction: 0.125                 # 1/8 of D_R
+  shuffle: true
+  freeze_forecast: true           # z_hat computed at stream start, reused
+
+# ---------------------------------------------------------------------------
+# Reporting buckets (Sec. 2 / 4.1)
+# ---------------------------------------------------------------------------
+eval:
+  f1_average: binary
+  report_precision_recall: true

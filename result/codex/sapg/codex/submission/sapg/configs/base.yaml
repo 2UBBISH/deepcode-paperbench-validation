@@ -1,0 +1,61 @@
+# Base configuration.  Values that the paper specifies (Tables 2-4 and Sec. 5.2)
+# are marked with their source; the remaining knobs are implementation details.
+seed: 0
+verbose: true
+
+env:
+  name: multimodal_collect
+  num_envs: 1024
+
+model:
+  latent_dim: 16                 # dim(phi_j) = 16 for the "simpler" tasks
+  activation: elu
+  phi_conditioning: concat
+  normalize_obs: false
+  action_bound: null             # used by the rl_games-style bounds loss
+  actor:
+    type: mlp
+    units: [512, 256, 128]
+  critic:
+    type: mlp
+    units: [512, 256, 128]
+
+algo:
+  name: sapg
+  num_policies: 6                # M = 6 policies for SAPG and DexPBT (Sec. 5.2)
+  horizon: 16                    # "we collect 16 steps of experience" (Sec. 5.2)
+  minibatch_size_multiplier: 4   # mini-batch size = num_envs * 4 (Tables 2-4)
+  mini_epochs: 5                 # Tables 2-4
+  gamma: 0.99
+  tau: 0.95                      # GAE lambda, "tau" in Tables 2-4
+  nstep: 3                       # 3-step critic returns for on-policy data
+  critic_target: nstep
+  learning_rate: 5.0e-4
+  min_learning_rate: 1.0e-5
+  kl_threshold: 0.016            # Tables 2-4
+  max_grad_norm: 1.0
+  clip_epsilon: 0.1
+  critic_coef: 4.0               # critic coefficient lambda' (Tables 2-4)
+  bounds_loss_coef: 0.0001       # Tables 2-4
+  action_bound: null
+  entropy_coef: 0.0              # sigma; followers use sigma * j
+  offpolicy_lambda: 1.0          # lambda = 1 (Sec. 4.3)
+  aggregation: leader_follower
+  use_offpolicy: true
+  offpolicy_subsample: true      # subsample D'_i to |D_i| transitions
+  max_importance_weight: 10.0
+  normalise_advantages: false
+  num_iterations: 100
+  max_env_steps: 2.0e10          # paper compares runs by samples collected
+  eval_interval: 25
+  checkpoint_interval: 0
+  record_states_interval: 0
+
+eval:
+  episodes: 32
+  max_steps: 1024
+  policy_ids: [0]
+
+logging:
+  logdir: runs
+  use_tensorboard: true

@@ -1,0 +1,218 @@
+# ============================================================================
+# DPMs-ANT — per-task hyper-parameter overrides
+# ----------------------------------------------------------------------------
+# Values come from:
+#   * "Hyperparameters for Table 3" (paper addendum)  -> lr / C / gamma / iterations
+#   * Section 5.2 Configurations                      -> omega=0.02, J=10,
+#                                                        batch_size=40, gamma=5 default
+#
+# "C" in the addendum is the *compression* factor of the adaptor down-projection;
+# it maps onto the adaptor's `bottleneck_d` / MLP width (hidden_dims) override,
+# while the base bottleneck channel count follows Section 5.2 (c=4 for DDPM,
+# c=2 for LDM).  This resolves the plan's noted ambiguity between Section 5.2
+# (c = 4 DDPM / 2 LDM) and the addendum (C = 8/16).
+# ============================================================================
+
+defaults:
+  num_timesteps: 1000
+  schedule: linear
+  eta: 0.0
+  batch_size: 40
+  optimizer: adam
+  adam_betas: [0.9, 0.999]
+  weight_decay: 0.0
+  grad_clip: 1.0
+  iterations: 300
+  gamma: 5.0
+  omega: 0.02
+  J: 10
+  use_adv_noise: true
+  only_adaptor: true
+  freeze_backbone: true
+  norm: per_sample
+  lr_ddpm: 5.0e-5
+  lr_ldm: 1.0e-5
+  # adaptor defaults (Section 5.2)
+  adaptor:
+    bottleneck_c: 4            # DDPM == 4 ; LDM == 2 (overridden per backbone)
+    bottleneck_c_ldm: 2
+    bottleneck_d: 8
+    hidden_dims: [8, 16]
+    num_heads: 4
+    up_sample_factor: 4
+    composition: linear
+
+tasks:
+  # --------------------------------------------------------------------------
+  # DDPM (256x256) tasks — addendum "Hyperparameters for Table 3"
+  # --------------------------------------------------------------------------
+  ffhq_babies:
+    backbone: ddpm
+    source: ffhq
+    target: babies
+    lr: 5.0e-6
+    C: 8
+    omega: 0.02
+    J: 10
+    gamma: 3.0
+    iterations: 160
+
+  ffhq_sunglasses:
+    backbone: ddpm
+    source: ffhq
+    target: sunglasses
+    lr: 5.0e-5
+    C: 8
+    omega: 0.02
+    J: 10
+    gamma: 15.0
+    iterations: 200
+
+  ffhq_raphael:
+    backbone: ddpm
+    source: ffhq
+    target: raphael
+    lr: 5.0e-5
+    C: 8
+    omega: 0.02
+    J: 10
+    gamma: 10.0
+    iterations: 500
+
+  church_haunted_houses:
+    backbone: ddpm
+    source: lsun_church
+    target: haunted_houses
+    lr: 5.0e-5
+    C: 8
+    omega: 0.02
+    J: 10
+    gamma: 10.0
+    iterations: 320
+
+  church_landscape_drawings:
+    backbone: ddpm
+    source: lsun_church
+    target: landscape_drawings
+    lr: 5.0e-5
+    C: 16
+    omega: 0.02
+    J: 10
+    gamma: 10.0
+    iterations: 500
+
+  # --------------------------------------------------------------------------
+  # LDM (64x64 latent) tasks — addendum "Hyperparameters for Table 3"
+  # --------------------------------------------------------------------------
+  ffhq_babies_ldm:
+    backbone: ldm
+    source: ffhq
+    target: babies
+    lr: 5.0e-6
+    C: 16
+    omega: 0.02
+    J: 10
+    gamma: 5.0
+    iterations: 320
+
+  ffhq_sunglasses_ldm:
+    backbone: ldm
+    source: ffhq
+    target: sunglasses
+    lr: 1.0e-5
+    C: 8
+    omega: 0.02
+    J: 10
+    gamma: 5.0
+    iterations: 280
+
+  ffhq_raphael_ldm:
+    backbone: ldm
+    source: ffhq
+    target: raphael
+    lr: 1.0e-5
+    C: 8
+    omega: 0.02
+    J: 10
+    gamma: 5.0
+    iterations: 320
+
+  church_haunted_houses_ldm:
+    backbone: ldm
+    source: lsun_church
+    target: haunted_houses
+    lr: 2.0e-5
+    C: 8
+    omega: 0.02
+    J: 10
+    gamma: 5.0
+    iterations: 500
+
+  church_landscape_drawings_ldm:
+    backbone: ldm
+    source: lsun_church
+    target: landscape_drawings
+    lr: 2.0e-5
+    C: 8
+    omega: 0.02
+    J: 10
+    gamma: 5.0
+    iterations: 500
+
+  # --------------------------------------------------------------------------
+  # Ablation / sensitivity tasks (Section 5.4, Appendix B.3)
+  # --------------------------------------------------------------------------
+  ablation_sunglasses_300:
+    backbone: ddpm
+    source: ffhq
+    target: sunglasses
+    lr: 5.0e-5
+    C: 8
+    omega: 0.02
+    J: 10
+    gamma: 15.0
+    iterations: 300
+
+  sensitivity_sunglasses:
+    backbone: ddpm
+    source: ffhq
+    target: sunglasses
+    lr: 5.0e-5
+    C: 8
+    omega: 0.02
+    J: 10
+    gamma: 5.0
+    iterations: 300
+
+# ----------------------------------------------------------------------------
+# Sensitivity-analysis grids (Appendix B.3 Tables 5-7)
+# ----------------------------------------------------------------------------
+sensitivity:
+  gamma: [1.0, 3.0, 5.0, 7.0, 9.0]
+  omega: [0.01, 0.02, 0.03, 0.04, 0.05]
+  iterations: [0, 100, 200, 300, 400]
+  # paper optima (used for reporting / verification)
+  best:
+    gamma: 5.0
+    omega: 0.02
+    iterations: 300
+    fid: 18.13
+
+# ----------------------------------------------------------------------------
+# Classifier fine-tuning ablation (Table 3): 10-shot vs 100-shot target pool
+# ----------------------------------------------------------------------------
+classifier_ablation:
+  target_pool_10: 10
+  target_pool_100: 100
+  lt_lr: 1.0e-4
+  batch_size: 64
+  iterations: 300
+
+# ----------------------------------------------------------------------------
+# Ablation variants (Section 5.4 / Figure 4), FID on 10-shot Sunglasses
+# ----------------------------------------------------------------------------
+ablation_variants:
+  full_finetune:      {only_adaptor: false, freeze_backbone: false, use_adv_noise: true,  fid: 41.88}
+  adaptor_only:       {only_adaptor: true,  freeze_backbone: true,  use_adv_noise: false, fid: 38.65}
+  ant_wo_an:          {only_adaptor: true,  freeze_backbone: true,  use_adv_noise: false, similarity_only: true, fid: 26.41}
+  full_ant:           {only_adaptor: true,  freeze_backbone: true,  use_adv_noise: true,  fid: 20.66}

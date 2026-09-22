@@ -1,0 +1,267 @@
+# =============================================================================
+# Montezuma's Revenge configuration
+# Paper: "Fine-tuning Reinforcement Learning Models is Secretly a
+#         Forgetting Mitigation Problem" (Wolczyk et al., 2024)
+#
+# Sources:
+#   SS3   (Montezuma's Revenge section)  -> M1/M2 pipeline, Room 7, 500 trajs
+#   Table 2 (Appendix B.2)              -> PPO + RND hyperparameters
+#   Figure 13 / Appendix B.2            -> BC KL-weight sweep
+#
+# Pipeline:
+#   M1 : PPO + RND trained from scratch until episode return ~ 7000.
+#   M2 : designed by RL, i.e. behaviorally cloned from >500 trajectories
+#        collected with M1 starting from Room 7 onward -> pi_*.
+#   Then M2 is fine-tuned on the WHOLE game with one of:
+#        none (vanilla) / bc / ewc / scratch (never sees BC data).
+# =============================================================================
+
+name: montezuma
+env_name: montezuma
+wandb_project: finetuning-rl-as-cl
+
+seed: 0
+
+# -----------------------------------------------------------------------------
+# Environment (Appendix B.2)
+#   Rooms are enumerated from Room 1 (player start).  Room completion = earn a
+#   coin, acquire a new item, or leave through a different passage.
+#   Room 7 is the FAR boundary used by the main experiment (Figure 12).
+# -----------------------------------------------------------------------------
+env:
+  env_id: MontezumaRevengeNoFrameskip-v4
+  far_room: 7
+  start_room: 1
+  max_room: 24
+  max_steps_per_episode: 4500      # Table 2: MaxStepPerEpisode
+  frame_stack: 4                   # Table 2: StateStackSize
+  frame_height: 84                 # Table 2: PreProcHeight
+  frame_width: 84                  # Table 2: ProProcWidth
+  grayscale: true
+  sticky: true                     # Table 2: StickyAction
+  action_prob: 0.25                # Table 2: ActionProb
+  life_done: false                 # Table 2: LifeDone
+  clip_rewards: true
+  num_actions: 18
+  stub: false                      # true -> DummyMontezumaEnv (CPU smoke tests)
+
+# -----------------------------------------------------------------------------
+# M1 : PPO + RND from scratch (SS3, Appendix B.2 / Table 2)
+#   Reference implementation: jcwleo/random-network-distillation-pytorch
+# -----------------------------------------------------------------------------
+m1:
+  agent_name: M1
+  method: scratch
+  total_steps: 100000000          # trained until the ~7000 return is reached
+  target_return: 7000.0           # episode cumulative reward (SS3)
+  eval_every: 5000000
+  eval_episodes: 100
+  save_every: 25000000
+  early_stop: true
+  checkpoint: null
+
+# -----------------------------------------------------------------------------
+# PPO + RND hyperparameters (Table 2)
+# Consumed by src/montezuma/model.py (MontezumaModelConfig) and
+# src/montezuma/ppo_rnd.py (PPORNDConfig).
+# -----------------------------------------------------------------------------
+ppo:
+  algorithm: ppo_rnd             # PPO + Random Network Distillation
+  MaxStepPerEpisode: 4500
+  ExtCoef: 2.0
+  LearningRate: 0.0001
+  NumEnv: 128
+  NumStep: 128
+  Gamma: 0.999
+  IntGamma: 0.99
+  Lambda: 0.95
+  StableEps: 1.0e-8
+  StateStackSize: 4
+  PreProcHeight: 84
+  ProProcWidth: 84
+  UseGAE: true
+  UseGPU: true
+  UseNorm: false                 # Table 2: UseNorm = False
+  UseNoisyNet: false
+  ClipGradNorm: 0.5
+  Entropy: 0.001
+  Epoch: 4
+  MiniBatch: 4                   # number of mini-batches per update
+  PPOEps: 0.1
+  IntCoef: 1.0
+  StickyAction: true
+  ActionProb: 0.25
+  UpdateProportion: 0.25
+  LifeDone: false
+  ObsNormStep: 50
+  # snake_case aliases (read by the config loaders)
+  max_steps_per_episode: 4500
+  ext_coef: 2.0
+  learning_rate: 0.0001
+  lr: 0.0001
+  num_env: 128
+  num_envs: 128
+  num_step: 128
+  gamma: 0.999
+  int_gamma: 0.99
+  lam: 0.95
+  stable_eps: 1.0e-8
+  state_stack_size: 4
+  preproc_height: 84
+  preproc_width: 84
+  use_gae: true
+  use_norm: false
+  clip_grad_norm: 0.5
+  entropy: 0.001
+  epoch: 4
+  mini_batch: 4
+  ppo_eps: 0.1
+  int_coef: 1.0
+  sticky_action: true
+  action_prob: 0.25
+  update_proportion: 0.25
+  life_done: false
+  obs_norm_step: 50
+  value_loss_coef: 0.5
+  normalize_advantages: true
+  normalize_ext_returns: false
+  total_steps: 200000000
+  eval_every: 5000000
+  room7_every: 5000000
+  save_every: 25000000
+  device: auto
+  seed: 0
+
+# -----------------------------------------------------------------------------
+# Model / RND architecture (Appendix B.2)
+#   RND target + predictor both output 512-dim vectors.
+# -----------------------------------------------------------------------------
+model:
+  obs_shape: [4, 84, 84]
+  feature_dim: 512
+  rnd_feature_dim: 512
+  activation: relu
+  shared_backbone: true
+  normalize_obs: false           # Table 2: UseNorm = False
+  init_log_std: 0.0
+
+rnd:
+  output_size: 512               # "return a vector with size 512"
+  predictor_extra_layers: 0
+  activation: leaky_relu
+  normalize_obs: true
+  normalize_intrinsic: true
+  update_proportion: 0.25        # Table 2: UpdateProportion
+
+obs_norm:
+  enabled: false                 # Table 2: UseNorm = False
+  update_steps: 50               # Table 2: ObsNormStep
+
+# -----------------------------------------------------------------------------
+# M2 : behavioral-cloning pre-training (pi_*) and fine-tuning (SS3, B.2)
+#   ">500 trajectories sampled from a pre-trained PPO agent with RND that
+#    achieved an episode cumulative reward of around 7000"
+#   Trajectories are truncated to Room 7 onward (FAR region).
+# -----------------------------------------------------------------------------
+m2:
+  agent_name: M2
+  num_trajectories: 500
+  min_room: 7
+  truncate_to_far: true
+  bc_epochs: 5
+  bc_updates: 10000
+  bc_batch_size: 256
+  bc_lr: 0.0001
+  bc_loss_type: kl               # distill pi_* with D_KL^s
+  teacher_from: m1
+  checkpoint: null               # -> results/montezuma/m2_pretrained.pt
+
+bc:
+  num_trajectories: 500
+  min_room: 7
+  truncate_to_far: true
+  epochs: 5
+  updates: 10000
+  batch_size: 256
+  learning_rate: 0.0001
+  loss_type: kl
+  kl_weight: 1.0                 # tuned via the Figure 13 sweep
+  temperature: 1.0
+
+# -----------------------------------------------------------------------------
+# Fine-tuning (SS3, Figure 3b / 6 / 13, Figures 17-19)
+#   Whole-game fine-tuning of M2; the from-scratch baseline NEVER sees BC data.
+# -----------------------------------------------------------------------------
+finetune:
+  methods: [none, bc, ewc, scratch]
+  total_steps: 200000000
+  eval_every: 5000000            # Room-7 success rate computed every 5M steps
+  eval_episodes: 100
+  room7_every: 5000000
+  save_every: 25000000
+  log_every: 1000000
+  kl_weight: 1.0
+  ewc_coef: 1.0                  # placeholder; Figure-13-style sweep tunes BC
+  checkpoint: null               # -> M2 (pi_*)
+
+# -----------------------------------------------------------------------------
+# Retention (actor only; the critic coefficient is always 0)
+#   Montezuma's main-text experiment compares:
+#     fine-tuning (none) vs fine-tuning + BC vs fine-tuning + EWC vs scratch.
+# -----------------------------------------------------------------------------
+retention:
+  method: bc                     # none | bc | ewc
+  apply_to: actor
+  critic_coef: 0.0
+  bc:
+    actor_coef: 1.0
+    critic_coef: 0.0
+    kl_weight: 1.0               # Figure 13 sweep selects the best value
+    loss_type: kl
+    memory_size: 5000            # sampled states from the 500 trajectories
+    batch_size: 256
+    decay: null                  # no decay for BC
+    decay_type: none
+  ewc:
+    actor_coef: 1.0
+    critic_coef: 0.0
+    num_batches: 1000
+    batch_size: 128
+    mode: policy                 # online pi_* rollouts (Wolczyk et al. 2021)
+    normalize: false
+  ks:
+    actor_coef: 0.5
+    decay: 0.99998
+    decay_type: exponential
+  em:
+    actor_coef: 0.0
+    memory_size: 1000
+    fraction: 0.1
+
+# -----------------------------------------------------------------------------
+# Evaluation (SS3, Appendix B.2, Figures 3b / 6 / 17-19)
+# -----------------------------------------------------------------------------
+eval:
+  episodes: 100
+  num_seeds: 3
+  confidence: 0.90
+  far_room: 7
+  room7_every: 5000000
+  metrics: [return, room7_success_rate, max_room, mean_length]
+
+# -----------------------------------------------------------------------------
+# Figure 13: BC KL-weight sweep (the paper does not state the chosen value)
+# -----------------------------------------------------------------------------
+sweep:
+  kl_weights: [0.1, 0.5, 1.0, 2.0, 5.0]
+  include_baselines: true        # also run `none` and `scratch`
+  seeds: [0]
+
+# -----------------------------------------------------------------------------
+# Compute
+# -----------------------------------------------------------------------------
+compute:
+  device: auto                   # auto | cpu | cuda
+  num_workers: 8
+  torch_threads: 8
+  gpu_vram: 16                   # 128 parallel envs need >=16GB VRAM

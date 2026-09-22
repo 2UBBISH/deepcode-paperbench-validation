@@ -1,0 +1,53 @@
+# Requirements for "What Will My Model Forget? Forecasting Forgotten Examples in
+# Language Model Refinement" reproduction.
+#
+# Target environment: Python 3.10, CUDA-capable PyTorch build.
+# Hardware: 24GB+ GPU for BART0_L / FLAN-T5_L; 1x A100 80GB (or equivalent) for
+# FLAN-T5_3B.  Full fine-tuning of 3B+ models is heavy -> use LoRA for the large
+# model (see config/config.yaml).
+#
+# Install (example):
+#   python3.10 -m venv .venv && source .venv/bin/activate
+#   pip install --upgrade pip
+#   pip install -r requirements.txt
+#
+# Notes
+# -----
+# * `torch` is pinned loosely (>=2.0); select the CUDA build that matches your
+#   driver, e.g. `pip install torch --index-url https://download.pytorch.org/whl/cu121`.
+# * `promptsource` is required to render the P3 prompt templates (D_PT / BART0
+#   D_R).  The P3 loaders in `src/data/p3_loader.py` also support a plain
+#   HuggingFace `datasets` back end and a local ReCross JSON back end, so the
+#   pipeline degrades gracefully when promptsource is unavailable.
+# * `sacrebleu` is optional (diagnostics only, not used by the reported tables).
+# * MMLU: `datasets` will fetch the HuggingFace mirror (`cais/mmlu`).  To use the
+#   original Berkeley release, download the CSV files and point
+#   `config/config.yaml -> data.mmlu_data_dir` at the containing directory
+#   (see MMLU release: https://github.com/hendrycks/test).
+# * BART0 weights are overlaid from `INK-USC/ReCross` (`bart0_large`) on top of
+#   `facebook/bart-large` (see `src/modeling/base_lm.py`) and are fetched from
+#   the HuggingFace hub on first use.
+
+# --- core deep learning stack -------------------------------------------------
+torch>=2.0.0
+transformers>=4.35.0
+accelerate>=0.24.0
+peft>=0.6.0
+
+# --- data / prompts -----------------------------------------------------------
+datasets>=2.14.0
+promptsource>=0.2.5
+
+# --- numerics / metrics -------------------------------------------------------
+numpy>=1.24.0
+scikit-learn>=1.3.0
+
+# --- utilities ----------------------------------------------------------------
+pyyaml>=6.0
+tqdm>=4.66.0
+huggingface_hub>=0.17.0
+
+# --- optional diagnostics -----------------------------------------------------
+sacrebleu>=2.3.1          # optional: BLEU/ROUGE-style diagnostics
+matplotlib>=3.7.0         # optional: Figure 3 plotting (--plot)
+pytest>=7.4.0             # optional: run tests/ suite

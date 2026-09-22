@@ -1,0 +1,30 @@
+# --- external checkouts (fetched by scripts/setup_third_party.sh) -----------
+third_party/*
+!third_party/.gitkeep
+
+# --- experiment outputs -----------------------------------------------------
+results/
+*.jsonl
+!reproduction_runs.jsonl
+*.npy
+*.pkl
+*.pt
+*.pth
+!paper_results.jsonl
+
+# --- python -----------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ipynb_checkpoints/
+build/
+dist/
+
+# --- editors / OS -----------------------------------------------------------
+.DS_Store
+.idea/
+.vscode/
+
+# --- sbi / tensorboard artefacts --------------------------------------------
+sbi-logs/

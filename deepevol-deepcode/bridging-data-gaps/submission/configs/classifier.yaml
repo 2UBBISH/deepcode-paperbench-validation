@@ -1,0 +1,233 @@
+# =============================================================================
+# configs/classifier.yaml
+# -----------------------------------------------------------------------------
+# Configuration for the binary source/target classifier p_phi of DPMs-ANT
+# ("Adapting Pretrained Diffusion Models for Few-Shot Image Generation").
+#
+# Paper specification (§4.1, §5.2, §5.5, addendum "Classifier Training"):
+#   * Start from a pretrained diffusion (noise-conditioned) classifier:
+#       DDPM 256x256 : .../256x256_classifier.pt   (guided-diffusion)
+#       LDM  64x64   : .../64x64_classifier.pt     (latent 64x64 classifier)
+#   * Replace the final layer with a 2-way head (y=0 source, y=1 target).
+#   * Fine-tune on *noised* source and target images with t ~ Uniform({1..T}).
+#   * Adam, lr = 1e-4, batch size = 64, 300 iterations.
+#   * Freeze p_phi (phi) during the ANT adaptor adaptation stage.
+#   * Gradient consumed by the similarity-guided term is
+#       grad_{x_t} log p_phi(y = T | x_t)   (detached by default).
+#
+# Usage:  scripts/train_classifier.py --config configs/default.yaml \
+#                                    --classifier-config configs/classifier.yaml \
+#                                    --task ffhq_sunglasses --backbone ddpm
+#   (merged over configs/default.yaml by _deep_update toward this file)
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Global classifier hyper-parameters (paper values, §5.2 / addendum).
+# -----------------------------------------------------------------------------
+classifier:
+  # ---- label space ------------------------------------------------------------
+  num_classes: 2                 # binary: source vs target
+  target_index: 1                # y = T  (target class) used for guidance
+  source_label: 0
+  target_label: 1
+
+  # ---- optimization (paper: Adam, lr 1e-4, bs 64, 300 iters) ------------------
+  optimizer: adam
+  lr: 1.0e-4
+  batch_size: 64
+  iterations: 300
+  adam_betas: [0.9, 0.999]
+  weight_decay: 0.0
+  grad_clip: null                # no clipping reported in the paper
+  momentum: 0.9                  # used only if optimizer: sgd
+
+  # ---- diffusion conditioning -------------------------------------------------
+  num_timesteps: 1000
+  schedule: linear
+  eta: 0.0
+  t_sampling: uniform_1_T        # t ~ Uniform({1, ..., T})
+  t_min: 1
+  t_max: null                    # null -> num_timesteps
+
+  # ---- data mixture -----------------------------------------------------------
+  # Half of each batch is noised source, half noised target (pseudo labels).
+  noise_frac_source: 0.5
+  source_pool: 1000              # source images sampled per training run
+  target_pool: 10                # 10-shot target set (ablation: 100)
+  target_pool_ablation: 100
+  resize: 256
+  latent_size: 64                # LDM input resolution
+  num_workers: 0
+
+  # ---- model / head -----------------------------------------------------------
+  replace_head: true             # swap the ImageNet head for the 2-way head
+  zero_init_head: true
+  input_mode: pixel              # pixel for DDPM, latent for LDM backbones
+  freeze_during_ant: true        # phi frozen while training adaptors psi
+  freeze_after_training: true
+  grad_scale: 1.0                # scales grad_{x_t} log p_phi(y=T|x_t)
+  detach_grad: true              # detach the classifier gradient (Eq. 5 / 8)
+
+  # ---- bookkeeping ------------------------------------------------------------
+  seed: 0
+  log_interval: 10
+  save_interval: 100
+  verbose: true
+
+# -----------------------------------------------------------------------------
+# Backbone-specific classifier checkpoints (pretrained, then fine-tuned head).
+# Files are resolved from models.<backbone>.classifier_ckpt; the URLs below are
+# the released OpenAI guided-diffusion / CompVis LDM classifier checkpoints.
+# -----------------------------------------------------------------------------
+models:
+  ddpm:
+    image_size: 256
+    classifier_ckpt: "checkpoints/256x256_classifier.pt"
+    classifier_url: "https://openaipublic.blob.core.windows.net/diffusion/jul-2021/256x256_classifier.pt"
+    classifier_pool: attention
+    attention_resolutions: [32, 16, 8]
+    num_head_channels: 64
+    use_scale_shift_norm: false
+    resblock_updown: true
+    dropout: 0.0
+  ldm:
+    latent_size: 64
+    latent_channels: 4
+    classifier_ckpt: "checkpoints/64x64_classifier.pt"
+    classifier_url: "https://openaipublic.blob.core.windows.net/diffusion/jul-2021/64x64_classifier.pt"
+    classifier_pool: attention
+    attention_resolutions: [16]
+    num_head_channels: 64
+    dropout: 0.0
+    use_scale_shift_norm: false
+    resblock_updown: true
+
+# -----------------------------------------------------------------------------
+# Per-task classifier settings / checkpoint destinations.
+# Production runs use the 10-shot target pool; LDM variants operate on 64x64
+# latents produced by the frozen autoencoder.
+# -----------------------------------------------------------------------------
+task_classifier:
+  default:
+    lr: 1.0e-4
+    batch_size: 64
+    iterations: 300
+    target_pool: 10
+    noise_frac_source: 0.5
+    t_sampling: uniform_1_T
+    replace_head: true
+    freeze_during_ant: true
+    ckpt: "outputs/classifier/classifier_{task}_{backbone}.pt"
+
+  ffhq_babies:
+    backbone: ddpm
+    source: ffhq
+    target: babies
+    input_mode: pixel
+    ckpt: "outputs/classifier/classifier_ffhq_babies_ddpm.pt"
+
+  ffhq_sunglasses:
+    backbone: ddpm
+    source: ffhq
+    target: sunglasses
+    input_mode: pixel
+    ckpt: "outputs/classifier/classifier_ffhq_sunglasses_ddpm.pt"
+
+  ffhq_raphael:
+    backbone: ddpm
+    source: ffhq
+    target: raphael
+    input_mode: pixel
+    ckpt: "outputs/classifier/classifier_ffhq_raphael_ddpm.pt"
+
+  church_haunted_houses:
+    backbone: ddpm
+    source: lsun_church
+    target: haunted_houses
+    input_mode: pixel
+    ckpt: "outputs/classifier/classifier_church_haunted_houses_ddpm.pt"
+
+  church_landscape_drawings:
+    backbone: ddpm
+    source: lsun_church
+    target: landscape_drawings
+    input_mode: pixel
+    ckpt: "outputs/classifier/classifier_church_landscape_drawings_ddpm.pt"
+
+  ffhq_babies_ldm:
+    backbone: ldm
+    source: ffhq
+    target: babies
+    input_mode: latent
+    lr: 1.0e-4
+    ckpt: "outputs/classifier/classifier_ffhq_babies_ldm.pt"
+
+  ffhq_sunglasses_ldm:
+    backbone: ldm
+    source: ffhq
+    target: sunglasses
+    input_mode: latent
+    lr: 1.0e-4
+    ckpt: "outputs/classifier/classifier_ffhq_sunglasses_ldm.pt"
+
+  ffhq_raphael_ldm:
+    backbone: ldm
+    source: ffhq
+    target: raphael
+    input_mode: latent
+    ckpt: "outputs/classifier/classifier_ffhq_raphael_ldm.pt"
+
+  church_haunted_houses_ldm:
+    backbone: ldm
+    source: lsun_church
+    target: haunted_houses
+    input_mode: latent
+    ckpt: "outputs/classifier/classifier_church_haunted_houses_ldm.pt"
+
+  church_landscape_drawings_ldm:
+    backbone: ldm
+    source: lsun_church
+    target: landscape_drawings
+    input_mode: latent
+    ckpt: "outputs/classifier/classifier_church_landscape_drawings_ldm.pt"
+
+# -----------------------------------------------------------------------------
+# §5.5 / Table 3 ablation: classifier trained on 10 vs 100 target images.
+# Reported (FFHQ -> Sunglasses, 300 ANT iterations):
+#   10-shot  classifier: Intra-LPIPS 0.613 +/- 0.023 , FID 20.06
+#   100-shot classifier: Intra-LPIPS 0.637 +/- 0.013 , FID 22.84
+# -----------------------------------------------------------------------------
+classifier_ablation:
+  task: ffhq_sunglasses
+  backbone: ddpm
+  source: ffhq
+  target: sunglasses
+  lr: 1.0e-4
+  batch_size: 64
+  iterations: 300
+  variants:
+    pool_10:
+      target_pool: 10
+      ckpt: "outputs/classifier/ablation_10shot_sunglasses.pt"
+      expected_intra_lpips: 0.613
+      expected_intra_lpips_std: 0.023
+      expected_fid: 20.06
+    pool_100:
+      target_pool: 100
+      ckpt: "outputs/classifier/ablation_100shot_sunglasses.pt"
+      expected_intra_lpips: 0.637
+      expected_intra_lpips_std: 0.013
+      expected_fid: 22.84
+
+# -----------------------------------------------------------------------------
+# Sanity-check thresholds used by scripts/train_classifier.py / validation.
+# The fine-tuned classifier must assign higher target probability to noised
+# target images than to noised source images (and vice versa).
+# -----------------------------------------------------------------------------
+validation:
+  # after fine-tuning, measured with classifier_accuracy() / predict_proba()
+  min_target_accuracy: 0.90      # accuracy on noised target images
+  min_source_accuracy: 0.90      # accuracy on noised source images
+  min_accuracy_gap: 0.0
+  max_grad_norm: 1.0e3           # gradient-stability check on 10-shot data
+  check_zero_init_head: true     # replaced head starts at zero logits

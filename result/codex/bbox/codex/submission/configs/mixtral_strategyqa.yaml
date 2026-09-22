@@ -1,0 +1,32 @@
+# White-box model treated as black-box (Section 4.7 / Table 6).
+dataset: strategyqa
+output_dir: runs/mixtral_strategyqa
+seed: 0
+
+adapter:
+  model_name: bert-base-cased   # "BBOX-ADAPTER uses BERT-0.1B as the backend"
+  adapter_size: "0.1B"
+  learning_rate: 5.0e-6
+  batch_size: 64
+  num_train_steps: 6000
+  weight_decay: 0.01
+  alpha: 0.01
+
+inference:
+  beam_size: 3
+  num_samples_per_beam: 3
+  temperature: 1.0
+  mode: full
+
+online:
+  num_iterations: 3
+  num_candidates_per_question: 5
+  init_candidates_per_question: 5
+  positive_source: ground_truth
+
+llm:
+  name: mistralai/Mixtral-8x7B-v0.1
+  provider: huggingface
+  dtype: float16
+  device_map: auto
+  temperature: 1.0

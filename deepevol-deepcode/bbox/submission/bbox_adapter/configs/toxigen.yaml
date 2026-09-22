@@ -1,0 +1,226 @@
+# =============================================================================
+# BBox-Adapter -- ToxiGen configuration (toxicity extension, Table 7)
+# =============================================================================
+# Reproduces the ToxiGen extension of the paper (Table 7):
+#   Toxic%          41.90 -> 20.60   (lower is better)
+#   Toxicity Prob%  41.02 -> 20.75   (lower is better)
+#
+# ToxiGen-specific deviations from the QA configs (documented, per plan):
+#   * generation temperature 0.7 (not 1.0) -- the plan pins temp 0.7 for the
+#     ToxiGen extension, whereas BBox-Adapter QA runs use 1.0.
+#   * no '####' answer terminator: ToxiGen is a continuation task, the model
+#     simply continues the neutral prompt and the RoBERTa toxicity judge scores
+#     the generated text (negative class = toxic).
+#   * metric: toxicity (Toxic% binary rate @ threshold 0.5 and mean toxicity
+#     probability), not accuracy.
+#   * splits 2000 train / 500 test, standard random seed.
+#
+# This file is intended to be deep-merged on top of `configs/default.yaml`
+# (keys set here override the base defaults); it can also be loaded standalone
+# with `yaml.safe_load`.
+# =============================================================================
+
+name: bbox_adapter_toxigen
+dataset: toxigen
+size: 0.1b
+# null -> resolved from (dataset, size) in adapter/energy_model.py
+# (deberta-v3-base for 0.1b, deberta-v3-large for 0.3b)
+backbone: null
+seed: 0
+output_dir: runs/toxigen
+
+# -----------------------------------------------------------------------------
+# Dataset (Appendix E / Section F.1 -- ToxiGen 2000 train / 500 test)
+# -----------------------------------------------------------------------------
+data:
+  hf_path: toxigen
+  hf_config: toxigen-data
+  hf_subset: annotated
+  train_split: train
+  test_split: test
+  n_train: 2000
+  n_test: 500
+  question_field: text
+  answer_field: null           # continuation task: no gold continuation
+  answer_type: toxic
+  prompt_key: toxigen
+  metric: toxicity
+  n_shot: 0                    # zero-shot continuation prompt
+  drop_instruction_models: [mixtral, davinci]
+  use_terminator: false
+  terminator: "####"
+  random_subset_seed: 0
+  # RoBERTa toxicity classifier used by the evaluation harness (TomH-style
+  # hate/toxicity detection); the score is the probability of the toxic class.
+  toxicity_judge: roberta-hate-speech
+  toxicity_threshold: 0.5
+
+# -----------------------------------------------------------------------------
+# Black-box proposal generator (Section 4.1, Appendix H.2)
+# -----------------------------------------------------------------------------
+blackbox:
+  model: gpt-3.5-turbo
+  kind: bbox
+  max_len: 512
+  temperature: 0.7             # ToxiGen extension temperature (paper-silent->plan)
+  top_p: 1.0
+  n: 1
+  allow_mock: true
+
+# -----------------------------------------------------------------------------
+# Energy adapter g_theta (Section 3.1, Appendix E)
+# -----------------------------------------------------------------------------
+adapter:
+  backbone: null               # deberta-v3-base (0.1B) / deberta-v3-large (0.3B)
+  pooling: null                # mean for DeBERTa-v3, cls for BERT
+  head_hidden: 0
+  dropout: 0.0
+  freeze_backbone: false
+  max_length: 512
+  output_scale: 1.0
+  head_init_std: 0.02
+  size: 0.1b
+
+# -----------------------------------------------------------------------------
+# Ranking-based NCE objective (Eq. 2 / Eq. 3)
+# -----------------------------------------------------------------------------
+loss:
+  name: nce                    # nce | mlm (ablation)
+  alpha: 0.01                  # paper-silent; sweep {1e-3, 1e-2, 1e-1}
+  reduction: mean
+  temperature: 1.0
+  label_smoothing: 0.0
+  energy_clamp: null
+  reg_mode: split              # alpha*E[g^2] on positives and negatives
+  reg_schedule: constant
+  reg_warmup_steps: 0
+  use_regularizer: true
+
+# -----------------------------------------------------------------------------
+# Algorithm 1 / online adaptation (Section 3.4, Appendix H.2)
+# -----------------------------------------------------------------------------
+training:
+  lr: 5.0e-6                   # eta
+  batch_size: 64
+  max_train_steps: 6000
+  weight_decay: 0.01
+  betas: [0.9, 0.999]
+  max_grad_norm: 1.0
+  schedule: constant
+  warmup_fraction: 0.1
+  n_iterations: 4              # T (paper-silent; Fig. 3(b) plateau)
+  n_candidates: 5              # M candidates sampled per outer iteration
+  k_init: 5                    # K initial prompted responses per query
+  samples_per_beam: 2          # n sentence samples per beam per step
+  use_beam_search: true
+  outcome_supervision: true
+  sel_mode: ground_truth       # toxicity task: no ground-truth answer; AI feedback
+                               # is the practical positive-source (see feedback below)
+  device: auto
+  log_every: 50
+  eval_every: 1
+  save_every: 0
+
+# -----------------------------------------------------------------------------
+# Sentence-level beam search (Eq. 4)
+# -----------------------------------------------------------------------------
+beam_search:
+  beam_size: 3
+  n_samples: 2
+  max_steps: 6
+  stop_signal: "####"
+  temperature: 0.7
+  max_len: 512
+  normalization: none
+  length_penalty: 0.0
+  deduplicate: true
+  stop_when_all_complete: true
+  include_prompt_in_energy: true
+  keep_candidates: true
+
+# -----------------------------------------------------------------------------
+# Positive / negative buffers + SEL (Eq. 5 / Eq. 6, Section 3.4)
+# -----------------------------------------------------------------------------
+buffer:
+  sel_mode: ground_truth
+  k_init: 5
+  m_candidates: 5
+  max_positives: 8
+  max_negatives: 64
+  deduplicate: true
+  outcome_supervision: true
+  ai_feedback_n_ranked: 5
+
+# -----------------------------------------------------------------------------
+# GPT-4 AI feedback rater (Section 3.4, Appendix G/J).
+# For ToxiGen the rater is asked to prefer the least toxic / most neutral
+# continuation; the four Appendix-G criteria are retained but "Correctness"
+# is interpreted as "non-toxicity of the continuation".
+# -----------------------------------------------------------------------------
+feedback:
+  enabled: true
+  model: gpt-4
+  temperature: 0.0
+  n_ranked: 5
+  retries: 2
+  fallback: majority
+  prompt_style: best
+  criteria: [Coherency, Reasonability, Correctness, Format]
+
+# -----------------------------------------------------------------------------
+# Evaluation (Table 7)
+# -----------------------------------------------------------------------------
+eval:
+  metric: toxicity
+  n_test: 500
+  gpt_judge: false
+  toxicity_threshold: 0.5
+  report_delta: true
+  num_seeds: 1
+
+# -----------------------------------------------------------------------------
+# Baselines (Section 4.1 / Appendix F.2 / H.2) -- disabled by default
+# -----------------------------------------------------------------------------
+baselines:
+  cot:
+    enabled: false             # plain prompting is the base reference row
+    temperature: 0.7
+    n_shot: 0
+  azure_sft:
+    enabled: false
+    model: gpt-3.5-turbo
+    epochs: 3                  # Section F.2 (H.2 lists 5 -- conflict documented)
+    batch_size: null
+    lr_multiplier: null
+  sft_lora:
+    enabled: false
+    model: mistralai/Mixtral-8x7B-v0.1
+    lora_r: 128
+    lora_alpha: 256            # alpha = 2r
+    lora_dropout: 0.1
+    lr: 2.0e-4
+    weight_decay: 0.001
+    batch_size: 8
+    grad_accum: 1
+    max_grad_norm: 0.3
+    epochs: 3
+    optimizer: paged_adamw_32bit
+    lr_scheduler: cosine
+    max_length: 512
+
+# -----------------------------------------------------------------------------
+# Cost accounting (gpt-3.5-turbo-1106 pricing)
+# -----------------------------------------------------------------------------
+cost:
+  enabled: true
+  model_for_pricing: gpt-3.5-turbo-1106
+  usd_per_1k_input_tokens: 0.0015
+  usd_per_1k_output_tokens: 0.002
+  per_questions: 1000
+
+# -----------------------------------------------------------------------------
+# VRAM accounting (Table 6; addendum: report only for the 0.1B adapter)
+# -----------------------------------------------------------------------------
+vram:
+  enabled: false
+  report_only_0_1b: true

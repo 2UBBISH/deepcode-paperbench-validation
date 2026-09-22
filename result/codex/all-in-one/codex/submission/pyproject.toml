@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "simformer"
+version = "0.1.0"
+description = "Reproduction of 'All-in-one simulation-based inference' (Simformer, ICML 2024)"
+requires-python = ">=3.9"
+dependencies = [
+    "numpy>=1.23",
+    "scipy>=1.9",
+    "torch>=2.0",
+    "scikit-learn>=1.2",
+    "matplotlib>=3.6",
+    "sbi>=0.22",
+]
+
+[tool.setuptools]
+packages = ["simformer", "simformer.tasks"]

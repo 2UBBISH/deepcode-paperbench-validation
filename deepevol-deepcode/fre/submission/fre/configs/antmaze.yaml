@@ -1,0 +1,292 @@
+# FRE configuration: D4RL AntMaze (antmaze-large-diverse-v2)
+# ---------------------------------------------------------------------------
+# Hyperparameters follow Appendix A Table 3 of "Zero-Shot Reinforcement
+# Learning via Functional Reward Encodings".  AntMaze uses the *short* strided
+# schedule (150k encoder steps + 850k policy steps); ExORL and Kitchen use the
+# 1M/1M schedule (see configs/exorl.yaml, configs/kitchen.yaml).
+# ---------------------------------------------------------------------------
+
+name: antmaze
+domain: antmaze
+env_name: antmaze-large-diverse-v2
+dataset: antmaze-large-diverse-v2
+
+# ------------------------------------------------------------------ training
+# Flat keys are consumed directly by fre.run_fre.FRETrainConfig.from_dict();
+# the identical `train:` block below is provided so config loaders that select
+# a section still work.
+encoder_steps: 150000
+policy_steps: 850000
+batch_size: 512
+num_encoder_pairs: 32
+num_decoder_pairs: 8
+beta: 0.01
+learning_rate: 0.0001
+latent_dim: 128
+rl_hidden_dims: [512, 512, 512]
+decoder_hidden_dims: [512, 512, 512]
+expectile: 0.8
+awr_temperature: 3.0
+discount: 0.88
+target_update_rate: 0.001
+prior_preset: fre-all
+rl_observation: encoder
+phase: both
+
+train:
+  domain: antmaze
+  encoder_steps: 150000
+  policy_steps: 850000
+  batch_size: 512
+  num_encoder_pairs: 32
+  num_decoder_pairs: 8
+  beta: 0.01
+  learning_rate: 0.0001
+  latent_dim: 128
+  rl_hidden_dims: [512, 512, 512]
+  decoder_hidden_dims: [512, 512, 512]
+  expectile: 0.8
+  awr_temperature: 3.0
+  discount: 0.88
+  target_update_rate: 0.001
+  prior_preset: fre-all
+  rl_observation: encoder
+  phase: both
+  optimizer: adam
+  target_update: polyak
+  seed: 0
+  device: cuda
+  log_every: 5000
+  save_every: 50000
+  run_dir: runs/antmaze
+
+# ------------------------------------------------------------------- encoder
+# FRE transformer VAE over reward functions (§4.1).  Tokens are
+# 64-d projected state + 64-d reward embedding = 128-d; 4 pre-norm blocks with
+# 4 heads and a 256-wide MLP; no positional encodings, no causal masking.
+encoder:
+  state_embed_dim: 64
+  reward_embed_dim: 64
+  num_layers: 4              # Table 3 "Encoder Layers [256,256,256,256]"
+  num_heads: 4
+  mlp_dim: 256
+  dropout: 0.0
+  activation: gelu
+  norm_first: true
+  log_std_min: -10.0
+  log_std_max: 2.0
+  num_reward_bins: 32        # Table 3 "Number of Reward Embeddings"
+  normalize_rewards: true    # per-reward-function min/max rescale before binning
+
+# ------------------------------------------------------------------- decoder
+# Feed-forward decoder q_theta(eta(s^d) | s^d, z); raw state concatenated with
+# z, hidden layers [512,512,512], unit-variance Gaussian (MSE) decoder.
+decoder:
+  hidden_dims: [512, 512, 512]
+  activation: relu
+  use_layer_norm: false
+  output_dim: 1
+
+# -------------------------------------------------------------- FRE objective
+# Eq. (6): maximize E[log q_theta(eta(s^d)|s^d,z)] - beta * KL(p_theta(z|L^e) || u(z))
+objective:
+  beta: 0.01
+  kl_target: unit_gaussian
+  decoder_likelihood: gaussian_unit_variance
+
+# ------------------------------------------------------------- reward priors
+# §4.2 / Appendix B: uniform 1/3 mixture of goal-reaching, linear, and
+# random-MLP reward functions.  AntMaze removes XY positions from the linear
+# family for stability, and goals are sampled with the HER distribution
+# 0.2 current / 0.5 future / 0.3 random.
+prior:
+  preset: fre-all
+  family_weights:
+    goal: 0.3333333333
+    linear: 0.3333333333
+    mlp: 0.3333333333
+  goal:
+    p_current: 0.2
+    p_future: 0.5
+    p_random: 0.3
+    min_offset: 1
+    threshold: 0.1
+    reward_unachieved: -1.0
+    reward_achieved: 0.0
+    distance_dims: antmaze_xy   # (x, y) = observation dims 0, 1
+    encode_goal_in_encoder: true   # >= 1 encoder sample is the goal
+  linear:
+    mask_prob: 0.9
+    weight_range: [-1.0, 1.0]
+    exclude_dims: [0, 1]        # remove XY positions on AntMaze
+  mlp:
+    hidden_dim: 32
+    hidden_activation: tanh
+    clip_value: 1.0
+    scaling: avg_dim_sqrt
+  # §5.4 domain-knowledge study (FRE-hint): superset of task families
+  hint:
+    num_directions: 16
+    velocity_width: 1.0
+
+# ------------------------------------------------------- prior ablation presets
+# §5.3 scaling study (Table 4 / Figure 5): equal budget per subset.
+scaling_presets:
+  - fre-all
+  - fre-goals
+  - fre-goals
+  - fre-lin
+  - fre-mlp
+  - fre-lin-mlp
+  - fre-goal-mlp
+  - fre-goal-lin
+
+# ------------------------------------------------------------------ RL agent
+# IQL with z concatenated to the observation of every component (§4.3).
+iql:
+  hidden_dims: [512, 512, 512]
+  activation: relu
+  use_layer_norm: false
+  expectile: 0.8
+  awr_temperature: 3.0
+  discount: 0.88
+  target_update_rate: 0.001
+  learning_rate: 0.0001
+  batch_size: 512
+  optimizer: adam
+  bellman_target: max_q
+  exp_adv_clamp: 100.0
+  log_std_min: -10.0
+  log_std_max: 2.0
+  action_low: -1.0
+  action_high: 1.0
+  action_dim: 8
+  state_dim: 29
+
+# --------------------------------------------------------------- data pipeline
+# Appendix C.1: X/Y positions are discretized into 32 bins before being fed to
+# FRE, GC-IQL, GC-BC and OPAL.
+data:
+  dataset: antmaze-large-diverse-v2
+  state_dim: 29
+  action_dim: 8
+  discretize_xy: true
+  num_xy_bins: 32
+  xy_indices: [0, 1]
+  normalize_states: false
+  augment_dim: 0
+  d4rl_commit_note: "use a pre-June-2024 D4RL commit"
+
+# ----------------------------------------------------------------- evaluation
+# §5.2 / Appendix C: zero-shot evaluation with 32 reward-annotated samples,
+# 20 episodes per task, 5 seeds, returns normalized to [0, 100].
+eval:
+  num_encoding_samples: 32
+  num_episodes: 20
+  seeds: [0, 1, 2, 3, 4]
+  deterministic: true
+  max_episode_steps: 2000
+  center_start: true
+  discretize_xy: true
+  num_xy_bins: 32
+  encoder_normalizes_rewards: true
+  policy_uses_encoder_observation: false
+  normalize_returns: true
+  return_range: [0.0, 100.0]
+  task_set: all
+
+# --------------------------------------------------------------- eval task sets
+# AntMaze task suites reported in Table 1:
+#   goal-reaching  : 5 fixed goals
+#   directional    : 4 unit-direction velocity tasks
+#   random-simplex : 5 seeded opensimplex height+velocity tasks
+#   path           : center / loop / edges corridor tasks
+tasks:
+  goal_reaching:
+    - {name: ant-goal-bottom, goal: [28.0, 0.0]}
+    - {name: ant-goal-left,   goal: [0.0, 15.0]}
+    - {name: ant-goal-top,    goal: [35.0, 24.0]}
+    - {name: ant-goal-center, goal: [12.0, 24.0]}
+    - {name: ant-goal-right,  goal: [33.0, 16.0]}
+    goal_distance: 2.0
+  directional:
+    - {name: ant-directional-left,  direction: [-1.0, 0.0]}
+    - {name: ant-directional-up,    direction: [0.0, 1.0]}
+    - {name: ant-directional-down,  direction: [0.0, -1.0]}
+    - {name: ant-directional-right, direction: [1.0, 0.0]}
+  random_simplex:
+    seeds: [1, 2, 3, 4, 5]
+    baseline: -1.0
+    height_weight: 1.0
+    velocity_weight: 1.0
+    noise_frequency: 3.0
+  path:
+    - {name: ant-path-center}
+    - {name: ant-path-loop}
+    - {name: ant-path-edges}
+    corridor_width: 3.0
+  task_sets:
+    goal-reaching: [ant-goal-bottom, ant-goal-left, ant-goal-top, ant-goal-center, ant-goal-right]
+    directional: [ant-directional-left, ant-directional-up, ant-directional-down, ant-directional-right]
+    random-simplex: [ant-simplex-1, ant-simplex-2, ant-simplex-3, ant-simplex-4, ant-simplex-5]
+    path: [ant-path-center, ant-path-loop, ant-path-edges]
+    all: [antmaze-all]
+
+# ------------------------------------------------------------- baselines (§5.2)
+# GC-IQL and GC-BC share this codebase and network structure; OPAL is
+# re-implemented here; FB/SF run through facebookresearch/controllable_agent.
+baselines:
+  gc_iql:
+    hidden_dims: [512, 512, 512]
+    expectile: 0.8
+    awr_temperature: 3.0
+    discount: 0.88
+    target_update_rate: 0.001
+    learning_rate: 0.0001
+    batch_size: 512
+    train_steps: 1000000
+    p_current: 0.2
+    p_future: 0.5
+    p_random: 0.3
+    reward_unachieved: -1.0
+    reward_reached: 0.0
+  gc_bc:
+    hidden_dims: [512, 512, 512]
+    use_layer_norm: true
+    log_std_min: -5.0
+    learning_rate: 0.0001
+    batch_size: 512
+    train_steps: 1000000
+    geometric_p: 0.5
+    min_offset: 1
+  opal:
+    latent_dim: 128
+    num_layers: 4
+    num_heads: 4
+    mlp_dim: 256
+    hidden_dims: [512, 512, 512]
+    learning_rate: 0.0001
+    batch_size: 512
+    segment_length: 64
+    train_steps: 1000000
+    num_skills: 10        # privileged evaluation: 10 unit-Gaussian skills
+  fb:
+    reward_samples: 5120
+    dataset_type: rnd
+    train_steps: 1000000
+  sf:
+    reward_samples: 5120
+    features: icm
+    dataset_type: rnd
+    train_steps: 1000000
+
+# ------------------------------------------------------- Table 1 reference row
+# Paper §5.2 Table 1 (mean of 20 episodes, std over 5 seeds, returns 0-100).
+reference:
+  ant-goal-reaching: {mean: 48.8, std: 6.0}
+  ant-directional: {mean: 55.2, std: 8.0}
+  ant-random-simplex: {mean: 21.3, std: 4.0}
+  ant-path-loop: {mean: 67.2}
+  ant-path-edges: {mean: 60.0}
+  ant-path-center: {mean: 64.4}
+  antmaze-all: {mean: 52.8, std: 18.2}

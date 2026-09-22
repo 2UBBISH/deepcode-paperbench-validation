@@ -1,0 +1,76 @@
+{
+  "note": "Every hyperparameter used by the reproduction, taken from the main text and from Appendix E of the paper. Scripts default to these values.",
+  "model": {
+    "base_lm": "gpt2-medium",
+    "llama2": "meta-llama/Llama-2-7b-hf (out of scope: gated weights)"
+  },
+  "probe": {
+    "dataset": "thesofakillers/jigsaw-toxic-comment-classification-challenge",
+    "labels": ["toxic", "severe_toxic", "obscene", "threat", "insult", "identity_hate"],
+    "binary_rule": "toxic if any label equals 1",
+    "layer": -1,
+    "pooling": "mean over all timesteps of the last-layer residual stream",
+    "split": 0.9,
+    "epochs": 10,
+    "batch_size": 16,
+    "lr": 0.001,
+    "reported_accuracy": 0.94
+  },
+  "toxic_vectors": {
+    "similarity": "cosine(value_vector, W_toxic[:, 1])",
+    "top_n": 128,
+    "svd": "SVD of the transpose (d x N) of the stacked value vectors",
+    "n_svd_components": 10
+  },
+  "interventions": {
+    "operation": "x^{L-1} = x^{L-1} - alpha * W",
+    "layer": "last",
+    "vectors": ["W_toxic", "top-1 MLP.v_toxic", "SVD.U_toxic[0]"],
+    "alpha_calibration": "match the perplexity of the post-DPO model",
+    "eval_prompts": "RealToxicityPrompts challenge subset (1,199 prompts)",
+    "generation_length": 20,
+    "perplexity_dataset": "wikitext-2-raw-v1 (test)",
+    "f1_dataset": "2,000 Wikipedia sentences (wikitext-2)"
+  },
+  "pplm": {
+    "step_size": 0.4,
+    "temperature": 1.0,
+    "top_k": 10,
+    "num_iterations": 50,
+    "window_length": 0,
+    "horizon_length": 1,
+    "decay": false,
+    "gamma": 1.0,
+    "gm_scale": 0.95,
+    "kl_scale": 0.1,
+    "attribute_classifier": "W_toxic (learned in Section 3.1)"
+  },
+  "pairs": {
+    "n_pairs": 24576,
+    "prompts": "sentences from Wikitext-2",
+    "positive": "greedy sampling from GPT2",
+    "negative": "PPLM steered towards toxicity"
+  },
+  "dpo": {
+    "learning_rate": 1e-06,
+    "batch_size": 4,
+    "optimizer": "rmsprop",
+    "gradient_accumulation_steps": 1,
+    "max_grad_norm": 10.0,
+    "validation_metric": "loss/valid",
+    "validation_patience": 10,
+    "beta": 0.1,
+    "train_val_split": 0.9,
+    "pairs_until_convergence": 6700
+  },
+  "analysis": {
+    "parameter_shift": "cosine similarity above 0.99 for every parameter, mean norm difference below 1e-5 (unembedding below 1e-3)",
+    "activation_measurement": "mean m_i over 20 greedily sampled tokens of GPT2 for the 1,199 RealToxicityPrompts prompts",
+    "residual_shift_layer": 19,
+    "logit_lens": "295 prompts whose greedy GPT2 next token is sh*t"
+  },
+  "unalign": {
+    "gpt2": {"n_key_vectors": 7, "scale": 10.0},
+    "llama2": {"n_gates": 8, "w2_scale": 3.0}
+  }
+}

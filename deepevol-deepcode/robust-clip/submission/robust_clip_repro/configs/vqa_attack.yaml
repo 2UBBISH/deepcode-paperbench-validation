@@ -1,0 +1,162 @@
+# =============================================================================
+# VQA robustness evaluation configuration (TextVQA / POPE / SQA-I)
+# -----------------------------------------------------------------------------
+# Precision-graded attack schedule from the Addendum:
+#   (1) low-precision  (half  -> int16) attacks on the TOP-5 most frequent
+#       ground truths;
+#   (2) take the ground truth that led to the LOWEST score for each sample
+#       (argmin);
+#   (3) high-precision (single -> int32) attack on that ground truth;
+#   (4) targeted attack on the most frequent ground truth with the literal
+#       lower-case string "maybe", using a CLEAN perturbation initialization;
+#   (5) targeted attack with the literal capitalized string "Word", using a
+#       second, SEPARATE clean perturbation initialization.
+#       The "Word" attack is SKIPPED on TextVQA.
+#
+# Case-sensitivity of the two target strings is graded, so they are kept
+# literally as "maybe" and "Word" (never normalized).
+#
+# BUDGETS: the Addendum does not state eps / alpha / iterations for the VQA
+# attacks, so the stage budgets below are null -> they MUST be supplied
+# externally (config/CLI).  The harness refuses to run without them and logs
+# them as externally supplied rather than inventing paper values.
+# =============================================================================
+
+vqa_attack:
+  # ---------------------------------------------------------------- dataset --
+  dataset_name: POPE           # TextVQA | POPE | SQA-I  (aliases accepted)
+  datasets: [TextVQA, POPE, SQA-I]
+  split: null                  # null -> per-dataset default from data/benchmarks.py
+  num_samples: null            # null -> all loaded samples
+  shuffle: true
+  seed: 0
+
+  # ------------------------------------------------------------------ model --
+  model_name: llava            # llava | openflamingo | dummy
+  model_kwargs:
+    # LLaVA-1.5 7B with the OpenAI CLIP ViT-L/14@224 encoder consumed through
+    # OpenCLIP (ADDENDUM); everything not stated by the Addendum is null and
+    # falls back to the wrapper defaults, which are logged as external.
+    model_path: liuhaotian/llava-v1.5-7b
+    clip_model: ViT-L-14
+    clip_pretrained: openai
+    clip_resolution: 224
+    use_openclip: true
+    freeze_language_model: true
+    dtype: float16
+    device: null
+    device_map: null
+
+  # ------------------------------------------------------- attack schedule --
+  # ADDENDUM-mandated schedule invariants.
+  top_k_ground_truths: 5       # ADDENDUM: top-5 most frequent ground truths
+  selection: argmin            # ADDENDUM: lowest score selects the ground truth
+  low_precision: half          # ADDENDUM: 16-bit integer perturbation storage
+  high_precision: single       # ADDENDUM: 32-bit integer perturbation storage
+  target_maybe: "maybe"        # ADDENDUM: literal lower-case string
+  target_word: "Word"          # ADDENDUM: literal capitalized string
+  maybe_clean_init: true       # ADDENDUM: clean perturbation initialization
+  word_clean_init: true        # ADDENDUM: second, separate clean initialization
+  skip_word_on: [TextVQA]      # ADDENDUM: "Word" attack skipped on TextVQA
+  stage_order:                 # ADDENDUM: exact call order
+    - low_precision_top5
+    - select_argmin
+    - high_precision_argmin
+    - targeted_maybe_clean_init
+    - targeted_word_clean_init
+
+  # ---------------------------------------------------- attack budgets ------
+  # UNSPECIFIED BY ADDENDUM -> must be supplied externally (see note above).
+  low_eps: null
+  low_alpha: null              # null -> alpha = eps / 4
+  low_iterations: null
+  low_restarts: 1
+  high_eps: null
+  high_alpha: null             # null -> alpha = eps / 4
+  high_iterations: null
+  high_restarts: 1
+  targeted_eps: null
+  targeted_alpha: null         # null -> alpha = eps / 4
+  targeted_iterations: null
+  targeted_restarts: 1
+  norm: linf                   # ball computed around NON-normalized pixels
+  random_start: true           # untargeted stages; targeted stages use clean init
+
+  # ------------------------------------------------- precision policy -------
+  # ADDENDUM: half-precision attacks use int16, single-precision attacks int32.
+  int_dtype_half: int16
+  int_dtype_single: int32
+  quant_scale: 100000.0
+
+  # ------------------------------------------------------ score definition --
+  # The Addendum does not define the numeric "score" used for the argmin over
+  # the top-5 ground truths -> exposed here, tagged UNSPECIFIED_BY_ADDENDUM.
+  score_definition: accuracy   # accuracy | logprob | constant
+  score_direction: max         # higher score = better model performance
+  answer_parser: null          # null -> dataset-appropriate parser
+  constant_score_value: 0.0
+
+  # ------------------------------------------------------- victim inputs ----
+  prompt: null                 # null -> prompts/templates.py template
+  prompt_template: null
+  resolution: 224
+  batch_size: 1
+  max_new_tokens: 16           # NULL/UNSPECIFIED BY ADDENDUM
+  generation_temperature: 0.0  # NULL/UNSPECIFIED BY ADDENDUM
+  do_sample: false
+
+  # -------------------------------------------------------------- runtime --
+  device: null                 # null -> cuda if available else cpu
+  num_workers: 0
+  output_dir: results
+  output_file: null            # null -> auto-named from dataset/model/eps
+  verbose: true
+  smoke_test: false
+
+  # ----------------------------------------------------------- provenance ---
+  provenance:
+    addendum:
+      - top_k_ground_truths=5
+      - selection=argmin
+      - low_precision=half (int16 storage)
+      - high_precision=single (int32 storage)
+      - target_maybe="maybe" (literal lower-case)
+      - target_word="Word" (literal capitalized)
+      - maybe_clean_init=true
+      - word_clean_init=true (separate clean initialization)
+      - skip_word_on=[TextVQA]
+      - stage_order
+      - norm=linf around NON-normalized pixels
+    paper_body: []
+    upstream:
+      - llava prompt conventions from haotian-liu/LLaVA
+      - openflamingo prompt conventions from mlfoundations/open_flamingo
+    unspecified_by_addendum:
+      - low_eps
+      - low_alpha
+      - low_iterations
+      - low_restarts
+      - high_eps
+      - high_alpha
+      - high_iterations
+      - high_restarts
+      - targeted_eps
+      - targeted_alpha
+      - targeted_iterations
+      - targeted_restarts
+      - score_definition
+      - score_direction
+      - answer_parser
+      - constant_score_value
+      - prompt
+      - prompt_template
+      - max_new_tokens
+      - generation_temperature
+      - do_sample
+      - batch_size
+      - num_workers
+      - seed
+
+# A convenience flat block for `python -m robust_clip_repro.eval_vqa`, which
+# tolerates a nested top-level `vqa_attack:` mapping (preferred) or flat keys.
+smoke_test: false

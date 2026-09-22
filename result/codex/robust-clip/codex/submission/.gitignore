@@ -1,0 +1,18 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ipynb_checkpoints/
+
+# large artifacts (checkpoints, datasets, results) are never committed
+checkpoints/
+results/
+outputs/
+data/harmful_corpus/
+*.pt
+*.pth
+*.ckpt
+
+# environments
+.venv/
+venv/
+env/

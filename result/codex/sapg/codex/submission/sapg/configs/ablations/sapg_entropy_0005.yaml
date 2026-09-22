@@ -1,0 +1,5 @@
+# Sec. 4.5 / Sec. 6.3: entropy-regularised followers with sigma = 0.005.
+defaults: [../sapg_allegrokuka_regrasping.yaml]
+algo:
+  name: sapg
+  entropy_coef: 0.005

@@ -1,0 +1,17 @@
+# Core (required for the library and the toy experiments)
+numpy>=1.24
+scipy>=1.10
+torch>=2.0
+matplotlib>=3.7
+
+# Optional: only needed to run the full experiments on the real environments
+# gymnasium[atari,accept-rom-license]>=0.29
+# ale-py>=0.8
+# opencv-python>=4.8
+# nle @ git+https://github.com/heiner/nle.git@main
+# sample-factory @ git+https://github.com/alex-petrenko/sample-factory/
+# metaworld>=3.0
+# mujoco>=3.1
+
+# Development
+pytest>=7.0

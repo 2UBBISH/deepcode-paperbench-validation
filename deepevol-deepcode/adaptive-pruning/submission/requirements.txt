@@ -1,0 +1,62 @@
+# APT: Adaptive Pruning and Tuning Pretrained Language Models
+# for Efficient Training and Inference -- reproduction dependencies.
+#
+# Python 3.9 or 3.10 is recommended (matching the paper's setup).
+# Install with:
+#     pip install -r requirements.txt
+#
+# For GPU runs install a CUDA-enabled PyTorch build first, e.g.
+#     pip install torch==2.0.1 --index-url https://download.pytorch.org/whl/cu118
+# then the rest of this file.
+
+# ---------------------------------------------------------------------------
+# Core deep-learning stack (PyTorch >= 2.0 required for the reproduction)
+# ---------------------------------------------------------------------------
+torch>=2.0.0
+numpy>=1.23,<2.0
+
+# ---------------------------------------------------------------------------
+# HuggingFace stack (model loading, GLUE/SQuAD/CNN-DM datasets, metrics)
+# ---------------------------------------------------------------------------
+transformers>=4.30,<4.40
+datasets>=2.12,<3.0
+evaluate>=0.4.0
+accelerate>=0.20
+tokenizers>=0.13,<0.15
+
+# ---------------------------------------------------------------------------
+# Task metrics
+# ---------------------------------------------------------------------------
+scikit-learn>=1.2          # accuracy / F1 / MCC for GLUE, SQuAD helpers
+scipy>=1.10                # Spearman correlation (STS-B), kurtosis utilities
+rouge_score>=0.1.2         # ROUGE-1/2/L for CNN/DailyMail
+
+# ---------------------------------------------------------------------------
+# Configuration / utilities
+# ---------------------------------------------------------------------------
+pyyaml>=6.0
+tqdm>=4.65
+sentencepiece>=0.1.99      # T5-family tokenizers
+protobuf>=3.20             # required by some HF dataset/tokenizer paths
+
+# ---------------------------------------------------------------------------
+# Optional: Figure 3 plotting
+# ---------------------------------------------------------------------------
+# matplotlib>=3.7
+
+# ---------------------------------------------------------------------------
+# External baseline repositories (clone manually, NOT pip-installable)
+# ---------------------------------------------------------------------------
+# Mask Tuning  (LoRA+Prune row)        : https://github.com/WoosukKwon/retraining-free-pruning
+# CoFiPruning  (Prune+Distill and
+#               LoRA+Prune+Distill)    : https://github.com/princeton-nlp/CoFiPruning
+#
+# Point the wrappers at the checkouts with:
+#     export MASK_TUNING_DIR=/path/to/retraining-free-pruning
+#     export COFI_DIR=/path/to/CoFiPruning
+#
+# If the checkouts are absent the in-repo proxy implementations in
+# apt/baselines/{mask_tuning,cofi}.py are used instead.
+#
+# Out of scope for this reproduction (do NOT install): LLaMA-2 weights,
+# Alpaca data, lm-eval-harness.

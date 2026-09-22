@@ -1,0 +1,20 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ipynb_checkpoints/
+
+# experiment artifacts (results are regenerated; keep the repo small)
+runs/
+outputs/
+checkpoints/
+*.pt
+*.bin
+*.safetensors
+*.ckpt
+
+# HF / dataset caches
+.cache/
+hf_cache/
+data_cache/

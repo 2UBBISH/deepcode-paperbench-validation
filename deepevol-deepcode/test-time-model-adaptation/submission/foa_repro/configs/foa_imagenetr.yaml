@@ -1,0 +1,68 @@
+# FOA configuration: ImageNet-R (renditions), full-precision ViT-Base, Table 3.
+#
+# Notes:
+#   * lambda base for ImageNet-R is 0.2 (instead of 0.4 on C/V2/Sketch),
+#     scaled by BS/64 (Appendix B.2 / Table 15).
+#   * ImageNet-R has 200 classes, which are a subset of the ImageNet-1k
+#     label space -> the frozen 1000-way head is evaluated on the 200
+#     relevant classes via a label map built by the dataset loader.
+experiment:
+  name: foa_imagenetr
+  description: "ImageNet-R (200 classes), ViT-Base, BS=64, lambda_base=0.2"
+
+seed: 0
+output_dir: ./outputs/imagenet-r
+
+model:
+  name: vit_base_patch16_224
+  checkpoint: null            # falls back to vit_loader.FOA_CHECKPOINT_URL
+  pretrained: true
+  num_classes: 1000           # frozen head; evaluated on the 200 ImageNet-R classes
+  precision: 32
+  device: cuda
+
+prompt:
+  num_prompts: 3
+  init: uniform
+  init_range: 0.01
+
+cma:
+  population_size: 28         # K = 4 + 3*log(d*N_p)
+  sigma0: 1.0
+  mean0: 0.0
+  cov0: 1.0
+  seed: 0
+
+fitness:
+  use_entropy: true
+  use_discrepancy: true
+  lambda_base: 0.2            # ImageNet-R uses 0.2 (scaled by BS/64)
+  lambda_scale_with_bs: true
+  beta: 1.0
+  layer_start: 1
+  entropy_reduction: sum
+  discrepancy_reduction: sum
+
+shifting:
+  enabled: true
+  gamma: 1.0
+  alpha: 0.1
+
+data:
+  dataset: imagenet-r
+  root: ./data
+  batch_size: 64
+  num_workers: 4
+  shuffle: false
+  image_size: 224
+  num_classes_eval: 200
+
+source_stats:
+  path: ./checkpoints/source_stats_vit_base.pt
+  num_samples: 32
+  seed: 0
+  id_root: ./data
+
+eval:
+  ece_bins: 15
+  report_per_corruption: false

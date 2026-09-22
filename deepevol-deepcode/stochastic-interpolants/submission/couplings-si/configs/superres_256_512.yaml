@@ -1,0 +1,122 @@
+# =============================================================================
+# Stochastic Interpolants with Data-Dependent Couplings
+# Config: ImageNet Super-Resolution 256 x 256  ->  512 x 512
+#
+# Paper: "Stochastic Interpolants with Data-Dependent Couplings"
+#   - Section 4.2 (Super-resolution on ImageNet)
+#       * x_1 ~ rho_1 = ImageNet (512)
+#       * D : R^{C x W x H} -> R^{C x W_low x H_low}  (downsample)
+#       * U : R^{C x W_low x H_low} -> R^{C x W x H}  (upsample)
+#       * x_0 = U(D(x_1)) + sigma * zeta,   zeta ~ N(0, Id),  sigma > 0
+#       * xi  = U(D(x_1))  appended to the channel dim of the velocity-model
+#         input x at all times, together with the ImageNet class labels
+#   - Appendix B (architecture / optimization hyperparameters)
+#
+# The paper reports Fig. 6 (256 -> 512) qualitatively and only tabulates
+# FID-50k for the 64 -> 256 task (Table 3).  Consequently no FID target is
+# asserted here; the value below is left informational only.
+# =============================================================================
+
+name: superres_256_512
+task: superres
+seed: 0
+
+# -----------------------------------------------------------------------------
+# Data  [paper Section 4.1 / 4.2; addendum: HuggingFace imagenet-1k download]
+# -----------------------------------------------------------------------------
+data:
+  dataset: imagenet-1k
+  split: train
+  resolution: 512            # high-resolution target x_1  (paper Section 4.2)
+  low_resolution: 256        # low-resolution conditioning input
+  num_classes: 1000
+  channels: 3
+  data_range: "[-1, 1]"      # repo-wide image convention
+  cache_dir: null
+  num_workers: 4
+  augmentation:
+    random_crop: false
+    hflip: true
+    hflip_prob: 0.5
+    pad: true
+    antialias: true
+
+# -----------------------------------------------------------------------------
+# Data-dependent coupling + interpolant  [paper Section 3.2, Section 4.2]
+# -----------------------------------------------------------------------------
+coupling: superres
+coefficients: gamma0         # alpha_t = 1 - t, beta_t = t, gamma_t = 0
+sigma: 0.05                  # [engineering] paper leaves sigma unset; small >0
+down_mode: area              # D (downsampling)
+up_mode: bilinear            # U (upsampling)
+antialias: true
+requires_conditioning: true
+
+# -----------------------------------------------------------------------------
+# Model: U-Net velocity field \hat b_t(x, xi)  [Appendix B]
+# -----------------------------------------------------------------------------
+model: unet
+channels: 256                # base channel width
+dim_mults: [1, 1, 2, 3, 4]
+resnet_block_groups: 8       # GroupNorm groups inside ResNet blocks
+num_classes: 1000            # ImageNet class-label conditioning
+class_dropout_prob: 0.1
+learned_sinusoidal_cond: true
+learned_sinusoidal_dim: 32
+attention_dim_head: 64
+attention_heads: 4
+random_fourier_features: false
+conditioning_channels: 3     # xi = U(D(x_1)) appended to x  ->  2 * 3 in-channels
+mask_observed: false         # no fixed-pixel invariant for super-resolution
+in_channels: 3
+out_channels: 3
+image_size: 512
+
+# -----------------------------------------------------------------------------
+# Training: Algorithm 1  [paper Appendix B + addendum]
+# -----------------------------------------------------------------------------
+batch_size: 32
+steps: 200000
+lr: 2.0e-4
+betas: [0.9, 0.999]
+weight_decay: 0.0
+grad_clip: 10000.0           # whole-parameter-vector norm (PyTorch default)
+scheduler: step
+lr_gamma: 0.99
+lr_step_size: 1000
+ema: false                   # paper does not mention EMA
+precision: "32-true"
+log_every: 100
+save_every: 10000
+output_dir: runs/superres_256_512
+resume: null
+transport_cost_log: true
+
+# -----------------------------------------------------------------------------
+# Sampling: Algorithm 2 (probability-flow ODE)  [paper Section 3.4, Appendix B]
+# -----------------------------------------------------------------------------
+method: dopri5               # torchdiffeq Dopri(5) adaptive solver
+sampling_steps: 50           # forward-Euler steps when method: euler
+atol: 1.0e-5
+rtol: 1.0e-5
+project_observed: false
+num_samples: 50000
+sample_batch_size: 32
+
+# -----------------------------------------------------------------------------
+# Evaluation  [paper Section 4.2; Table 3 covers only 64 -> 256]
+# -----------------------------------------------------------------------------
+eval_fid: true
+fid_num_samples: 50000
+fid_batch_size: 32
+fid_dataset: imagenet
+paper_fid_train: null        # not tabulated for 256 -> 512 (Fig. 6 only)
+paper_fid_valid: null
+qualitative: true
+qualitative_count: 8
+reported_only_baselines:
+  - improved_ddpm
+  - sr3
+  - adm
+  - cascaded_diffusion
+  - i2sb

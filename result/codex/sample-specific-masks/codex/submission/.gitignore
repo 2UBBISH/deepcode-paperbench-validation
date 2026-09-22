@@ -1,0 +1,18 @@
+# datasets and cached split indices (large, downloaded on demand)
+data/
+# run outputs (JSON results, figures, checkpoints)
+runs/
+runs_*/
+figs/
+*.pt
+*.pth
+*.ckpt
+# python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ipynb_checkpoints/
+.venv/
+venv/
+*.egg-info/
+.DS_Store

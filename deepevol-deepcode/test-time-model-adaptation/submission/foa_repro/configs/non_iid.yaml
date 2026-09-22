@@ -1,0 +1,121 @@
+# FOA - non-i.i.d. robustness study (Section 4.4, Table 11)
+# ---------------------------------------------------------------------------
+# Three test distributions are compared:
+#   mild_iid          : ordinary i.i.d. ImageNet-C stream (severity 5)
+#   online_label_shift: test data presented in a class-ordered (imbalanced,
+#                       non-i.i.d.) stream
+#   mixed_shifts      : the 15 ImageNet-C corruptions concatenated in random
+#                       order into a single continuous stream
+#
+# Consumed by scripts/run_non_iid.py, which reuses the plain Algorithm-1 loop
+# of scripts/run_foa.py and only swaps the batch stream.
+# ---------------------------------------------------------------------------
+experiment:
+  name: foa_non_iid
+  description: >-
+    FOA on non-i.i.d. ImageNet-C streams (online label-shift and mixed
+    corruption shift), ViT-Base, BS=64, full precision.
+
+seed: 0
+output_dir: ./outputs/non_iid
+
+model:
+  name: vit_base_patch16_224
+  checkpoint: null          # null -> vit_loader.FOA_CHECKPOINT_URL (augreg in21k->1k)
+  pretrained: true
+  num_classes: 1000
+  precision: 32
+  device: cuda
+
+# ---------------------------------------------------------------------------
+# FOA hyper-parameters (Appendix B.2) -- identical to configs/foa_imagenetc.yaml
+# ---------------------------------------------------------------------------
+prompt:
+  num_prompts: 3            # N_p ; CMA search dim = 768 * 3 = 2304
+  init: uniform
+  init_range: 0.01          # documented default: U(-0.01, 0.01)
+
+cma:
+  population_size: 28       # K = ceil(4 + 3*ln(2304))
+  sigma0: 1.0               # tau^(0)
+  mean0: 0.0                # m^(0)
+  cov0: 1.0                 # Sigma^(0) = I
+  seed: 0
+
+fitness:
+  use_entropy: true
+  use_discrepancy: true
+  lambda_base: 0.4          # * BS/64  (0.2 on ImageNet-R only)
+  lambda_scale_with_bs: true
+  beta: 1.0                 # batch statistics, no EMA
+  layer_start: 1            # Eqn.(5) sums i = 1..N
+  entropy_reduction: sum
+  discrepancy_reduction: sum
+
+shifting:
+  enabled: true
+  gamma: 1.0
+  alpha: 0.1
+
+# ---------------------------------------------------------------------------
+# Data / stream
+# ---------------------------------------------------------------------------
+data:
+  dataset: imagenet-c
+  root: ./data
+  severity: 5
+  corruption: gaussian_noise        # single corruption for the label-shift stream
+  corruptions:                      # 15 ImageNet-C corruptions (mixed_shifts)
+    - gaussian_noise
+    - shot_noise
+    - impulse_noise
+    - defocus_blur
+    - glass_blur
+    - motion_blur
+    - zoom_blur
+    - snow
+    - frost
+    - fog
+    - brightness
+    - contrast
+    - elastic_transform
+    - pixelate
+    - jpeg_compression
+  batch_size: 64
+  num_workers: 4
+  shuffle: false            # single-pass, ordered online stream (Algorithm 1)
+  image_size: 224
+  subset: null
+
+# ---------------------------------------------------------------------------
+# Non-i.i.d. stream construction
+# ---------------------------------------------------------------------------
+non_iid:
+  # "online_label_shift" -> class-ordered imbalanced stream
+  # "mixed_shifts"       -> concatenation of the 15 corruptions in random order
+  scenarios:
+    - mild_iid
+    - online_label_shift
+    - mixed_shifts
+  methods:
+    - foa
+  label_shift:
+    mode: class_order       # class_order | geometric | dirichlet
+    decay: 0.98             # geometric imbalance profile (NOTE/SAR-style)
+    dirichlet_alpha: 0.5    # dirichlet mode concentration
+    shuffle_within_class: true
+  mixed_shift:
+    shuffle_domains: true   # permute the 15 corruption blocks with `seed`
+    domains_per_stream: 15
+  limit_batches: null       # null -> full stream
+
+source_stats:
+  path: ./checkpoints/source_stats_vit_base.pt
+  num_samples: 32           # Q
+  seed: 0
+  id_root: ./data
+
+eval:
+  ece_bins: 15
+  report_per_corruption: false
+  report_mean_over_corruptions: false

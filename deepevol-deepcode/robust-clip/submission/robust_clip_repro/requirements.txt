@@ -1,0 +1,110 @@
+# =============================================================================
+# Robust CLIP reproduction — Python requirements
+# =============================================================================
+# Paper: "Robust CLIP: Unsupervised Adversarial Fine-Tuning of Vision Embeddings
+#         for Robust Large Vision-Language Models" (+ Addendum clarifications)
+#
+# Provenance policy (see robust_clip_repro/__init__.py and README.md):
+#   - Values stated by the paper/Addendum are pinned where the plan fixes them.
+#   - Values the Addendum does not state are NOT invented here; loose lower
+#     bounds are given so that upstream repositories can be installed in
+#     editable mode against a compatible environment.
+#
+# Python: 3.10+ required (per plan environment_setup).
+# CUDA:   a GPU with >= 24 GB VRAM is recommended for LLaVA-1.5 7B and for
+#         OpenFlamingo evaluation (see README "Environment").
+# -----------------------------------------------------------------------------
+
+# ----------------------------------------------------------------------------
+# Core deep-learning stack (ADDENDUM/plan: torch, torchvision)
+# NOTE: install the CUDA build matching your driver, e.g.
+#   pip install torch==2.1.2 torchvision==0.16.2 --index-url https://download.pytorch.org/whl/cu121
+# The versions below are the ones the upstream repos (LLaVA, open_flamingo,
+# robust-finetuning) are tested against; they are EXTERNAL defaults, not values
+# stated by the paper.
+# ----------------------------------------------------------------------------
+torch>=2.0.0
+torchvision>=0.15.0
+
+# ----------------------------------------------------------------------------
+# HuggingFace stack
+#   - transformers/accelerate/tokenizers: LLaVA-1.5 7B and OpenFlamingo language
+#     backbones.
+#   - datasets: ImageNet via HuggingFace datasets with trust_remote_code=True
+#     (ADDENDUM requirement, data/imagenet.py).
+# ----------------------------------------------------------------------------
+transformers>=4.36.0
+tokenizers>=0.15.0
+accelerate>=0.25.0
+datasets>=2.16.0
+huggingface_hub>=0.20.0
+safetensors>=0.4.0
+sentencepiece>=0.1.99
+
+# ----------------------------------------------------------------------------
+# Vision encoder
+#   open_clip_torch provides the OpenAI CLIP ViT-L/14@224 implementation used by
+#   Robust CLIP and by the LLaVA-1.5 OpenCLIP patch (ADDENDUM requirement,
+#   models/clip_vision_encoder.py, models/llava_openclip.py).
+# ----------------------------------------------------------------------------
+open_clip_torch>=2.24.0
+timm>=0.9.8
+
+# ----------------------------------------------------------------------------
+# Image / array / tabular IO
+# ----------------------------------------------------------------------------
+Pillow>=10.0.0
+numpy>=1.24.0
+pandas>=2.0.0
+
+# pycocotools is used by the COCO captioning bookkeeping
+# (data/coco_captioning.py, metrics/cider.py). The in-repo CIDEr-D scorer is
+# pure Python, so pycocotools is optional but recommended for cross-checking.
+pycocotools>=2.0.7
+
+# Optional image backends referenced by the plan's environment_setup
+# (scikit-image/opencv for image IO). Not required by any hard code path.
+scikit-image>=0.22.0
+opencv-python>=4.8.0
+
+# ----------------------------------------------------------------------------
+# Tokenizer/text normalization helpers required by the CLIP tokenizer and the
+# VQA answer normalization paths (plan environment_setup: ftfy/regex).
+# ----------------------------------------------------------------------------
+ftfy>=6.1.1
+regex>=2023.10.3
+
+# ----------------------------------------------------------------------------
+# Configuration / CLI / progress / numerics
+# ----------------------------------------------------------------------------
+PyYAML>=6.0
+tqdm>=4.66.0
+einops>=0.7.0
+
+# ----------------------------------------------------------------------------
+# Upstream repositories to vendor or install in editable mode
+# (plan environment_setup / implementation_strategy Phase 1). These are NOT on
+# PyPI at the pinned commits used by the paper; install them explicitly, e.g.:
+#
+#   git clone https://github.com/haotian-liu/LLaVA && pip install -e LLaVA
+#   git clone https://github.com/mlfoundations/open_flamingo && pip install -e open_flamingo
+#   git clone https://github.com/fra31/robust-finetuning   # APGD (attacks/apgd.py)
+#   git clone https://github.com/Unispac/Visual-Adversarial-Examples-Jailbreak-Large-Language-Models
+#
+# The codebase degrades gracefully when these are absent:
+#   * attacks/apgd.py     -> vendored APGD fallback
+#   * models/llava_openclip.py, models/openflamingo_wrapper.py -> Dummy victims
+#     for `--smoke-test` (also forced with ROBUST_CLIP_DUMMY_LLAVA=1)
+#   * data/jailbreak_assets.py -> downloads assets from the Unispac repo
+# ----------------------------------------------------------------------------
+
+# ----------------------------------------------------------------------------
+# NOT specifiable (UNSPECIFIED_BY_ADDENDUM). Do not pin these from the paper:
+#   * general PGD eps / alpha / iterations        (configs/pgd_eval.yaml)
+#   * APGD eps budgets without paper-body tables  (configs/apgd_eval.yaml)
+#   * training optimizer/lr/batch/epochs beyond paper-body FARE values
+#   * OpenFlamingo version / vision encoder / language backbone
+#   * prompt template literals (prompts/templates.py inherits upstream)
+#   * VQA numeric "score" definition (metrics/vqa.py, configurable)
+# Supply these via configs/*.yaml or the CLI; they are logged as external.
+# -----------------------------------------------------------------------------

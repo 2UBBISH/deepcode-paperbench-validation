@@ -1,0 +1,168 @@
+# RoboticSequence (Meta-World) configuration
+# Source: paper Section 3 (Experimental setup), Appendix B.3 (Meta World),
+#         Table 3 (Hyperparameters of knowledge retention methods in Meta-World).
+#
+# RoboticSequence requires the robot to complete, sequentially within one episode:
+#   hammer -> push -> peg-unplug-side -> push-wall
+# The pre-trained policy pi_* solves the last two stages (FAR) but not the first two
+# (CLOSE).  See the addendum: the "pre-training" model is trained from scratch on all
+# stages (used as an extra baseline); the model trained on the last two stages only is
+# the pi_* used for the main results (Section 3 / Appendix B.3).
+#
+# All Meta-World experiments are run with at least 20 seeds and reported with 90%
+# confidence intervals; the compute is CPU-only (8 cores / 30GB RAM, ~48h per run).
+
+name: robotic_sequence
+env_name: robotic_sequence
+wandb_project: finetuning-rl-as-cl
+
+seed: 0
+
+# ---------------------------------------------------------------------------
+# Environment (Algorithm 1, Appendix B.3)
+# ---------------------------------------------------------------------------
+env:
+  # Sequence of Meta-World v2 stages, in order.
+  tasks: [hammer, push, peg-unplug-side, push-wall]
+  # Alternative orderings / truncations supported by src/robotic_sequence/env.py
+  task_order: main          # main | reversed | two_stage | far_only | close_only | continual_world_prefix
+  prefix: null              # truncate the sequence (Table 6 prefix-length ablations)
+  # Appendix B.3: T = 200 maximal number of steps; the timestep counter is reset on
+  # stage advancement and the episode terminates either on success or on the time limit.
+  time_limit: 200
+  # Appendix B.3 / Section 3: CLOSE stages are the first two, FAR the last two.
+  close_tasks: [hammer, push]
+  far_tasks: [peg-unplug-side, push-wall]
+  # Appendix B.3: augmented success reward r'_t = beta * r_t * (T - t), beta = 1.5.
+  beta: 1.5
+  # Appendix B.3: append the normalized timestep t/T to the state vector so that the
+  # MDP is fully observable.
+  append_timestep: true
+  append_stage_onehot: false   # heads are selected via the stage ID, not the observation
+  # Appendix B.3: start and goal conditions are randomly sampled.
+  random_start_goal: true
+  # Appendix B.3: the episode is terminal on both success and the time limit, so no
+  # bootstrapping is applied in the target Q-value.
+  terminal_on_time_limit: true
+  # Use the dependency-free stub environment (CPU smoke tests without Meta-World).
+  stub: false
+  solve_probability: 1.0
+
+# ---------------------------------------------------------------------------
+# Pre-training of pi_* (Section 3 / Appendix B.3, addendum)
+# ---------------------------------------------------------------------------
+pretrain:
+  # Section 3 / Appendix B.3: pi_* is trained with SAC on the last two stages until
+  # convergence (100% success rate) -> FAR.
+  scope: last_two            # last_two | all_stages
+  tasks: [peg-unplug-side, push-wall]
+  num_steps: 2000000
+  target_success_rate: 1.0
+  checkpoint: checkpoints/robotic_sequence/pretrained_last_two.pt
+
+# ---------------------------------------------------------------------------
+# SAC (Appendix B.3)
+# ---------------------------------------------------------------------------
+sac:
+  # Appendix B.3: 4 hidden layers, 256 neurons each, Leaky-ReLU; layer normalization
+  # after the first layer; a separate output head per stage selected by the stage ID.
+  hidden_dim: 256
+  num_hidden_layers: 4
+  activation: leaky_relu
+  leaky_relu_slope: 0.01
+  layer_norm_after_first: true
+  separate_heads: true
+  # Appendix B.3 / addendum: same architecture as the Continual World paper.
+  per_stage_heads: true
+
+  algorithm: sac
+  lr: 0.001                # Appendix B.3: learning rate 10^-3
+  optimizer: adam          # Appendix B.3: Adam (Kingma & Ba, 2014)
+  batch_size: 128          # Appendix B.3: batch size 128 in all experiments
+  gamma: 0.99
+  tau: 0.005               # target network EMA (Continual World default)
+  # Appendix B.3: the entropy coefficient is tuned automatically (Haarnoja et al., 2018b)
+  automatic_entropy_tuning: true
+  target_entropy: null     # null -> -dim(action)
+  initial_alpha: 0.2
+  alpha_lr: 0.0003
+  # SAC's replay buffer is 100k transitions (Appendix B.3); EM fills 10% of it.
+  buffer_size: 100000
+  warmup_steps: 10000
+  update_every: 1
+  updates_per_step: 1
+  policy_delay: 1
+  num_gradient_steps: 1
+  grad_clip: null
+  hidden_sizes: [256, 256, 256, 256]
+
+# ---------------------------------------------------------------------------
+# Fine-tuning on the full RoboticSequence
+# ---------------------------------------------------------------------------
+finetune:
+  num_steps: 2000000
+  eval_every: 25000
+  eval_episodes: 20
+  save_every: 100000
+  log_every: 1000
+  # Appendix B.3: log-likelihood of expert actions is computed every 50k steps
+  # (addendum, Figure 8).
+  loglikelihood_every: 50000
+
+# ---------------------------------------------------------------------------
+# Knowledge retention (Table 3 / Appendices B.3, C.1, C.2, C.3)
+# ---------------------------------------------------------------------------
+retention:
+  method: none             # none | ewc | bc | em
+  # Wołczyk et al. (2021, 2022): we do not regularize the critic (critic coef = 0).
+  apply_to: actor
+  freeze_critic_regularization: true
+
+  ewc:
+    # Table 3: EWC actor reg. coef. = 100, critic reg. coef. = 0, no memory.
+    actor_coef: 100.0
+    critic_coef: 0.0
+    # Fisher computed per Wołczyk et al. (2021) convention (Appendix C.1).
+    num_batches: 1000
+    batch_size: 128
+    mode: policy
+    normalize: false
+
+  bc:
+    # Table 3: BC actor reg. coef. = 1, critic reg. coef. = 0, memory = 10000.
+    actor_coef: 1.0
+    critic_coef: 0.0
+    memory_size: 10000
+    batch_size: 128
+    # No decay schedule for BC.
+    decay: null
+    decay_type: none
+
+  em:
+    # Table 3: EM has no regularization coefficient; memory = 10000, which is 10% of
+    # the 100k replay buffer.  Appendix B.3: 10k state-action-reward tuples sampled
+    # from the pre-trained stages with pi_* and kept in the replay buffer throughout
+    # downstream training (never overwritten).
+    actor_coef: 0.0
+    critic_coef: 0.0
+    memory_size: 10000
+    fraction: 0.1
+    protected: true
+
+# ---------------------------------------------------------------------------
+# Evaluation / analysis
+# ---------------------------------------------------------------------------
+eval:
+  episodes: 20
+  num_seeds: 20
+  confidence: 0.90         # Appendix B.3: results with 90% confidence intervals
+  # Forward transfer is measured over prefix-task lengths (Table 6, Appendix F).
+  prefix_lengths: [1, 2, 3, 4]
+  compute_cka: true
+  # CKA uses a linear kernel in both cases (Appendix B.3).
+  cka_kernel: linear
+
+compute:
+  device: cpu              # Appendix B.3: CPU acceleration for Meta-World
+  num_workers: 8
+  torch_threads: 8

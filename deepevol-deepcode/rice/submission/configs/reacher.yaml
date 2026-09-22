@@ -1,0 +1,247 @@
+# =============================================================================
+# RICE configuration: Reacher-v2 (dense MuJoCo, negative-reward application)
+# -----------------------------------------------------------------------------
+# Merged on top of configs/default.yaml by rice.utils.io.get_config("reacher").
+#
+# Paper facts for this application ($C.2):
+#   * "Reacher is an engaging two-jointed robot arm game ... maneuver the robot's
+#      end effector ... towards a randomly spawned target."
+#   * Action space: torques at the hinge joints (2-D continuous).
+#   * Observation: cos/sin of the two arm angles, target coordinates, angular
+#     velocities of the arms and the vector between target and fingertip (11-D).
+#   * Reward: "reward distance" (proximity to target) + "reward control"
+#     (negative squared action norm); total reward is their sum.
+#   * Episode: "concludes either after 50 timesteps with a new random target or
+#     if any state space value becomes non-finite."
+#   * "there is no sparse reward implementation of Reacher-v2 in Mazoure et al.
+#      (2019)" -> no SparseReacher variant exists in this reproduction.
+#   * "We use 'Reacher-v2' in our experiments."
+# =============================================================================
+
+name: reacher
+
+seed: 0
+seeds: [0, 1, 2]                 # 3 seeds for the reported mean +- std (Sec. 4.2)
+device: cpu
+output_dir: results
+log_dir: logs
+save_dir: checkpoints
+results_dir: results
+verbose: true
+
+# -----------------------------------------------------------------------------
+# Environment
+# -----------------------------------------------------------------------------
+env:
+  id: reacher
+  gym_id: Reacher-v2             # exactly as stated in Appendix C.2
+  registered_id: null
+  app: mujoco
+  discrete_actions: false
+  normalize_obs: false           # App. C.2 normalizes observations only for
+                                 # Walker2d and HalfCheetah
+  sparse: false                  # no sparse-reward implementation for Reacher
+  sparse_threshold: null
+  max_episode_steps: 50          # episode ends after 50 timesteps (App. C.2)
+  d_max: 1.0                     # max single-episode reward used by fidelity:
+                                 # Reacher returns are negative (best ~0), so a
+                                 # small positive constant keeps log(d/d_max)
+                                 # finite and preserves the method ordering.
+                                 # (unspecified in the paper -> sensible default)
+  obs_dim: 11
+  action_dim: 2
+  negative_reward: true          # trend checks use signed improvement
+
+# -----------------------------------------------------------------------------
+# Stage 0: pre-trained (bottlenecked) target policy pi  -- frozen afterwards
+# -----------------------------------------------------------------------------
+target:
+  algo: ppo
+  policy: MlpPolicy              # SB3 default MlpPolicy (addendum "Architectures")
+  hidden_sizes: [64, 64]
+  activation: tanh
+  lr: 0.0003                     # SB3 defaults (paper silent) -> 3e-4
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_range: 0.2
+  n_epochs: 10
+  batch_size: 64
+  n_steps: 2048
+  total_timesteps: 1000000
+  checkpoint: policies/reacher_ppo.zip
+  expected_return: -5.51         # Table 1 "No Refine" (trend reference only)
+  expected_std: 1.12
+
+# -----------------------------------------------------------------------------
+# Stage 1: explanation -- mask network trained with Algorithm 1
+# (vanilla PPO + blinding bonus alpha * a_t^m)
+# -----------------------------------------------------------------------------
+explanation:
+  enabled: true
+  method: ours                   # ours | random | statemask | integrated_gradients | airs
+  hidden_sizes: [64, 64]
+  activation: tanh
+  alpha: 0.0001                  # Table 3 value; Sec. 4.3/C.3 prose says 0.01,
+                                 # alpha is treated as insensitive (Fig. 9)
+  alpha_sweep: [0.01, 0.001, 0.0001]
+  use_blinding_bonus: true
+  reward_mode: augmented         # R'_t = R(s_t, a_t) + alpha * a_t^m
+  total_timesteps: 300000        # Table 4 fixed sample budget
+  lr: 0.0003
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_range: 0.2
+  n_epochs: 10
+  batch_size: 64
+  K: 0.1                         # fidelity sliding-window fraction l = K * L
+  checkpoint: policies/reacher_mask.pt
+  expected_time_ours: null       # Table 4 lists Hopper / HalfCheetah / CAGE-2
+  expected_time_statemask: null
+
+# -----------------------------------------------------------------------------
+# Experiment I: fidelity evaluation (500 trajectories x 3 seeds)
+# -----------------------------------------------------------------------------
+fidelity:
+  K_values: [0.10, 0.20, 0.30, 0.40]
+  n_trajectories: 500
+  seeds: [0, 1, 2]
+  deterministic_policy: true
+  action_mode: random            # random actions inside the selected window
+  scoring: auto                  # auto -> mask when available else random
+  window_metric: mean            # highest AVERAGE importance window
+  max_tail_steps: 10
+  store_details: true
+
+# -----------------------------------------------------------------------------
+# Stage 2: refining -- Algorithm 2 (mixed init + RND-augmented PPO)
+# -----------------------------------------------------------------------------
+refine:
+  enabled: true
+  method: ours                   # ours | ppo_finetune | statemask_r | jsrl | sac | gail | sil
+  p: 0.5                         # beta of mu(s) = beta*d^pi(s) + (1-beta)*rho(s)
+  p_sweep: [0.0, 0.25, 0.5, 0.75, 1.0]
+  lam: 0.01                      # RND intrinsic-reward coefficient
+  lam_sweep: [0.0, 0.1, 0.01, 0.001]
+  use_mixed_init: true
+  use_rnd: true
+  K: null                        # null -> episode horizon T
+  copy_policy: true              # pi stays frozen, pi_theta is trained
+  total_timesteps: 200000
+  lr: 0.0003
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_range: 0.2
+  n_epochs: 10
+  batch_size: 64
+  n_steps: null                  # null -> episode horizon T
+  eval_episodes: 10
+  deterministic_eval: true
+  expected_return: null          # trend-only validation for this application
+  expected_std: null
+
+# -----------------------------------------------------------------------------
+# Random Network Distillation
+# -----------------------------------------------------------------------------
+rnd:
+  hidden_sizes: [64, 64]         # sizes unspecified in paper -> small MLP
+  activation: tanh
+  lr: 0.0001
+  lam: 0.01
+  normalize: true
+  normalization: running_std     # unspecified -> running std of prediction error
+  clip_bonus: null
+  update_epochs: 1
+  batch_size: 256
+  reward_scale: 1.0
+
+# -----------------------------------------------------------------------------
+# Baselines (Sec. 4.1 / Appendix C.1). All refining baselines share the SAME
+# explanation as RICE when an explanation is needed.
+# -----------------------------------------------------------------------------
+baselines:
+  random_explanation:
+    enabled: true
+    mode: uniform
+    seed: null
+  statemask:
+    enabled: true                # primal-dual formulation min|eta(pi)-eta(pi')|
+    alpha_init: 0.01
+    dual_lr: 0.0001
+    delta: 0.1
+    alpha_min: 0.0
+    alpha_max: 10.0
+    dual_mode: enforce
+    total_timesteps: 300000
+  integrated_gradients:
+    enabled: true
+    n_steps: 16
+    baseline: zero
+    target: action
+  airs:
+    enabled: true
+    hidden_sizes: [64, 64]
+    epochs: 20
+  ppo_finetune:
+    enabled: true
+    lr: 0.0001                   # "lowering the learning rate and continuing"
+    total_timesteps: 200000
+  jsrl:
+    enabled: true
+    total_timesteps: 200000
+  sac_finetune:
+    enabled: false               # Experiment IV is Hopper-only
+  gail:
+    enabled: false
+  sil:
+    enabled: true
+    total_timesteps: 200000
+
+# -----------------------------------------------------------------------------
+# Experiment drivers
+# -----------------------------------------------------------------------------
+experiments:
+  envs: [reacher]
+  dense_envs: [hopper, walker2d, reacher, halfcheetah, selfish_mining, cage2, autodriving]
+  app_envs: [selfish_mining, cage2, autodriving]
+  sparse_envs: [sparse_hopper, sparse_halfcheetah]
+  mujoco_envs: [hopper, walker2d, reacher, halfcheetah]
+  seeds: [0, 1, 2]
+
+  exp1_fidelity_efficiency:
+    enabled: true
+    envs: [reacher]
+    methods: [ours, statemask, random]
+    K_values: [0.10, 0.20, 0.30, 0.40]
+    n_trajectories: 500
+    seeds: [0, 1, 2]
+
+  exp2_refine_effectiveness:
+    enabled: true
+    envs: [reacher]
+    methods: [ours, ppo_finetune, statemask_r, jsrl]
+
+  exp3_explanation_quality:
+    enabled: true
+    envs: [reacher]
+    explanations: [random, statemask, ours]
+
+  exp4_sac_agent:
+    enabled: false               # Hopper-only experiment
+    envs: []
+
+  exp5_hyperparams:
+    enabled: true
+    envs: [reacher]
+    p_sweep: [0.0, 0.25, 0.5, 0.75, 1.0]
+    lam_sweep: [0.0, 0.1, 0.01, 0.001]
+    alpha_sweep: [0.01, 0.001, 0.0001]
+
+  optional:
+    sil_envs: [hopper, walker2d, reacher, halfcheetah]
+    extra_explanations: [integrated_gradients, airs]
+
+plot:
+  dpi: 150
+  format: pdf
+  figsize: [6, 4]
+  show: false

@@ -1,0 +1,48 @@
+/Users/apple/Documents/0919-test/codex/work/bam-codex-desktop/submission/src/bam/bam.py:103: RuntimeWarning: invalid value encountered in subtract
+  Gc = G - gbar
+/Users/apple/Documents/0919-test/codex/work/bam-codex-desktop/submission/src/bam/bam.py:105: RuntimeWarning: overflow encountered in matmul
+  Gamma = (Gc.T @ Gc) / B
+/Users/apple/Library/Python/3.9/lib/python/site-packages/numpy/core/numeric.py:925: RuntimeWarning: overflow encountered in multiply
+  return multiply(a.ravel()[:, newaxis], b.ravel()[newaxis, :], out)
+/Users/apple/Documents/0919-test/codex/work/bam-codex-desktop/submission/src/bam/linalg.py:126: RuntimeWarning: invalid value encountered in subtract
+  centered = np.asarray(batch, dtype=np.float64) - np.asarray(gbar, dtype=np.float64)
+/Users/apple/Documents/0919-test/codex/work/bam-codex-desktop/submission/src/bam/linalg.py:99: RuntimeWarning: invalid value encountered in matmul
+  VQ = V @ Q
+gp_pois_regr             BaM (B=8)        rel_mean  FAILED: LinAlgError: Eigenvalues did not converge
+gp_pois_regr             BaM (B=32)       rel_mean  final=4.997 (14.6s)
+gp_pois_regr             ADVI (B=8)       rel_mean  final=86.21 (10.0s)
+gp_pois_regr             GSM (B=8)        rel_mean  FAILED: LinAlgError: Eigenvalues did not converge
+gp_pois_regr             ADVI (B=32)      rel_mean  final=86.51 (15.3s)
+gp_pois_regr             GSM (B=32)       rel_mean  FAILED: LinAlgError: Eigenvalues did not converge
+/Users/apple/Documents/0919-test/codex/work/bam-codex-desktop/submission/src/bam/bam.py:103: RuntimeWarning: invalid value encountered in subtract
+  Gc = G - gbar
+/Users/apple/Documents/0919-test/codex/work/bam-codex-desktop/submission/src/bam/bam.py:105: RuntimeWarning: overflow encountered in matmul
+  Gamma = (Gc.T @ Gc) / B
+/Users/apple/Library/Python/3.9/lib/python/site-packages/numpy/core/numeric.py:925: RuntimeWarning: overflow encountered in multiply
+  return multiply(a.ravel()[:, newaxis], b.ravel()[newaxis, :], out)
+/Users/apple/Documents/0919-test/codex/work/bam-codex-desktop/submission/src/bam/linalg.py:126: RuntimeWarning: invalid value encountered in subtract
+  centered = np.asarray(batch, dtype=np.float64) - np.asarray(gbar, dtype=np.float64)
+/Users/apple/Documents/0919-test/codex/work/bam-codex-desktop/submission/src/bam/linalg.py:99: RuntimeWarning: invalid value encountered in matmul
+  VQ = V @ Q
+  saved /tmp/pdbs_sqrt/posteriordb_gp_pois_regr_rel_mean.png
+gp_pois_regr             BaM (B=8)        rel_sd    FAILED: LinAlgError: Eigenvalues did not converge
+gp_pois_regr             BaM (B=32)       rel_sd    final=0.7706 (12.2s)
+gp_pois_regr             ADVI (B=8)       rel_sd    final=15.38 (9.5s)
+gp_pois_regr             GSM (B=8)        rel_sd    FAILED: LinAlgError: Eigenvalues did not converge
+gp_pois_regr             ADVI (B=32)      rel_sd    final=15.09 (15.6s)
+gp_pois_regr             GSM (B=32)       rel_sd    FAILED: LinAlgError: Eigenvalues did not converge
+  saved /tmp/pdbs_sqrt/posteriordb_gp_pois_regr_rel_sd.png
+eight_schools_centered   BaM (B=8)        rel_mean  final=1.104e+05 (5.5s)
+eight_schools_centered   BaM (B=32)       rel_mean  final=1.229 (2.1s)
+eight_schools_centered   ADVI (B=8)       rel_mean  final=3.218 (5.5s)
+eight_schools_centered   GSM (B=8)        rel_mean  final=0.9367 (6.3s)
+eight_schools_centered   ADVI (B=32)      rel_mean  final=3.221 (4.1s)
+eight_schools_centered   GSM (B=32)       rel_mean  final=1.831 (3.7s)
+  saved /tmp/pdbs_sqrt/posteriordb_eight_schools_centered_rel_mean.png
+eight_schools_centered   BaM (B=8)        rel_sd    final=32.77 (5.5s)
+eight_schools_centered   BaM (B=32)       rel_sd    final=1.417 (1.9s)
+eight_schools_centered   ADVI (B=8)       rel_sd    final=2.573 (5.9s)
+eight_schools_centered   GSM (B=8)        rel_sd    final=0.8519 (6.3s)
+eight_schools_centered   ADVI (B=32)      rel_sd    final=2.602 (3.5s)
+eight_schools_centered   GSM (B=32)       rel_sd    final=0.7249 (3.5s)
+  saved /tmp/pdbs_sqrt/posteriordb_eight_schools_centered_rel_sd.png

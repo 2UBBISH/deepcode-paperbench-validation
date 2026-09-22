@@ -1,0 +1,211 @@
+# SMM -- Target-task dataset registry
+#
+# Table 6 of the paper (Appendix C) describes the 11 target datasets used for the
+# main results (Tables 1 and 2) plus StanfordCars, which is only used for the
+# failure-case study of Appendix D.4 / Table 12.
+#
+#   dataset      original size   train      test    classes
+#   ---------------------------------------------------------
+#   CIFAR10           32x32      50000     10000       10
+#   CIFAR100          32x32      50000     10000      100
+#   SVHN              32x32      73257     26032       10
+#   GTSRB             32x32      39209     12630       43
+#   Flowers102       128x128      1020      6149      102
+#   DTD              128x128      1880      1880       47
+#   UCF101           128x128      9537      3783      101
+#   Food101          128x128     50500     30300      101
+#   SUN397           128x128     39700     19850      397
+#   EuroSAT          128x128     13500      8100       10
+#   OxfordPets       128x128      1836      3669       37
+#   StanfordCars     128x128      8144      8041      196
+#
+# All images are converted to RGB and resized to the pre-trained backbone input
+# resolution (224x224 for ResNet-18/ResNet-50, 384x384 for ViT-B/32).
+
+datasets:
+
+  cifar10:
+    num_classes: 10
+    original_size: 32
+    torchvision: torchvision.datasets.CIFAR10
+    split_policy: native
+    reference_train_size: 50000
+    reference_test_size: 10000
+    display_name: CIFAR10
+    domain: natural
+
+  cifar100:
+    num_classes: 100
+    original_size: 32
+    torchvision: torchvision.datasets.CIFAR100
+    split_policy: native
+    reference_train_size: 50000
+    reference_test_size: 10000
+    display_name: CIFAR100
+    domain: natural
+
+  svhn:
+    num_classes: 10
+    original_size: 32
+    torchvision: torchvision.datasets.SVHN
+    split_policy: native
+    reference_train_size: 73257
+    reference_test_size: 26032
+    display_name: SVHN
+    domain: natural
+
+  gtsrb:
+    num_classes: 43
+    original_size: 32
+    torchvision: torchvision.datasets.GTSRB
+    split_policy: native
+    reference_train_size: 39209
+    reference_test_size: 12630
+    display_name: GTSRB
+    domain: natural
+
+  flowers102:
+    num_classes: 102
+    original_size: 128
+    torchvision: torchvision.datasets.Flowers102
+    split_policy: ratio
+    train_ratio: 1020
+    reference_train_size: 1020
+    reference_test_size: 6149
+    display_name: Flowers102
+    domain: natural
+
+  dtd:
+    num_classes: 47
+    original_size: 128
+    torchvision: torchvision.datasets.DTD
+    split_policy: ratio
+    train_ratio: 0.5
+    batch_size: 64           # Table 9
+    reference_train_size: 1880
+    reference_test_size: 1880
+    display_name: DTD
+    domain: textures
+
+  ucf101:
+    num_classes: 101
+    original_size: 128
+    torchvision: torchvision.datasets.UCF101
+    split_policy: native
+    reference_train_size: 9537
+    reference_test_size: 3783
+    display_name: UCF101
+    domain: videos
+
+  food101:
+    num_classes: 101
+    original_size: 128
+    torchvision: torchvision.datasets.Food101
+    split_policy: native
+    reference_train_size: 50500
+    reference_test_size: 30300
+    display_name: Food101
+    domain: natural
+
+  sun397:
+    num_classes: 397
+    original_size: 128
+    torchvision: torchvision.datasets.SUN397
+    split_policy: ratio
+    train_ratio: 0.4
+    reference_train_size: 39700
+    reference_test_size: 19850
+    display_name: SUN397
+    domain: scenes
+
+  eurosat:
+    num_classes: 10
+    original_size: 128
+    torchvision: torchvision.datasets.EuroSAT
+    split_policy: ratio
+    train_ratio: 0.625
+    reference_train_size: 13500
+    reference_test_size: 8100
+    display_name: EuroSAT
+    domain: satellite
+
+  oxfordpets:
+    num_classes: 37
+    original_size: 128
+    torchvision: torchvision.datasets.OxfordIIITPet
+    split_policy: ratio
+    train_ratio: 0.5
+    batch_size: 64           # Table 9
+    reference_train_size: 1836
+    reference_test_size: 3669
+    display_name: OxfordPets
+    domain: fine-grained
+
+  # Only used for the Appendix D.4 failure-case study (Table 12).
+  stanfordcars:
+    num_classes: 196
+    original_size: 128
+    torchvision: torchvision.datasets.StanfordCars
+    split_policy: native
+    reference_train_size: 8144
+    reference_test_size: 8041
+    display_name: StanfordCars
+    domain: fine-grained
+    extra: true
+
+# ---------------------------------------------------------------------------
+# Ordering used when rendering the paper tables (Tables 1, 2, 3, 10, 11).
+# ---------------------------------------------------------------------------
+dataset_order:
+  - cifar10
+  - cifar100
+  - svhn
+  - gtsrb
+  - flowers102
+  - dtd
+  - ucf101
+  - food101
+  - sun397
+  - eurosat
+  - oxfordpets
+
+main_datasets:
+  - cifar10
+  - cifar100
+  - svhn
+  - gtsrb
+  - flowers102
+  - dtd
+  - ucf101
+  - food101
+  - sun397
+  - eurosat
+  - oxfordpets
+
+extra_datasets:
+  - stanfordcars
+
+# Table 9: batch size is 256 everywhere except DTD and OxfordPets (64).
+batch_sizes:
+  default: 256
+  dtd: 64
+  oxfordpets: 64
+
+# Native torchvision splits are used where the dataset ships an official
+# train/test partition; the remaining datasets use a deterministic,
+# class-balanced split that approximates the Table 6 counts.
+split_policy:
+  native:
+    - cifar10
+    - cifar100
+    - svhn
+    - gtsrb
+    - ucf101
+    - food101
+    - stanfordcars
+  ratio:
+    - flowers102
+    - dtd
+    - sun397
+    - eurosat
+    - oxfordpets

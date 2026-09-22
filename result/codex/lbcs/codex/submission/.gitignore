@@ -1,0 +1,19 @@
+# datasets and results are never committed
+data/
+results/
+*.pt
+*.pth
+*.tar.gz
+
+# python
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+
+# environments
+.venv/
+venv/
+env/
+
+# macOS
+.DS_Store

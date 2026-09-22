@@ -1,0 +1,45 @@
+{
+  "name": "eight_schools_centered",
+  "params": [
+    "theta[1]",
+    "theta[2]",
+    "theta[3]",
+    "theta[4]",
+    "theta[5]",
+    "theta[6]",
+    "theta[7]",
+    "theta[8]",
+    "mu",
+    "tau"
+  ],
+  "dim": 10,
+  "n_draws": 10000,
+  "mean": [
+    6.150511741638184,
+    4.939581394195557,
+    3.905912399291992,
+    4.7960076332092285,
+    3.614445209503174,
+    4.051152229309082,
+    6.31716775894165,
+    4.88398551940918,
+    4.410529613494873,
+    3.602062940597534
+  ],
+  "sd": [
+    5.615870952606201,
+    4.645574569702148,
+    5.280711650848389,
+    4.770936012268066,
+    4.614717960357666,
+    4.796244144439697,
+    5.002853870391846,
+    5.317692756652832,
+    3.3092949390411377,
+    3.1984779834747314
+  ],
+  "source": {
+    "data": "https://raw.githubusercontent.com/stan-dev/posteriordb/master/posterior_database/data/data/eight_schools.json.zip",
+    "draws": "https://raw.githubusercontent.com/stan-dev/posteriordb/master/posterior_database/reference_posteriors/draws/draws/eight_schools-eight_schools_noncentered.json.zip"
+  }
+}

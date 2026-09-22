@@ -1,0 +1,21 @@
+# Core
+torch>=1.13
+torchvision>=0.14
+timm>=0.9
+numpy>=1.21
+
+# CMA-ES: the paper uses https://github.com/CyberAgentAILab/cmaes
+# (a pure NumPy fallback implementation is included in foa/core/cma.py)
+cmaes>=0.9
+
+# Data
+datasets>=2.14
+huggingface_hub>=0.20
+Pillow>=9.0
+
+# Utilities
+tqdm>=4.60
+pyyaml>=6.0
+
+# Tests
+pytest>=7.0

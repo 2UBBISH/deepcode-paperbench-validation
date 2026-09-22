@@ -1,0 +1,205 @@
+# =============================================================================
+# FOA on Quantized ViT-Base models (PTQ4ViT), ImageNet-C severity level 5
+# Reproduces Table 4 (accuracy / average ECE) and Table 17 (per-corruption ECE)
+# of "Test-Time Model Adaptation with Only Forward Passes".
+#
+# Paper sources:
+#   Section 4.2      : FOA applied to quantized ViT; FOA (8-bit) 63.5% beats
+#                      TENT (32-bit) 59.6% on ImageNet-C.
+#   Appendix B.2     : "We adopt PTQ4ViT (Yuan et al., 2022) for 8-bit and 6-bit
+#                      model quantization with 32 randomly selected samples from
+#                      the training set."  All other FOA hyperparameters
+#                      (N_p=3 uniform init, K=28, BS=64, lambda=0.4*BS/64,
+#                      alpha=0.1, gamma=1.0, source stats Q=32) are unchanged.
+#   Appendix D       : Table 4  -> 8-bit FOA 63.5% acc / 3.8% ECE,
+#                                 6-bit FOA 55.8% acc / 5.5% ECE.
+#                      Table 17 -> per-corruption ECE (see reference block below).
+#
+# The FOA loop itself is UNCHANGED: only forward passes are ever performed and
+# the model weights are never updated, so no backward propagation is required.
+# =============================================================================
+
+experiment:
+  name: foa_quantized
+  description: >-
+    FOA (forward-only test-time adaptation) on 8-bit and 6-bit PTQ4ViT-quantized
+    ViT-Base, ImageNet-C severity level 5, batch size 64. Reproduces Table 4 and
+    Table 17 of the paper.
+
+seed: 0
+output_dir: ./outputs/quantized
+
+# -----------------------------------------------------------------------------
+# Frozen, quantized backbone
+# -----------------------------------------------------------------------------
+model:
+  name: vit_base_patch16_224
+  # null -> falls back to vit_loader.FOA_CHECKPOINT_URL, i.e. the timm augreg
+  # checkpoint
+  # https://storage.googleapis.com/vit_models/augreg/B_16-i21k-300ep-lr_0.001-aug_medium1-wd_0.1-do_0.0-sd_0.0-imagenet2012-steps_20k-lr_0.01-res_224.npz
+  checkpoint: null
+  pretrained: true
+  num_classes: 1000
+  # 32-bit float master weights; the quantization bit-width is set in the
+  # `quantization` block below (8 or 6).
+  precision: 32
+  device: cuda
+
+# -----------------------------------------------------------------------------
+# PTQ4ViT post-training quantization (Section 4.2, Appendix B.2)
+# -----------------------------------------------------------------------------
+quantization:
+  enabled: true
+  # PTQ4ViT: https://github.com/hahnyuan/PTQ4ViT
+  backend: ptq4vit
+  repo_url: https://github.com/hahnyuan/PTQ4ViT
+  # Both bit-widths are evaluated (Table 4 rows: "8-bit" and "6-bit").
+  bits: 8              # primary; also run with 6
+  bit_widths: [8, 6]   # CLI default for scripts/run_quantized.py / sensitivity
+  weight_bits: null    # null -> same as `bits`
+  activation_bits: null
+  quantization_scheme: uniform
+  symmetric_weights: false      # per-channel asymmetric weights (PTQ4ViT)
+  symmetric_activations: false
+  per_channel_weights: true
+  dynamic_activations: false    # static scales from calibration data
+  scale_search: true            # PTQ4ViT twin-uniform min-MSE clipping search
+  num_candidates: 100           # candidate clip points for the scale search
+  quantize_attention: true      # logits / softmax probs / context quantization
+  quantize_patch_embed: false
+  quantize_head: false          # classification head stays in full precision
+  exclude_prefixes: ["head"]
+  # 32 randomly selected ImageNet-1K training samples used for calibration.
+  calibration_samples: 32
+  calibration_split: train
+  calibration_seed: 0
+  cache_per_layer: 32768
+
+# -----------------------------------------------------------------------------
+# Learnable input prompt (unchanged from the full-precision configuration)
+# -----------------------------------------------------------------------------
+prompt:
+  num_prompts: 3        # N_p = 3, uniform initialization (Appendix B.2)
+  init: uniform
+  init_range: 0.01      # documented default: paper only says "uniform"
+
+# -----------------------------------------------------------------------------
+# CMA-ES optimizer (Eqn. 6 / Algorithm 1)
+# -----------------------------------------------------------------------------
+cma:
+  population_size: 28   # K = 4 + 3*log(prompt dim) = 4 + 3*ln(2304) (Hansen 2016)
+  sigma0: 1.0           # tau^(0)
+  mean0: 0.0            # m^(0)
+  cov0: 1.0             # Sigma^(0) = I
+  seed: 0
+
+# -----------------------------------------------------------------------------
+# Unsupervised fitness, Eqn. (5): entropy + lambda * activation discrepancy
+# -----------------------------------------------------------------------------
+fitness:
+  use_entropy: true
+  use_discrepancy: true
+  # lambda = 0.4 * BS/64 on ImageNet-C / V2 / Sketch (Appendix B.2)
+  lambda_base: 0.4
+  lambda_scale_with_bs: true
+  beta: 1.0             # batch statistics used directly (Table 15: beta=1.0)
+  layer_start: 1        # Eqn. (5) sums over layers i = 1..N
+  entropy_reduction: sum
+  discrepancy_reduction: sum
+
+# -----------------------------------------------------------------------------
+# Back-to-source activation shifting (Eqn. 7-9)
+# -----------------------------------------------------------------------------
+shifting:
+  enabled: true
+  gamma: 1.0            # step size, Eqn. (7)
+  alpha: 0.1            # moving-average factor, Eqn. (9)
+
+# -----------------------------------------------------------------------------
+# Data stream: ImageNet-C, severity 5, ordered single-pass online TTA stream
+# -----------------------------------------------------------------------------
+data:
+  dataset: imagenet-c
+  root: ./data
+  severity: 5
+  corruption: gaussian_noise
+  corruptions:
+    - gaussian_noise
+    - shot_noise
+    - impulse_noise
+    - defocus_blur
+    - glass_blur
+    - motion_blur
+    - zoom_blur
+    - snow
+    - frost
+    - fog
+    - brightness
+    - contrast
+    - elastic_transform
+    - pixelate
+    - jpeg_compression
+  batch_size: 64
+  num_workers: 4
+  shuffle: false        # Algorithm 1 consumes one ordered pass, never reshuffled
+  image_size: 224
+  subset: null
+
+# -----------------------------------------------------------------------------
+# Source in-distribution statistics {mu_i^S, sigma_i^S}_{i=0..N}
+# Computed WITHOUT the newly inserted prompt (Appendix B.2), Q = 32 samples.
+# -----------------------------------------------------------------------------
+source_stats:
+  path: ./checkpoints/source_stats_vit_base.pt
+  num_samples: 32
+  seed: 0
+  id_root: ./data
+
+# -----------------------------------------------------------------------------
+# Evaluation: accuracy (%) and ECE (%) with 15 equal-width bins
+# -----------------------------------------------------------------------------
+eval:
+  ece_bins: 15
+  report_per_corruption: true
+  report_mean_over_corruptions: true
+
+# -----------------------------------------------------------------------------
+# Paper reference values (Appendix Table 4 and Table 17)
+# -----------------------------------------------------------------------------
+reference:
+  table4:
+    8bit:
+      foa:     {accuracy: 63.5, ece: 3.8}
+      noadapt: {accuracy: null, ece: 10.8}
+      t3a:     {accuracy: null, ece: 25.9}
+    6bit:
+      foa:     {accuracy: 55.8, ece: 5.5}
+      noadapt: {accuracy: null, ece: 9.9}
+      t3a:     {accuracy: null, ece: 30.1}
+    # headline claim to verify: FOA on 8-bit (63.5%) > TENT on 32-bit (59.6%)
+    full_precision_tent_accuracy: 59.6
+  table17:
+    corruptions:
+      - gaussian_noise
+      - shot_noise
+      - impulse_noise
+      - defocus_blur
+      - glass_blur
+      - motion_blur
+      - zoom_blur
+      - snow
+      - frost
+      - fog
+      - brightness
+      - contrast
+      - elastic_transform
+      - pixelate
+      - jpeg_compression
+    8bit:
+      noadapt: [8.3, 5.7, 7.5, 7.9, 4.9, 3.0, 4.4, 5.5, 20.7, 50.0, 10.4, 14.1, 5.2, 6.2, 8.3]
+      t3a:     [30.0, 26.0, 25.7, 28.7, 41.9, 31.2, 40.1, 27.2, 21.6, 9.6, 15.8, 5.7, 40.7, 23.1, 21.0]
+      foa:     [2.8, 3.4, 2.9, 3.5, 3.5, 3.1, 4.3, 3.6, 3.9, 5.6, 3.9, 5.0, 3.6, 3.9, 3.1]
+    6bit:
+      noadapt: [10.1, 7.0, 10.5, 5.8, 4.2, 4.2, 4.5, 2.8, 18.0, 32.5, 12.4, 17.3, 4.2, 6.6, 7.8]
+      t3a:     [31.3, 27.3, 26.2, 43.2, 50.4, 35.6, 49.3, 33.9, 22.8, 14.6, 16.9, 7.7, 44.2, 26.6, 22.2]
+      foa:     [5.6, 4.9, 6.7, 3.1, 2.4, 5.0, 3.5, 6.6, 7.1, 7.0, 6.0, 7.7, 3.3, 5.8, 7.7]

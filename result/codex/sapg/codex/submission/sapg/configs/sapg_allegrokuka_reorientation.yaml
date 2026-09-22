@@ -1,0 +1,8 @@
+# SAPG on Reorientation (best entropy coefficient sigma = 0.005).
+defaults: [allegrokuka.yaml]
+env:
+  name: reorientation
+algo:
+  name: sapg
+  entropy_coef: 0.005
+  aggregation: leader_follower

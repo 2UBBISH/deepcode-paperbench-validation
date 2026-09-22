@@ -1,0 +1,12 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+runs/
+eval/
+third_party/
+*.pt
+*.npz
+*.hdf5
+.DS_Store

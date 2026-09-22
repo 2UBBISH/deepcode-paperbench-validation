@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+*.pt
+*.zip
+*.pkl
+checkpoints/
+results/
+figures/
+logs/
+tensorboard/
+.ipynb_checkpoints/

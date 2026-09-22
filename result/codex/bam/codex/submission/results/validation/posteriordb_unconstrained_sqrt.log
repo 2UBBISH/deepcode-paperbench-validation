@@ -1,0 +1,28 @@
+arK                      BaM (B=8)        rel_mean  final=0.1033 (6.5s)
+arK                      BaM (B=32)       rel_mean  final=0.07321 (3.1s)
+arK                      ADVI (B=8)       rel_mean  final=39.28 (6.7s)
+arK                      GSM (B=8)        rel_mean  final=0.1247 (6.6s)
+arK                      ADVI (B=32)      rel_mean  final=166.5 (4.4s)
+arK                      GSM (B=32)       rel_mean  final=0.124 (4.6s)
+  saved /tmp/pdbs_unc_sqrt/posteriordb_arK_rel_mean.png
+arK                      BaM (B=8)        rel_sd    final=0.0508 (6.0s)
+arK                      BaM (B=32)       rel_sd    final=0.06278 (2.3s)
+arK                      ADVI (B=8)       rel_sd    final=32.71 (6.3s)
+arK                      GSM (B=8)        rel_sd    final=0.02361 (6.7s)
+arK                      ADVI (B=32)      rel_sd    final=132.3 (4.5s)
+arK                      GSM (B=32)       rel_sd    final=0.02859 (4.4s)
+  saved /tmp/pdbs_unc_sqrt/posteriordb_arK_rel_sd.png
+eight_schools_centered   BaM (B=8)        rel_mean  final=0.7719 (6.3s)
+eight_schools_centered   BaM (B=32)       rel_mean  final=0.4929 (2.5s)
+eight_schools_centered   ADVI (B=8)       rel_mean  final=2.985 (6.1s)
+eight_schools_centered   GSM (B=8)        rel_mean  final=0.197 (6.2s)
+eight_schools_centered   ADVI (B=32)      rel_mean  final=3.049 (3.7s)
+eight_schools_centered   GSM (B=32)       rel_mean  final=0.35 (3.7s)
+  saved /tmp/pdbs_unc_sqrt/posteriordb_eight_schools_centered_rel_mean.png
+eight_schools_centered   BaM (B=8)        rel_sd    final=1.183 (5.6s)
+eight_schools_centered   BaM (B=32)       rel_sd    final=1.084 (2.1s)
+eight_schools_centered   ADVI (B=8)       rel_sd    final=2.25 (5.6s)
+eight_schools_centered   GSM (B=8)        rel_sd    final=0.7526 (6.1s)
+eight_schools_centered   ADVI (B=32)      rel_sd    final=2.471 (3.6s)
+eight_schools_centered   GSM (B=32)       rel_sd    final=0.8215 (3.7s)
+  saved /tmp/pdbs_unc_sqrt/posteriordb_eight_schools_centered_rel_sd.png

@@ -1,0 +1,156 @@
+# ============================================================================
+# Task registry (glue).
+#   - 36 P3-train tasks  -> D_PT   (Addendum / Section 4.1)
+#   -  8 P3-test  tasks  -> BART0 D_R  (Addendum, INK-USC/ReCross data/)
+#   - MMLU (57 validation tasks) -> FLAN-T5 D_R  (Clarifications)
+#   - ID / OOD partition of P3-Test (Appendix B)
+# ============================================================================
+
+# --- D_PT: intersection of T0-Train tasks and the BART0 (ReCross) tasks -----
+pt_tasks:
+  forward_tasks:
+    - glue-mrpc
+    - glue-qqp
+    - paws_x-en
+    - kilt_tasks-hotpotqa
+    - wiki_qa
+    - adversarial_qa-dbert
+    - adversarial_qa-dbidaf
+    - adversarial_qa-droberta
+    - duorc-SelfRC
+    - duorc-ParaphraseRC
+    - ropes
+    - quoref
+    - cos_e-v1.11
+    - cosmos_qa
+    - dream
+    - qasc
+    - quail
+    - quartz
+    - sciq
+    - social_i_qa
+    - wiki_hop-original
+    - wiqa
+  classification_tasks:
+    - amazon_polarity
+    - app_reviews
+    - imdb
+    - rotten_tomatoes
+    - yelp_review_full
+    - common_gen
+    - wiki_bio
+    - cnn_dailymail-3.0.0
+    - gigaword
+    - multi_news
+    - samsum
+    - xsum
+    - ag_news
+    - dbpedia_14
+
+# --- D_R for BART0: test split of P3 (8 tasks, ReCross data repo) ----------
+bart0_r_tasks:
+  - super_glue-wsc.fixed
+  - winogrande-winogrande_xl
+  - super_glue-cb
+  - super_glue-rte
+  - anli
+  - super_glue-copa
+  - hellaswag
+  - super_glue-wic
+
+# --- D_R for FLAN-T5: MMLU validation split (57 tasks) ---------------------
+mmlu_tasks:
+  - abstract_algebra
+  - anatomy
+  - astronomy
+  - business_ethics
+  - clinical_knowledge
+  - college_biology
+  - college_chemistry
+  - college_computer_science
+  - college_mathematics
+  - college_medicine
+  - college_physics
+  - computer_security
+  - conceptual_physics
+  - econometrics
+  - electrical_engineering
+  - elementary_mathematics
+  - formal_logic
+  - global_facts
+  - high_school_biology
+  - high_school_chemistry
+  - high_school_computer_science
+  - high_school_european_history
+  - high_school_geography
+  - high_school_government_and_politics
+  - high_school_macroeconomics
+  - high_school_mathematics
+  - high_school_microeconomics
+  - high_school_physics
+  - high_school_psychology
+  - high_school_statistics
+  - high_school_us_history
+  - high_school_world_history
+  - human_aging
+  - human_sexuality
+  - international_law
+  - jurisprudence
+  - logical_fallacies
+  - machine_learning
+  - management
+  - marketing
+  - medical_genetics
+  - miscellaneous
+  - moral_disputes
+  - moral_scenarios
+  - nutrition
+  - philosophy
+  - prehistory
+  - professional_accounting
+  - professional_law
+  - professional_medicine
+  - professional_psychology
+  - public_relations
+  - security_studies
+  - sociology
+  - us_foreign_policy
+  - virology
+  - world_religions
+
+mmlu_answer_choices: ["A", "B", "C", "D"]
+
+# --- ID / OOD split of P3-Test (Appendix B) -------------------------------
+# Appendix B: ID = {SuperGlue-Cb, SuperGlue-RTE, SuperGlue-wsc.fixed,
+#                   SuperGlue-Copa, SuperGlue-wic}
+#               OOD = {storycloze, hellaswag, anli, winogrande-xl}
+# NOTE: the Clarifications list "anli" among D_R tasks; Appendix B assigns
+#       "anli" to the out-of-domain split -> we follow Appendix B for OOD.
+id_tasks:
+  - super_glue-cb
+  - super_glue-rte
+  - super_glue-wsc.fixed
+  - super_glue-copa
+  - super_glue-wic
+ood_tasks:
+  - storycloze
+  - hellaswag
+  - anli
+  - winogrande-winogrande_xl
+
+# ---------------------------------------------------------------------------
+# PromptSource template hints: prefer the *_score_eval / eval variants where
+# available. If a task name has no template in the installed promptsource
+# revision, the loader falls back to the first available template.
+# ---------------------------------------------------------------------------
+prefer_template_substrings:
+  - "score_eval"
+  - "eval"
+
+# P3 splits per task family (used only when the aggregation script needs to
+# know which config/split pair to request).
+task_splits:
+  forward: train
+  classification: train
+  bart0_r: test
+  mmlu: validation

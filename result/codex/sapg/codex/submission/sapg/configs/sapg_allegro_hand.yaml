@@ -1,0 +1,13 @@
+# SAPG on the AllegroHand in-hand reorientation task (sigma = 0).
+defaults: [inhand.yaml]
+env:
+  name: allegro_hand
+model:
+  actor:
+    units: [512, 256, 128]       # Table 4
+  critic:
+    units: [512, 256, 128]
+algo:
+  name: sapg
+  entropy_coef: 0.0
+  clip_epsilon: 0.2              # Table 4

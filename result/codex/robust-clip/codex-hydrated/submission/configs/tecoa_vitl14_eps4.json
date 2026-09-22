@@ -1,0 +1,22 @@
+{
+  "method": "tecoa",
+  "arch": "ViT-L-14",
+  "pretrained": "openai",
+  "image_size": 224,
+  "eps": "4/255",
+  "pgd_alpha": "1/255",
+  "pgd_steps": 10,
+  "pgd_momentum": 0.9,
+  "pgd_grad_norm": "elementwise_sign",
+  "pgd_random_init": true,
+  "epochs": 2,
+  "batch_size": 128,
+  "lr": 1e-05,
+  "weight_decay": 0.0001,
+  "beta1": 0.9,
+  "beta2": 0.95,
+  "warmup_frac": 0.07,
+  "lr_schedule": "cosine",
+  "imagenet_prompt": "A photo of a {}.",
+  "_comment": "TeCoA^4-CLIP baseline (Mao et al., 2023)"
+}

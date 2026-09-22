@@ -1,0 +1,474 @@
+# =============================================================================
+# Section 5.2 configuration overlay -- "Comparison with the Competitors"
+# (Table 2 and Table 3 of the paper)
+# -----------------------------------------------------------------------------
+# This file is a *declarative overlay*: it deep-merges on top of
+# `configs/default.yaml` and only lists deltas / protocol values that the
+# Section 5.2 experiment driver (`lbcs_repro.experiments.table2_table3_compare`)
+# consumes.  Nothing here is algorithm code; changing a value here must be
+# enough to change the experiment without touching `lbcs/`, `baselines/`,
+# or `experiments/`.
+#
+# Provenance tags:
+#   # PAPER      -> value stated explicitly in the paper / appendix
+#   # SUGGESTED  -> reproduction default chosen because the paper is silent
+#                   (exposed here so it can be overridden without code edits)
+# =============================================================================
+
+inherit:
+  - default.yaml
+
+driver: lbcs_repro.experiments.table2_table3_compare
+entrypoint: run_table2_table3
+
+# ---------------------------------------------------------------------------
+# Runtime / IO
+# ---------------------------------------------------------------------------
+seed: 0                       # PAPER: "All experiments are repeated ten times" -> per-repeat seeds derived as seed+repeat*7919
+device: null                  # SUGGESTED: null -> auto-select cuda if available, else cpu
+num_workers: 0                # SUGGESTED
+data_root: null               # SUGGESTED: null -> torchvision default root (env LBCS_DATA_ROOT overrides)
+output_dir: results/table2_table3
+save_artifacts: true          # SUGGESTED
+plot: false                   # SUGGESTED: Table 2/3 are tables, not figures
+verbose: false
+
+logging:
+  level: INFO
+  log_every: 25               # SUGGESTED
+  to_file: true
+  file_name: table2_table3.log
+
+# ---------------------------------------------------------------------------
+# LBCS core (Algorithm 1) -- Section 5.2 protocol
+# ---------------------------------------------------------------------------
+lbcs:
+  epsilon: 0.2                # PAPER: "The parameters epsilon and T are set to 0.2 and 500."
+  T: 500                      # PAPER
+  k: 1000                     # PAPER: first predefined coreset size of the sweep
+  delta_init: 0.1             # SUGGESTED (paper gives no number for delta_init)
+  delta_lower: 0.001          # SUGGESTED (paper gives no number for delta_lower)
+  warm_start: true            # SUGGESTED: Section 3.2 acceleration trick (i)
+  group_size: 1               # SUGGESTED: no grouping -> full example-level search space
+  cache_evaluations: true     # SUGGESTED
+  cache_theta: false          # SUGGESTED
+  pretrain_random_masks: false  # SUGGESTED
+
+# ---------------------------------------------------------------------------
+# Inner loop (coreset selection) -- Section 5.2
+# ---------------------------------------------------------------------------
+inner:
+  optimizer: adam             # PAPER: "An Adam optimizer (Kingma & Ba, 2015) is used with a learning rate of 0.001 for the inner loop."
+  lr: 0.001                   # PAPER
+  momentum: 0.9               # SUGGESTED (unused by Adam; kept for parity with drivers)
+  weight_decay: 0.0           # SUGGESTED
+  epochs: 100                 # PAPER: inner loop trained "until convergence"; the paper trains 100 epochs elsewhere
+  batch_size: 128             # SUGGESTED
+  eval_batch_size: 256        # SUGGESTED
+  scheduler: null             # SUGGESTED
+
+# ---------------------------------------------------------------------------
+# Proxy (inner-loop) architectures -- Section 5.2
+#   "we employ a LeNet for F-MNIST and simple convolutional neural networks
+#    (CNNs) for SVHN and CIFAR-10."
+# ---------------------------------------------------------------------------
+proxy:
+  F-MNIST: LeNet              # PAPER (model family); exact widths -> Appendix D.2 Table 7 (SUGGESTED defaults in models/lenet.py)
+  SVHN: SVHNCNN               # PAPER (model family); widths SUGGESTED
+  CIFAR-10: CIFARCNN          # PAPER (model family); widths SUGGESTED
+
+# ---------------------------------------------------------------------------
+# Target (post-selection) training -- Section 5.2
+#   "we utilize a LeNet (LeCun et al., 1998) for F-MNIST, a CNN for SVHN, and
+#    a ResNet-18 network for CIFAR-10 respectively.  In addition, for F-MNIST
+#    and SVHN, an Adam optimizer is used with a learning rate of 0.001 and 100
+#    epochs.  For CIFAR-10, an SGD optimizer is exploited with an initial
+#    learning rate of 0.1 and a cosine rate scheduler.  200 epochs are set
+#    totally."
+# ---------------------------------------------------------------------------
+target:
+  F-MNIST:
+    architecture: LeNet       # PAPER
+    optimizer: adam           # PAPER
+    lr: 0.001                 # PAPER
+    epochs: 100               # PAPER
+    momentum: 0.9             # SUGGESTED
+    weight_decay: 0.0         # SUGGESTED
+    scheduler: null           # PAPER (none stated for F-MNIST)
+    batch_size: 128           # SUGGESTED
+  SVHN:
+    architecture: SVHNTargetCNN  # PAPER: "a CNN for SVHN" (family); widths SUGGESTED
+    optimizer: adam           # PAPER
+    lr: 0.001                 # PAPER
+    epochs: 100               # PAPER
+    momentum: 0.9             # SUGGESTED
+    weight_decay: 0.0         # SUGGESTED
+    scheduler: null           # PAPER (none stated for SVHN)
+    batch_size: 128           # SUGGESTED
+  CIFAR-10:
+    architecture: ResNet18    # PAPER
+    optimizer: sgd            # PAPER
+    lr: 0.1                   # PAPER: "initial learning rate of 0.1"
+    epochs: 200               # PAPER: "200 epochs are set totally"
+    momentum: 0.9             # PAPER: standard SGD momentum for ResNet (also used in Appendix C.3)
+    weight_decay: 0.0005      # SUGGESTED
+    scheduler: cosine         # PAPER: "a cosine rate scheduler"
+    batch_size: 128           # SUGGESTED
+
+# ---------------------------------------------------------------------------
+# Baseline suite -- Section 5.2 competitors (Appendix D.1 for technical detail)
+# ---------------------------------------------------------------------------
+baselines:
+  suite:                      # PAPER: the seven competitors listed in Section 5.2
+    - Uniform                 # (i)
+    - EL2N                    # (ii)
+    - GraNd                   # (iii)
+    - Influential             # (iv)
+    - Moderate                # (v)
+    - CCS                     # (vi)
+    - Probabilistic           # (vii) Zhou et al. 2022
+  uniform:
+    stratified: false         # SUGGESTED: class-agnostic random subset
+  el2n:
+    reference_epochs: 100     # SUGGESTED: proxy trained before scoring
+    n_train_epochs: 1         # PAPER-ish: single-pass EL2N error vector
+    reduction: norm           # PAPER: "large norms of predicted-class-probability minus one-hot error vectors"
+    optimizer: adam           # SUGGESTED (matches Section 5.2 inner loop)
+    lr: 0.001                 # SUGGESTED (matches Section 5.2 inner loop)
+  grand:
+    reference_epochs: 100     # SUGGESTED
+    param_scope: last_layer   # PAPER-ish: "large loss-gradient norms during training"
+    reduction: norm           # PAPER
+    optimizer: adam           # SUGGESTED
+    lr: 0.001                 # SUGGESTED
+  influential:
+    reference_epochs: 100     # SUGGESTED
+    param_scope: last_layer   # SUGGESTED
+    hessian_approx: diag      # SUGGESTED: diagonal Fisher/Hessian approximation
+    damping: 0.01             # SUGGESTED
+    normalize: false          # SUGGESTED
+    lr: 0.001                 # SUGGESTED
+  moderate:
+    reference_epochs: 100     # SUGGESTED
+    metric: l2                # PAPER: "score is distance to class center"
+    median_mode: class        # PAPER-ish: select scores near the score median, per class
+    normalize_features: false # SUGGESTED
+    lr: 0.001                 # SUGGESTED
+  ccs:
+    reference_epochs: 100     # SUGGESTED
+    importance: l2            # SUGGESTED
+    alpha: 0.5                # SUGGESTED: balance coverage vs. importance
+    preserve_distribution: true  # PAPER-ish: "coverage-plus-importance" one-shot selection
+    normalize_features: true  # SUGGESTED
+    lr: 0.001                 # SUGGESTED
+  probabilistic:
+    lambda: 0.5               # PAPER: Zhou et al. 2022 weighted objective (Eq. (4) form)
+    outer_iters: 500          # SUGGESTED (paper states 1000 for Figure 1 only)
+    outer_lr: 2.5             # PAPER (Appendix C.3 outer Adam lr)
+    cosine: true              # PAPER (Appendix C.3 cosine schedule)
+    inner_optimizer: adam     # SUGGESTED (matches Section 5.2 inner loop)
+    inner_lr: 0.001           # SUGGESTED
+    inner_epochs: 100         # SUGGESTED
+
+# ---------------------------------------------------------------------------
+# Table 2 / Table 3 protocol
+# ---------------------------------------------------------------------------
+table2:
+  datasets: [F-MNIST, SVHN, CIFAR-10]   # PAPER
+  ks: [1000, 2000, 3000, 4000]          # PAPER: "various predefined coreset sizes"
+  epsilon: 0.2                          # PAPER
+  T: 500                                # PAPER
+  repeats: 10                           # PAPER: "All experiments are repeated ten times"
+  architecture:                         # proxy/target pairs from `proxy` / `target` above
+    F-MNIST: LeNet
+    SVHN: SVHNCNN
+    CIFAR-10: CIFARCNN
+  f1_eval_split: train                  # SUGGESTED: f1(m) evaluated on the full training split
+  track: [accuracy, coreset_size, accuracy_per_point, f1, f2]
+  table3: true                          # PAPER: second kind of comparison reuses LBCS-achieved sizes
+  per_point_table: true                 # PAPER: "average accuracy brought by per data point ... in Appendix E.1"
+
+# ---------------------------------------------------------------------------
+# Paper-reported reference values -- VALIDATION ONLY (never algorithm inputs)
+#   Table 2: same predefined size k for every method; "Coreset size (ours)" is
+#            the LBCS-optimized size.
+#   Table 3: the LBCS-achieved size applied to every baseline.
+#   Layout: method -> [mean, std]; LBCS sizes -> [mean, std].
+# ---------------------------------------------------------------------------
+paper_reference:
+  # ---------------- Table 2 ----------------
+  table2:
+    F-MNIST:
+      1000:
+        Uniform: [76.9, 2.5]
+        EL2N: [71.8, 2.9]
+        GraNd: [70.7, 4.0]
+        Influential: [78.9, 2.0]
+        Moderate: [77.0, 0.6]
+        CCS: [76.7, 3.5]
+        Probabilistic: [80.3, 0.6]
+        LBCS: [79.7, 0.7]
+        coreset_size: [956.7, 3.5]
+      2000:
+        Uniform: [80.0, 2.4]
+        EL2N: [73.7, 1.6]
+        GraNd: [71.7, 2.3]
+        Influential: [80.4, 0.8]
+        Moderate: [80.3, 0.4]
+        CCS: [81.4, 0.6]
+        Probabilistic: [82.6, 0.2]
+        LBCS: [82.8, 0.6]
+        coreset_size: [1915.3, 6.6]
+      3000:
+        Uniform: [81.7, 1.7]
+        EL2N: [75.3, 2.3]
+        GraNd: [73.3, 1.8]
+        Influential: [81.5, 1.2]
+        Moderate: [81.7, 0.5]
+        CCS: [82.6, 1.2]
+        Probabilistic: [83.7, 0.9]
+        LBCS: [84.0, 0.6]
+        coreset_size: [2831.6, 10.9]
+      4000:
+        Uniform: [83.0, 1.7]
+        EL2N: [77.0, 1.0]
+        GraNd: [75.9, 2.1]
+        Influential: [82.4, 1.3]
+        Moderate: [82.4, 0.3]
+        CCS: [84.1, 0.6]
+        Probabilistic: [84.2, 0.7]
+        LBCS: [84.5, 0.4]
+        coreset_size: [3745.4, 15.6]
+    SVHN:
+      1000:
+        Uniform: [67.1, 3.3]
+        EL2N: [56.8, 1.3]
+        GraNd: [60.7, 1.1]
+        Influential: [70.3, 0.8]
+        Moderate: [68.4, 2.0]
+        CCS: [66.9, 1.9]
+        Probabilistic: [67.8, 0.4]
+        LBCS: [70.6, 0.3]
+        coreset_size: [970.0, 4.8]
+      2000:
+        Uniform: [75.9, 1.0]
+        EL2N: [64.8, 0.6]
+        GraNd: [67.3, 2.0]
+        Influential: [76.2, 1.3]
+        Moderate: [77.9, 0.7]
+        CCS: [77.3, 0.8]
+        Probabilistic: [76.6, 1.3]
+        LBCS: [78.3, 0.7]
+        coreset_size: [1902.3, 10.3]
+      3000:
+        Uniform: [80.3, 1.2]
+        EL2N: [72.1, 2.8]
+        GraNd: [75.2, 1.6]
+        Influential: [80.8, 1.5]
+        Moderate: [81.8, 0.7]
+        CCS: [81.9, 0.6]
+        Probabilistic: [80.9, 1.1]
+        LBCS: [82.3, 0.7]
+        coreset_size: [2712.6, 15.0]
+      4000:
+        Uniform: [83.9, 0.8]
+        EL2N: [75.8, 1.9]
+        GraNd: [79.1, 2.4]
+        Influential: [83.6, 1.8]
+        Moderate: [83.9, 0.6]
+        CCS: [84.1, 0.3]
+        Probabilistic: [84.3, 1.4]
+        LBCS: [84.6, 0.6]
+        coreset_size: [3804.2, 16.4]
+    CIFAR-10:
+      1000:
+        Uniform: [46.9, 1.8]
+        EL2N: [36.8, 1.2]
+        GraNd: [41.6, 2.0]
+        Influential: [45.7, 1.1]
+        Moderate: [48.1, 2.2]
+        CCS: [47.6, 1.6]
+        Probabilistic: [48.2, 0.9]
+        LBCS: [48.3, 1.2]
+        coreset_size: [970.4, 2.9]
+      2000:
+        Uniform: [58.1, 2.0]
+        EL2N: [47.9, 0.7]
+        GraNd: [52.3, 2.4]
+        Influential: [57.7, 1.3]
+        Moderate: [58.5, 1.3]
+        CCS: [59.3, 1.4]
+        Probabilistic: [60.1, 0.8]
+        LBCS: [60.4, 1.0]
+        coreset_size: [1955.2, 5.3]
+      3000:
+        Uniform: [65.7, 2.3]
+        EL2N: [56.1, 1.9]
+        GraNd: [61.9, 1.7]
+        Influential: [67.5, 1.6]
+        Moderate: [69.2, 2.6]
+        CCS: [67.6, 1.6]
+        Probabilistic: [68.7, 1.1]
+        LBCS: [69.5, 0.9]
+        coreset_size: [2913.8, 9.6]
+      4000:
+        Uniform: [70.9, 2.5]
+        EL2N: [63.0, 2.0]
+        GraNd: [67.9, 1.3]
+        Influential: [71.7, 2.4]
+        Moderate: [73.9, 0.4]
+        CCS: [73.0, 0.9]
+        Probabilistic: [73.6, 0.2]
+        LBCS: [73.4, 0.5]
+        coreset_size: [3736.0, 14.2]
+
+  # ---------------- Table 3 ----------------
+  # Rows are the LBCS-achieved coreset sizes from Table 2.
+  table3:
+    F-MNIST:
+      956:
+        Uniform: [76.5, 1.8]
+        EL2N: [71.3, 3.1]
+        GraNd: [70.8, 1.1]
+        Influential: [78.2, 0.9]
+        Moderate: [76.3, 0.5]
+        CCS: [75.4, 1.1]
+        Probabilistic: [79.2, 0.9]
+        LBCS: [79.7, 0.5]
+      1935:
+        Uniform: [79.8, 2.1]
+        EL2N: [73.2, 1.3]
+        GraNd: [71.2, 1.5]
+        Influential: [80.0, 1.9]
+        Moderate: [79.7, 0.5]
+        CCS: [80.3, 0.6]
+        Probabilistic: [81.7, 0.7]
+        LBCS: [82.8, 0.4]
+      2832:
+        Uniform: [81.2, 1.3]
+        EL2N: [75.0, 1.6]
+        GraNd: [73.2, 1.1]
+        Influential: [81.0, 0.7]
+        Moderate: [81.4, 0.3]
+        CCS: [82.5, 0.7]
+        Probabilistic: [83.4, 0.6]
+        LBCS: [84.0, 0.4]
+      3746:
+        Uniform: [82.8, 1.5]
+        EL2N: [77.0, 2.2]
+        GraNd: [75.1, 1.6]
+        Influential: [82.1, 1.0]
+        Moderate: [82.2, 0.4]
+        CCS: [83.6, 1.0]
+        Probabilistic: [83.8, 0.5]
+        LBCS: [84.5, 0.3]
+    SVHN:
+      970:
+        Uniform: [66.7, 2.6]
+        EL2N: [57.2, 0.5]
+        GraNd: [60.6, 1.7]
+        Influential: [70.3, 1.2]
+        Moderate: [68.4, 1.8]
+        CCS: [65.1, 1.1]
+        Probabilistic: [67.6, 1.3]
+        LBCS: [70.6, 0.3]
+      1902:
+        Uniform: [75.7, 1.8]
+        EL2N: [65.0, 0.7]
+        GraNd: [67.0, 1.2]
+        Influential: [75.5, 0.9]
+        Moderate: [77.7, 1.2]
+        CCS: [75.9, 1.4]
+        Probabilistic: [76.1, 0.7]
+        LBCS: [78.3, 0.7]
+      2713:
+        Uniform: [79.5, 2.6]
+        EL2N: [72.3, 0.5]
+        GraNd: [74.8, 1.1]
+        Influential: [80.0, 1.9]
+        Moderate: [81.4, 1.1]
+        CCS: [81.1, 1.0]
+        Probabilistic: [80.5, 0.4]
+        LBCS: [82.3, 0.8]
+      3805:
+        Uniform: [83.6, 1.2]
+        EL2N: [75.5, 1.8]
+        GraNd: [78.2, 1.3]
+        Influential: [82.8, 1.6]
+        Moderate: [83.6, 0.6]
+        CCS: [84.2, 0.3]
+        Probabilistic: [83.5, 1.2]
+        LBCS: [84.6, 0.6]
+    CIFAR-10:
+      970:
+        Uniform: [46.8, 1.2]
+        EL2N: [36.7, 1.1]
+        GraNd: [41.4, 1.9]
+        Influential: [44.8, 1.5]
+        Moderate: [46.2, 1.9]
+        CCS: [45.4, 1.0]
+        Probabilistic: [47.8, 1.1]
+        LBCS: [48.3, 1.2]
+      1955:
+        Uniform: [58.0, 1.3]
+        EL2N: [48.3, 1.9]
+        GraNd: [52.5, 1.2]
+        Influential: [57.6, 1.9]
+        Moderate: [57.4, 0.8]
+        CCS: [58.6, 1.4]
+        Probabilistic: [59.4, 1.2]
+        LBCS: [60.4, 1.0]
+      2914:
+        Uniform: [65.5, 1.9]
+        EL2N: [55.0, 3.2]
+        GraNd: [67.7, 1.8]
+        Influential: [67.2, 1.0]
+        Moderate: [68.2, 2.1]
+        CCS: [66.5, 1.0]
+        Probabilistic: [68.0, 0.8]
+        LBCS: [69.5, 0.9]
+      3736:
+        Uniform: [70.6, 2.4]
+        EL2N: [58.8, 1.9]
+        GraNd: [72.8, 1.1]
+        Influential: [70.2, 3.5]
+        Moderate: [73.0, 1.2]
+        CCS: [72.8, 0.9]
+        Probabilistic: [73.4, 0.5]
+        LBCS: [73.4, 0.5]
+
+# ---------------------------------------------------------------------------
+# Qualitative claims checked by `direction_checks()` in the driver
+# ---------------------------------------------------------------------------
+expected_directions:
+  lbcs_size_below_k: true                       # PAPER: LBCS reports a coreset size smaller than the predefined k
+  lbcs_best_or_competitive_accuracy: true       # PAPER: "LBCS obtains the best accuracy ... most of the time"
+  lbcs_always_best_on_svhn: true                # PAPER: "for SVHN, our method always achieves the best test accuracy"
+  larger_k_higher_accuracy: true                # PAPER: accuracy increases with the predefined size
+  svhn_k1000_size: 970.0                        # PAPER: anchor (Table 2, SVHN, k=1000)
+  cifar10_k4000_size: 3736.0                    # PAPER: anchor (Table 2, CIFAR-10, k=4000)
+
+# ---------------------------------------------------------------------------
+# Fast CPU smoke-test overrides (`--smoke`)
+# ---------------------------------------------------------------------------
+smoke:
+  datasets: [F-MNIST]
+  ks: [200]
+  repeats: 1
+  T: 20
+  inner_epochs: 1
+  target_epochs: 1
+  batch_size: 64
+  eval_batch_size: 128
+  methods: [Uniform, Moderate, Probabilistic]
+  save_artifacts: false
+  plot: false
+  verbose: false
+
+# ---------------------------------------------------------------------------
+# Explicitly out-of-scope paper sections (never executed)
+# ---------------------------------------------------------------------------
+out_of_scope:
+  section5.4: "ImageNet-1k experiments are not reproduced"
+  appendix_e.5: "Continual learning experiments are not reproduced"
+  appendix_e.6: "Streaming / online settings are not reproduced"

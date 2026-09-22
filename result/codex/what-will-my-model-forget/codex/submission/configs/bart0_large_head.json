@@ -1,0 +1,26 @@
+{
+  "model": "bart0_large",
+  "refinement_data": "p3_test",
+  "tuning_mode": "head",
+  "seed": 0,
+  "data_root": "data",
+  "cache_root": "cache",
+  "output_root": "outputs",
+  "examples_per_upstream_task": 100,
+  "max_input_len": 512,
+  "max_target_len": 32,
+  "eval_batch_size": 16,
+  "stream_fraction": 0.125,
+  "device": "auto",
+  "steps_override": null,
+  "lr_override": null,
+  "hyperparameters": {
+    "steps_single_error": 100,
+    "lr_single_error": 0.001,
+    "lr_sequential": 0.0001,
+    "replay": {
+      "batch_size": 8,
+      "every_n_steps": 10
+    }
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "comment": "Hyper-parameters used in the reproduction. alpha/p/lambda follow Appendix C.3 of the paper (alpha=0.01 for every application, lambda=0.01 and p in {0.25, 0.5} are the best choices).",
+  "global": {
+    "alpha": 0.01,
+    "p_values": [0.0, 0.25, 0.5, 0.75, 1.0],
+    "lambda_values": [0.0, 0.1, 0.01, 0.001],
+    "alpha_values": [0.01, 0.001, 0.0001],
+    "fidelity_K": [0.1, 0.2, 0.3, 0.4],
+    "fidelity_trajectories": 500,
+    "refine_seeds": [0, 1, 2],
+    "mask_samples": {
+      "mujoco": 300000,
+      "selfish_mining": 1500000,
+      "cage": 10000000,
+      "auto_driving": 2443260,
+      "malware": 32349
+    },
+    "mask_training_seconds_reported_in_table4": {
+      "Hopper": {"StateMask": 15393, "Ours": 12426},
+      "Walker2d": {"StateMask": 2240, "Ours": 1899},
+      "Reacher": {"StateMask": 8571, "Ours": 7033},
+      "HalfCheetah": {"StateMask": 1579, "Ours": 1317},
+      "SelfishMining": {"StateMask": 9520, "Ours": 8360},
+      "CageChallenge2": {"StateMask": 79382, "Ours": 65400},
+      "AutoDriving": {"StateMask": 109802, "Ours": 88761},
+      "MalwareMutation": {"StateMask": 50775, "Ours": 41340}
+    }
+  },
+  "applications": {
+    "Hopper": {"p": 0.25, "lambda": 0.01, "policy_hidden": [64, 64], "mask_hidden": [64, 64], "d_max": 4000.0},
+    "Walker2d": {"p": 0.5, "lambda": 0.01, "policy_hidden": [64, 64], "mask_hidden": [64, 64], "d_max": 6000.0, "normalize_obs": true},
+    "Reacher": {"p": 0.25, "lambda": 0.01, "policy_hidden": [64, 64], "mask_hidden": [64, 64], "d_max": 20.0},
+    "HalfCheetah": {"p": 0.25, "lambda": 0.01, "policy_hidden": [64, 64], "mask_hidden": [64, 64], "d_max": 15000.0, "normalize_obs": true},
+    "SparseHopper": {"p": 0.5, "lambda": 0.01, "x_threshold": 0.6},
+    "SparseWalker2d": {"p": 0.5, "lambda": 0.01, "x_threshold": 0.6},
+    "SparseHalfCheetah": {"p": 0.5, "lambda": 0.01, "x_threshold": 5.0},
+    "SelfishMining": {"p": 0.25, "lambda": 0.01, "policy_hidden": [128, 128, 128, 128], "mask_hidden": [128, 128, 128, 128], "horizon": 200, "alpha_fee": 0.35},
+    "CageChallenge2": {"p": 0.25, "lambda": 0.01, "policy_hidden": [64, 64, 64], "mask_hidden": [64, 64, 64], "episode_lengths": [30, 50, 100]},
+    "AutoDriving": {"p": 0.25, "lambda": 0.01, "policy_hidden": [256, 256], "mask_hidden": [256, 256], "env_id": "Macro-v1"}
+  }
+}

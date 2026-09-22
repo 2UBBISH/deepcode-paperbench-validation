@@ -1,0 +1,202 @@
+# configs/default.yaml
+# ---------------------------------------------------------------------------
+# Default configuration for the reproduction of
+#   "A Mechanistic Understanding of Alignment Algorithms:
+#    A Case Study on DPO and Toxicity"
+#
+# Reproduction scope: GPT2-medium ONLY.
+#   * Llama2-7b / GLU results are OUT OF SCOPE (`in_scope.llama2: false`).
+#   * Toxicity is scored with `unitary/unbiased-toxic-roberta` instead of the
+#     (closed) Perspective API.
+#   * Jigsaw is loaded from the HuggingFace mirror
+#     `thesofakillers/jigsaw-toxic-comment-classification-challenge`.
+#
+# This file is the single source of truth for paths, model names, dataset
+# sizes, seeds and the in-scope flags used by main.py and scripts/*.py.
+# ---------------------------------------------------------------------------
+
+# --- reproducibility ------------------------------------------------------
+seed: 0
+device: auto            # "auto" -> cuda if available else cpu
+
+# --- scope flags ----------------------------------------------------------
+in_scope:
+  model: gpt2-medium
+  family: gpt2
+  llama2: false         # out of scope (GLU architecture stubs exist in src/model_utils.py)
+  glu: false            # out of scope
+  toxicity_scorer: unbiased-toxic-roberta   # substitute for Perspective API
+  jigsaw_source: huggingface-mirror
+
+# --- model ----------------------------------------------------------------
+model:
+  name: openai-community/gpt2-medium        # GPT2-medium
+  family: gpt2
+  n_layers: 24                              # L = 24
+  d_model: 1024                             # d_model
+  d_mlp: 4096                               # d_mlp
+  n_heads: 16
+  vocab_size: 50257
+  is_glu: false
+  dtype: float32
+  eval_mode: true
+
+reference_model:
+  name: openai-community/gpt2-medium        # frozen pi_ref for DPO
+
+dpo_model:
+  name: openai-community/gpt2-medium        # starting point of DPO training
+  path: artifacts/models/gpt2_dpo           # saved GPT2_DPO checkpoint
+
+# --- data -----------------------------------------------------------------
+data:
+  jigsaw:
+    hf_name: thesofakillers/jigsaw-toxic-comment-classification-challenge
+    split: train
+    text_column: comment_text
+    valid_ratio: 0.1                        # 90:10 split
+    max_length: 128
+    batch_size: 256
+    n_total_comments: 561808
+  wikitext:
+    hf_name: Salesforce/wikitext
+    config: wikitext-2-raw-v1
+    split: train
+    ppl_split: test
+    seq_len: 1024
+    stride: 512
+    min_chars: 40
+    min_words: 8
+    n_f1_sentences: 2000                    # 2,000 Wikipedia sentences for F1
+  realtoxicity:
+    hf_name: allenai/real-toxicity-prompts
+    split: train
+    n_challenge_prompts: 1199               # RTP "challenge" subset
+    n_target_token_prompts: 295             # prompts whose greedy next token is "sh*t"
+    target_token: "sh*t"
+    challenge_tox_min: 0.5
+    challenge_tox_max: 1.0
+  pairwise:
+    path: artifacts/data/pairs.jsonl        # 24,576 PPLM/greedy pairs
+    shard_dir: artifacts/data/pairs_shards
+    shard_size: 512
+    n_pairs: 24576
+    valid_ratio: 0.1                        # 90:10 train/valid split
+    max_length: 128
+  cache_dir: artifacts/cache
+
+# --- artifact paths (aliases kept flat for CLI/config lookup) -------------
+paths:
+  model: openai-community/gpt2-medium
+  model_name: openai-community/gpt2-medium
+  reference_model: openai-community/gpt2-medium
+  dpo_dir: artifacts/models/gpt2_dpo
+  dpo_model: artifacts/models/gpt2_dpo
+  dpo_model_name: artifacts/models/gpt2_dpo
+  probe: artifacts/probe/w_toxic.pt
+  probe_path: artifacts/probe/w_toxic.pt
+  vectors: artifacts/vectors/toxic_vectors.pt
+  vectors_path: artifacts/vectors/toxic_vectors.pt
+  vectors_dir: artifacts/vectors
+  analysis_dir: artifacts/analysis
+  figure_dir: artifacts/figures
+  figures_dir: artifacts/figures
+  eval_dir: artifacts/eval
+  interventions_dir: artifacts/interventions
+  data_dir: artifacts/data
+  cache_dir: artifacts/cache
+  output_dir: artifacts
+
+# --- toxicity probe W_Toxic (Section 3.1) ---------------------------------
+probe:
+  path: artifacts/probe/w_toxic.pt
+  layer: -1                 # last layer residual stream
+  position: block_out       # residual after MLP (block output)
+  pooling: mean             # averaged over all timesteps
+  toxic_index: 1            # W_Toxic[:, 1] is the toxic direction
+  n_classes: 2
+  lr: 1.0e-3                # not specified in the paper -> default
+  weight_decay: 0.01        # not specified in the paper -> default
+  batch_size: 256           # not specified in the paper -> default
+  epochs: 20                # not specified in the paper -> default (early stopping)
+  patience: 3
+  valid_ratio: 0.1
+  target_valid_accuracy: 0.94
+
+# --- toxic vectors (Section 3.1 / 3.2) ------------------------------------
+vectors:
+  dir: artifacts/vectors
+  path: artifacts/vectors/toxic_vectors.pt
+  top_n: 128                # top 128 MLP value vectors by cosine similarity
+  top_k_tokens: 10
+  toxic_index: 1
+  compute_svd: true         # SVD on the TRANSPOSED d x N matrix
+  center: false
+  layer: 19                 # layer l of the analyzed vector
+  mlp_idx: 770              # MLP.v_770^19
+  target_vector: [19, 770]
+  # MLP vectors referenced by the paper (Table 1 / Table 2 / Table 4)
+  table1_vectors:
+    - [19, 770]
+    - [12, 771]
+    - [18, 2669]
+    - [13, 668]
+    - [16, 255]
+    - [12, 882]
+    - [19, 1438]
+  unalign:
+    n_vectors: 7            # 7 MLP.k_Toxic vectors with highest cosine to W_Toxic[:,1]
+    scale: 10.0             # scale key vectors by 10x
+
+# --- shared evaluation defaults (Section 3.3) -----------------------------
+evaluation:
+  model: openai-community/gpt2-medium
+  dpo_model: artifacts/models/gpt2_dpo
+  n_challenge_prompts: 1199
+  n_f1_sentences: 2000
+  max_new_tokens: 20        # greedy 20-token generations
+  batch_size: 16
+  seed: 0
+  do_sample: false          # greedy
+  temperature: 1.0
+  top_k: 0
+  max_prompt_length: 96
+  toxicity_model: unitary/unbiased-toxic-roberta
+  toxicity_threshold: 0.5
+  perplexity_dataset: wikitext-2
+  greedily_sampled_tokens_analysis: 20   # Section 5.2 mean-activation protocol
+
+# --- mechanistic analysis (Section 5, Figures 1-5) ------------------------
+analysis:
+  layer: 19
+  mlp_idx: 770
+  n_tokens: 20              # 20 greedy tokens
+  n_shit_prompts: 295
+  n_challenge_prompts: 1199
+  top_k_vectors_fig2: 5     # top 5 MLP.v_Toxic vectors in Figure 2
+  bins: 50
+  dpi: 150
+  cosine_threshold: 0.99    # Section 5.1 parameter-delta claim
+  norm_diff_threshold: 1.0e-5
+  unembedding_norm_diff_threshold: 1.0e-3
+
+# --- paper reference numbers (used by validation checks) ------------------
+reference:
+  gpt2_toxicity: 0.453
+  gpt2_ppl: 21.70
+  gpt2_f1: 0.193
+  gpt2_dpo_toxicity: 0.208
+  gpt2_dpo_ppl: 23.34
+  gpt2_dpo_f1: 0.195
+  unaligned_toxicity: 0.458
+  unaligned_ppl: 23.30
+  unaligned_f1: 0.195
+  probe_valid_accuracy: 0.94
+  convergence_examples: 6700
+
+# --- logging --------------------------------------------------------------
+logging:
+  verbose: true
+  progress: true
+  save_json: true
+  dpi: 150

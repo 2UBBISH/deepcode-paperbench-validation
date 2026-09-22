@@ -1,0 +1,15 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.venv/
+
+# artefacts (never commit checkpoints, datasets or results)
+runs/
+results/
+data/
+*.pt
+*.pth
+*.bin
+*.safetensors
+wandb/

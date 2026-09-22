@@ -1,0 +1,9 @@
+# PPO baseline: one policy, batch size scaled with the number of environments.
+defaults: [allegrokuka.yaml]
+algo:
+  name: ppo
+  num_policies: 1
+  aggregation: none
+  use_offpolicy: false
+eval:
+  policy_ids: [0]

@@ -1,0 +1,47 @@
+# Default configuration for reproducing LCA-on-the-Line.
+
+data:
+  root: ./data/datasets
+  hierarchy_csv: ./data/hierarchy/imagenet_fiveai.csv
+  class_index_json: ./data/hierarchy/imagenet_class_index.json
+  id_dataset: imagenet
+  ood_datasets: [imagenet_v2, imagenet_s, imagenet_r, imagenet_a, objectnet]
+
+lca:
+  # D_LCA^I (information content) is used for all benchmark measurements ...
+  benchmark_score: information
+  # ... and D_LCA^P (tree-depth path length) for the linear-probing soft labels
+  # (Appendix D.2.1).
+  soft_label_score: depth
+
+eval:
+  batch_size: 64
+  device: cpu            # set to cuda for the full 75-model sweep
+  save_logits: true
+
+prompts:
+  # standard OpenAI CLIP ImageNet prompt ensemble
+  templates: imagenet_ensemble
+
+soft_labels:
+  lambda_weight: 0.03    # Appendix E.2
+  temperature: 25.0      # Appendix E.2
+  alignment_mode: CE     # CE or BCE (Algorithm 1)
+  epochs: 50
+  batch_size: 1024
+  lr: 0.001
+  weight_decay: 0.0001
+  warmup_lr: 0.00001
+  optimizer: AdamW
+  scheduler: cosine      # with linear warm-up
+  interpolate: true      # W_interp = alpha * W_ce + (1 - alpha) * W_soft
+
+latent_hierarchy:
+  n_levels: 9            # 2**9 = 512 < 1000
+  kmeans_seed: 0
+  per_class_features: 20
+
+prompt_engineering:
+  model: CLIP_ViT-B_32
+  depth: 2               # parent + grandparent
+  modes: [baseline, stack_parent, taxonomy_parent, shuffle_parent]

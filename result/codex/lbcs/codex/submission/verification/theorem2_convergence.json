@@ -1,0 +1,72 @@
+{
+  "n": 12,
+  "k": 6,
+  "epsilon": 0.2,
+  "f1_star": 0.2796052098274231,
+  "f2_star": 1.0,
+  "fraction_f1_constraint": 1.0,
+  "fraction_f2_optimal": 1.0,
+  "mean_condition1_fraction": 0.8090601065601065,
+  "rows": [
+    {
+      "restart": 0,
+      "f1_final": 0.2796052098274231,
+      "f2_final": 1.0,
+      "f1_threshold": 0.3355262517929077,
+      "satisfies_f1_constraint": true,
+      "satisfies_f2_optimality": true,
+      "condition1_violations": 2,
+      "condition1_steps": 15,
+      "condition1_fraction": 0.8666666666666667,
+      "num_evaluations": 801
+    },
+    {
+      "restart": 1,
+      "f1_final": 0.2796052098274231,
+      "f2_final": 1.0,
+      "f1_threshold": 0.3355262517929077,
+      "satisfies_f1_constraint": true,
+      "satisfies_f2_optimality": true,
+      "condition1_violations": 3,
+      "condition1_steps": 14,
+      "condition1_fraction": 0.7857142857142857,
+      "num_evaluations": 801
+    },
+    {
+      "restart": 2,
+      "f1_final": 0.2796052098274231,
+      "f2_final": 1.0,
+      "f1_threshold": 0.3355262517929077,
+      "satisfies_f1_constraint": true,
+      "satisfies_f2_optimality": true,
+      "condition1_violations": 5,
+      "condition1_steps": 22,
+      "condition1_fraction": 0.7727272727272727,
+      "num_evaluations": 801
+    },
+    {
+      "restart": 3,
+      "f1_final": 0.2796052098274231,
+      "f2_final": 1.0,
+      "f1_threshold": 0.3355262517929077,
+      "satisfies_f1_constraint": true,
+      "satisfies_f2_optimality": true,
+      "condition1_violations": 5,
+      "condition1_steps": 26,
+      "condition1_fraction": 0.8076923076923077,
+      "num_evaluations": 801
+    },
+    {
+      "restart": 4,
+      "f1_final": 0.2796052098274231,
+      "f2_final": 1.0,
+      "f1_threshold": 0.3355262517929077,
+      "satisfies_f1_constraint": true,
+      "satisfies_f2_optimality": true,
+      "condition1_violations": 3,
+      "condition1_steps": 16,
+      "condition1_fraction": 0.8125,
+      "num_evaluations": 801
+    }
+  ]
+}

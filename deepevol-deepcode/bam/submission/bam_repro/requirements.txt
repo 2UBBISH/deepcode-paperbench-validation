@@ -1,0 +1,48 @@
+# BaM (Batch and Match) reproduction — Python dependencies
+# Tested with Python 3.10+ (the reference implementation uses JAX on CPU or CUDA GPU).
+#
+# Environment summary (plan "environment_setup"):
+#   Core:   jax, jaxlib (CPU + optional CUDA GPU), numpy, scipy, matplotlib, pyyaml
+#   VAE:    flax, optax (JAX conv-net framework + Adam optimizer), CIFAR-10 dataset
+#   PosteriorDB: bridgestan (Python binding) + a Stan install; posteriordb reference
+#                samples/datasets (optional — the code falls back to a flagged
+#                Gaussian surrogate when they are unavailable).
+#
+# Hardware: CPU is sufficient for the synthetic (Gaussian / sinh-arcsinh) and
+# posteriordb experiments; a GPU is recommended for the CIFAR-10 VAE and for the
+# larger-batch BaM runs. Full covariance assumes O(D^2) memory and an O(D^3) dense
+# solve (or an O(K D^2 + K^3) low-rank solve when B << D).
+
+# ---------------------------------------------------------------------------
+# Core numerical stack
+# ---------------------------------------------------------------------------
+numpy>=1.23
+scipy>=1.9
+
+# JAX (the paper implements everything in JAX). Install the CUDA variant instead
+# of the plain `jaxlib` wheels if a GPU is available, e.g.:
+#   pip install --upgrade "jax[cuda12_pip]" -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html
+jax>=0.4.10
+jaxlib>=0.4.10
+
+# ---------------------------------------------------------------------------
+# VAE (Section 5.3 / Appendix E.6): conv-net framework + Adam optimizer
+# ---------------------------------------------------------------------------
+flax>=0.7.0
+optax>=0.1.7
+
+# ---------------------------------------------------------------------------
+# PosteriorDB targets (Section 5.2 / Appendix E.5): Stan model score/log-density
+# ---------------------------------------------------------------------------
+bridgestan>=2.4.0
+
+# ---------------------------------------------------------------------------
+# Plotting and configuration
+# ---------------------------------------------------------------------------
+matplotlib>=3.6
+pyyaml>=6.0
+
+# ---------------------------------------------------------------------------
+# Development / testing (optional)
+# ---------------------------------------------------------------------------
+pytest>=7.0

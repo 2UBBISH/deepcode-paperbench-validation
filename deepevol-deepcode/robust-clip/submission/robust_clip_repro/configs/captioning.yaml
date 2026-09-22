@@ -1,0 +1,133 @@
+# =============================================================================
+# Captioning robustness evaluation configuration (Robust CLIP reproduction).
+#
+# The Addendum (Unsupervised Adversarial Fine-Tuning of Vision Embeddings for
+# Robust LVLMs) does NOT specify the captioning attack suite or its budgets.
+# Therefore every numeric budget below is EITHER taken from the paper body
+# (documented inline with "PAPER BODY") OR explicitly marked as externally
+# supplied / unspecified ("UNSPECIFIED_BY_ADDENDUM").  Nothing here claims to be
+# an Addendum-mandated value.
+#
+# Consumed by: robust_clip_repro/eval_captioning.py  (load_config)
+#              robust_clip_repro/attacks/captioning.py (CaptioningAttackConfig)
+#
+# Loader behaviour: eval_captioning.load_config() accepts a top-level
+# `captioning:` block (preferred) and also a flat mapping, so either layout
+# works.
+# =============================================================================
+
+captioning:
+  # ---- Dataset / victim -----------------------------------------------------
+  dataset_name: COCO            # PAPER BODY: COCO (worst-case CIDEr table); 'Flickr30k' also supported
+  model_name: openflamingo      # one of: openflamingo | llava | dummy   [glue]
+  split: test                   # UNSPECIFIED_BY_ADDENDUM (external default)
+  num_samples: 500              # PAPER BODY: 500 adversarial samples per dataset
+  num_samples_clean: null       # null = evaluate the clean pass on all loaded samples
+
+  # ---- Attack budget --------------------------------------------------------
+  # The paper body reports l_inf budgets of 2/255 and 4/255 for the vision
+  # encoder robustness evaluation; the Addendum says nothing about captioning
+  # budgets, so eps MUST be supplied by the caller (no invented default).
+  eps: null                     # REQUIRED at run time: 2/255 or 4/255 (paper body budgets)
+  alpha: null                   # null -> alpha = eps (evaluation-harness convention)
+  iterations_half: 100          # PAPER BODY: 100 iterations for the half-precision (int16) attacks
+  iterations_single: null       # null -> falls back to iterations_half (UNSPECIFIED_BY_ADDENDUM)
+  restarts_half: 1              # UNSPECIFIED_BY_ADDENDUM (external default)
+  restarts_single: 1            # UNSPECIFIED_BY_ADDENDUM (external default)
+  norm: linf                    # UNSPECIFIED_BY_ADDENDUM (l_inf ball around NON-normalized pixels)
+  loss: ce                      # UNSPECIFIED_BY_ADDENDUM (caption teacher-forced CE, external default)
+
+  # ---- Staged attack schedule (half precision -> single precision) ----------
+  num_ground_truths: 5          # PAPER BODY: 5 ground-truth captions attacked in the half-precision stage
+  warm_start_single: true       # PAPER BODY: single-precision stage warm-started from best GT + its perturbation
+  precision_half: half          # ADDENDUM: half-precision attacks store perturbations as int16
+  precision_single: single      # ADDENDUM: single-precision attacks store perturbations as int32
+  quant_scale: 100000.0         # utils/precision.py fixed-point scale (int16/int32 storage policy)
+  random_start: true            # UNSPECIFIED_BY_ADDENDUM (external default)
+
+  # ---- Early stopping -------------------------------------------------------
+  # CIDEr threshold used to stop the half-precision loop early.
+  threshold: null               # null -> dataset default from CAPTIONING_THRESHOLDS
+                                #   COCO: 10.0   (PAPER BODY)
+                                #   Flickr30k: 2.0 (PAPER BODY)
+
+  # ---- Scoring (CIDEr must be recomputed after EVERY attack) ----------------
+  score_for_selection: cider    # worst-case accounting: minimum CIDEr per sample
+  higher_is_better: true        # CIDEr is maximized, so we keep the minimum
+
+  # ---- Generation -----------------------------------------------------------
+  max_new_tokens: 32            # UNSPECIFIED_BY_ADDENDUM (external default)
+  captioning_temperature: 0.0   # UNSPECIFIED_BY_ADDENDUM (greedy decoding, external default)
+  prompt: UNSPECIFIED_BY_ADDENDUM   # prompt template lives in prompts/templates.py
+  caption_loss: UNSPECIFIED_BY_ADDENDUM  # captioning loss not stated by the Addendum
+
+  # ---- Runtime --------------------------------------------------------------
+  batch_size: 1                 # UNSPECIFIED_BY_ADDENDUM (external default)
+  seed: 0                       # UNSPECIFIED_BY_ADDENDUM (external default)
+  subsample_seed: 0             # UNSPECIFIED_BY_ADDENDUM (deterministic sample subsetting)
+  num_workers: 0                # UNSPECIFIED_BY_ADDENDUM (external default)
+  device: null                  # null -> auto (cuda if available else cpu)
+  verbose: true
+
+  # ---- Output ---------------------------------------------------------------
+  output_dir: results           # UNSPECIFIED_BY_ADDENDUM (external default)
+  output_file: null             # null -> results/captioning_{dataset}_{model}_eps{eps*255}.json
+
+  # ---- Model construction kwargs (passed through to the victim wrapper) ----
+  model_kwargs:
+    # OpenFlamingo: version / vision encoder / language backbone are NOT stated
+    # by the Addendum -> upstream defaults, logged as externally supplied.
+    openflamingo_version: UNSPECIFIED_BY_ADDENDUM
+    vision_encoder: UNSPECIFIED_BY_ADDENDUM
+    lang_encoder: UNSPECIFIED_BY_ADDENDUM
+    # LLaVA-1.5 7B: ADDENDUM says OpenAI CLIP ViT-L/14@224 + OpenCLIP patch.
+    clip_model: ViT-L-14
+    clip_pretrained: openai
+    clip_resolution: 224
+
+  # ---- Provenance -----------------------------------------------------------
+  # Values are classified so the harness never presents an external default as
+  # if it came from the paper.
+  provenance:
+    paper_body:
+      - dataset_name
+      - num_samples
+      - num_ground_truths
+      - warm_start_single
+      - iterations_half
+      - eps
+      - threshold
+    addendum:
+      - precision_half
+      - precision_single
+      - "int16 for half-precision attacks"
+      - "int32 for single-precision attacks"
+      - "CIDEr recomputed after every attack; only per-sample worst case retained"
+    unspecified_by_addendum:
+      - eps
+      - alpha
+      - iterations_half
+      - iterations_single
+      - restarts_half
+      - restarts_single
+      - norm
+      - loss
+      - threshold
+      - max_new_tokens
+      - captioning_temperature
+      - prompt
+      - caption_loss
+      - batch_size
+      - seed
+      - subsample_seed
+      - split
+      - output_dir
+      - model_kwargs.openflamingo_version
+      - model_kwargs.vision_encoder
+      - model_kwargs.lang_encoder
+
+# -----------------------------------------------------------------------------
+# Model-free smoke test path (no OpenFlamingo / LLaVA / CIDEr needed):
+#   python -m robust_clip_repro.eval_captioning --smoke-test
+# -----------------------------------------------------------------------------
+smoke_test: false

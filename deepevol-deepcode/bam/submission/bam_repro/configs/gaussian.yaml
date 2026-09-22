@@ -1,0 +1,65 @@
+# ============================================================================
+# BaM reproduction -- Section 5.1 (Figure 5.1) + Appendix E.3 (Figure E.3)
+# Synthetic Gaussian targets p = N(mu*, Sigma*) with Sigma* = A A^T.
+#
+# Consistency of the metric is measured by closed-form forward KL(p;q) and
+# reverse KL(q;p), plotted against the number of gradient evaluations.
+# ============================================================================
+
+experiment: "gaussian"
+description: >-
+  Full-covariance Gaussian targets at D = 4, 16, 64, 256. BaM (constant
+  schedule lambda_t = B D, batch sizes 20 and 40) is compared against
+  ADVI, Score-ADVI, Fisher-ADVI and GSM (batch size 2) using the paper's
+  grid-searched Adam learning rates. 10 runs per (D, method, B) cell.
+
+# ---------------------------------------------------------------- run control
+seed: 0
+n_runs: 10
+dims: [4, 16, 64, 256]
+methods: [bam, advi, score, fisher, gsm]
+
+# ------------------------------------------------------------ cost axis / IO
+history_points: 120          # subsample of the per-run trace stored in JSON
+metric: forward              # primary metric for the figure ("forward"|"reverse")
+report_both_kl: true         # always record forward AND reverse KL
+outdir: "results"
+save: true
+figures: true
+
+# --------------------------------------------------------------- BaM settings
+bam:
+  schedule: "BD"             # lambda_t = B * D  (constant, Gaussian targets)
+  batch_sizes: [20, 40]
+
+# --------------------------------------------------- gradient-based baselines
+# Batch size 2 for every gradient-based baseline (paper protocol).
+baseline_batch_size: 2
+
+# Grid-searched Adam learning rates (paper values).
+advi:
+  learning_rate: 0.01
+  learning_rate_grid: [0.05, 0.02, 0.01, 0.005, 0.001]
+
+score:
+  learning_rate: {4: 0.01, 16: 0.005, 64: 0.001, 256: 0.001}
+  learning_rate_grid: [0.05, 0.02, 0.01, 0.005, 0.001]
+
+fisher:
+  learning_rate: 0.01
+  learning_rate_grid: [0.05, 0.02, 0.01, 0.005, 0.001]
+
+gsm:
+  learning_rate: null        # hyper-parameter free (Algorithm 3)
+
+# ------------------------------------------------------------ target / init
+target:
+  mean_scale: 0.1            # mu* ~ Uniform[0, 0.1]^D   (documented default)
+  cov_factor_scale: 1.0      # A entries ~ N(0, 1) -> Sigma* = A A^T
+  cond: null                 # optional condition-number rescaling of A
+  init_mean_scale: 0.1       # mu_0 ~ Uniform[0, 0.1]^D
+  init_cov: "identity"       # Sigma_0 = I
+
+# --------------------------------------------------- per-dimension budget (grad evals)
+# Cost axis = number of gradient evaluations (wallclock out of scope).
+grad_budget: {4: 20000, 16: 20000, 64: 30000, 256: 40000}

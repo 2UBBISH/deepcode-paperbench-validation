@@ -1,0 +1,251 @@
+# =============================================================================
+# RICE -- SparseHalfCheetah configuration
+# =============================================================================
+# Per-application YAML config for the sparse-reward HalfCheetah variant used in
+# Experiment II (sparse-reward refining, Figure 2).  Merged on top of
+# `configs/default.yaml` by `rice.utils.io.get_config("sparse_halfcheetah")`.
+#
+# Sparse reward definition (Mazoure et al. 2019, RICE Appendix C.2):
+#   r_t = x_t  if x_t > 5.0  else  0.0
+# i.e. the forward x-position is only revealed once the agent has moved past an
+# x-threshold of 5.0 (see `rice/envs/sparse_reward.py::SPARSE_THRESHOLDS`).
+#
+# Observation normalization is applied for HalfCheetah (Appendix C.2).
+#
+# All unspecified PPO/RND numerics follow the reproduction-plan defaults:
+#   gamma=0.99, GAE lambda=0.95, clip=0.2, lr=3e-4, n_epochs=10,
+#   RND normalization = running-std division, RND net = small MLP [64, 64].
+# =============================================================================
+
+name: sparse_halfcheetah
+
+seed: 0
+seeds: [0, 1, 2]           # Sec. 4.2: report mean +- std over 3 seeds
+
+device: auto
+output_dir: outputs/sparse_halfcheetah
+log_dir: logs/sparse_halfcheetah
+save_dir: policies/sparse_halfcheetah
+results_dir: results/sparse_halfcheetah
+verbose: true
+
+# -----------------------------------------------------------------------------
+# Environment
+# -----------------------------------------------------------------------------
+env:
+  id: sparse_halfcheetah
+  gym_id: HalfCheetah-v3           # underlying dense MuJoCo environment
+  app: mujoco
+  discrete_actions: false
+  normalize_obs: true              # Appendix C.2: HalfCheetah obs are normalized
+  sparse: true
+  sparse_threshold: 5.0            # forward-x threshold for the sparse signal
+  max_episode_steps: 1000
+  d_max: 5000.0                    # max single-episode reward for fidelity
+  obs_dim: 17
+  action_dim: 6
+  # Registered wrapper id produced by rice/envs/make_env.py
+  registered_id: SparseHalfCheetah-v0
+
+# -----------------------------------------------------------------------------
+# Pre-trained (sub-optimal / bottlenecked) target policy pi
+# -----------------------------------------------------------------------------
+target:
+  algo: ppo
+  policy: MlpPolicy
+  hidden_sizes: [64, 64]           # SB3 default MlpPolicy
+  activation: tanh
+  lr: 3.0e-4
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_range: 0.2
+  n_epochs: 10
+  batch_size: 64
+  n_steps: 2048
+  total_timesteps: 1000000
+  checkpoint: policies/sparse_halfcheetah_ppo.zip
+  # Trend-validation reference only (sparse reward values are not tabulated in
+  # the paper); used to confirm the "No-Refine" bottleneck regime.
+  expected_return: null
+  expected_std: null
+
+# -----------------------------------------------------------------------------
+# Stage 1 -- Explanation (mask network, Algorithm 1)
+# -----------------------------------------------------------------------------
+explanation:
+  enabled: true
+  method: ours                     # ours | random | statemask | ig | airs
+  hidden_sizes: [64, 64]
+  activation: tanh
+  alpha: 1.0e-4                    # Table 3 value (alpha is insensitive)
+  alpha_sweep: [0.01, 0.001, 0.0001]
+  use_blinding_bonus: true
+  reward_mode: augmented           # R' = R + alpha * a_t^m
+  total_timesteps: 300000          # Table-4 fixed sample budget
+  d_max: 5000.0
+  lr: 3.0e-4
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_range: 0.2
+  n_epochs: 10
+  batch_size: 64
+  K: 0.1                           # trajectory fraction used for scoring
+  checkpoint: policies/sparse_halfcheetah_mask.pt
+  expected_time_ours: 1317          # Table 4 (seconds, HalfCheetah budget)
+  expected_time_statemask: 1579
+
+# -----------------------------------------------------------------------------
+# Fidelity evaluation (Experiment I)
+# -----------------------------------------------------------------------------
+fidelity:
+  K_values: [0.10, 0.20, 0.30, 0.40]
+  n_trajectories: 500
+  seeds: [0, 1, 2]
+  deterministic_policy: true
+  action_mode: random
+  scoring: auto                    # auto -> mask when a mask net is available
+  window_metric: mean              # window with highest AVERAGE importance
+  max_tail_steps: 10000
+  store_details: false
+
+# -----------------------------------------------------------------------------
+# Stage 2 -- Refining (mixed init + RND, Algorithm 2)
+# -----------------------------------------------------------------------------
+refine:
+  enabled: true
+  method: ours                     # ours | ppo_finetune | statemask_r | jsrl |
+                                   #        sac | gail | sil
+  p: 0.5                           # mixture weight beta of mu(s)
+  p_sweep: [0.0, 0.25, 0.5, 0.75, 1.0]
+  lam: 0.01                        # RND bonus coefficient
+  use_mixed_init: true
+  use_rnd: true
+  K: null                          # null -> episode horizon T (Algorithm 2)
+  copy_policy: true                # pi stays frozen; pi_theta is trained
+  total_timesteps: 200000
+  lr: 3.0e-4
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_range: 0.2
+  n_epochs: 10
+  batch_size: 64
+  n_steps: null                    # null -> episode horizon T
+  eval_episodes: 10
+  deterministic_eval: true
+  checkpoint: policies/sparse_halfcheetah_refined.pt
+  # Sparse-reward trends are reported in Figure 2 rather than a table.
+  expected_return: null
+  expected_std: null
+
+# -----------------------------------------------------------------------------
+# Random Network Distillation module
+# -----------------------------------------------------------------------------
+rnd:
+  hidden_sizes: [64, 64]           # unspecified in paper -> small MLP
+  activation: tanh
+  lr: 1.0e-4
+  lam: 0.01
+  normalize: true
+  normalization: running_std       # unspecified -> divide by running std
+  clip_bonus: null
+  update_epochs: 1
+  batch_size: 256
+  reward_scale: 1.0
+
+# -----------------------------------------------------------------------------
+# Baseline hyperparameters specific to the sparse setting
+# -----------------------------------------------------------------------------
+baselines:
+  random_explanation:
+    mode: uniform
+    score_range: [0.0, 1.0]
+  statemask:
+    alpha_init: 0.01
+    dual_lr: 1.0e-4
+    delta: 0.1
+    alpha_min: 0.0
+    alpha_max: 10.0
+    dual_mode: enforce
+    total_timesteps: 300000
+  integrated_gradients:
+    n_steps: 16
+    baseline: zero
+    target: action
+    reduction: l1
+  airs:
+    hidden_sizes: [64, 64]
+    lr: 3.0e-4
+    epochs: 20
+    batch_size: 512
+  ppo_finetune:
+    lr: 1.0e-4
+    total_timesteps: 200000
+  jsrl:
+    max_guided_horizon: 1000
+    min_guided_horizon: 0
+    horizon_schedule: linear
+    total_timesteps: 200000
+  sac_finetune:
+    lr: 3.0e-4
+    hidden_sizes: [256, 256]
+    total_timesteps: 200000
+  gail:
+    lr: 3.0e-4
+    disc_hidden_sizes: [100, 100]
+    total_timesteps: 200000
+  sil:
+    lr: 3.0e-4
+    sil_coef: 1.0
+    buffer_size: 100000
+    total_timesteps: 200000
+
+# -----------------------------------------------------------------------------
+# Experiment drivers
+# -----------------------------------------------------------------------------
+experiments:
+  envs: [sparse_halfcheetah]
+  dense_envs: [hopper, walker2d, reacher, halfcheetah]
+  app_envs: [selfish_mining, cage2, autodriving]
+  sparse_envs: [sparse_hopper, sparse_halfcheetah]
+  mujoco_envs: [hopper, walker2d, reacher, halfcheetah]
+  seeds: [0, 1, 2]
+
+  exp1:
+    envs: [sparse_halfcheetah]
+    K_values: [0.10, 0.20, 0.30, 0.40]
+    n_trajectories: 500
+    seeds: [0, 1, 2]
+    methods: [ours, statemask, random]
+
+  exp2:
+    envs: [sparse_halfcheetah]
+    methods: [ours, ppo_finetune, statemask_r, jsrl]
+    explanation: ours              # fixed explanation for all refiners
+    seeds: [0, 1, 2]
+
+  exp3:
+    envs: [sparse_halfcheetah]
+    explanations: [random, statemask, ours, integrated_gradients, airs]
+    method: ours                   # fixed refiner
+    seeds: [0, 1, 2]
+
+  exp4:
+    envs: [sparse_halfcheetah]     # Exp IV targets Hopper; kept for symmetry
+    enabled: false
+    seeds: [0, 1, 2]
+
+  exp5:
+    envs: [sparse_halfcheetah]
+    p_sweep: [0.0, 0.25, 0.5, 0.75, 1.0]
+    lam_sweep: [0.0, 0.1, 0.01, 0.001]
+    alpha_sweep: [0.01, 0.001, 0.0001]
+    seeds: [0, 1, 2]
+
+# -----------------------------------------------------------------------------
+# Plotting
+# -----------------------------------------------------------------------------
+plot:
+  dpi: 150
+  format: png
+  figsize: [6.0, 4.0]
+  show: false

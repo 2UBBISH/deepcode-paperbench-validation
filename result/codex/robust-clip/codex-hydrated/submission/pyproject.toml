@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "robust-clip"
+version = "1.0.0"
+description = "Reproduction of 'Robust CLIP: Unsupervised Adversarial Fine-Tuning of Vision Embeddings for Robust Large Vision-Language Models' (ICML 2024)"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+
+[tool.setuptools.packages.find]
+include = ["robust_clip*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

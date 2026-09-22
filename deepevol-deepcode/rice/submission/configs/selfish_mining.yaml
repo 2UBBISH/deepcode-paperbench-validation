@@ -1,0 +1,209 @@
+# RICE configuration - Selfish Mining (blockchain application).
+#
+# Merged on top of configs/default.yaml by rice.utils.io.get_config("selfish_mining").
+# Source of truth for the per-application hyper-parameters used by Stage 1
+# (mask / explanation), Stage 2 (refining with mixed-init + RND), fidelity
+# evaluation and the experiment drivers.
+#
+# Paper references:
+#   * Environment / application set ............ Sec. 4.1, Appendix C.1, C.2
+#   * Architecture (MLP [128,128,128,128]) ..... Appendix C.1 / Addendum
+#   * Table 3 hyper-parameters (p, lambda, alpha) Table 3
+#   * Table 4 mask-net sample budget (1.5e6) ... Table 4
+#   * Experiment V sensitivity sweeps .......... Sec. 4.2 / Fig. 7-9
+#
+# Selfish Mining (Bar-Zur et al. 2022) is a 3-action discrete application:
+#   action 0 = Adopt, action 1 = Reveal, action 2 = Mine.
+# Rewards are per-block relative revenues (often negative); the "No Refine"
+# regime of the paper therefore sits near 0 reward per episode.
+
+name: selfish_mining
+seed: 0
+seeds: [0, 1, 2]
+
+env:
+  id: selfish_mining
+  gym_id: SelfishMining-v0
+  registered_id: SelfishMining-v0
+  app: blockchain
+  discrete_actions: true
+  normalize_obs: false
+  sparse: false
+  sparse_threshold: null
+  max_episode_steps: 1000
+  # Max single-episode reward, used by the fidelity score log(d / d_max).
+  d_max: 100.0
+  obs_dim: 8
+  action_dim: 3
+  actions: ["adopt", "reveal", "mine"]
+
+target:
+  algo: ppo
+  policy: MlpPolicy
+  # Appendix C.1 / Addendum: Selfish Mining uses a deeper MLP.
+  hidden_sizes: [128, 128, 128, 128]
+  activation: tanh
+  lr: 3.0e-4
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_range: 0.2
+  n_epochs: 10
+  batch_size: 64
+  n_steps: 2048
+  total_timesteps: 2000000
+  checkpoint: policies/selfish_mining_ppo.zip
+  # "No Refine" reference regime (trend validation only).
+  expected_return: null
+  expected_std: null
+
+explanation:
+  enabled: true
+  method: ours
+  hidden_sizes: [128, 128, 128, 128]
+  activation: tanh
+  # Table 3 value; Sec. 4.3 prose says 0.01 - alpha is (near) insensitive and is
+  # exposed through alpha_sweep for Experiment V.
+  alpha: 1.0e-4
+  alpha_sweep: [0.01, 0.001, 0.0001]
+  use_blinding_bonus: true
+  reward_mode: augmented
+  # Table 4 sample budget for the mask network.
+  total_timesteps: 1500000
+  lr: 3.0e-4
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_range: 0.2
+  n_epochs: 10
+  batch_size: 64
+  K: 0.1
+  checkpoint: policies/selfish_mining_mask.pt
+  expected_time_ours: null
+  expected_time_statemask: null
+
+fidelity:
+  K_values: [0.10, 0.20, 0.30, 0.40]
+  n_trajectories: 500
+  seeds: [0, 1, 2]
+  deterministic_policy: true
+  action_mode: random
+  scoring: auto
+  window_metric: mean
+  max_tail_steps: 10
+  store_details: true
+
+refine:
+  enabled: true
+  method: ours
+  # Table 3 values for the blockchain application.
+  p: 0.5
+  p_sweep: [0.0, 0.25, 0.5, 0.75, 1.0]
+  lam: 0.01
+  use_mixed_init: true
+  use_rnd: true
+  K: null            # null -> episode horizon T
+  copy_policy: true
+  total_timesteps: 200000
+  lr: 3.0e-4
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_range: 0.2
+  n_epochs: 10
+  batch_size: 64
+  n_steps: null
+  eval_episodes: 10
+  deterministic_eval: true
+  expected_return: null
+  expected_std: null
+
+rnd:
+  hidden_sizes: [64, 64]
+  activation: tanh
+  lr: 1.0e-4
+  lam: 0.01
+  normalize: true
+  normalization: running_std
+  clip_bonus: null
+  update_epochs: 1
+  batch_size: 256
+  reward_scale: 1.0
+
+baselines:
+  random_explanation:
+    enabled: true
+    method: uniform
+  statemask:
+    alpha_init: 0.01
+    dual_lr: 1.0e-4
+    delta: 0.1
+    alpha_min: 0.0
+    alpha_max: 10.0
+    dual_mode: enforce
+    total_timesteps: 1500000
+  integrated_gradients:
+    enabled: true
+    n_steps: 16
+    baseline: zero
+    target: action
+    reduction: l1
+  airs:
+    enabled: true
+    hidden_sizes: [128, 128, 128, 128]
+    epochs: 20
+    lr: 3.0e-4
+    l1_coeff: 0.01
+  ppo_finetune:
+    enabled: true
+    lr: 1.0e-4
+    total_timesteps: 200000
+  jsrl:
+    enabled: true
+    max_guided_horizon: 1000
+    total_timesteps: 200000
+  sac_finetune:
+    enabled: false      # discrete action space -> SAC application is MuJoCo only
+    total_timesteps: 200000
+  gail:
+    enabled: false      # discrete action space -> Exp IV is Hopper-only
+    total_timesteps: 200000
+    expert_timesteps: 100000
+  sil:
+    enabled: true
+    sil_coef: 1.0
+    sil_batch_size: 128
+    total_timesteps: 200000
+
+experiments:
+  envs: [selfish_mining]
+  dense_envs: [hopper, walker2d, reacher, halfcheetah]
+  app_envs: [selfish_mining, cage2, autodriving]
+  sparse_envs: [sparse_hopper, sparse_halfcheetah]
+  mujoco_envs: [hopper, walker2d, reacher, halfcheetah]
+  seeds: [0, 1, 2]
+  exp1:
+    envs: [selfish_mining]
+    K_values: [0.10, 0.20, 0.30, 0.40]
+    n_trajectories: 500
+    seeds: [0, 1, 2]
+  exp2:
+    envs: [selfish_mining]
+    methods: [ours, ppo_finetune, statemask_r, jsrl]
+  exp3:
+    envs: [selfish_mining]
+    explanations: [random, statemask, ours]
+  exp4:
+    envs: [selfish_mining]
+    enabled: false      # SAC / GAIL versatility study is Hopper-only
+  exp5:
+    envs: [selfish_mining]
+    p_sweep: [0.0, 0.25, 0.5, 0.75, 1.0]
+    lam_sweep: [0.0, 0.1, 0.01, 0.001]
+    alpha_sweep: [0.01, 0.001, 0.0001]
+  optional:
+    sil_envs: [hopper, walker2d, reacher, halfcheetah]
+    extra_explanations: [integrated_gradients, airs]
+
+plot:
+  dpi: 150
+  format: pdf
+  figsize: [6, 4]
+  show: false

@@ -1,0 +1,189 @@
+# =============================================================================
+# FRE configuration -- ExORL (Exploratory Off-policy RL) domains: walker, cheetah
+# =============================================================================
+# Consumed by fre/main.py (--config), fre/train_encoder.py, fre/train_policy.py
+# and fre/evaluate.py. Mirrors the schema of fre/configs/antmaze.yaml.
+#
+# Paper details encoded here (Sec 4 / App B / reproduction plan):
+#   * Datasets are ExORL RND exploratory datasets for `walker` and `cheetah`,
+#     placed under ./data (see `data_root`).
+#   * Physics features are appended to the ENCODER observation ONLY (never to
+#     decoder or policy inputs):
+#       walker  -> horizontal_velocity, torso_upright, torso_height  (3 dims)
+#       cheetah -> speed                                            (1 dim)
+#   * Observations are per-dimension std-normalized before entering the encoder.
+#   * Goal-reaching tasks: sparse reward, success when the Euclidean distance in
+#     physics space is < 0.1, with 5 fixed goal states per domain.
+#   * Velocity tasks: sparse threshold rewards
+#       cheetah -> thresholds (10, 1)
+#       walker  -> thresholds (0.1, 1, 4, 8)
+#   * Episodes last at most 1000 steps.
+#   * Strided training schedule (Algorithm 1):
+#       Phase 1 (encoder + decoder) : 1,000,000 steps
+#       Phase 2 (frozen encoder IQL): 1,000,000 steps
+# =============================================================================
+
+domain: exorl
+# One of: walker | cheetah. `null` means "run both sub-domains" when the driver
+# (fre/main.py) expands the ExORL domain, otherwise it defaults to `walker`.
+sub_domain: null
+
+# ---------------------------------------------------------------------------
+# Data / environment
+# ---------------------------------------------------------------------------
+data_root: ./data
+dataset_kind: rnd                 # ExORL dataset flavour (RND exploratory data)
+datasets:                         # per-sub-domain dataset descriptors
+  walker:
+    name: rnd_walker
+    raw_obs_dim: 24
+    action_dim: 6
+    physics: [horizontal_velocity, torso_upright, torso_height]
+  cheetah:
+    name: rnd_cheetah
+    raw_obs_dim: 17
+    action_dim: 6
+    physics: [speed]
+
+# Defaults applied when a single sub-domain is not specified explicitly.
+default_sub_domain: walker
+raw_obs_dim: 24                   # walker default (overridden by `datasets`)
+obs_dim: 27                       # raw + 3 physics dims (walker); cheetah = 18
+action_dim: 6
+max_episode_steps: 1000
+
+# Physics handling -----------------------------------------------------------
+append_physics: true              # append physics to the ENCODER observation only
+physics_to_encoder_only: true     # policy/decoder must NOT see physics features
+normalise_observations: true      # per-dimension std-normalization
+normalisation_eps: 0.001
+
+# Goal task ------------------------------------------------------------------
+goal_threshold: 0.1               # Euclidean distance in physics space
+num_goal_states: 5                # 5 fixed goal states per domain
+goal_metric: euclidean
+goal_reward_success: 0.0
+goal_reward_failure: -1.0
+goal_selection_mode: quantile     # deterministic goal selection seed
+goal_selection_seed: 0
+
+# Velocity tasks -------------------------------------------------------------
+velocity_thresholds:
+  cheetah: [10, 1]
+  walker: [0.1, 1, 4, 8]
+velocity_reward_value: 1.0
+velocity_feature_index: 0         # speed == first physics dim
+
+# ---------------------------------------------------------------------------
+# Phase 1: FRE encoder + reward decoder pretraining (Algorithm 1)
+# ---------------------------------------------------------------------------
+encoder:
+  steps: 1000000                  # 1M steps for ExORL
+  batch_size: 512
+  lr: 0.0001                      # Adam, 1e-4
+  beta: 0.01                      # info-bottleneck weight (Eq. 6)
+  context_size: 32                # K  encoder (state, reward) samples
+  decoder_size: 8                 # K' decoder states (disjoint)
+  latent_dim: 128                 # z dimension
+  state_emb_dim: 64               # state projection dim
+  reward_emb_dim: 64              # reward embedding dim (64 + 64 = 128 token)
+  num_reward_bins: 32             # discretization bins
+  reward_rescale: 32.0
+  num_blocks: 4                   # transformer blocks
+  num_heads: 4                    # attention heads
+  mlp_dim: 256                    # transformer MLP hidden (128 -> 256 -> 128)
+  dropout: 0.0
+  decoder_hidden: [512, 512, 512]
+  grad_clip: 10.0
+  log_interval: 1000
+  eval_interval: 5000
+  checkpoint_interval: 25000
+  use_mean_latent_for_eval: true
+  exclude_xy: false               # AntMaze-only; kept for schema symmetry
+
+# ---------------------------------------------------------------------------
+# Phase 2: z-conditioned IQL policy (encoder frozen)
+# ---------------------------------------------------------------------------
+policy:
+  steps: 1000000                  # 1M steps for ExORL
+  batch_size: 512
+  lr: 0.0001
+  discount: 0.88                  # gamma
+  expectile: 0.8                  # IQL expectile for V
+  awr_temperature: 3.0            # AWR inverse temperature
+  target_update_rate: 0.001       # single target network, EMA
+  hidden_sizes: [512, 512, 512]
+  context_size: 32
+  latent_dim: 128
+  num_reward_functions: 512       # reward functions sampled per RL batch
+  reward_resample_interval: 1     # re-sample eta and re-encode z each iteration
+  max_grad_norm: 1.0
+  log_interval: 1000
+  eval_interval: 25000
+  checkpoint_interval: 50000
+  exclude_xy: false
+
+# ---------------------------------------------------------------------------
+# Unsupervised reward prior p(eta) -- Sec 4.2 / App B
+# ---------------------------------------------------------------------------
+prior:
+  families: [goal_reaching, linear, mlp]
+  weights: [0.33, 0.33, 0.33]
+  goal_reaching:
+    p_current: 0.2                # HER sampling mixture
+    p_future: 0.5
+    p_random: 0.3
+    future_mode: geometric
+    geom_p: 0.5
+    goal_threshold: 0.1           # physics-space euclidean goal
+    reward_success: 0.0
+    reward_failure: -1.0
+    metric: euclidean
+    dims: null                    # full state (no XY-style exclusion for ExORL)
+    include_success_sample: true  # guarantee >=1 context sample contains goal
+  linear:
+    mask_prob: 0.9                # each dim zeroed with prob 0.9
+    weight_range: 1.0             # weights ~ Uniform(-1, 1)
+    exclude_dims: null
+    clip: 1.0
+  mlp:
+    hidden_sizes: [32]
+    activation: tanh
+    init_scale: 1.0
+    output_scale: 1.0
+    clip: 1.0
+
+# ---------------------------------------------------------------------------
+# Zero-shot evaluation harness
+# ---------------------------------------------------------------------------
+eval:
+  num_episodes: 20                # 20 evaluation episodes
+  num_seeds: 5                    # 5 seeds
+  context_size: 32                # exactly K = 32 (state, reward) pairs at test
+  decoder_size: 8
+  deterministic: true
+  base_seed: 0
+  score_mode: success_rate        # normalized return in [0, 100]
+  tasks:
+    goal_indices: [0, 1, 2, 3, 4] # 5 fixed goal states per domain
+    velocity_thresholds:
+      cheetah: [10, 1]
+      walker: [0.1, 1, 4, 8]
+    include_velocity: true
+
+# ---------------------------------------------------------------------------
+# Ablations (Table 4) and hinted prior (Figure 6)
+# all | goals | lin | mlp | lin-mlp | goal-mlp | goal-lin
+# ---------------------------------------------------------------------------
+ablation: all
+hint: false
+hint_dims: null                   # velocity/XY-restricted functions for FRE-hint
+
+# ---------------------------------------------------------------------------
+# Run
+# ---------------------------------------------------------------------------
+seed: 0
+device: auto                      # auto | cpu | cuda
+output_dir: ./runs
+log_file: null
+dry_run: false

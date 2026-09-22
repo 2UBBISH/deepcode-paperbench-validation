@@ -1,0 +1,84 @@
+# APT configuration: RoBERTa-base on SST-2 (GLUE-big)
+#
+# Inherits every default from `default.yaml` and overrides only the
+# model / task / data keys.  SST-2 belongs to the GLUE *big* task group
+# (MNLI, SST2, QNLI, QQP), whose Table 6 hyper-parameters are identical
+# to GLUE-small:  lr 2e-4, batch 32, 40 epochs, 20 distill epochs.
+#
+# Paper anchors
+#   Table 2   -> RoBERTa-base, 60% sparsity, SST2 = 94.5 (APT)
+#   Table 6   -> GLUE-big: lr 2e-4, batch size 32, epochs 40,
+#                distill epochs 20
+#   Appendix A-> initial adapter rank 8, scaling factor 2 (static),
+#                cubic sparsity schedule, mask decay alpha < 1,
+#                EMA salience
+#   Appendix C-> Algorithm 1 two-stage prune-then-recover loop
+#
+# Usage:
+#   python main.py --config apt/configs/roberta_sst2.yaml --mode train
+
+# --------------------------------------------------------------------------
+# Model / task
+# --------------------------------------------------------------------------
+model_name_or_path: roberta-base
+model_type: roberta
+task: sst2
+table6_group: glue-big
+
+# --------------------------------------------------------------------------
+# Table 6 hyper-parameters (GLUE-big)
+# --------------------------------------------------------------------------
+learning_rate: 2.0e-4
+batch_size: 32
+epochs: 40
+distill_epochs: 20
+
+# --------------------------------------------------------------------------
+# APT / Algorithm 1
+# --------------------------------------------------------------------------
+target_sparsity: 0.60
+initial_rank: 8
+scaling: 2.0
+mask_alpha: 0.01
+ema_beta: 0.85
+tau: 4
+tuning_budget_initial: 1.0
+tuning_budget_final: 2.0
+top_fraction: 0.5
+use_distillation: true
+use_kurtosis: true
+
+# GLUE distillation weighting (Appendix A / Addendum):
+#   L_distill = 1.0 * L_pred + 0.9 * L_layer
+pred_distill_weight: 1.0
+layer_distill_weight: 0.9
+
+# --------------------------------------------------------------------------
+# Optimization
+# --------------------------------------------------------------------------
+optimizer: adamw
+weight_decay: 0.01
+warmup_ratio: 0.06
+lr_kind: linear
+max_grad_norm: 1.0
+seed: 42
+
+# --------------------------------------------------------------------------
+# Data / tokenization
+# --------------------------------------------------------------------------
+max_seq_length: 128
+max_target_length: 8
+dynamic_padding: false
+num_workers: 0
+
+# --------------------------------------------------------------------------
+# Runtime / evaluation
+# --------------------------------------------------------------------------
+device: cuda
+output_dir: outputs/apt_roberta_sst2
+logging_steps: 50
+eval_steps: 0          # 0 == evaluate once per epoch
+save_steps: 0          # 0 == save once per epoch
+inference_batch_size: 128
+fp16: false
+bf16: false

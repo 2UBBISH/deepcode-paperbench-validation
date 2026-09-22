@@ -1,0 +1,102 @@
+# =============================================================================
+# BaM reproduction -- Section 5.3 / Appendix E.6 : CIFAR-10 deep generative
+# model (VAE) target, Figure 5.4.
+#
+# Target:  z_n ~ N(0, I);  x_n | z_n ~ N(Omega(z_n, theta_hat), sigma^2 I)
+#          with sigma^2 = 0.1 (paper's setting).
+# Variational state for the held-out image x': p(z'|x') with
+#          mu_0 ~ Uniform[0, 0.1]^D,  Sigma_0 = I.
+# Cost axis: number of gradient evaluations (wallclock is out of scope).
+#
+# Decoder pre-training (Appendix E.6 / addendum):
+#   factorized-Gaussian encoder + variational EM, Adam lr 0 -> 1e-4 over 100
+#   warmup steps, then 1e-4 -> 1e-5 over 500 decay steps, 100 epochs,
+#   mc_sim = 1.
+# =============================================================================
+
+experiment: vae
+description: "Section 5.3 / E.6 -- CIFAR-10 VAE posterior (Figure 5.4)."
+
+seed: 0
+# Number of independent runs per (method, batch-size) cell. The paper reports a
+# single trajectory per configuration; we keep the synthetic-experiment
+# convention of 5 runs and report mean +/- standard error.
+n_runs: 5
+methods: [bam, advi, score, fisher, gsm]
+
+# ---- full-covariance BBVI budget -------------------------------------------
+# T = 1000 iterations is the paper's budget (Appendix E.6). Batch sizes
+# B in {10, 100, 300}.
+T: 1000
+batch_sizes: [10, 100, 300]
+history_points: 120
+
+# Pilot run used for the pre-experiment learning-rate / lambda selection
+# (Appendix E.2/E.6): T = 100, then the best value is used for the full run.
+pilot: true
+pilot_T: 100
+pilot_seeds: [0]
+
+# ---- gradient-based baselines (ADAM) ---------------------------------------
+# grid of learning rates searched during the pilot, then the winner is used.
+advi:
+  learning_rate: 0.02            # paper grid-searched ADVI lr
+  learning_rate_grid: [0.001, 0.01, 0.02, 0.05]
+score:
+  learning_rate: 0.02
+  learning_rate_grid: [0.001, 0.01, 0.02, 0.05]
+fisher:
+  learning_rate: 0.02
+  learning_rate_grid: [0.001, 0.01, 0.02, 0.05]
+
+# ---- BaM (Algorithm 1) -----------------------------------------------------
+# BaM uses a *constant* schedule for the VAE experiment; lambda is the
+# inverse regularization parameter (large lambda = weak regularization).
+# Values follow the addendum's per-batch-size grid search.
+bam:
+  schedule: constant
+  lambda: {10: 0.1, 100: 50.0, 300: 7500.0}
+  lambda_grid:
+    10: [0.01, 0.1, 1.0, 10.0]
+    100: [1.0, 10.0, 50.0, 100.0]
+    300: [100.0, 1000.0, 7500.0, 10000.0]
+
+# ---- GSM (Algorithm 3) -----------------------------------------------------
+gsm:
+  # GSM is hyper-parameter free (per-sample matching updates).
+  learning_rate: null
+
+# ---- held-out target image -------------------------------------------------
+# A single held-out CIFAR-10 image is used for every method/B so all
+# algorithms solve the identical target.
+image_index: 0
+init_mean_scale: 0.1
+image_shape: [3, 32, 32]           # CIFAR-10, scaled to [-1, 1]
+
+# ---- deep generative model architecture ------------------------------------
+vae:
+  latent_dim: 256
+  c_hid: 64                        # documented default (paper silent)
+  sigma2: 0.1
+  epochs: 100
+  batch_size: 128                  # documented default (paper silent)
+  mc_sim: 1
+  lr_start: 0.0
+  lr_peak: 0.0001
+  lr_warmup: 100
+  lr_decay: 500
+  lr_final: 0.00001
+  dataset: CIFAR-10
+  normalize: true                  # scale images to [-1, 1] (tanh decoder)
+  allow_synthetic: true            # synthetic-image fallback if data missing
+
+# ---- reporting -------------------------------------------------------------
+metric: reconstruction_mse
+# AVI (amortized variational inference) reconstruction MSE is reported as the
+# reference baseline in Figure 5.4.
+report_avi: true
+
+# ---- output ----------------------------------------------------------------
+outdir: results
+save: true
+figures: true

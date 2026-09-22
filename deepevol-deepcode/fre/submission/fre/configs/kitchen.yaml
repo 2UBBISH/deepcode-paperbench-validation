@@ -1,0 +1,289 @@
+# FRE config: Kitchen (D4RL kitchen-mixed-v0)
+# ---------------------------------------------------------------------------
+# Paper: "Zero-Shot Reinforcement Learning via Functional Reward Encodings"
+#   - Table 3 (Appendix A) : architecture + optimisation hyperparameters
+#   - Appendix C.3         : offline data (kitchen-mixed-v0)
+#   - Section 5.2          : evaluation protocol (7 sparse subtasks, 0-100)
+#
+# Keys are duplicated at the top level (consumed by
+# ``fre.run_fre.FRETrainConfig.from_dict``) and inside the ``train:`` block
+# (consumed by section-selecting loaders). Kitchen uses the long strided
+# schedule: 1M encoder steps + 1M policy steps (like ExORL).
+# ---------------------------------------------------------------------------
+
+name: kitchen
+domain: kitchen
+env_name: kitchen-mixed-v0
+dataset: kitchen-mixed-v0
+
+# --- training (flat, Table 3 + strided schedule) ---------------------------
+encoder_steps: 1000000
+policy_steps: 1000000
+batch_size: 512
+num_encoder_pairs: 32
+num_decoder_pairs: 8
+beta: 0.01
+learning_rate: 0.0001
+latent_dim: 128
+rl_hidden_dims: [512, 512, 512]
+decoder_hidden_dims: [512, 512, 512]
+expectile: 0.8
+awr_temperature: 3.0
+discount: 0.88
+target_update_rate: 0.001
+prior_preset: fre-all
+rl_observation: encoder
+phase: both
+seed: 0
+device: cuda
+
+train:
+  domain: kitchen
+  env_name: kitchen-mixed-v0
+  encoder_steps: 1000000          # Phase 1: encoder + decoder only
+  policy_steps: 1000000           # Phase 2: frozen encoder, train IQL
+  batch_size: 512
+  num_encoder_pairs: 32           # K  (encoder reward samples)
+  num_decoder_pairs: 8            # K' (decoder reward samples, disjoint)
+  beta: 0.01                      # information bottleneck weight
+  learning_rate: 0.0001
+  latent_dim: 128
+  rl_hidden_dims: [512, 512, 512]
+  decoder_hidden_dims: [512, 512, 512]
+  expectile: 0.8
+  awr_temperature: 3.0
+  discount: 0.88
+  target_update_rate: 0.001
+  prior_preset: fre-all
+  rl_observation: encoder
+  optimizer: adam
+  target_update: polyak
+  seed: 0
+  device: cuda
+  log_every: 5000
+  save_every: 50000
+  run_dir: runs/kitchen
+
+# --- FRE encoder (permutation-invariant transformer VAE) -------------------
+encoder:
+  token_dim: 128
+  state_embed_dim: 64
+  reward_embed_dim: 64
+  num_layers: 4
+  num_heads: 4
+  mlp_dim: 256
+  dropout: 0.0
+  activation: gelu
+  norm_first: true
+  pooling: mean
+  permutation_invariant: true
+  positional_encoding: false
+  log_std_min: -10.0
+  log_std_max: 2.0
+  num_reward_bins: 32            # scalar reward -> 32 integer bins
+  normalize_rewards: true        # per-reward-function min/max rescale to [0,1]
+
+# --- FRE decoder -----------------------------------------------------------
+decoder:
+  input: raw_state                # no state embedding, concatenated with z
+  hidden_dims: [512, 512, 512]
+  activation: relu
+  use_layer_norm: false
+  output_dim: 1
+
+# --- objective (Eq. 6) -----------------------------------------------------
+objective:
+  beta: 0.01
+  beta_annealing: false
+  kl_target: unit_gaussian
+  decoder_likelihood: gaussian_unit_variance
+  loss: reconstruction_mse_plus_beta_kl
+
+# --- prior reward distribution (uniform 1/3 mixture) -----------------------
+prior:
+  preset: fre-all
+  family_weights:                 # uniform over the three families (Section 4.2)
+    goal: 0.3333333333333333
+    linear: 0.3333333333333333
+    mlp: 0.3333333333333333
+  goal:
+    p_current: 0.2                # HER distribution (Appendix B)
+    p_future: 0.5
+    p_random: 0.3
+    min_offset: 1
+    threshold: 0.1                # sparse goal-reaching threshold
+    reward_unachieved: -1.0
+    reward_achieved: 0.0
+    distance_dims: all            # Kitchen: full observation distance
+    encode_goal_in_encoder: true  # >= 1 encoding sample is the goal
+  linear:
+    mask_prob: 0.9                # each dim zeroed with p = 0.9
+    weight_range: [-1.0, 1.0]
+    exclude_dims: []              # no XY exclusion for Kitchen
+    weight_scale: 1.0
+  mlp:
+    hidden_dim: 32
+    hidden_activation: tanh
+    output_activation: tanh
+    clip_value: 1.0
+    scaling: avg_dim_sqrt
+    bias: true
+  hint:
+    enabled: false                # Section 5.4 domain-knowledge study only
+    num_directions: 16
+    velocity_width: 1.0
+
+# --- Section 5.3 scaling study (reward-family subsets) ---------------------
+scaling_presets:
+  - fre-all
+  - fre-goals
+  - fre-lin
+  - fre-mlp
+  - fre-lin-mlp
+  - fre-goal-mlp
+  - fre-goal-lin
+
+# --- z-conditioned IQL agent (Table 3) -------------------------------------
+iql:
+  hidden_dims: [512, 512, 512]
+  activation: relu
+  use_layer_norm: false
+  expectile: 0.8
+  awr_temperature: 3.0
+  discount: 0.88
+  target_update_rate: 0.001
+  learning_rate: 0.0001
+  batch_size: 512
+  bellman_target: max_q           # Q(s,a,z) <- eta(s) + E[max_a' Q(s',a',z)]
+  exp_adv_clamp: 100.0
+  log_std_min: -10.0
+  log_std_max: 2.0
+  action_low: -1.0
+  action_high: 1.0
+  state_dim: 59
+  action_dim: 9
+
+# --- data pipeline ---------------------------------------------------------
+data:
+  dataset: kitchen-mixed-v0
+  state_dim: 59                   # raw D4RL Kitchen observation
+  action_dim: 9
+  discretize_xy: false
+  num_xy_bins: 32
+  xy_indices: [0, 1]
+  normalize_states: false
+  augment_dim: 0
+  d4rl_commit_note: >-
+    Use a pre-June-2024 D4RL commit (mujoco_py / mujoco 2.3+) for
+    kitchen-mixed-v0.
+
+# --- evaluation (Section 5.2 / Appendix C.3) -------------------------------
+eval:
+  num_encoding_samples: 32        # K reward-annotated samples -> z
+  num_episodes: 20
+  seeds: [0, 1, 2, 3, 4]
+  deterministic: true
+  max_episode_steps: 280
+  encoder_normalizes_rewards: true
+  policy_uses_encoder_observation: false
+  normalize_returns: true
+  return_range: [0, 100]
+  task_set: all
+
+# --- tasks: the 7 standard sparse Kitchen subtasks -------------------------
+tasks:
+  threshold: 0.3                  # D4RL bonus threshold for completion
+  offset: 0
+  subtasks:                       # names must match fre/envs/kitchen_tasks.py
+    - microwave
+    - kettle
+    - light-switch
+    - slide-cabinet
+    - hinge-cabinet
+    - top-burner
+    - bottom-burner
+  task_sets:
+    subtasks:
+      - kitchen-microwave
+      - kitchen-kettle
+      - kitchen-light-switch
+      - kitchen-slide-cabinet
+      - kitchen-hinge-cabinet
+      - kitchen-top-burner
+      - kitchen-bottom-burner
+    all:
+      - kitchen-microwave
+      - kitchen-kettle
+      - kitchen-light-switch
+      - kitchen-slide-cabinet
+      - kitchen-hinge-cabinet
+      - kitchen-top-burner
+      - kitchen-bottom-burner
+
+# --- baselines (Section 5.2) -----------------------------------------------
+baselines:
+  gc_iql:
+    hidden_dims: [512, 512, 512]
+    activation: relu
+    use_layer_norm: false
+    expectile: 0.8
+    awr_temperature: 3.0
+    discount: 0.88
+    target_update_rate: 0.001
+    learning_rate: 0.0001
+    batch_size: 512
+    train_steps: 1000000
+    p_current: 0.2
+    p_future: 0.5
+    p_random: 0.3
+    reward_unachieved: -1.0
+    reward_achieved: 0.0
+    eval_goal: ground_truth
+  gc_bc:
+    hidden_dims: [512, 512, 512]
+    activation: relu
+    use_layer_norm: true
+    log_std_min: -5.0
+    log_std_max: 2.0
+    learning_rate: 0.0001
+    batch_size: 512
+    train_steps: 1000000
+    geometric_p: 0.5
+    hindsight: geometric_only
+    eval_goal: ground_truth
+  opal:
+    latent_dim: 128
+    token_dim: 128
+    num_layers: 4
+    num_heads: 4
+    mlp_dim: 256
+    hidden_dims: [512, 512, 512]
+    learning_rate: 0.0001
+    batch_size: 512
+    segment_length: 64
+    train_steps: 1000000
+    num_skills: 10
+    eval: privileged
+    num_episodes: 20
+    seeds: [0, 1, 2, 3, 4]
+  fb:
+    train_steps: 1000000
+    reward_samples: 5120          # FB/SF use 5120 samples (vs FRE's 32)
+    dataset_type: rnd
+    num_episodes: 20
+    seeds: [0, 1, 2, 3, 4]
+  sf:
+    train_steps: 1000000
+    reward_samples: 5120
+    features: icm
+    dataset_type: rnd
+    num_episodes: 20
+    seeds: [0, 1, 2, 3, 4]
+
+# --- reference numbers (Table 1 of the paper) ------------------------------
+reference:
+  kitchen: 66.0
+  kitchen_std: 3.0
+  all: 57.0
+  all_std: 9.0
+  num_reward_samples: 32

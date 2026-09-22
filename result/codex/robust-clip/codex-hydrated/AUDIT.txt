@@ -1,0 +1,157 @@
+  (1 command(s) rejected / not run — fine)
+  ran    10.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop && python3 --version && pip 
+  ran     8.1s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop && python3 - <<'PY' 2>&1 | t
+  ran    10.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop && python3 - <<'PY' 2>&1 | t   ⚠️ training-looking
+  ran     7.9s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop && python3 - <<'PY' 2>&1 | t   ⚠️ training-looking
+  ran     0.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop && timeout 560 python3 - <<'   ⚠️ training-looking
+  ran    10.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop && python3 - <<'PY' 2>&1 | t   ⚠️ training-looking
+  ran    10.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop && python3 - <<'PY' 2>&1 | t   ⚠️ training-looking
+  ran     7.2s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop && python3 - <<'PY' 2>&1 | t
+  ran     7.6s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop && python3 - <<'PY' 2>&1 | t   ⚠️ training-looking
+  ran    10.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop && python3 - <<'PY' 2>&1 | t   ⚠️ training-looking
+  ran    10.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && python3 - <<'P
+  ran     8.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop && python3 - <<'PY' 2>&1 | t
+  ran     7.8s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop && python3 - <<'PY' 2>&1 | t
+  ran     1.7s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && python3 - <<'P   ⚠️ training-looking
+  ran    10.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && python3 - <<'P   ⚠️ training-looking
+  ran     0.3s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop && python3 - <<'PY'
+  ran    10.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && python3 -m rob   ⚠️ training-looking
+  ran     2.1s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && python3 -m rob   ⚠️ training-looking
+  ran    10.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && python3 -m rob   ⚠️ training-looking
+  ran    10.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && python3 -m rob   ⚠️ training-looking
+  ran     9.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && python3 - <<'P   ⚠️ training-looking
+  ran    10.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && python3 -m rob   ⚠️ training-looking
+  ran     9.3s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && python3 - <<'P
+  ran    10.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && python3 - <<'P
+  ran     8.7s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && python3 - <<'P
+  ran     7.3s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && python3 - <<'P
+  ran     8.5s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && python3 - <<'P
+  ran    10.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop && python3 - <<'PY'   ⚠️ training-looking
+  ran    10.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && python3 -m rob   ⚠️ training-looking
+  ran     3.9s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && python3 - <<'P   ⚠️ training-looking
+  ran    10.0s  cd /tmp/rc_zsroot/imagenet && mv test validation && cd /Users/apple/Documents/0919-test/codex/work/robust-clip   ⚠️ training-looking
+  ran    10.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && python3 - <<'P   ⚠️ training-looking
+  ran    10.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && python3 tests/
+  ran    10.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && python3 tests/
+  ran     2.5s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && python3 - <<'P   ⚠️ training-looking
+  ran     8.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && python3 tests/
+  ran     8.5s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && python3 - <<'P
+  ran     8.3s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && python3 tests/
+  ran     7.2s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && python3 tests/
+  ran    10.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && chmod +x repro
+  ran    10.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && python3 -m pyt
+  ran    10.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && python3 -m pyt
+  ran    10.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && python3 -c "   ⚠️ training-looking
+  ran     8.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && python3 - <<'P   ⚠️ training-looking
+  ran    10.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && python3 - <<'P   ⚠️ training-looking
+  ran    10.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && python3 -m pyt
+  ran    10.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && python3 -m pyt
+  ran    10.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && python3 -m pyt
+  ran    10.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && python3 -m pyt
+  ran    10.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && python3 -m pyt
+  ran     9.5s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && ls /tmp/rc_run
+  ran    10.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && python3 - <<'P
+  ran    10.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && python3 -m com
+  ran     0.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && chmod +x scrip   ⚠️ training-looking
+  ran     0.3s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && python3 -c "im
+  ran     0.0s  mkdir -p /tmp/rc_fig2 && python3 - <<'PY'
+  ran     0.7s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && python3 -m rob   ⚠️ training-looking
+  ran     1.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && python3 -m rob   ⚠️ training-looking
+  ran     1.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && python3 -m rob   ⚠️ training-looking
+  ran    10.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && python3 -m pyt
+  ran     0.1s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && python3 -m com   ⚠️ training-looking
+  ran    10.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && python3 -m pyt   ⚠️ training-looking
+  ran    10.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && python3 -m pyt
+  ran    10.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && python3 -m rob   ⚠️ training-looking
+  ran    10.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && python3 -m rob   ⚠️ training-looking
+  ran    10.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && python3 -m rob   ⚠️ training-looking
+  ran    10.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && rg -n "normali
+  ran    10.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && python3 - <<'P   ⚠️ training-looking
+  ran    10.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && python3 - <<'P   ⚠️ training-looking
+  ran    10.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && python3 - <<'P   ⚠️ training-looking
+  ran    10.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && python3 - <<'P   ⚠️ training-looking
+  ran    10.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && python3 - <<'P   ⚠️ training-looking
+  ran    10.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && python3 - <<'P   ⚠️ training-looking
+  ran    10.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && python3 -m rob   ⚠️ training-looking
+  ran    10.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && python3 -m rob   ⚠️ training-looking
+  ran    10.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && python3 -m pyt
+  ran    10.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && python3 -m pyt
+  ran    10.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && python3 -m pyt
+  ran    10.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && python3 -m pyt
+  ran    10.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && python3 script   ⚠️ training-looking
+  ran    10.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && PYTORCH_MPS_HI   ⚠️ training-looking
+  ran    10.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && python3 script   ⚠️ training-looking
+  ran    10.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && OMP_NUM_THREAD   ⚠️ training-looking
+  ran    10.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && OMP_NUM_THREAD   ⚠️ training-looking
+  ran    10.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && python3 -m com
+  ran    10.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && OMP_NUM_THREAD   ⚠️ training-looking
+  ran    10.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && python3 -m pyt
+  ran    10.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && for m in robus   ⚠️ training-looking
+  ran     7.8s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && python3 -m pyt   ⚠️ training-looking
+  ran    10.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && python3 -m pyt
+  ran    10.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && python3 -m rob   ⚠️ training-looking
+  ran    10.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && python3 -m pyt
+  ran     7.6s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && python3 -m pyt
+  ran     6.4s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && python3 - <<'P   ⚠️ training-looking
+  ran     6.3s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && python3 - <<'P
+  ran     7.7s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && python3 -m pyt
+  ran    10.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && python3 -m pyt
+  ran     9.6s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && python3 -m pyt
+  ran     7.6s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && python3 -m pyt
+  ran    10.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && python3 -m pyt
+  ran    10.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && python3 -m pyt
+  ran    10.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && chmod +x scrip
+  ran    10.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && python3 - <<'P
+  ran    10.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && OMP_NUM_THREAD   ⚠️ training-looking
+  ran    10.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && OMP_NUM_THREAD   ⚠️ training-looking
+  ran    10.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && python3 -m rob   ⚠️ training-looking
+  ran     0.0s  cd /tmp && pip install --quiet "open-flamingo @ git+https://github.com/mlfoundations/open_flamingo.git" 2>&1 |
+  ran    10.0s  cd /tmp && python3 -m pip install --quiet "open-flamingo @ git+https://github.com/mlfoundations/open_flamingo.
+  ran     3.7s  cd /tmp && python3 -c "import torch, transformers; print('torch', torch.__version__); print('transformers', tr
+  ran    10.0s  cd /tmp && python3 -m pip install --quiet "torch==2.2.2" "torchvision==0.17.2" 2>&1 | tail -6; python3 -c "imp
+  ran     8.0s  cd /tmp && python3 - <<'PY' 2>&1 | tail -40
+  ran     7.0s  cd /tmp && python3 - <<'PY' 2>&1 | tail -45
+  ran     6.9s  cd /tmp && python3 - <<'PY' 2>&1 | tail -35
+  ran     6.3s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop && python3 - <<'PY' 2>&1 | t
+  ran     6.4s  cd /tmp && python3 - <<'PY' 2>&1 | tail -30
+  ran     6.5s  cd /tmp && python3 - <<'PY' 2>&1 | tail -35
+  ran     6.5s  cd /tmp && python3 - <<'PY' 2>&1 | tail -30
+  ran    10.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && python3 -m pyt
+  ran    10.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && python3 -m pyt
+  ran    10.0s  cd /tmp && timeout_run() { :; }; python3 - <<'PY' 2>&1 | tail -25   ⚠️ training-looking
+  ran    10.0s  cd /tmp && python3 - <<'PY' 2>&1 | tail -25   ⚠️ training-looking
+  ran    10.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && python3 -m pyt
+  ran    10.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && python3 -m pyt
+  ran    10.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && python3 -m pyt
+  ran    10.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && python3 -m pyt
+  ran    10.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && python3 -m pyt
+  ran    10.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && python3 -m pyt
+  ran     0.1s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && python3 -m com
+  ran    10.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && python3 -m pyt   ⚠️ training-looking
+  ran    10.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && python3 -m pyt   ⚠️ training-looking
+  ran     0.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && bash -n reprod
+  ran    10.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && git add -A && 
+  ran     2.0s  cd /tmp && python3 -m pip install --quiet pycocoevalcap 2>&1 | tail -3; python3 - <<'PY' 2>&1 | tail -20   ⚠️ training-looking
+  ran     0.1s  cd /tmp && python3 - <<'PY' 2>&1 | tail -20   ⚠️ training-looking
+  ran     0.2s  cd /tmp && python3 - <<'PY' 2>&1 | tail -20   ⚠️ training-looking
+  ran     0.2s  cd /tmp && python3 - <<'PY' 2>&1 | tail -20   ⚠️ training-looking
+  ran     0.1s  cd /tmp && python3 - <<'PY' 2>&1 | head -80   ⚠️ training-looking
+  ran     0.1s  cd /tmp && python3 - <<'PY' 2>&1 | tail -20   ⚠️ training-looking
+  ran     0.2s  cd /tmp && python3 - <<'PY' 2>&1 | tail -20   ⚠️ training-looking
+  ran     0.1s  cd /tmp && python3 - <<'PY' 2>&1 | head -70   ⚠️ training-looking
+  ran     0.1s  cd /tmp && python3 - <<'PY' 2>&1 | head -90   ⚠️ training-looking
+  ran     0.1s  cd /tmp && python3 - <<'PY' 2>&1 | head -60   ⚠️ training-looking
+  ran     0.2s  cd /tmp && python3 - <<'PY' 2>&1 | tail -20   ⚠️ training-looking
+  ran     0.1s  cd /tmp && python3 - <<'PY' 2>&1 | head -40   ⚠️ training-looking
+  ran     0.1s  cd /tmp && sed -n '1,60p' /Users/apple/Library/Python/3.9/lib/python3.9/site-packages/pycocoevalcap/cider/cide   ⚠️ training-looking
+  ran     0.2s  cd /tmp && python3 - <<'PY' 2>&1 | tail -20   ⚠️ training-looking
+  ran     0.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && python3 - <<'P   ⚠️ training-looking
+  ran     0.7s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && python3 -m pyt
+  ran    10.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && python3 -m pyt
+  ran    10.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && git add -A &&    ⚠️ training-looking
+  ran     0.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && echo "--- TODO
+  ran    10.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && OMP_NUM_THREAD   ⚠️ training-looking
+  ran    10.0s  cd /Users/apple/Documents/0919-test/codex/work/robust-clip-hydrated-codex-desktop/submission && python3 -m pyt
+codex: 1 session file(s), 1 turn(s), models ['deepseek-flash'], output tokens 315629, thinking tokens 127947
+  /Users/apple/.codex/sessions/2026/09/22/rollout-2026-09-22T10-37-57-01a0c6fa-2430-7130-a884-b7ec3fc1ee95.jsonl
+CALIBER_REVIEW: 153 command(s) ran (1142s total, 75 training-looking by keyword) — owner to glance at the list; none exceeded the long-experiment line

@@ -1,0 +1,169 @@
+# ===========================================================================
+# Toy / sanity-check experiments for
+# "Fine-tuning Reinforcement Learning Models is Secretly a Forgetting
+#  Mitigation Problem" (Wolczyk et al., 2024)
+#
+# Source of the model: Appendix A.1 (two-state MDP, Figure 9) and
+# Appendix A.2 (AppleRetrieval, Figures 10-11).
+#
+# The paper does not tabulate the rewards (r0, r1), the discount factor or the
+# noise level eps of the two-state MDP; it only reports the *outcomes*:
+#
+#   * state coverage gap   : gradient-ascent fine-tuning from theta=0 (the
+#                            pre-trained parameter found by training on s1 only)
+#                            converges to a suboptimal local optimum
+#                            theta = 0.11 with value v0 = 2.22.
+#   * imperfect cloning gap: theta = 1 gives f_theta = 1 and the maximum total
+#                            discounted return 10 (=> gamma = 0.9, since
+#                            v0(1) = 1/(1-gamma)); perturbing theta by a small
+#                            noise eps before fine-tuning diverges to a local
+#                            maximum theta = 0.08 with value 9.93.
+#
+# The constants below were therefore chosen (fitted) so that the paper's own
+# closed form
+#
+#   v_0(theta) = 1/(1-gamma) * [ theta + r0 (1-theta)(1-gamma f_theta)
+#                                + gamma theta r1 (1 - f_theta) ]
+#                              / [ 1 - gamma f_theta + gamma theta ]
+#
+# reproduces those reported optima numerically:
+#
+#   coverage gap       : gamma=0.9, r0=0.0,  r1=-1.0,
+#                        f_theta = 1 - (eps/(1-eps/2)) theta  with eps = 2/3
+#                        -> local maximum at theta = 0.1111 (v0 = 2.2222),
+#                           global maximum v0(1) = 1/(1-gamma) = 10.
+#   imperfect cloning  : gamma=0.9, r0=0.99134, r1=0.97680,
+#                        f_theta = 2 |theta - 0.5|
+#                        -> local maximum at theta = 0.0800 (v0 = 9.9300),
+#                           global maximum v0(1) = 10.
+#                        (r0 = r1 = 1 makes v0 identically constant = 1/(1-gamma),
+#                         hence the slight offsets; they are the unique values
+#                         whose v0 is stationary *and* equal to 9.93 at 0.08.)
+# ===========================================================================
+
+name: toy
+env_name: toy
+wandb_project: finetuning-rl-as-cl
+seed: 0
+
+logging:
+  log_every: 50
+  save_every: 5000
+  use_tensorboard: true
+
+compute:
+  device: cpu
+  num_workers: 1
+  torch_threads: 1
+
+# ---------------------------------------------------------------------------
+# A.1 - Two-state MDP (Figure 9)
+# ---------------------------------------------------------------------------
+two_state_mdp:
+  gamma: 0.9                 # 1/(1-gamma) = 10 = paper's maximum return
+  max_return: 10.0           # v0(theta=1), used as the normaliser for figures
+  # Number of theta points used to draw the blue curve of Figure 9(b)/(c).
+  theta_grid:
+    min: 0.0
+    max: 1.0
+    num: 1001
+  # Fine-tuning = gradient ascent on v0(theta) until a local extremum is hit.
+  finetune:
+    lr: 0.01
+    num_steps: 20000
+    grad_clip: 10.0
+    tol: 1.0e-9              # stop when |dv0/dtheta| < tol
+    lr_decay: 1.0
+  # Scenarios of Appendix A.1 (values fitted to the reported optima).
+  scenarios:
+    coverage_gap:
+      f_theta: coverage      # f = (-eps/(1-eps/2)) theta + 1     for theta <= 1-eps/2
+                             #     = 2 theta - 1                       otherwise
+      r0: 0.0
+      r1: -1.0
+      eps: 0.6666666666666666   # => slope c = eps/(1-eps/2) = 2, branch point 2/3
+      theta_init: 0.0           # policy pre-trained on s1 only (f_0 = 1)
+      expected_optimum: 0.11
+      expected_value: 2.22
+      num_restarts: 0
+    imperfect_cloning:
+      f_theta: cloning       # f = 2 |theta - 0.5|
+      r0: 0.99134
+      r1: 0.97680
+      eps: 0.1                  # noise added to theta before fine-tuning
+      theta_init: 0.9           # = 1 - eps (maximum perturbed towards s0)
+      expected_optimum: 0.08
+      expected_value: 9.93
+      num_restarts: 0
+
+# ---------------------------------------------------------------------------
+# A.2 - AppleRetrieval (1D gridworld, Figures 10-11)
+# ---------------------------------------------------------------------------
+apple_retrieval:
+  # Environment
+  horizon: 100                 # episodes terminated when solved or after 100 steps
+  phases: 2                    # Phase 1: 0 -> M (retrieve apple); Phase 2: M -> 0
+  reward_step: 1.0             # +1 for moving in the correct direction
+  reward_wrong: -1.0           # -1 otherwise
+  # Observation o = [-c] in Phase 1 and o = [c] in Phase 2; o = [x, phase-sign]
+  # encoding is handled in src/toy/apple_retrieval.py.
+  c: 1.0                       # default observation scale (swept below)
+  M: 30                        # default distance home <-> apple (swept below)
+  # Policy: linear + sigmoid, pi_{w,b}(o) = sigmoid(w * o + b)
+  policy:
+    init_scale: 0.0            # 0.0 => init from the Phase-2 pre-trained weights
+    weight_init: 0.0
+    bias_init: 0.0
+  # REINFORCE (Williams, 1992)
+  reinforce:
+    lr: 0.5
+    num_episodes: 5000
+    batch_episodes: 1
+    gamma: 0.99
+    entropy_bonus: 0.0
+    grad_clip: 5.0
+    normalize_returns: false
+    max_grad_norm: 5.0
+  # Phase-2 pre-training (the "pre-trained capability" that must not be forgotten)
+  pretrain:
+    phase: 2                   # train pi_* only in Phase 2, starting at x = M
+    start_x: 30                # = M
+    num_episodes: 5000
+    lr: 0.5
+    c: 1.0
+    weight_init: 0.0
+    bias_init: 0.0
+  # Fine-tuning starts at home (x = 0, Phase 1) from the Phase-2 weights.
+  finetune:
+    num_episodes: 5000
+    lr: 0.5
+    evaluate_every: 100
+    eval_episodes: 50
+  # Sweeps of Figures 10 and 11
+  sweep_M:
+    values: [1, 2, 3, 5, 10, 15, 20, 25, 30, 40, 50]
+    c: 1.0
+  sweep_c:
+    values: [0.05, 0.1, 0.2, 0.5, 1.0, 2.0, 5.0]
+    M: 30                      # Figure 11 uses M = 30
+  metrics:
+    # Forgetting of pre-trained capabilities: success rate in Phase 2 evaluated
+    # with the Phase-2-started policy, before and after fine-tuning.
+    - phase2_success
+    - phase2_action_agreement   # fraction of states where argmax pi == argmax pi_*
+    - overall_success
+    - mean_return
+    - weight_norm               # |w| after fine-tuning
+    - bias_norm                 # |b| after fine-tuning
+    - bias_weight_ratio         # |b| / |w| (Figure 11 right)
+  seeds: [0, 1, 2, 3, 4]
+
+eval:
+  num_seeds: 5
+  confidence: 0.90
+  episodes: 50
+
+analysis:
+  forgetting_metric: phase2_action_agreement
+  early_window: 200            # steps used for the "early fine-tuning" curves
+  plot_style: paper

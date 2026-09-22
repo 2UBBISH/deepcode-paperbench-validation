@@ -1,0 +1,13 @@
+{
+  "model_name": "roberta-base",
+  "task": "squad",
+  "target_sparsity": 0.6,
+  "initial_rank": 8,
+  "target_rank": 64,
+  "scaling": 2.0,
+  "adapt_ffn": true,
+  "learning_rate": 0.0002,
+  "batch_size": 32,
+  "epochs": 40,
+  "distill_epochs": 20
+}

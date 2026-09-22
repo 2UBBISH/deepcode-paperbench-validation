@@ -1,0 +1,23 @@
+{
+ "judged_score": 0.9452614379084966,
+ "judged_invalid": 3,
+ "reparsed_score": 0.9779411764705882,
+ "reparsed_invalid": 0,
+ "leaves": {
+  "4f388c37-1aea-4ea4-a576-bbf5df58a531": {
+   "valid_score": true,
+   "score": 1,
+   "explanation": "The submission provides concrete executable code for pretraining a PPO agent on the selfish mining environment using the specified architecture [128,128,128,128], via scripts/train_target.py with support for --env selfish_mining, fulfilling all requirements."
+  },
+  "618a2e75-6514-4143-892f-4bba8babe64a": {
+   "valid_score": true,
+   "score": 1,
+   "explanation": "The submission contains RandomStateProvider that randomly selects visited states for rollouts without training, and the random explanation method is selectable via multiple code paths for MuJoCo environments."
+  },
+  "805a94ce-bc0c-4ea5-8864-b72fbc7f2635": {
+   "valid_score": true,
+   "score": 1,
+   "explanation": "The judge finds that the submission implements the fidelity score metric for selfish mining correctly, including trajectory snapshots, state restoration, random actions, and the specified formula. Therefore the criterion is met."
+  }
+ }
+}

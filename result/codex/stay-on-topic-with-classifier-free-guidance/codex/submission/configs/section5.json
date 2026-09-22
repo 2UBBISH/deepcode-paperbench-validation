@@ -1,0 +1,15 @@
+{
+  "comment": "Section 5. Falcon-7b base + instruct on a sample of P3.",
+  "model": "tiiuae/falcon-7b",
+  "instruct_model": "tiiuae/falcon-7b-instruct",
+  "gamma": 1.5,
+  "n_per_dataset": 50,
+  "max_input_tokens": 200,
+  "target_total_datapoints": 32902,
+  "top_p": 0.9,
+  "visualisation": {
+    "prompt": "The dragon flew over Paris, France",
+    "gamma": 1.5,
+    "model": "gpt2-large"
+  }
+}

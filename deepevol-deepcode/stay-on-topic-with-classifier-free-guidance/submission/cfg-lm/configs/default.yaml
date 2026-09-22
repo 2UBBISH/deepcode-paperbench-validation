@@ -1,0 +1,300 @@
+# =============================================================================
+# CFG-LM: default configuration
+# Reproducing "Stay on Topic with Classifier-Free Guidance"
+# -----------------------------------------------------------------------------
+# Every numeric constant in this file mirrors a value stated in the paper or in
+# its appendices; it is the single source of truth shared by all scripts
+# (run_zero_shot.py, run_cot.py, run_humaneval.py, run_analysis.py,
+# run_flops.py) as well as by the library constants in src/data/prompts.py,
+# src/cfg/sampler.py, src/eval/harness_cfg.py and src/analysis/*.py.
+#
+# The YAML is deliberately flat-ish and dependency-free: it can be loaded with
+# PyYAML, or by the tiny fallback loader in scripts/* (`load_config`), or even
+# by `src.data.prompts.CFG_GAMMAS` if YAML is unavailable.
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Core CFG formulation  (paper Eq. 5, 6, 7 / Sections 2.1 - 2.2)
+#   guided_logits = uncond + gamma * (cond - uncond)          (log space, raw)
+# gamma == 1 -> vanilla conditional sampling
+# gamma == 0 -> unconditional sampling
+# -----------------------------------------------------------------------------
+cfg:
+  # Eq. 7 combination is applied to RAW pre-softmax logits, *before*
+  # temperature / top-p / softmax (Section 2.2).
+  apply_stage: "raw_logits"
+  # gamma grid swept in Table 2 / Table 5 / Tables 7-9 and in Figure 2/17.
+  gammas: [1.0, 1.1, 1.25, 1.5, 1.75, 2.0]
+  # gamma studied in the Section 5 analysis (entropy / overlap / perplexity /
+  # Table 3 vocabulary re-ranking).
+  analysis_gamma: 1.5
+  # Eq. 5 negative prompting: user supplies c_bar = "what we do not want".
+  negative_prompting:
+    enabled: false                # Section 3.4 human study is out of scope
+    gammas: [1.0, 2.0, 3.0, 4.0, 5.0, 6.0]
+    n_system_prompts: 25          # n_c in Section 3.4
+    n_user_prompts: 46            # n_p in Section 3.4
+    n_prompt_pairs: 1740          # 25 x 46 randomly sampled combinations
+    peak_gamma: 3.0               # 75% system-prompt preference peak
+    default_negative_prompt: ""   # filled from data.default_system_prompt
+
+# -----------------------------------------------------------------------------
+# Which context the "unconditional" pass sees (Section 3.1 convention)
+#   last_prompt_token : unconditional prompt begins at the *last token of the
+#                       initial prompt*  -> used for the zero-shot harness suite
+#   empty_prefix      : prefix dropped entirely -> default elsewhere
+# -----------------------------------------------------------------------------
+unconditional:
+  default: "empty_prefix"
+  zero_shot: "last_prompt_token"
+  modes: ["empty_prefix", "last_prompt_token"]
+
+# -----------------------------------------------------------------------------
+# Sampling defaults.
+# The zero-shot suite follows the EleutherAI LM Evaluation Harness defaults
+# (greedy / temperature 0, top_p = 1.0) since CFG is a *logit* intervention.
+# Generation tasks (HumanEval) sweep temperature in {0.2, 0.6, 0.8}; CoT
+# decoding is greedy with a stop at the answer marker.
+# -----------------------------------------------------------------------------
+sampling:
+  harness:
+    temperature: 0.0
+    top_p: 1.0
+    top_k: 0
+    do_sample: false
+    max_length: 2048
+    max_gen_toks: 256
+    batch_size: 1
+  humaneval:
+    temperatures: [0.2, 0.6, 0.8]
+    top_p: 1.0
+    top_k: 0
+    do_sample: true
+    max_new_tokens: 512
+    n_samples: 200
+    pass_at_k: [1, 10, 100]
+    timeout: 3.0
+    stop_strings: ["\nclass", "\ndef", "\n#", "\nif", "\nprint"]
+  cot:
+    temperatures: [0.0]
+    top_p: 1.0
+    do_sample: false
+    max_new_tokens: 512
+    stop_strings: ["####", "The answer is", "Answer:"]
+  analysis:
+    # Section 5 analysis uses greedy decoding for deterministic, comparable
+    # entropy / overlap / perplexity traces.
+    temperature: 1.0
+    top_p: 0.9
+    do_sample: false
+    max_new_tokens: 128
+
+# -----------------------------------------------------------------------------
+# Section 3.1 zero-shot suite (Table 5) - 9 tasks x 6 gammas.
+# -----------------------------------------------------------------------------
+zero_shot:
+  tasks:
+    - arc_challenge
+    - arc_easy
+    - boolq
+    - hellaswag
+    - piqa
+    - sciq
+    - triviaqa
+    - winogrande
+    - lambada_openai
+  # TriviaQA is scored by substring containment, not exact match (App. C.1).
+  substring_match_tasks: ["triviaqa"]
+  # Number of few-shot examples: 0 (zero-shot) for every task in Table 5.
+  num_fewshot: 0
+  # CFG is applied only to the FIRST scored token in the multi-choice /
+  # loglikelihood setting (Appendix C.1): "CFG-by-last-token".
+  combine_mode: "all_tokens"
+  rolling_mode: "shift_by_one"
+  limit: null
+  models:
+    gpt2:
+      - gpt2
+      - gpt2-medium
+      - gpt2-large
+      - gpt2-xl
+    pythia:
+      - EleutherAI/pythia-160m
+      - EleutherAI/pythia-410m
+      - EleutherAI/pythia-1b
+      - EleutherAI/pythia-1.4b
+      - EleutherAI/pythia-2.8b
+      - EleutherAI/pythia-6.9b
+      - EleutherAI/pythia-12b
+  # Paper anchor points used for sanity checking the sweep (Table 5).
+  anchors:
+    - {model: gpt2-large, task: lambada_openai, gamma: 1.0, accuracy: 47.7}
+    - {model: gpt2-large, task: lambada_openai, gamma: 1.5, accuracy: 60.5}
+    - {model: EleutherAI/pythia-12b, task: lambada_openai, gamma: 1.0, accuracy: 70.4}
+    - {model: EleutherAI/pythia-12b, task: lambada_openai, gamma: 1.5, accuracy: 80.6}
+    - {model: EleutherAI/pythia-6.9b, task: sciq, gamma: 1.0, accuracy: 84.3}
+    - {model: EleutherAI/pythia-6.9b, task: sciq, gamma: 1.5, accuracy: 89.7}
+
+# -----------------------------------------------------------------------------
+# Section 3.2 Chain-of-Thought (Figure 2: GSM8K, Figure 17: AQuA).
+# Few-shot prompt follows Wang et al. (2023) Self-Consistency.
+# -----------------------------------------------------------------------------
+cot:
+  tasks:
+    gsm8k:
+      dataset: "openai/gsm8k"
+      subset: "main"
+      split: "test"
+      answer_marker: "####"
+      n_shot: 8
+      prompt_builder: "build_gsm8k_prompt"
+    aqua:
+      dataset: "nguyen-brat/aqua"
+      subset: "raw"
+      split: "test"
+      answer_marker: "The answer is"
+      n_shot: 4
+      prompt_builder: "build_aqua_prompt"
+  models:
+    - WizardLM-30B
+    - Guanaco-65B
+  # For small gamma CFG raises the % of chains ending in a valid, parsable
+  # answer AND raises accuracy; for gamma > 1.5 chains degrade.
+  invalid_gamma_threshold: 1.5
+  limit: null
+
+# -----------------------------------------------------------------------------
+# Section 3.3.1 HumanEval (Table 2 at temp 0.2; Tables 7/8/9 at 0.6/0.8).
+# -----------------------------------------------------------------------------
+humaneval:
+  models:
+    - Salesforce/codegen-350M-mono
+    - Salesforce/codegen-2B-mono
+    - Salesforce/codegen-6B-mono
+  temperature: 0.2          # Table 2 headline temperature
+  n_problems: 164
+  anchors:                   # CodeGen-350M-mono, temperature = 0.2 (Table 2)
+    - {gamma: 1.0,  pass@1: 11.0, pass@10: 17.0, pass@100: 22.0}
+    - {gamma: 1.1,  pass@1: 11.8, pass@10: 18.1, pass@100: 20.1}
+    - {gamma: 1.25, pass@1: 11.4, pass@10: 17.3, pass@100: 18.9}
+    - {gamma: 1.5,  pass@1: 10.9, pass@10: 16.7, pass@100: 18.3}
+    - {gamma: 1.75, pass@1: 10.3, pass@10: 16.0, pass@100: 18.2}
+    - {gamma: 2.0,  pass@1: 8.6,  pass@10: 14.6, pass@100: 17.6}
+
+# -----------------------------------------------------------------------------
+# Section 5 analysis over the P3 subsample (Falcon-7b-Base / -Instruct).
+# -----------------------------------------------------------------------------
+analysis:
+  models:
+    base: "tiiuae/falcon-7b"
+    instruct: "tiiuae/falcon-7b-instruct"
+  p3:
+    dataset: "bigscience/P3"
+    samples_per_dataset: 50
+    n_datasets: 660
+    target_n_datapoints: 32902
+    max_input_tokens: 200
+    seed: 1234
+    cache_path: "data/cache/p3_sample.json"
+  entropy:
+    modes: ["cfg", "vanilla", "unprompted", "instruct"]
+    expected_cfg_mean: 4.7
+    expected_vanilla_mean: 5.49
+    tolerance: 0.15
+  overlap:
+    top_p: 0.9
+    expected_cfg_vanilla_overlap: 0.5
+    spearman_threshold: 0.7
+    tolerance: 0.1
+  perplexity:
+    # Perplexity is computed on the CONTINUATION only (Appendix E).
+    ignore_prompt: true
+    expected_cfg_vanilla_corr: 0.94
+    expected_instruct_cfg_corr: 0.70
+    tolerance: 0.10
+  table3:
+    prompt: "The dragon flew over Paris, France"
+    negative_prompt: ""
+    top_k: 5
+    n_steps: 12
+    expected_encouraged: ["dragon", "dragons", "flew", "Paris", "France"]
+    expected_discouraged: ["Queensland", "1913", "hostages", "voyages"]
+
+# -----------------------------------------------------------------------------
+# Section 4 cost analysis / Appendix C.2 Table 6 (ANCOVA on log-FLOPs).
+# -----------------------------------------------------------------------------
+cost_analysis:
+  alpha: 0.01                 # significance cutoff, Rutherford (2011)
+  method: "lr"                # likelihood-ratio logistic regression
+  test: "lines"               # compare intercept + slope of the two lines
+  cfg_inference_multiplier: 2.0   # two forward passes per token -> 2x FLOPs
+  flop_per_mac: 2
+  seq_len: 1
+  min_points_per_group: 2
+  # Appendix C.2 / Table 6: 5 insignificant, 2 favor CFG, 2 favor vanilla.
+  table6_pvalues:
+    lambada_openai: 0.000
+    winogrande: 0.003
+    sciq: 0.008
+    triviaqa: 0.008
+    hellaswag: 0.012
+    piqa: 0.030
+    arc_challenge: 0.216
+    boolq: 0.345
+    arc_easy: 0.355
+  table6_winners:
+    lambada_openai: "cfg"
+    winogrande: "vanilla"
+    sciq: "cfg"
+    triviaqa: "vanilla"
+    hellaswag: null
+    piqa: null
+    arc_challenge: null
+    boolq: null
+    arc_easy: null
+  expected_favor_counts: {inconclusive: 5, cfg: 2, vanilla: 2}
+
+# -----------------------------------------------------------------------------
+# Prompting / system prompts (Section 3.4), kept for completeness only.
+# The default system prompt doubles as the negative prompt c_bar in Eq. 5.
+# -----------------------------------------------------------------------------
+prompts:
+  default_system_prompt: >-
+    The prompt below is a question to answer, a task to complete, or a
+    conversation to respond to; decide which and write an appropriate response.
+  edited_system_prompts:
+    sad: "The prompt below is a question to answer, a task to complete, or a conversation to respond to; decide which and write a sad response."
+    happy: "The prompt below is a question to answer, a task to complete, or a conversation to respond to; decide which and write a happy response."
+    formal: "The prompt below is a question to answer, a task to complete, or a conversation to respond to; decide which and write a formal response."
+    casual: "The prompt below is a question to answer, a task to complete, or a conversation to respond to; decide which and write a casual response."
+    concise: "The prompt below is a question to answer, a task to complete, or a conversation to respond to; decide which and write a concise response."
+    detailed: "The prompt below is a question to answer, a task to complete, or a conversation to respond to; decide which and write a detailed response."
+    poetic: "The prompt below is a question to answer, a task to complete, or a conversation to respond to; decide which and write a poetic response."
+    sarcastic: "The prompt below is a question to answer, a task to complete, or a conversation to respond to; decide which and write a sarcastic response."
+    expert: "The prompt below is a question to answer, a task to complete, or a conversation to respond to; decide which and write a response as an expert."
+    child: "The prompt below is a question to answer, a task to complete, or a conversation to respond to; decide which and write a response as if to a child."
+
+# -----------------------------------------------------------------------------
+# Runtime / environment.
+# -----------------------------------------------------------------------------
+runtime:
+  device: "auto"
+  dtype: "auto"               # autodetect bf16 > fp16 > fp32
+  seed: 0
+  batch_size: 1
+  low_cpu_mem_usage: true
+  trust_remote_code: false
+  output_dir: "results"
+  cache_dir: "data/cache"
+  fp16: true                  # 24GB GPU assumed for 7B models
+  log_level: "INFO"
+
+# -----------------------------------------------------------------------------
+# Out of scope (documented so no script attempts them).
+# -----------------------------------------------------------------------------
+out_of_scope:
+  - "LLaMA model family"
+  - "Section 3.4 human preference study"
+  - "Section 4 VRAM / memory analysis (Eqs. 8-10, Figure 10)"
+  - "Appendix D.1 GPT-J / CodeGen text-to-image results"
+  - "Table 1 and Figures 6, 7, 9, 11, 12, 13"

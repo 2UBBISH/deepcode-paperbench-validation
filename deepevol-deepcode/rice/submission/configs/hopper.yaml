@@ -1,0 +1,70 @@
+# RICE configuration — Hopper-v3 (dense MuJoCo)
+# Merged on top of configs/default.yaml by rice.utils.io.get_config("hopper").
+# Source: §4.1/§4.2 (applications), Appendix C.1, Appendix C.2, Table 3.
+name: hopper
+
+env:
+  id: hopper
+  gym_id: Hopper-v3
+  app: mujoco
+  discrete_actions: false
+  normalize_obs: false          # Appendix C.2: Hopper is NOT normalized
+  sparse: false
+  sparse_threshold: 0.6
+  max_episode_steps: 1000
+  d_max: 3800.0                 # max single-episode reward for the fidelity score
+  obs_dim: 11
+  action_dim: 3
+
+target:
+  algo: ppo
+  policy: MlpPolicy
+  hidden_sizes: [64, 64]        # SB3 default MlpPolicy (Addendum: "Architectures")
+  activation: tanh
+  lr: 3.0e-4
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_range: 0.2
+  n_epochs: 10
+  batch_size: 64
+  n_steps: 2048
+  total_timesteps: 1000000
+  checkpoint: policies/hopper_ppo.zip
+  # Paper's "No Refine" regime (Table 1): 3559.44 +- 217.45
+  expected_return: 3559.44
+  expected_std: 217.45
+
+explanation:
+  enabled: true
+  method: ours
+  hidden_sizes: [64, 64]
+  alpha: 1.0e-4                 # Table 3 value (α is insensitive)
+  total_timesteps: 300000       # Table 4 fixed sample budget
+  K: 0.1
+
+refine:
+  enabled: true
+  method: ours
+  p: 0.5                        # Table 3
+  lam: 0.01                     # Table 3
+  K: null                       # K defaults to the episode horizon T
+  total_timesteps: 200000
+  expected_return: 3663.91      # Table 1: RICE refinement result
+  expected_std: 217.45
+
+rnd:
+  hidden_sizes: [64, 64]
+  lam: 0.01
+  normalize: true
+
+experiments:
+  exp1:
+    envs: [hopper]
+  exp2:
+    envs: [hopper]
+  exp3:
+    envs: [hopper]
+  exp4:
+    envs: [hopper]
+  exp5:
+    envs: [hopper]

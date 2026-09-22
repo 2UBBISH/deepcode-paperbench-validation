@@ -1,0 +1,12 @@
+{
+  "baseline": {
+    "masked_mse": 0.2369980137097781,
+    "masked_psnr": 12.273153066635132,
+    "observed_max_error": 2.0
+  },
+  "ours": {
+    "masked_mse": 0.03457884157084983,
+    "masked_psnr": 20.632495880126953,
+    "observed_max_error": 0.0
+  }
+}

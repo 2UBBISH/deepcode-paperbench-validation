@@ -1,0 +1,99 @@
+# The 75 models benchmarked in the paper (Appendix A): 36 VMs + 39 VLMs.
+#
+#   source: torchvision | clip | open_clip | lavis
+#   arch / pretrained: the exact checkpoint keys used by each loader
+#
+# `lca_on_the_line.models.all_model_specs()` builds this list programmatically;
+# this file documents it and can be used to select subsets.
+
+vision_models:            # 36 supervised ImageNet models via torchvision
+  - alexnet
+  - convnext_tiny
+  - densenet121
+  - densenet161
+  - densenet169
+  - densenet201
+  - efficientnet_b0
+  - googlenet
+  - inception_v3
+  - mnasnet0_5
+  - mnasnet0_75
+  - mnasnet1_0
+  - mnasnet1_3
+  - mobilenet_v3_small
+  - mobilenet_v3_large
+  - regnet_y_1_6gf
+  - wide_resnet101_2
+  - resnet18
+  - resnet34
+  - resnet50
+  - resnet101
+  - resnet152
+  - shufflenet_v2_x2_0
+  - squeezenet1_0
+  - squeezenet1_1
+  - swin_b
+  - vgg11
+  - vgg13
+  - vgg16
+  - vgg19
+  - vgg11_bn
+  - vgg13_bn
+  - vgg16_bn
+  - vgg19_bn
+  - vit_b_32
+  - vit_l_32
+
+clip_models:              # 7 models via openai/CLIP
+  - RN50
+  - RN101
+  - RN50x4
+  - ViT-B/32
+  - ViT-B/16
+  - ViT-L/14
+  - ViT-L/14@336px
+
+open_clip_models:         # 30 models via OpenCLIP (arch, pretrained tag)
+  - [RN101, openai]
+  - [RN101, yfcc15m]
+  - [RN101-quickgelu, openai]
+  - [RN101-quickgelu, yfcc15m]
+  - [RN50, cc12m]
+  - [RN50, openai]
+  - [RN50, yfcc15m]
+  - [RN50-quickgelu, cc12m]
+  - [RN50-quickgelu, openai]
+  - [RN50-quickgelu, yfcc15m]
+  - [RN50x16, openai]
+  - [RN50x4, openai]
+  - [RN50x64, openai]
+  - [ViT-B-16, laion2b_s34b_b88k]
+  - [ViT-B-16, laion400m_e31]
+  - [ViT-B-16, laion400m_e32]
+  - [ViT-B-16-plus-240, laion400m_e31]
+  - [ViT-B-16-plus-240, laion400m_e32]
+  - [ViT-B-32, laion2b_e16]
+  - [ViT-B-32, laion2b_s34b_b79k]
+  - [ViT-B-32, laion400m_e31]
+  - [ViT-B-32, laion400m_e32]
+  - [ViT-B-32, openai]
+  - [ViT-B-32-quickgelu, laion400m_e31]
+  - [ViT-B-32-quickgelu, laion400m_e32]
+  - [ViT-L-14, laion2b_s32b_b82k]
+  - [ViT-L-14, laion400m_e31]
+  - [ViT-L-14, laion400m_e32]
+  - [coca_ViT-B-32, laion2b_s13b_b90k]
+  - [coca_ViT-L-14, laion2b_s13b_b90k]
+
+lavis_models:             # 2 feature extractors (optional salesforce-lavis dep)
+  - albef_feature_extractor
+  - blip_feature_extractor_base
+
+datasets:
+  id: imagenet
+  ood:
+    - imagenet_v2          # MatchedFrequency split only
+    - imagenet_s           # ImageNet-Sketch
+    - imagenet_r           # ImageNet-Rendition
+    - imagenet_a           # ImageNet-Adversarial
+    - objectnet

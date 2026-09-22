@@ -1,0 +1,331 @@
+# =============================================================================
+# FRE configuration -- ExORL domain (walker / cheetah, RND datasets)
+# =============================================================================
+# Reference: FRE paper, Appendix A Table 3 (hyperparameters), Appendix C.2
+# (ExORL data pipeline / physics augmentation), Appendix C.3 (evaluation tasks),
+# Section 5.2 Table 1 (target numbers) and Addendum ("Details on the evaluation
+# tasks", "D4RL commit note").
+#
+# Unlike AntMaze (150k/850k), ExORL uses the long strided schedule:
+#   Phase 1 -- encoder/decoder only .......... 1,000,000 steps
+#   Phase 2 -- frozen encoder + IQL policy .... 1,000,000 steps
+#
+# The domain key may be given as "exorl" (both sub-domains) or as the
+# sub-domain prefixed forms "exorl:walker" / "exorl:cheetah".
+#
+# NOTE: keys are duplicated between the flat top level and the `train:` block so
+# that both `FRETrainConfig.from_dict` (flat) and section-selecting loaders work.
+# =============================================================================
+
+name: exorl
+domain: exorl
+sub_domain: both            # "walker" | "cheetah" | "both"
+env_name: exorl-rnd         # RND datasets: walker-run / cheetah-run (+ goal tasks)
+dataset: rnd
+dataset_type: rnd           # ExORL "RND" unsupervised datasets
+
+# -----------------------------------------------------------------------------
+# Training / strided schedule (Algorithm 1)
+# -----------------------------------------------------------------------------
+encoder_steps: 1000000      # Phase 1: encoder + decoder, RL untrained
+policy_steps: 1000000       # Phase 2: freeze encoder, train z-conditioned IQL
+batch_size: 512
+num_encoder_pairs: 32       # K  encoder (s, eta(s)) samples
+num_decoder_pairs: 8        # K' decoder states (disjoint from encoder states)
+beta: 0.01                  # information-bottleneck weight on KL(p(z|L^e) || u(z))
+learning_rate: 0.0001
+latent_dim: 128             # z dimension
+rl_hidden_dims: [512, 512, 512]
+decoder_hidden_dims: [512, 512, 512]
+expectile: 0.8
+awr_temperature: 3.0
+discount: 0.88
+target_update_rate: 0.001   # Polyak tau
+prior_preset: fre-all
+rl_observation: encoder     # ExORL RL observations include physics augmentation
+phase: both                 # "encoder" | "policy" | "both"
+
+train:
+  encoder_steps: 1000000
+  policy_steps: 1000000
+  batch_size: 512
+  num_encoder_pairs: 32
+  num_decoder_pairs: 8
+  beta: 0.01
+  learning_rate: 0.0001
+  latent_dim: 128
+  rl_hidden_dims: [512, 512, 512]
+  decoder_hidden_dims: [512, 512, 512]
+  expectile: 0.8
+  awr_temperature: 3.0
+  discount: 0.88
+  target_update_rate: 0.001
+  prior_preset: fre-all
+  rl_observation: encoder
+  phase: both
+  optimizer: adam
+  target_update: polyak
+  seed: 0
+  device: cuda
+  log_every: 5000
+  save_every: 50000
+  run_dir: runs/exorl
+
+# -----------------------------------------------------------------------------
+# FRE encoder -- permutation-invariant transformer VAE  (Table 3 / Addendum)
+# -----------------------------------------------------------------------------
+encoder:
+  state_embed_dim: 64       # learned linear projection of the state
+  reward_embed_dim: 64      # reward -> rescale [0,1] -> x32 -> floor -> 32 bins -> embed
+  token_dim: 128            # 64 + 64, no positional encodings, no causal mask
+  num_layers: 4             # Appendix: "Encoder Layers [256,256,256,256]"
+  num_heads: 4
+  mlp_dim: 256              # attention/residual stream 128 -> MLP 256 -> 128
+  dropout: 0.0
+  activation: gelu
+  norm_first: true          # pre-norm transformer blocks
+  log_std_min: -10.0
+  log_std_max: 2.0
+  num_reward_bins: 32
+  normalize_rewards: true   # per-reward-function min/max rescale before binning
+  pooling: mean             # mean over final-layer tokens -> two linear heads
+  permutation_invariant: true
+
+# -----------------------------------------------------------------------------
+# FRE decoder -- feed-forward MLP over raw state (NO embedding) concat z
+# -----------------------------------------------------------------------------
+decoder:
+  hidden_dims: [512, 512, 512]
+  activation: relu
+  use_layer_norm: false
+  output_dim: 1
+  output_activation: null
+  input: raw_state        # decoder states are NOT embedded; concatenated with z
+
+# -----------------------------------------------------------------------------
+# Variational objective  Eq. (6)
+# -----------------------------------------------------------------------------
+objective:
+  beta: 0.01
+  kl_target: unit_gaussian
+  decoder_likelihood: gaussian_unit_variance   # MSE-equivalent
+  beta_annealing: false
+
+# -----------------------------------------------------------------------------
+# Prior reward distribution (Section 4.2 / Appendix B)
+# -----------------------------------------------------------------------------
+prior:
+  preset: fre-all
+  family_weights: {goal: 0.3333333333333333, linear: 0.3333333333333333, mlp: 0.3333333333333333}
+  goal:
+    p_current: 0.2          # HER: 0.2 current state
+    p_future: 0.5           # HER: 0.5 future state within the trajectory
+    p_random: 0.3           # HER: 0.3 random dataset state
+    min_offset: 1
+    threshold: 0.1          # Euclidean goal-reached threshold
+    reward_unachieved: -1.0
+    reward_achieved: 0.0
+    distance_dims: non_augmented   # exclude appended physics dims
+    encode_goal_in_encoder: true   # guarantee >=1 encoding sample is the goal
+  linear:
+    mask_prob: 0.9          # each dim zeroed with p=0.9
+    weight_range: [-1.0, 1.0]
+    exclude_dims: []
+  mlp:
+    hidden_dim: 32          # (state_dim, 32, 1)
+    hidden_activation: tanh
+    clip_value: 1.0         # output clipped to [-1, 1]
+    scaling: avg_dim_sqrt   # weights ~ N scaled by average layer dimension
+    bias: true
+  hint:
+    enabled: true
+    num_directions: 8       # (walker/cheetah) unit forward/backward directions
+    velocity_width: 0.5
+
+# -----------------------------------------------------------------------------
+# Ablation: reward-family subsets (Section 5.3, Table 4 / Figure 5)
+# -----------------------------------------------------------------------------
+scaling_presets:
+  - fre-all
+  - fre-goals
+  - fre-lin
+  - fre-mlp
+  - fre-lin-mlp
+  - fre-goal-mlp
+  - fre-goal-lin
+
+# -----------------------------------------------------------------------------
+# z-conditioned IQL agent (Section 4.3, Algorithm 1, Table 3)
+# -----------------------------------------------------------------------------
+iql:
+  hidden_dims: [512, 512, 512]
+  activation: relu
+  expectile: 0.8
+  awr_temperature: 3.0
+  discount: 0.88
+  target_update_rate: 0.001
+  learning_rate: 0.0001
+  batch_size: 512
+  bellman_target: max_q
+  exp_adv_clamp: 100.0
+  log_std_min: -10.0
+  log_std_max: 2.0
+  action_low: -1.0
+  action_high: 1.0
+
+# -----------------------------------------------------------------------------
+# Data pipeline (Appendix C.2)
+# -----------------------------------------------------------------------------
+data:
+  dataset: rnd
+  dataset_type: rnd
+  # per-sub-domain observation/action dimensionality (base state, before augment)
+  walker:
+    state_dim: 24
+    action_dim: 6
+    augment_dim: 4          # physics.horizontal_velocity() (x,y), torso_upright, torso_height
+  cheetah:
+    state_dim: 17
+    action_dim: 6
+    augment_dim: 1          # physics.speed()
+  # enc_dim = state_dim + augment_dim  ->  walker 28, cheetah 18
+  normalize_states: true    # per-dimension normalization by dataset std
+  normalize_by: std         # divide by std (no mean shift)
+  physics_augmentation: encoder_only   # appended dims used by the encoder ONLY
+  goal_dims: non_augmented  # augmented dims excluded from goal distance
+  allow_fallback: true      # zeros if dm_control physics replay unavailable
+
+# -----------------------------------------------------------------------------
+# Evaluation protocol (Section 5.2, Appendix C.3)
+# -----------------------------------------------------------------------------
+eval:
+  num_encoding_samples: 32  # K reward-annotated (s, eta(s)) samples -> z (posterior mean)
+  num_episodes: 20
+  seeds: [0, 1, 2, 3, 4]
+  deterministic: true
+  max_episode_steps: 1000   # ExORL episodes capped at 1000 steps
+  encoder_normalizes_rewards: true
+  policy_uses_encoder_observation: true    # physics-augmented obs for the policy
+  normalize_returns: true
+  return_range: [0, 100]
+  task_set: all
+
+# -----------------------------------------------------------------------------
+# Evaluation tasks (Appendix C.3 / Addendum)
+# -----------------------------------------------------------------------------
+tasks:
+  velocity:
+    walker:
+      # clipping velocity at thresholds 0.1 / 1 / 4 / 8, reward 0 for opposite dir
+      thresholds: [0.1, 1.0, 4.0, 8.0]
+      linear_decay: true
+      tasks:
+        - {name: exorl-walker-velocity-0.1, domain: walker, threshold: 0.1, direction: 1.0}
+        - {name: exorl-walker-velocity-1, domain: walker, threshold: 1.0, direction: 1.0}
+        - {name: exorl-walker-velocity-4, domain: walker, threshold: 4.0, direction: 1.0}
+        - {name: exorl-walker-velocity-8, domain: walker, threshold: 8.0, direction: 1.0}
+    cheetah:
+      run_threshold: 10.0     # cheetah-run: forward velocity >= 10
+      walk_threshold: 1.0     # cheetah-walk: forward velocity >= 1
+      linear_decay: true
+      tasks:
+        - {name: exorl-cheetah-run, domain: cheetah, threshold: 10.0, direction: 1.0}
+        - {name: exorl-cheetah-run-backwards, domain: cheetah, threshold: 10.0, direction: -1.0}
+        - {name: exorl-cheetah-walk, domain: cheetah, threshold: 1.0, direction: 1.0}
+        - {name: exorl-cheetah-walk-backwards, domain: cheetah, threshold: 1.0, direction: -1.0}
+  goals:
+    num_goals: 5              # 5 fixed goal states selected from the dataset
+    goal_distance: 0.1        # Euclidean threshold 0.1
+    goal_seed: 0
+    rewards: {unachieved: -1.0, achieved: 0.0}
+    walker:
+      - exorl-walker-goal-0
+      - exorl-walker-goal-1
+      - exorl-walker-goal-2
+      - exorl-walker-goal-3
+      - exorl-walker-goal-4
+    cheetah:
+      - exorl-cheetah-goal-0
+      - exorl-cheetah-goal-1
+      - exorl-cheetah-goal-2
+      - exorl-cheetah-goal-3
+      - exorl-cheetah-goal-4
+  task_sets:
+    velocity: [exorl-walker-velocity-0.1, exorl-walker-velocity-1, exorl-walker-velocity-4, exorl-walker-velocity-8,
+               exorl-cheetah-run, exorl-cheetah-run-backwards, exorl-cheetah-walk, exorl-cheetah-walk-backwards]
+    goals: [exorl-walker-goal-0, exorl-walker-goal-1, exorl-walker-goal-2, exorl-walker-goal-3, exorl-walker-goal-4,
+            exorl-cheetah-goal-0, exorl-cheetah-goal-1, exorl-cheetah-goal-2, exorl-cheetah-goal-3, exorl-cheetah-goal-4]
+    walker-velocity: [exorl-walker-velocity-0.1, exorl-walker-velocity-1, exorl-walker-velocity-4, exorl-walker-velocity-8]
+    cheetah-velocity: [exorl-cheetah-run, exorl-cheetah-run-backwards, exorl-cheetah-walk, exorl-cheetah-walk-backwards]
+    walker-goals: [exorl-walker-goal-0, exorl-walker-goal-1, exorl-walker-goal-2, exorl-walker-goal-3, exorl-walker-goal-4]
+    cheetah-goals: [exorl-cheetah-goal-0, exorl-cheetah-goal-1, exorl-cheetah-goal-2, exorl-cheetah-goal-3, exorl-cheetah-goal-4]
+    all: [exorl-walker-velocity-0.1, exorl-walker-velocity-1, exorl-walker-velocity-4, exorl-walker-velocity-8,
+          exorl-cheetah-run, exorl-cheetah-run-backwards, exorl-cheetah-walk, exorl-cheetah-walk-backwards,
+          exorl-walker-goal-0, exorl-walker-goal-1, exorl-walker-goal-2, exorl-walker-goal-3, exorl-walker-goal-4,
+          exorl-cheetah-goal-0, exorl-cheetah-goal-1, exorl-cheetah-goal-2, exorl-cheetah-goal-3, exorl-cheetah-goal-4]
+
+# -----------------------------------------------------------------------------
+# Baselines (Section 5.2 / Addendum)
+# -----------------------------------------------------------------------------
+baselines:
+  gc_iql:
+    hidden_dims: [512, 512, 512]
+    expectile: 0.8
+    awr_temperature: 3.0
+    discount: 0.88
+    target_update_rate: 0.001
+    learning_rate: 0.0001
+    batch_size: 512
+    train_steps: 1000000
+    p_current: 0.2
+    p_future: 0.5
+    p_random: 0.3
+    goal_distance: 0.1
+    rewards: {unachieved: -1.0, reached: 0.0}
+  gc_bc:
+    hidden_dims: [512, 512, 512]
+    use_layer_norm: true
+    log_std_min: -5.0
+    learning_rate: 0.0001
+    batch_size: 512
+    train_steps: 1000000
+    geometric_p: 0.5
+    geometric_only_goals: true
+  opal:
+    latent_dim: 128
+    token_dim: 128
+    num_layers: 4
+    num_heads: 4
+    mlp_dim: 256
+    hidden_dims: [512, 512, 512]
+    learning_rate: 0.0001
+    batch_size: 512
+    segment_length: 64
+    train_steps: 1000000
+    num_skills: 10
+    eval_protocol: privileged   # 10 unit-Gaussian skills, whole-episode rollouts, best kept
+  fb:
+    train_steps: 1000000
+    reward_samples: 5120
+    dataset_type: rnd
+    features: icm
+    repo: controllable_agent
+  sf:
+    train_steps: 1000000
+    reward_samples: 5120
+    dataset_type: rnd
+    features: icm          # ICM features for SF
+    repo: controllable_agent
+
+# -----------------------------------------------------------------------------
+# Reference numbers -- Table 1 (normalized return 0-100, mean of 20 episodes,
+# 5 seeds). FRE uses only 32 reward samples at eval vs 5120 for FB/SF.
+# -----------------------------------------------------------------------------
+reference:
+  exorl-walker-goals: 94.0
+  exorl-cheetah-goals: 58.0
+  exorl-walker-velocity: 34.0
+  exorl-cheetah-velocity: 20.0
+  exorl-all: 51.5
+  exorl-all-std: 6.3
+  num_reward_samples: 32

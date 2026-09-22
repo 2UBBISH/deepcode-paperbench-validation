@@ -1,0 +1,177 @@
+# =============================================================================
+# train_smm.yaml
+# -----------------------------------------------------------------------------
+# Experiment-specific overrides for the main SMM training runs (Algorithm 1 of
+# the SMM paper, ICML 2024).  Layered on top of:
+#     base.yaml            (global defaults, data/model/reprogram/output blocks)
+#     model_<backbone>.yaml (backbone + mask-generator + schedule specifics)
+# and consumed by smm_vr/engine/train_smm.py (SMMTrainConfig) and by the
+# experiment runners in smm_vr/experiments/.
+#
+# Values are transcribed from the paper:
+#   * Table 9  - training hyper-parameters per dataset / mask-generator depth
+#   * Sec. 5   - "Baselines" / "Results on ResNets" / "Results on ViT"
+#   * Sec. 3.4, Algorithm 1 - joint update of delta and phi
+#   * Appendix C, Table 9 - milestones, batch sizes, learning rates
+#
+# Paper ambiguities resolved here (see README "Defaults chosen for paper
+# ambiguities"):
+#   * The optimiser is not stated -> SGD with momentum 0.9, no weight decay.
+#   * The leading "0" in the Table 9 milestone column is treated as an artifact
+#     of the schedule notation, so milestones are [100, 145] for E = 200.
+#   * The classification loss is cross-entropy over the mapped target labels.
+# =============================================================================
+
+name: train_smm
+experiment: main
+
+# -----------------------------------------------------------------------------
+# Selected backbone / target task
+# -----------------------------------------------------------------------------
+# The runner overrides `model.backbone` (resnet18 | resnet50 | vit_b32) and
+# iterates over `data.datasets`.  These keys are the defaults for a single run.
+model:
+  backbone: resnet18
+  pretrained: true
+  freeze: true
+
+# -----------------------------------------------------------------------------
+# Training loop - Algorithm 1
+# -----------------------------------------------------------------------------
+training:
+  # Epoch budget and LR schedule (Sec. 5 / Table 9).
+  epochs: 200
+  milestones: [100, 145]
+
+  # Shared pattern delta: alpha_1 = 0.01 with gamma = 0.1 (Table 9),
+  # following Chen et al. (2023).
+  alpha_delta: 0.01
+  gamma_delta: 0.1
+
+  # Mask generator phi: alpha_2 depends on the CNN depth (Table 9 / Sec. 3.2).
+  #   * 5-layer generator (ResNet-18 / ResNet-50): 0.01 with gamma 0.1
+  #   * 6-layer generator (ViT-B32):               0.001 with gamma 1 (no decay)
+  # `null` -> resolved at runtime from `mask_generator.num_layers`.
+  alpha_mask: null
+  gamma_mask: null
+
+  # Optimiser (not specified by the paper -> SGD, momentum 0.9, wd 0).
+  optimizer: sgd
+  momentum: 0.9
+  weight_decay: 0.0
+  nesterov: false
+  grad_clip: null
+
+  # Batch sizes: 256 everywhere except DTD and OxfordPets (Table 9).
+  batch_size: 256
+  test_batch_size: 256
+  batch_sizes:
+    default: 256
+    dtd: 64
+    oxfordpets: 64
+
+  num_workers: 4
+  download: true
+  drop_last: false
+
+  # Output label mapping: Ilm is the default for the main Tables 1 and 2
+  # (Algorithm 4, refreshed before every epoch).
+  label_mapping: ilm
+  mapping_refresh_every: 1
+
+  # Logging / evaluation cadence.
+  log_every: 10
+  eval_every: 1
+  verbose: true
+
+  # Debug knobs (null = full dataset / full epoch).
+  max_train_batches: null
+  max_eval_batches: null
+
+  # Check-pointing.
+  save_checkpoint: false
+  save_dir: null
+
+# -----------------------------------------------------------------------------
+# Mask generator (f_mask) - Sec. 3.2 / Table 4
+# -----------------------------------------------------------------------------
+mask_generator:
+  # `num_layers` is normally inherited from model_<backbone>.yaml
+  # (5 for ResNet-18/ResNet-50, 6 for ViT-B32).  `null` -> derive from backbone.
+  num_layers: null
+  base_channels: 8
+  out_channels: 3
+  num_pooling_layers: 3      # patch size 2^l = 8
+  use_bn: true
+  use_relu: true
+  width_scale: 1.0           # Table 11 scaling study doubles this per stage
+  expected_parameters: null  # 26499 (5-layer) / 102339 (6-layer)
+
+# -----------------------------------------------------------------------------
+# Reprogramming f_in (Sec. 3.1, Eq. 4)
+# -----------------------------------------------------------------------------
+reprogram:
+  patch_size: 8              # default for all datasets; l = 3
+  delta_init: zero           # Algorithm 1: delta <- 0 before training
+  normalize_mask: false
+
+# -----------------------------------------------------------------------------
+# Evaluation (Sec. 5)
+# -----------------------------------------------------------------------------
+evaluation:
+  topk: [1, 5]
+  batch_size: 256
+  num_workers: 4
+  max_batches: null
+  tsne_samples: 5000         # Addendum: feature-space analysis
+
+# -----------------------------------------------------------------------------
+# Reproducibility: three seeds, mean +- std (Sec. 5 "Baselines")
+# -----------------------------------------------------------------------------
+seeds: [0, 1, 2]
+deterministic: true
+
+# -----------------------------------------------------------------------------
+# Target tasks for the main tables (Table 6 order - Table 1 / Table 2 rows)
+# -----------------------------------------------------------------------------
+datasets:
+  - cifar10
+  - cifar100
+  - svhn
+  - gtsrb
+  - flowers102
+  - dtd
+  - ucf101
+  - food101
+  - sun397
+  - eurosat
+  - oxfordpets
+
+# -----------------------------------------------------------------------------
+# Output paths
+# -----------------------------------------------------------------------------
+output:
+  root: outputs
+  results_dir: outputs/results
+  checkpoints_dir: outputs/checkpoints
+  logs_dir: outputs/logs
+  figures_dir: outputs/figures
+
+# -----------------------------------------------------------------------------
+# Runs of this config (used by main.py dispatch)
+# -----------------------------------------------------------------------------
+runs:
+  # Main-table runs: one entry per (backbone, dataset) combination; the runner
+  # expands `datasets` x `seeds` automatically.
+  - name: main_resnet18
+    backbone: resnet18
+    label_mapping: ilm
+    method: ours
+  - name: main_resnet50
+    backbone: resnet50
+    label_mapping: ilm
+    method: ours
+  - name: main_vit_b32
+    backbone: vit_b32
+    label_mapping: ilm
+    method: ours

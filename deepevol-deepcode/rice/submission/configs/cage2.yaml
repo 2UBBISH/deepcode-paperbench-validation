@@ -1,0 +1,278 @@
+# =============================================================================
+# RICE -- CAGE Challenge 2 (cyber-defence application) configuration
+#
+# Merged on top of `configs/default.yaml` by `rice.utils.io.get_config("cage2")`.
+# Paper reference: Cheng et al., "RICE: A Refining Scheme for Reinforcement
+# Learning with Explanation", ICML 2024 (PMLR 235).
+#
+# CAGE-2 specifics (Sec. 4.1, Sec. 4.2, Appendix C.1):
+#   * Blue-agent discrete action set; the Restore action carries a penalty
+#     of -1 (see `rice.envs.make_env.restore_action_penalty`).
+#   * The blue policy is evaluated over three trial lengths {30, 50, 100};
+#     the reported final reward is the SUM of the three average rewards
+#     (see `rice.envs.make_env.cage2_final_reward`).
+#   * Target policy / mask network architecture: MLP hidden [64, 64, 64]
+#     (Appendix C.1 + addendum "Architectures").
+#   * Observations are NOT normalized for this application (Appendix C.2
+#     only normalizes Walker2d and HalfCheetah).
+#   * Mask-network sample budget: 1e7 steps (Table 4 mask-training budget),
+#     reference wall-clock 65400 s (Ours) vs 79382 s (StateMask).
+#   * Table-1 reference returns (trend validation only, NOT exact targets):
+#       No-Refine -23.64  ->  Ours -20.02
+# =============================================================================
+
+name: cage2
+seed: 0
+seeds: [0, 1, 2]
+
+device: cpu
+output_dir: outputs
+log_dir: logs
+save_dir: runs
+results_dir: results
+verbose: true
+
+# -----------------------------------------------------------------------------
+# Environment
+# -----------------------------------------------------------------------------
+env:
+  id: cage2
+  gym_id: Cage2-v0
+  registered_id: Cage2-v0
+  app: cyber
+  # Discrete blue-agent action set (Monitor / Analyse / Remove / Restore / ...).
+  discrete_actions: true
+  # Appendix C.2: only Walker2d and HalfCheetah use observation normalization.
+  normalize_obs: false
+  sparse: false
+  sparse_threshold: null
+  # Each trial length is {30, 50, 100}; horizon for one trial = 100 steps.
+  max_episode_steps: 100
+  # Fidelity normalizer d_max for the aggregate (sum of the three average
+  # rewards) CAGE-2 reward; overridable at runtime.
+  d_max: 100.0
+  # Observation / action dimensions (best-effort defaults; the real CybORG
+  # wrapper reports its own spaces and takes precedence).
+  obs_dim: 147
+  action_dim: 54
+  # Trail (trial) lengths used by the CAGE Challenge 2 evaluation protocol.
+  trial_lengths: [30, 50, 100]
+  # Reward shaping constants from the challenge specification.
+  restore_penalty: -1.0
+  aggregate: sum          # final reward = sum of the three average rewards
+  actions:
+    - monitor
+    - analyse
+    - remove
+    - restore
+
+# -----------------------------------------------------------------------------
+# Target (pre-trained, frozen) policy pi -- Stage 1 explains it, Stage 2 refines it
+# -----------------------------------------------------------------------------
+target:
+  algo: ppo
+  policy: MlpPolicy
+  hidden_sizes: [64, 64, 64]
+  activation: tanh
+  lr: 3.0e-4
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_range: 0.2
+  n_epochs: 10
+  batch_size: 64
+  n_steps: 100
+  total_timesteps: 1000000
+  checkpoint: policies/cage2_ppo.zip
+  # Table 1 "No Refine" reference (trend validation only).
+  expected_return: -23.64
+  expected_std: null
+
+# -----------------------------------------------------------------------------
+# Stage 1 -- Explanation (mask network / Algorithm 1)
+# -----------------------------------------------------------------------------
+explanation:
+  enabled: true
+  method: ours                  # ours | random | statemask | ig | airs
+  hidden_sizes: [64, 64, 64]
+  activation: tanh
+  # Table 3 value; alpha is insensitive (Fig. 9) and exposed for the Exp V sweep.
+  alpha: 1.0e-4
+  alpha_sweep: [0.01, 0.001, 0.0001]
+  use_blinding_bonus: true
+  reward_mode: augmented        # R'_t = R(s_t, a_t) + alpha * a_t^m
+  # Table 4 mask-network sample budget for CAGE-2.
+  total_timesteps: 10000000
+  lr: 3.0e-4
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_range: 0.2
+  n_epochs: 10
+  batch_size: 64
+  K: 0.1                        # default sliding-window fraction for fidelity
+  checkpoint: policies/cage2_mask.pt
+  # Table 4 reference mask-training wall-clock (seconds).
+  expected_time_ours: 65400
+  expected_time_statemask: 79382
+
+# -----------------------------------------------------------------------------
+# Fidelity evaluation (Experiment I)
+# -----------------------------------------------------------------------------
+fidelity:
+  K_values: [0.10, 0.20, 0.30, 0.40]
+  n_trajectories: 500
+  seeds: [0, 1, 2]
+  deterministic_policy: true
+  action_mode: random
+  scoring: auto                 # auto | mask | random
+  window_metric: mean
+  max_tail_steps: 10
+  store_details: true
+
+# -----------------------------------------------------------------------------
+# Stage 2 -- Refining (Algorithm 2: mixed initial distribution + RND)
+# -----------------------------------------------------------------------------
+refine:
+  enabled: true
+  method: ours                  # ours | ppo_finetune | statemask_r | jsrl | sac | gail | sil
+  p: 0.5                        # = beta in mu(s) = beta*d_rho^pihat(s) + (1-beta)*rho(s)
+  p_sweep: [0.0, 0.25, 0.5, 0.75, 1.0]
+  lam: 0.01                     # lambda for the RND intrinsic reward
+  lam_sweep: [0.0, 0.1, 0.01, 0.001]
+  use_mixed_init: true
+  use_rnd: true
+  K: null                       # null -> episode horizon T
+  copy_policy: true             # keep the pre-trained pi frozen while training pi_theta
+  total_timesteps: 200000
+  lr: 3.0e-4
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_range: 0.2
+  n_epochs: 10
+  batch_size: 64
+  n_steps: null                 # null -> episode horizon T
+  eval_episodes: 10
+  deterministic_eval: true
+  # Table 1 "Ours" reference (trend validation only).
+  expected_return: -20.02
+  expected_std: null
+
+# -----------------------------------------------------------------------------
+# Random Network Distillation (intrinsic reward normalizer)
+# -----------------------------------------------------------------------------
+rnd:
+  hidden_sizes: [64, 64]
+  activation: tanh
+  lr: 1.0e-4
+  lam: 0.01
+  normalize: true
+  normalization: running_std
+  clip_bonus: null
+  update_epochs: 1
+  batch_size: 256
+  reward_scale: 1.0
+
+# -----------------------------------------------------------------------------
+# Baselines (explanation + refining comparison methods)
+# -----------------------------------------------------------------------------
+baselines:
+  random_explanation:
+    enabled: true
+    mode: uniform
+
+  statemask:
+    enabled: true
+    alpha_init: 0.01
+    dual_lr: 1.0e-4
+    delta: 0.1
+    alpha_min: 0.0
+    alpha_max: 10.0
+    dual_mode: enforce
+    total_timesteps: 10000000
+
+  integrated_gradients:
+    enabled: true
+    n_steps: 16
+    baseline: zero
+    target: action
+    reduction: l1
+
+  airs:
+    enabled: true
+    attention_mode: softmax
+    score_mode: hybrid
+    lr: 3.0e-4
+    epochs: 20
+    l1_coeff: 0.01
+
+  ppo_finetune:
+    enabled: true
+    lr: 1.0e-4                  # lowered learning rate, continuing training
+    total_timesteps: 200000
+
+  jsrl:
+    enabled: true
+    max_guided_horizon: 100
+    horizon_schedule: linear
+    total_timesteps: 200000
+
+  # SAC / GAIL target continuous-action environments (Experiment IV is Hopper),
+  # so they are disabled for this discrete-action application.
+  sac_finetune:
+    enabled: false
+  gail:
+    enabled: false
+
+  sil:
+    enabled: true
+    sil_coef: 1.0
+    total_timesteps: 200000
+
+# -----------------------------------------------------------------------------
+# Experiment drivers
+# -----------------------------------------------------------------------------
+experiments:
+  envs: [cage2]
+  dense_envs: [cage2]
+  app_envs: [cage2]
+  sparse_envs: []
+  mujoco_envs: []
+
+  seeds: [0, 1, 2]
+
+  exp1:                         # fidelity & mask-training efficiency (Table 4)
+    enabled: true
+    envs: [cage2]
+    K_values: [0.10, 0.20, 0.30, 0.40]
+    n_trajectories: 500
+    methods: [ours, statemask, random]
+
+  exp2:                         # refining effectiveness (Table 1)
+    enabled: true
+    envs: [cage2]
+    methods: [ours, ppo_finetune, statemask_r, jsrl]
+
+  exp3:                         # explanation quality (fix refine = Ours)
+    enabled: true
+    envs: [cage2]
+    explanations: [random, statemask, ours]
+
+  exp4:                         # SAC agent (Hopper only)
+    enabled: false
+    envs: []
+
+  exp5:                         # sensitivity sweeps (Figures 7-9)
+    enabled: true
+    envs: [cage2]
+    p_sweep: [0.0, 0.25, 0.5, 0.75, 1.0]
+    lam_sweep: [0.0, 0.1, 0.01, 0.001]
+    alpha_sweep: [0.01, 0.001, 0.0001]
+
+  optional:
+    sil_envs: [cage2]
+    extra_explanations: [integrated_gradients, airs]
+
+plot:
+  dpi: 150
+  format: pdf
+  figsize: [6, 4]
+  show: false

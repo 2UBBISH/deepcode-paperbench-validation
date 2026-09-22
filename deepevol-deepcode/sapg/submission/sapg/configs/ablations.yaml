@@ -1,0 +1,126 @@
+# Ablation configurations for SAPG (Section 6.3, Figure 6).
+#
+# The paper studies the following variants:
+#   - SAPG (default):  leader/follower aggregation (i = 1, X = {2..M}), lambda = 1,
+#                      off-policy data subsampled so that |D'_1| = |D_1|.
+#   - SAPG (entropy):  followers additionally receive an entropy loss with coefficient
+#                      sigma * (j - 1) (Eq. 10); sigma swept over {0, 0.003, 0.005}.
+#   - SAPG (high off-policy ratio): subsampling disabled, so the gradient is computed
+#                      on the entire combined off-policy + on-policy dataset.
+#   - Ours (symmetric): no privileged leader, each policy i is updated with off-policy
+#                      data from all other policies X = {j : j != i} (Section 4.2).
+#   - No off-policy:   followers aggregate nothing (pure per-block PPO, sanity check).
+#
+# Each entry below is a set of overrides applied on top of a base task config
+# (configs/allegro_kuka.yaml, configs/shadow_hand.yaml or configs/allegro_hand.yaml).
+# Load with:
+#   from sapg.utils.config import load_ablation
+#   cfg = load_ablation("symmetric", base="allegro_kuka", task="regrasping")
+
+# ---------------------------------------------------------------------------
+# Base settings shared by every ablation run.
+# ---------------------------------------------------------------------------
+base:
+  num_envs: 24576          # N environments, split into M = 6 contiguous blocks
+  num_policies: 6          # M = 1 leader + 5 followers
+  leader_index: 1          # 1-based index of the leader policy (Section 4.3)
+  aggregation: leader_follower
+  off_policy_weight: 1.0   # lambda in Eq. 3 / Eq. 4
+  subsample_off_policy: true
+  entropy_coefficient: 0.0
+  critic_coefficient: 4.0  # lambda' (Eqs. 7-9)
+  num_seeds: 5             # 5 seeds, band = (2/sqrt(n)) * sum_i (y - y_i)^2
+  max_samples: 2.0e10      # ~2e10 transitions per experiment
+
+# ---------------------------------------------------------------------------
+# The ablation sweep itself.
+# ---------------------------------------------------------------------------
+ablations:
+
+  # -------- default SAPG (reference row in Figure 6) -----------------------
+  sapg:
+    aggregation: leader_follower
+    subsample_off_policy: true
+    entropy_coefficient: 0.0
+    off_policy_weight: 1.0
+    description: "Main SAPG: leader/follower, subsampled off-policy data, no entropy."
+
+  # -------- diversification through entropy (Eq. 10) -----------------------
+  entropy:
+    aggregation: leader_follower
+    subsample_off_policy: true
+    off_policy_weight: 1.0
+    # sigma swept over {0, 0.003, 0.005}; per-task best reported in Table 1.
+    entropy_coefficient: [0.0, 0.003, 0.005]
+    entropy_applies_to: followers        # sigma * (j - 1) * H(pi_j), j >= 2
+    per_block_sigma: true
+    description: "SAPG with entropy-regularised followers; sigma in {0, 0.003, 0.005}."
+
+  # -------- no subsampling: full off-policy + on-policy batch --------------
+  high_off_policy_ratio:
+    aggregation: leader_follower
+    subsample_off_policy: false          # |D'_1| = sum_j |D_j| instead of |D_1|
+    off_policy_weight: 1.0
+    entropy_coefficient: 0.0
+    description: "SAPG without off-policy subsampling (high off-policy ratio)."
+
+  # -------- symmetric aggregation (Section 4.2) ----------------------------
+  symmetric:
+    aggregation: symmetric
+    subsample_off_policy: true
+    off_policy_weight: 1.0
+    entropy_coefficient: 0.0
+    symmetric_pairs: all                 # X = {j : j != i} for every policy i
+    description: "No privileged leader; every policy is updated from all others."
+
+  # -------- no aggregation (ablation on the data fusion itself) ------------
+  no_off_policy:
+    aggregation: none
+    subsample_off_policy: false
+    off_policy_weight: 0.0
+    entropy_coefficient: 0.0
+    description: "Followers use on-policy losses only (X = empty)."
+
+# ---------------------------------------------------------------------------
+# Off-policy weight sweep for the leader (Sec. 4.1 / 4.3: lambda = 1).
+# ---------------------------------------------------------------------------
+lambda_sweep:
+  parameter: off_policy_weight
+  values: [0.0, 0.5, 1.0, 2.0]
+  aggregation: leader_follower
+  subsample_off_policy: true
+  default: 1.0
+
+# ---------------------------------------------------------------------------
+# Number of policies (block count) sweep.
+# ---------------------------------------------------------------------------
+num_policies_sweep:
+  parameter: num_policies
+  values: [1, 2, 3, 6, 12]
+  aggregation: leader_follower
+  subsample_off_policy: true
+  note: "num_policies = 1 reduces SAPG to vanilla PPO at batch size N."
+
+# ---------------------------------------------------------------------------
+# Per-task expectations from Figure 6 / Section 6.3 (for reporting).
+# ---------------------------------------------------------------------------
+expected_findings:
+  symmetric: "Significantly worse than SAPG on every task."
+  high_off_policy_ratio: >
+    Significantly worse on AllegroHand and ShadowHand; marginally worse on
+    Regrasping and Throw; more sample efficient but lower asymptotic performance
+    on Reorientation.
+  entropy: >
+    SAPG (sigma = 0) matches or beats the entropy variant everywhere except
+    Reorientation, where sigma = 5e-3 is up to 16.5% better.
+  no_off_policy: "Worse than SAPG (aggregation contributes to final performance)."
+
+# ---------------------------------------------------------------------------
+# Task-specific best entropy coefficients (Section 6.2 / Table 1).
+# ---------------------------------------------------------------------------
+best_entropy_coefficient:
+  regrasping: 0.0
+  throw: 0.0
+  reorientation: 0.005
+  shadow_hand: 0.0
+  allegro_hand: 0.0

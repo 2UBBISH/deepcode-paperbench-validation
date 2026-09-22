@@ -1,0 +1,79 @@
+# RICE: A Refining Scheme for Reinforcement Learning with Explanation
+# (Cheng et al., ICML 2024, PMLR 235) -- reference implementation requirements.
+#
+# Core install (enough to import `rice`, run the CLI and every config/plot path):
+#     pip install -r requirements.txt
+# Optional heavier stacks (MuJoCo training, applications, baselines) are listed
+# further down and can be installed incrementally.
+
+# ---------------------------------------------------------------------------
+# Core numerics / configuration  (matches setup.py INSTALL_REQUIRES)
+# ---------------------------------------------------------------------------
+numpy>=1.21,<2.0
+PyYAML>=5.4
+
+# ---------------------------------------------------------------------------
+# Deep learning
+# ---------------------------------------------------------------------------
+# PyTorch (Paszke et al. 2019) -- mask network (Stage 1) and PPO refinement
+# (Stage 2). CPU wheels are sufficient; only trends are reproduced.
+#   CPU:  pip install torch --index-url https://download.pytorch.org/whl/cpu
+#   CUDA: see https://pytorch.org/get-started/previous-versions/
+torch>=1.13,<2.4
+
+# ---------------------------------------------------------------------------
+# Reinforcement learning / environments (dense + sparse MuJoCo)
+# ---------------------------------------------------------------------------
+# Stable-Baselines3 (Raffin et al. 2021) -- default MlpPolicy networks and the
+# PPO/SAC implementations used as the target policy and fine-tuning baselines.
+stable-baselines3>=1.8,<2.4
+
+# Gym (0.21 / 0.26 both supported by the wrappers) + Box2D-free MuJoCo.
+gym>=0.21
+# MuJoCo binding used by gym v3 environments (Hopper-v3, Walker2d-v3,
+# Reacher-v2, HalfCheetah-v3). Recent `mujoco` (>=2.3) works with the
+# SB3-compatible bindings; `mujoco-py` is only needed for legacy gym <0.22.
+mujoco>=2.3
+# mujoco-py>=2.1            # legacy alternative, needs a MuJoCo 210 licence key
+
+# ---------------------------------------------------------------------------
+# Reporting / plotting
+# ---------------------------------------------------------------------------
+pandas>=1.3
+matplotlib>=3.4
+# seaborn>=0.11            # nicer tables (optional)
+
+# ---------------------------------------------------------------------------
+# Optional: application environments (RICE Sec. 4.1 / Appendix C.1)
+# ---------------------------------------------------------------------------
+# Autonomous driving (MetaDrive Macro-v1) via DI-engine / DI-drive.
+# di-drive
+# metadrive-simulator>=0.2.5
+# Selfish Mining: external repo (github.com/roibarzur/pto-selfish-mining);
+#   no PyPI package -- the lightweight `rice.envs.make_env` fallback covers it.
+# CAGE Challenge 2: external repo + Cardiff champion scheme;
+#   the `rice.envs.make_env` fallback implements the blue-agent action set,
+#   Restore penalty (-1) and trial lengths {30, 50, 100}.
+# Tianshou is only required for the EXCLUDED Malware Mutation experiments:
+# tianshou>=0.4.10
+
+# ---------------------------------------------------------------------------
+# Optional: explanation / refining baselines
+# ---------------------------------------------------------------------------
+# Integrated Gradients (Sundararajan et al. 2017) -- Captum makes the
+# attribution exact; `rice.baselines.integrated_gradients` falls back to a
+# finite-difference implementation when Captum is absent.
+# captum>=0.5
+# AIRS attention explanation + GAIL / SIL options use only torch + numpy and
+# therefore need no additional packages.
+# StateMask (github.com/nuwuxian/RL-state_mask) is re-implemented natively in
+# `rice.baselines.statemask_r` (primal-dual alpha), so no extra install.
+# JSRL (github.com/steventango/jumpstart-rl) is re-implemented natively in
+# `rice.baselines.jsrl`.
+
+# ---------------------------------------------------------------------------
+# Development
+# ---------------------------------------------------------------------------
+# pytest>=7.0
+# black>=22.0
+# flake8>=5.0

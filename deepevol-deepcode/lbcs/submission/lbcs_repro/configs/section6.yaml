@@ -1,0 +1,337 @@
+# =============================================================================
+# configs/section6.yaml
+#
+# Section 6 "More Justifications and Analyses" of the LBCS paper.
+#
+# This file is an OVERLAY on configs/default.yaml: it is deep-merged on top of
+# the defaults, so only the deltas that matter for Section 6 are listed here.
+#
+# Section 6 contains three analyses, all reproduced by this config:
+#
+#   (a) "The influence of the number of search times"  -> Table 9 / Appendix E.4
+#       F-MNIST, T in {100, 200, 300, 500, 800, 1500, 2000}
+#       Observations (paper): as T grows, test accuracy increases and the
+#       coreset size decreases; afterwards the accuracy stabilizes and the
+#       size continues to shrink only marginally.
+#
+#   (b) "The influence of mask initialization"          -> Table 5
+#       F-MNIST, k in {1000, 2000, 3000, 4000}
+#       "LBCS+Moderate" = mask initialized by Moderate then refined by LBCS.
+#       Paper: k=1000 79.7 +- 0.7 -> 79.8 +- 0.5 (LBCS+Moderate)
+#              k=2000 82.8 +- 0.6 -> 83.6 +- 0.7
+#              k=3000 84.0 +- 0.6 -> 84.3 +- 0.4
+#              k=4000 84.5 +- 0.4 -> 85.1 +- 0.3
+#
+#   (c) "Cross network architecture evaluation"         -> Table 6
+#       SVHN with ViT-small and WideResNet (W-NET) as the post-selection
+#       target network; "the other experimental settings are not changed"
+#       (i.e. the Section 5.2 inner-loop coreset-selection protocol).
+#       Exact LBCS coreset sizes are those of Table 2 (SVHN).
+#
+# Provenance legend:  # PAPER      = stated in the paper
+#                     # SUGGESTED  = not stated; reproduction default
+# =============================================================================
+
+inherit:
+  - default.yaml
+
+# -----------------------------------------------------------------------------
+# Global / Section-6-wide settings
+# -----------------------------------------------------------------------------
+seed: 0                 # PAPER (fixed seeds per repeat, logged)
+device: null            # auto-select cuda when available
+num_workers: 0          # SUGGESTED
+data_root: null         # torchvision default / LBCS_DATA_ROOT env override
+output_root: results
+save_artifacts: true
+verbose: false
+
+logging:
+  level: INFO
+  log_every: 0          # 0 = only log summary lines inside long loops
+  to_file: true
+  file_name: section6.log
+
+# -----------------------------------------------------------------------------
+# Algorithm 1 (LBCS) core settings used throughout Section 6
+# -----------------------------------------------------------------------------
+lbcs:
+  epsilon: 0.2          # PAPER (Section 5.2 setting, reused in Section 6)
+  T: 500                # PAPER (default search budget; Table 9 sweeps it)
+  k: 1000               # PAPER (smallest predefined coreset size)
+  delta_init: 0.1       # SUGGESTED (paper does not specify)
+  delta_lower: 0.001    # SUGGESTED (paper does not specify)
+  warm_start: true      # Section 3.2 acceleration trick (i)
+  group_size: 1         # Section 3.2 acceleration trick (iii); 1 = disabled
+  cache_evaluations: true
+  cache_theta: false
+  pretrain_random_masks: false
+
+# Inner loop: theta(m) <- argmin_theta L(m, theta).  Section 5.2 recipe reused.
+inner:
+  optimizer: adam       # PAPER (Section 5.2)
+  lr: 0.001             # PAPER (Section 5.2)
+  momentum: 0.9         # PAPER (inert w/ Adam; used by the SGD fallback)
+  weight_decay: 0.0     # SUGGESTED
+  epochs: 100           # PAPER (Section 5.2 inner loop)
+  batch_size: 128       # SUGGESTED
+  eval_batch_size: 256  # SUGGESTED
+  scheduler: null
+
+# Post-selection target training recipes (paper-stated per dataset).
+target:
+  F-MNIST:
+    architecture: LeNet    # PAPER
+    optimizer: adam        # PAPER
+    lr: 0.001              # PAPER
+    momentum: 0.9          # SUGGESTED
+    epochs: 100            # PAPER
+    weight_decay: 0.0      # SUGGESTED
+    batch_size: 128        # SUGGESTED
+    scheduler: null
+  SVHN:
+    # Section 6 (c) swaps ONLY the target network; the optimization recipe is
+    # the Section 5.2 SVHN recipe.
+    architecture: SVHNTargetCNN   # default; Table 6 overrides to ViTSmall/WideResNet
+    optimizer: adam        # PAPER
+    lr: 0.001              # PAPER
+    momentum: 0.9          # SUGGESTED
+    epochs: 100            # PAPER
+    weight_decay: 5e-4     # SUGGESTED
+    batch_size: 128        # SUGGESTED
+    scheduler: null
+  CIFAR-10:
+    architecture: ResNet18 # PAPER
+    optimizer: sgd         # PAPER
+    lr: 0.1                # PAPER
+    momentum: 0.9          # PAPER
+    epochs: 200            # PAPER
+    weight_decay: 5e-4     # SUGGESTED
+    batch_size: 128        # SUGGESTED
+    scheduler: cosine      # PAPER
+
+# Inner-loop (proxy) architectures per dataset (Section 5.2 recipes reused).
+proxy:
+  MNIST-S: ConvNet       # PAPER (Zhou et al. 2022 ConvNet, Figure 1 / 5.1)
+  MNIST: ConvNet         # PAPER
+  F-MNIST: LeNet         # PAPER
+  SVHN: SVHNCNN          # PAPER
+  CIFAR-10: CIFARCNN     # PAPER
+
+# Baselines compared in Section 6 (same competitor suite as Section 5.2).
+baselines:
+  suite:
+    - Uniform
+    - EL2N
+    - GraNd
+    - Influential
+    - Moderate
+    - CCS
+    - Probabilistic
+  uniform: {}
+  el2n:
+    reference_epochs: 100   # SUGGESTED
+  grand:
+    reference_epochs: 100   # SUGGESTED
+    param_scope: last_layer # SUGGESTED
+  influential:
+    reference_epochs: 100   # SUGGESTED
+    param_scope: last_layer # SUGGESTED
+    hessian_approx: diag    # SUGGESTED
+  moderate:
+    metric: l2              # SUGGESTED
+    median_mode: class      # SUGGESTED
+    reference_epochs: 100   # SUGGESTED
+  ccs:
+    importance: l2          # SUGGESTED
+    alpha: 0.5              # SUGGESTED
+    preserve_distribution: true  # SUGGESTED
+  probabilistic:
+    lambda: 0.5             # SUGGESTED (Zhou et al. 2022 comparator)
+    outer_iters: 500        # SUGGESTED
+    inner_epochs: 100       # PAPER (inner loop)
+    inner_lr: 0.001         # PAPER (Section 5.2)
+    inner_optimizer: adam   # PAPER (Section 5.2)
+
+# Statistical protocol (mean +- std over repeats).
+repeats:
+  section5_1: 20
+  section5_2: 10
+  section5_3: 10
+  section6: 10          # PAPER (Section 6 tables report mean +- std)
+
+# =============================================================================
+# (a) Table 9 -- the influence of the number of search times T  (Appendix E.4)
+# =============================================================================
+table9:
+  dataset: F-MNIST                    # PAPER
+  ks: [1000, 2000, 3000, 4000]        # PAPER
+  ts: [100, 200, 300, 500, 800, 1500, 2000]  # PAPER (sweep over T)
+  epsilon: 0.2                        # PAPER
+  repeats: 10                         # PAPER (Section 5.2/5.3 protocol)
+  inner_optimizer: adam               # PAPER
+  inner_lr: 0.001                     # PAPER
+  inner_epochs: 100                   # PAPER
+  target_optimizer: adam              # PAPER
+  target_lr: 0.001                    # PAPER
+  target_epochs: 100                  # PAPER
+  weight_decay: 5e-4                  # SUGGESTED
+  batch_size: 128                     # SUGGESTED
+  eval_batch_size: 256                # SUGGESTED
+  delta_init: 0.1                     # SUGGESTED
+  delta_lower: 0.001                  # SUGGESTED
+  warm_start: true                    # SUGGESTED (Section 3.2 trick (i))
+  group_size: 1                       # SUGGESTED
+  num_workers: 0                      # SUGGESTED
+  seed: 0
+  log_every: 0
+  plot: true
+  save_artifacts: true
+  verbose: false
+  output_dir: results/table9
+  # Paper anchor values (F-MNIST, k = 1000) used for validation only.
+  # NOTE: never used as algorithm inputs.
+  paper_reference:
+    k: 1000
+    T:
+      100:  {accuracy: 77.0, accuracy_std: 1.8, size: 998.0, size_std: 1.9}
+      500:  {accuracy: 79.7, accuracy_std: 0.7, size: 956.7, size_std: 3.5}
+      2000: {accuracy: 79.8, accuracy_std: 0.6, size: 935.8, size_std: 3.8}
+
+# =============================================================================
+# (b) Table 5 -- the influence of mask initialization
+# =============================================================================
+table5:
+  dataset: F-MNIST                    # PAPER
+  ks: [1000, 2000, 3000, 4000]        # PAPER
+  init_modes: [random, moderate]      # PAPER ("random" vs "LBCS+Moderate")
+  epsilon: 0.2                        # PAPER
+  T: 500                              # PAPER
+  repeats: 10                         # PAPER
+  inner_optimizer: adam               # PAPER
+  inner_lr: 0.001                     # PAPER
+  inner_epochs: 100                   # PAPER
+  target_optimizer: adam              # PAPER
+  target_lr: 0.001                    # PAPER
+  target_epochs: 100                  # PAPER
+  weight_decay: 0.0                   # SUGGESTED
+  batch_size: 128                     # SUGGESTED
+  eval_batch_size: 256                # SUGGESTED
+  delta_init: 0.1                     # SUGGESTED
+  delta_lower: 0.001                  # SUGGESTED
+  warm_start: true                    # SUGGESTED
+  group_size: 1                       # SUGGESTED
+  reference_epochs: 100               # SUGGESTED (Moderate score model)
+  num_workers: 0                      # SUGGESTED
+  seed: 0
+  log_every: 0
+  plot: true
+  save_artifacts: true
+  verbose: false
+  output_dir: results/table5
+  # Paper-reported mean +- std test accuracy (%), validation only.
+  paper_reference:
+    LBCS:
+      1000: {mean: 79.7, std: 0.7}
+      2000: {mean: 82.8, std: 0.6}
+      3000: {mean: 84.0, std: 0.6}
+      4000: {mean: 84.5, std: 0.4}
+    LBCS+Moderate:
+      1000: {mean: 79.8, std: 0.5}
+      2000: {mean: 83.6, std: 0.7}
+      3000: {mean: 84.3, std: 0.4}
+      4000: {mean: 85.1, std: 0.3}
+
+# =============================================================================
+# (c) Table 6 -- cross network architecture evaluation (SVHN)
+# =============================================================================
+table6:
+  dataset: SVHN                       # PAPER
+  ks: [1000, 2000, 3000, 4000]        # PAPER
+  architectures: [ViTSmall, WideResNet]  # PAPER (ViT-small and W-NET)
+  methods:
+    - Uniform
+    - EL2N
+    - GraNd
+    - Influential
+    - Moderate
+    - CCS
+    - Probabilistic
+  epsilon: 0.2                        # PAPER ("settings are not changed")
+  T: 500                              # PAPER
+  repeats: 10                         # PAPER
+  inner_optimizer: adam               # PAPER (Section 5.2 inner loop)
+  inner_lr: 0.001                     # PAPER
+  inner_epochs: 100                   # PAPER
+  target_optimizer: adam              # PAPER (Section 5.2 SVHN target recipe)
+  target_lr: 0.001                    # PAPER
+  target_epochs: 100                  # PAPER
+  momentum: 0.9                       # SUGGESTED
+  weight_decay: 5e-4                  # SUGGESTED
+  batch_size: 128                     # SUGGESTED
+  eval_batch_size: 256                # SUGGESTED
+  delta_init: 0.1                     # SUGGESTED
+  delta_lower: 0.001                  # SUGGESTED
+  warm_start: true                    # SUGGESTED
+  group_size: 1                       # SUGGESTED
+  num_workers: 0                      # SUGGESTED
+  seed: 0
+  log_every: 0
+  plot: true
+  save_artifacts: true
+  verbose: false
+  output_dir: results/table6
+  f1_eval_split: train
+  # LBCS optimized coreset sizes on SVHN are taken from Table 2 (Section 5.2);
+  # "the exact coreset sizes of our method can be checked in Table 2".
+  lbcs_sizes:
+    1000: 970.0    # PAPER (Table 2, SVHN k=1000, +- 4.8)
+    2000: null     # see Table 2 results/table2_table3 artifacts
+    3000: null
+    4000: null
+  # Model-config overrides for the two target architectures (all SUGGESTED:
+  # Appendix D.2 / Table 7 values are not recoverable from the paper text).
+  architecture_configs:
+    ViTSmall:
+      patch_size: 4
+      embed_dim: 384
+      depth: 12
+      num_heads: 6
+      mlp_ratio: 4.0
+      dropout: 0.0
+      attention_dropout: 0.0
+      global_pool: true
+      class_token: true
+      weight_decay: 5e-4
+      batch_size: 128
+    WideResNet:
+      depth: 16
+      widen_factor: 4
+      stem_width: 16
+      dropout: 0.0
+      use_bias: false
+      weight_decay: 5e-4
+      batch_size: 128
+  # Paper-reported mean +- std test accuracy (%), validation only.
+  paper_reference:
+    ViTSmall:
+      1000: {mean: 80.3, std: 1.2}
+      2000: {mean: 87.8, std: 1.1}
+      3000: {mean: 90.7, std: 0.5}
+      4000: {mean: 91.4, std: 0.9}
+    WideResNet:
+      1000: {mean: 33.9, std: 0.8}
+      2000: {mean: 47.5, std: 2.2}
+      3000: {mean: 51.3, std: 0.6}
+      4000: {mean: 57.7, std: 0.4}
+
+# =============================================================================
+# Out of scope for this config (documented for clarity, never executed):
+#   * Section 5.4  : ImageNet-1k experiments
+#   * Appendix E.5 : continual learning
+#   * Appendix E.6 : streaming coreset selection
+# =============================================================================
+out_of_scope:
+  section5.4: ImageNet-1k
+  appendix_e.5: continual learning
+  appendix_e.6: streaming coreset selection

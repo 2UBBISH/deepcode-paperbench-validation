@@ -1,0 +1,90 @@
+# Configuration for the Section 5.1 / Appendix E.4 non-Gaussian experiment.
+#
+# Target: sinh-arcsinh normal distribution (Jones & Pewsey, 2009)
+#         z = sinh((asinh(y) + s) / tau),  y ~ N(mu, Sigma),  D = 10
+#   - skew sweep: tau fixed at 1.0, s in {0.2, 1.0, 1.8}
+#   - tail sweep: s fixed at 0.0,  tau in {0.1, 0.9, 1.7}
+#
+# BaM uses the decaying schedule lambda_t = B D / (t + 1); the gradient-based
+# baselines use ADAM with grid-searched learning rates.  The cost axis is the
+# number of gradient evaluations (wallclock timing is out of scope).
+#
+# Consumed by bam_repro/experiments/exp_non_gaussian.py.
+
+experiment: "non_gaussian"
+description: "sinh-arcsinh normal target, D=10 (Section 5.1 / E.4)"
+
+seed: 0
+n_runs: 10
+dim: 10
+methods: [bam, advi, score, fisher, gsm]
+history_points: 120
+kl_samples: 4096
+metric: "forward"
+report_both_kl: true
+outdir: "results"
+save: true
+figures: true
+
+# ---------------------------------------------------------------------------
+# BaM (Algorithm 1): learning rate is the inverse regularisation lambda_t.
+# ---------------------------------------------------------------------------
+bam:
+  schedule: "BD/(t+1)"          # lambda_t = B * D / (t + 1)
+  batch_sizes: [2, 5, 10, 20, 40]
+
+# ---------------------------------------------------------------------------
+# Baselines: gradient-based methods share one batch size (B = 5).
+# ---------------------------------------------------------------------------
+baseline_batch_size: 5
+
+advi:
+  learning_rate: 0.02
+  learning_rate_grid: [0.05, 0.02, 0.01, 0.005, 0.001]
+
+score:
+  # per-setting grid-searched learning rates for the score-based divergence
+  learning_rate:
+    skew0.2: 0.01
+    skew1.0: 0.001
+    skew1.8: 0.001
+    tail0.1: 0.001
+    tail0.9: 0.01
+    tail1.7: 0.01
+  learning_rate_grid: [0.05, 0.02, 0.01, 0.005, 0.001]
+
+fisher:
+  learning_rate: 0.05
+  learning_rate_grid: [0.1, 0.05, 0.02, 0.01, 0.005, 0.001]
+
+gsm:
+  # Algorithm 3 is hyper-parameter free (no learning rate).
+  learning_rate: null
+
+# ---------------------------------------------------------------------------
+# Target / initialisation.
+# ---------------------------------------------------------------------------
+target:
+  name: "sinh-arcsinh"
+  mean_scale: 0.1          # base mean mu ~ Uniform[0, 0.1]^D
+  cov_factor_scale: 1.0    # base cov Sigma = A A^T with A ~ N(0, 1)
+  init_mean_scale: 0.1     # variational init mu_0 ~ Uniform[0, 0.1]^D
+  init_cov: "identity"     # variational init Sigma_0 = I
+  settings:
+    skew0.2: {s: 0.2, tau: 1.0}
+    skew1.0: {s: 1.0, tau: 1.0}
+    skew1.8: {s: 1.8, tau: 1.0}
+    tail0.1: {s: 0.0, tau: 0.1}
+    tail0.9: {s: 0.0, tau: 0.9}
+    tail1.7: {s: 0.0, tau: 1.7}
+
+# ---------------------------------------------------------------------------
+# Cost budget: number of gradient evaluations per setting.
+# ---------------------------------------------------------------------------
+grad_budget:
+  skew0.2: 20000
+  skew1.0: 30000
+  skew1.8: 40000
+  tail0.1: 20000
+  tail0.9: 20000
+  tail1.7: 30000

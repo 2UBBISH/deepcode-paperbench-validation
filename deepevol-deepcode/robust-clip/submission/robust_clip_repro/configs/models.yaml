@@ -1,0 +1,130 @@
+# =============================================================================
+# Victim-model + prompt-source configuration (LLaVA-1.5 7B and OpenFlamingo)
+# -----------------------------------------------------------------------------
+# Consumed by `models/llava_openclip.py` (LLaVAOpenCLIPConfig.from_dict),
+# `models/openflamingo_wrapper.py` (OpenFlamingoConfig.from_dict) and by the
+# evaluation harnesses (`eval_vqa.py`, `eval_captioning.py`, `eval_jailbreak.py`)
+# through their `model_name` / `model_kwargs` fields.
+#
+# PROVENANCE POLICY:
+#   * ADDENDUM: LLaVA-1.5 7B must use the OpenAI CLIP ViT-L/14@224 vision tower
+#     through the OpenCLIP implementation (NOT LLaVA's default HF ViT-L/14@336).
+#   * ADDENDUM: the LLaVA / OpenFlamingo repositories are pinned as the source of
+#     the prompt templates and harness code.
+#   * Everything the Addendum is silent about (OpenFlamingo version, vision
+#     encoder, language backbone, dtype, device_map, generation parameters) is
+#     declared here as UNSPECIFIED_BY_ADDENDUM and supplied externally; upstream
+#     defaults are used where a loader requires a value.
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Upstream repository pins (ADDENDUM)
+# -----------------------------------------------------------------------------
+repositories:
+  llava: "https://github.com/haotian-liu/LLaVA"                        # ADDENDUM
+  open_flamingo: "https://github.com/mlfoundations/open_flamingo"      # ADDENDUM
+  robust_finetuning: "https://github.com/fra31/robust-finetuning"      # ADDENDUM
+  robust_clip: "https://github.com/chs20/RobustVLM"                    # PAPER BODY
+
+# -----------------------------------------------------------------------------
+# LLaVA-1.5 7B victim (ADDENDUM: OpenAI CLIP ViT-L/14@224 via OpenCLIP)
+# -----------------------------------------------------------------------------
+llava:
+  model_name: llava                          # harness selector
+  model_path: "liuhaotian/llava-v1.5-7b"     # PAPER BODY (LLaVA-1.5 7B)
+  clip_model: ViT-L-14                       # ADDENDUM (OpenAI CLIP ViT-L/14)
+  clip_pretrained: openai                    # ADDENDUM
+  clip_resolution: 224                       # ADDENDUM (override LLaVA default 336)
+  clip_pretrained_path: null                 # optional local OpenCLIP checkpoint
+  use_openclip: true                         # ADDENDUM (patch HF CLIP -> OpenCLIP)
+  patch_hf_clip: true                        # ADDENDUM
+  freeze_language_model: true                # ADDENDUM (freeze LM for evaluation)
+  freeze_vision_model: false                 # adversarial fine-tuning of the vision tower
+  conv_mode: null                            # UNSPECIFIED_BY_ADDENDUM (LLaVA default)
+  dtype: float16                             # UNSPECIFIED_BY_ADDENDUM
+  device: null                               # null -> auto
+  device_map: null                           # UNSPECIFIED_BY_ADDENDUM
+  attn_implementation: null                  # UNSPECIFIED_BY_ADDENDUM
+  load_8bit: false                           # UNSPECIFIED_BY_ADDENDUM
+  load_4bit: false                           # UNSPECIFIED_BY_ADDENDUM
+  cache_dir: null
+  # Generation parameters: NOT specified by the paper/Addendum.
+  max_new_tokens: 64                         # UNSPECIFIED_BY_ADDENDUM
+  generation_temperature: 0.0                # UNSPECIFIED_BY_ADDENDUM
+  do_sample: false                           # UNSPECIFIED_BY_ADDENDUM
+  num_beams: 1                               # UNSPECIFIED_BY_ADDENDUM
+  top_p: 1.0                                 # UNSPECIFIED_BY_ADDENDUM
+  repetition_penalty: 1.0                    # UNSPECIFIED_BY_ADDENDUM
+
+# -----------------------------------------------------------------------------
+# OpenFlamingo victim (ADDENDUM: only the repository is stated -> all else is
+# upstream defaults / external configuration)
+# -----------------------------------------------------------------------------
+openflamingo:
+  model_name: openflamingo
+  version: "OpenFlamingo-9B-vitl-mpt7b"      # UPSTREAM default
+  vision_encoder: "openai/clip-vit-large-patch14"   # UPSTREAM default
+  lang_encoder: "anas-awadalla/mpt-7b"       # UPSTREAM default
+  checkpoint_path: null                      # external: path to the .pt checkpoint
+  tokenizer_path: null                       # external (defaults to lang_encoder)
+  cross_attn_every: 1                        # UPSTREAM default
+  freeze_vision_encoder: true                # UPSTREAM default for evaluation
+  freeze_language_model: true                # ADDENDUM (freeze for evaluation)
+  dtype: float16                             # UNSPECIFIED_BY_ADDENDUM
+  device: null
+  cache_dir: null
+  max_new_tokens: 32                         # UNSPECIFIED_BY_ADDENDUM
+  generation_temperature: 0.0                # UNSPECIFIED_BY_ADDENDUM
+  do_sample: false
+
+# -----------------------------------------------------------------------------
+# Prompt sources (ADDENDUM: prompts inherited from the upstream repositories)
+# Literal templates live in prompts/templates.py; these flags select them.
+# -----------------------------------------------------------------------------
+prompts:
+  source: "prompts/templates.py"             # ADDENDUM (upstream-derived templates)
+  llava:
+    vqa: "<image>\n{question}\nAnswer the question using a single word or phrase."
+    pope: "<image>\n{question}\nAnswer with a single word: yes or no."
+    caption: "<image>\nProvide a one-sentence caption for the provided image."
+    conv_mode: null                          # UNSPECIFIED_BY_ADDENDUM (vicuna_v1)
+  openflamingo:
+    vqa: "<image>{question}\nAnswer the question using a single word or phrase."
+    pope: "<image>{question}\nAnswer with a single word: yes or no."
+    caption: "<image>A short caption:"
+  imagenet:
+    templates: null                          # null -> eval_imagenet.IMAGENET_TEMPLATES
+
+# -----------------------------------------------------------------------------
+# Default victim used when a harness is invoked without an explicit model.
+# -----------------------------------------------------------------------------
+defaults:
+  eval_imagenet: clip
+  eval_vqa: llava
+  eval_captioning: openflamingo
+  eval_jailbreak: llava
+  # Force the deterministic, model-free dummy victims (smoke tests / CI).
+  dummy_env_var: "ROBUST_CLIP_DUMMY_LLAVA=1"
+
+# -----------------------------------------------------------------------------
+# Provenance bookkeeping
+# -----------------------------------------------------------------------------
+provenance:
+  addendum:
+    - "LLaVA-1.5 7B with OpenAI CLIP ViT-L/14@224 instead of the default ViT-L/14@336"
+    - "LLaVA patched to consume OpenCLIP rather than the HuggingFace CLIP implementation"
+    - "Language backbone frozen for evaluation"
+    - "OpenFlamingo loaded from https://github.com/mlfoundations/open_flamingo"
+    - "Prompts inherited from haotian-liu/LLaVA and mlfoundations/open_flamingo"
+  paper_body:
+    - "LLaVA-1.5 7B and OpenFlamingo are the evaluated VLM victims"
+  unspecified_by_addendum:
+    - openflamingo_version
+    - openflamingo_vision_encoder
+    - openflamingo_language_backbone
+    - dtype
+    - device_map
+    - conv_mode
+    - max_new_tokens
+    - generation_temperature
+    - prompt_templates

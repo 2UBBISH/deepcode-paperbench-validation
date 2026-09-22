@@ -1,0 +1,50 @@
+# ============================================================================
+# LCA-on-the-Line: reproduction dependencies
+# ----------------------------------------------------------------------------
+# Environment setup (paper §4 / Appendix A, plan "environment_setup"):
+#   Language: Python 3.9+
+#   All checkpoints are public; no API keys are required.
+#
+# NOTE: the paper does not pin the open_clip / OpenAI-CLIP versions, so recent
+#       releases are used and checkpoint names should be verified at runtime.
+#       requirements-core.txt-style split is provided below: everything above
+#       the "optional" markers is needed for the metrics/hierarchy/simulation
+#       stack (Phases 1, A-G), the rest is needed for the full 75-model zoo.
+# ============================================================================
+
+# --- core numerics / metrics stack (src/hierarchy, src/metrics, simulation) --
+numpy>=1.23,<2.0
+scipy>=1.9
+scikit-learn>=1.2
+pandas>=1.5
+matplotlib>=3.6
+
+# --- config / IO / utilities -------------------------------------------------
+PyYAML>=6.0
+tqdm>=4.64
+
+# --- deep learning + vision model zoo (36 torchvision VMs, Appendix A) -------
+torch>=2.0
+torchvision>=0.15
+
+# --- HuggingFace data + VLM feature extractors (ImageNet-1k, OOD, ALBEF/BLIP)
+datasets>=2.12
+transformers>=4.30
+huggingface_hub>=0.16
+Pillow>=9.4
+
+# --- vision-language model zoo (39 VLMs, Appendix A) ------------------------
+# OpenCLIP (30 configs) - prefer the torch package;
+#   pip install open_clip_torch
+open_clip_torch>=2.20
+# OpenAI CLIP (7 configs, incl. RN50x4 / ViT-L-14@336px):
+#   pip install git+https://github.com/openai/CLIP.git
+git+https://github.com/openai/CLIP.git
+
+# --- WordNet taxonomy helpers (synset names / wnid expansion) ----------------
+# nltk is only needed if the local imagenet_fiveai.csv (jvlmdr/hiercls) is
+# unavailable and the tree must be rebuilt from synset hypernym chains.
+nltk>=3.8
+
+# --- testing -----------------------------------------------------------------
+pytest>=7.0
